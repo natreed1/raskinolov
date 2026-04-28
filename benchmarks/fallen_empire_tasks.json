@@ -1,0 +1,150 @@
+[
+  {
+    "id": "biome-vocabulary",
+    "category": "types",
+    "prompt": "Fallen Empire's `Biome` union is exactly: water | plains | forest | mountain | desert. Reply with those five literals only, lowercase, comma-separated, in any order (no extra prose).",
+    "expect": {
+      "all_contains": ["water", "plains", "forest", "mountain", "desert"],
+      "min_chars": 20
+    }
+  },
+  {
+    "id": "tile-coordinate-fields",
+    "category": "types",
+    "prompt": "Our `Tile` type uses axial hex coordinates. In TypeScript, write a boolean expression `sameHex(a, b)` where `a` and `b` are `Pick<Tile, 'q' | 'r'>`, returning true when both coordinates match. Reply with a single expression or one-line arrow function body only.",
+    "expect": {
+      "all_contains": ["q", "r"],
+      "none_contains": ["python", "Python", "def "],
+      "min_chars": 10
+    }
+  },
+  {
+    "id": "clamp-utility",
+    "category": "pure-ts",
+    "prompt": "Write a TypeScript function `clamp(n: number, lo: number, hi: number): number` that bounds `n` to `[lo, hi]`. Code only, no explanation.",
+    "expect": {
+      "all_contains": ["clamp", "number"],
+      "any_contains": ["Math.min", "Math.max"],
+      "none_contains": ["python", "def "],
+      "min_chars": 30
+    }
+  },
+  {
+    "id": "skirmish-signature",
+    "category": "api-shape",
+    "prompt": "Write only a TypeScript function signature (no body) named `resolveSkirmish` that takes `attackerPower: number` and `defenderPower: number` and returns the literal union type `'attacker' | 'defender'`.",
+    "expect": {
+      "all_contains": ["resolveSkirmish", "attackerPower", "defenderPower", "attacker", "defender"],
+      "none_contains": ["python", "def resolveSkirmish"],
+      "min_chars": 40
+    }
+  },
+  {
+    "id": "ai-param-english",
+    "category": "game-systems",
+    "prompt": "In one or two sentences, explain what a parameter literally named `recruitGoldThreshold` might mean for an AI economy in a strategy game (gold vs recruiting). No code.",
+    "expect": {
+      "all_contains": ["recruitGoldThreshold"],
+      "any_contains": ["gold", "Gold", "recruit", "Recruit"],
+      "min_chars": 60
+    }
+  },
+  {
+    "id": "zustand-read",
+    "category": "frontend",
+    "prompt": "Our game client uses Zustand (`useGameStore`). In 2–4 sentences, describe a safe pattern for a React component to read one slice of state without re-rendering on unrelated store updates.",
+    "expect": {
+      "any_contains": ["useGameStore", "Zustand", "zustand", "selector", "shallow", "subscribe", "equality", "useShallow", "pick"],
+      "min_chars": 80
+    }
+  },
+  {
+    "id": "hex-neighbor-idea",
+    "category": "spatial",
+    "prompt": "Axial hex grids use `q` and `r`. Give one valid axial neighbor offset as two integers (dq and dr), using any common axial convention—e.g. (1,0) or 1, 0 or dq=1 dr=0.",
+    "expect": {
+      "any_contains": ["(1, 0)", "(1,0)", "(0, 1)", "(0,1)", "(-1, 0)", "(-1,0)", "(0, -1)", "(0,-1)", "(1, -1)", "(1,-1)", "(-1, 1)", "(-1,1)", "1, 0", "0, 1", "-1, 0", "0, -1", "1, -1", "-1, 1", "1,0", "0,1"],
+      "min_chars": 8
+    }
+  },
+  {
+    "id": "sim-result-fields",
+    "category": "serialization",
+    "prompt": "Fallen Empire headless sim returns `SimResult`. List comma-separated **field identifiers** you expect (e.g. winner, cycle, ai1Cities, ai2Pop, ai1Ships). Include at least `winner` and `cycle` and three more plausible numeric summary fields for both players.",
+    "expect": {
+      "all_contains": ["winner", "cycle"],
+      "any_contains": ["ai1Cities", "ai2Cities", "ai1Pop", "ai2Pop", "ai1Ships", "ai2Ships", "Cities", "Pop", "Ships", "ai1", "ai2"],
+      "min_chars": 35
+    }
+  },
+  {
+    "id": "axial-hex-distance",
+    "category": "spatial",
+    "prompt": "For axial coords (q, r), distance between two hexes is (|dq+dr| + |dq| + |dr|) / 2 in cube form, or equivalently max of |dq|, |dr|, |dq+dr| for some conventions. Write a **one-line** TypeScript expression `dist(a,b)` using `Math.abs` and `Math.max` assuming `dq = b.q - a.q` and `dr = b.r - a.r` already in scope. Expression only.",
+    "expect": {
+      "all_contains": ["Math.abs", "Math.max", "dq", "dr"],
+      "none_contains": ["python", "def "],
+      "min_chars": 25
+    }
+  },
+  {
+    "id": "map-size-presets",
+    "category": "types",
+    "prompt": "Fallen Empire `MAP_SIZE_PRESETS`: small is 38×38, normal is 52×52, large is 67×67. Reply by repeating those three sizes in the form `small 38×38, normal 52×52, large 67×67` (you may use x instead of ×). No extra commentary.",
+    "expect": {
+      "all_contains": ["38", "52", "67"],
+      "any_contains": ["small", "normal", "large"],
+      "min_chars": 28
+    }
+  },
+  {
+    "id": "mutation-buckets-prose",
+    "category": "evolution",
+    "prompt": "Fallen Empire's sim mutates AI params using buckets named stable, medium, and wildcard. In 3–5 sentences, explain why a **wildcard** bucket is useful occasionally even if most mutations should be stable.",
+    "expect": {
+      "all_contains": ["wildcard"],
+      "any_contains": ["stable", "Stable", "medium", "Medium", "bucket", "Bucket", "explore", "diverse", "escape", "mutation", "parameter", "search", "risk", "random", "noise", "landscape", "plateau", "local", "global"],
+      "min_chars": 120
+    }
+  },
+  {
+    "id": "season-curriculum-metaphor",
+    "category": "evolution",
+    "prompt": "Relate **seasons** of ranked play with **promotion** between tiers C, B, and A to training a code model across curriculum phases. 4–6 sentences; mention at least one risk if you skip early tiers.",
+    "expect": {
+      "any_contains": ["season", "promot", "C", "B", "A", "tier", "curriculum"],
+      "min_chars": 200
+    }
+  },
+  {
+    "id": "next-route-handler-sketch",
+    "category": "frontend",
+    "prompt": "Sketch a minimal Next.js App Router `route.ts` handler exporting an async `GET` that returns JSON `{ ok: true }` using either `Response.json(...)` or `NextResponse.json(...)`. TypeScript only, imports allowed.",
+    "expect": {
+      "all_contains": ["ok"],
+      "any_contains": ["GET", "export", "async", "function", "Response.json", "NextResponse.json", "NextResponse"],
+      "none_contains": ["python", "def "],
+      "min_chars": 70
+    }
+  },
+  {
+    "id": "siege-wall-priority-chain",
+    "category": "game-systems",
+    "prompt": "In 3–5 sentences, connect how an AI might jointly consider `siegeChance` and `wallBuildPriority` when deciding between pressing an attack versus fortifying—use plain English, no code.",
+    "expect": {
+      "all_contains": ["siegeChance", "wallBuildPriority"],
+      "any_contains": ["wall", "siege", "attack", "defend", "fortif", "prior"],
+      "min_chars": 160
+    }
+  },
+  {
+    "id": "headless-core-import",
+    "category": "api-shape",
+    "prompt": "Where do `runSimulation` and `SimResult` live in our repo? Reply with exactly one path string, preferring `src/core/gameCore.ts` if that matches our layout.",
+    "expect": {
+      "all_contains": ["src", "core"],
+      "any_contains": ["gameCore", "gameCore.ts", "runSimulation", "@/core"],
+      "min_chars": 10
+    }
+  }
+]

@@ -1,0 +1,60 @@
+{
+  "_comment": "Evolutionary benchmark + season-style LoRA curriculum targets (mlx_lm.lora not invoked here).",
+  "benchmark_evolution": {
+    "population_size": 18,
+    "seasons": 8,
+    "elite_fraction": 0.38,
+    "offspring_per_elite": 2,
+    "immigration_per_season": 2,
+    "anchor_task_ids": [
+      "biome-vocabulary",
+      "clamp-utility",
+      "skirmish-signature"
+    ],
+    "tier_cycle": ["C", "C", "B", "B", "A", "A", "B", "A"],
+    "selection_mode": "champions_for_curriculum",
+    "_selection_modes": {
+      "champions_for_curriculum": "Prefer tasks the model passes while rubric stays hard (good SFT mining).",
+      "adversarial_benchmark": "Prefer failures + harder rubric (stress suite)."
+    }
+  },
+  "lora_ambitious_defaults": {
+    "_comment": "Authoritative knobs live in training/lora_qwen_coder.yaml — this block is a quick mirror for planning.",
+    "config_yaml": "training/lora_qwen_coder.yaml",
+    "batch_size": 2,
+    "iters_per_season": 400,
+    "learning_rate": 1e-5,
+    "optimizer": "adamw",
+    "lora_rank": 16,
+    "lora_dropout": 0.05,
+    "grad_checkpoint": true,
+    "report_every": 10,
+    "val_batches": 8
+  },
+  "curriculum_seasons": [
+    {
+      "name": "foundations",
+      "description": "Types, pure TS, small API shapes — low noise, high precision.",
+      "focus_categories": ["pure-ts", "types"],
+      "suggested_tier": "C"
+    },
+    {
+      "name": "systems",
+      "description": "Game systems, spatial, combat hooks — domain vocabulary.",
+      "focus_categories": ["game-systems", "spatial", "combat"],
+      "suggested_tier": "B"
+    },
+    {
+      "name": "integration",
+      "description": "Frontend, evolution metaphor, headless sim types.",
+      "focus_categories": ["frontend", "api-shape", "evolution", "serialization"],
+      "suggested_tier": "A"
+    },
+    {
+      "name": "championship",
+      "description": "Full suite + evolved champions; mirror sim-system promotion pressure.",
+      "focus_categories": ["*"],
+      "suggested_tier": "A"
+    }
+  ]
+}

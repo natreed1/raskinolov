@@ -1,0 +1,18 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+!.env.example
+# Model weights & training outputs (large)
+models/
+checkpoints/
+data/raw/
+data/lora/
+*.mlx
+*.gguf
+wandb/
+# Benchmark machine output (optional; keep tasks JSON in git)
+benchmarks/results/

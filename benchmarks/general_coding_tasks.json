@@ -1,0 +1,50 @@
+[
+  {
+    "id": "http-get-idempotent",
+    "category": "web",
+    "prompt": "Which common HTTP request method is usually used to read a resource and should not change server state? Answer in one short sentence and name the method in ALL CAPS.",
+    "expect": { "all_contains": ["GET"] }
+  },
+  {
+    "id": "json-vs-jsonl",
+    "category": "data",
+    "prompt": "In one or two sentences, what is the main structural difference between a single JSON file and JSON Lines (JSONL) for many records?",
+    "expect": { "any_contains": ["line", "lines", "newline", "per line", "each line"] }
+  },
+  {
+    "id": "sql-select-users",
+    "category": "sql",
+    "prompt": "Write a minimal SQL query that selects columns email and name from a table called users. Output only the SQL, no explanation.",
+    "expect": { "all_contains": ["SELECT", "users"], "any_contains": ["email", "name"] }
+  },
+  {
+    "id": "regex-one-digit",
+    "category": "regex",
+    "prompt": "Give a simple regular expression that matches exactly one ASCII digit (0-9). Output only the pattern on one line.",
+    "expect": { "any_contains": ["[0-9]", "\\d"] }
+  },
+  {
+    "id": "utf8-encoding",
+    "category": "encodings",
+    "prompt": "Name the most common Unicode encoding used on the web. One phrase.",
+    "expect": { "any_contains": ["UTF-8", "utf-8", "utf8", "UTF8"] }
+  },
+  {
+    "id": "acronym-api",
+    "category": "acronyms",
+    "prompt": "What do the three letters API stand for in software? List the three words in order, comma-separated.",
+    "expect": { "all_contains": ["pplication", "rogramming", "nterface"] }
+  },
+  {
+    "id": "markdown-fence",
+    "category": "doc",
+    "prompt": "In CommonMark/Markdown, what three punctuation characters in a row often begin a fenced code block? Answer with only those three characters, nothing else.",
+    "expect": { "all_contains": ["```"] }
+  },
+  {
+    "id": "semver-parts",
+    "category": "versioning",
+    "prompt": "In semantic versioning MAJOR.MINOR.PATCH, list the three part names in order, comma-separated, lowercase: e.g. major, …",
+    "expect": { "all_contains": ["major", "minor", "patch"] }
+  }
+]

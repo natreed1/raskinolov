@@ -1,0 +1,302 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "loading-screen-polish",
+      "task_type": "ui",
+      "title": "Polish the loading/start screen",
+      "prompt": "Improve the loading/start screen shown by the standardized preview at `/test-env/loading-screen`. That sandbox renders `src/components/test/TestEnvironmentShell.tsx`, which calls `GameLoadingScreen` from `src/components/ui/GameLoadingScreen.tsx`; prefer editing those shared loading components/styles so the change is immediately visible in the preview. Before styling, infer Fallen Empire's existing medieval strategy vibe from `GameHUD`, panel theme components, `globals.css`, and the loading component: dark empire surfaces, parchment text, empire-gold accents, restrained red/amber warnings, compact tactical language. Add stronger Fallen Empire mood, clearer tactical/simulation framing, and one small visual hierarchy improvement. Do not create unrelated routes such as a new `app/loading.tsx` unless the existing files clearly require it.",
+      "allowed_paths": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "app/**/*.tsx",
+        "app/**/*.ts",
+        "components/**/*.tsx",
+        "components/**/*.ts",
+        "styles/**/*.css",
+        "src/**/*.css",
+        "app/**/*.css"
+      ],
+      "context_paths": [
+        "README.md",
+        "package.json",
+        "src/app/test-env/[envId]/page.tsx",
+        "src/components/test/TestEnvironmentShell.tsx",
+        "src/components/ui/GameLoadingScreen.tsx",
+        "src/app/page.tsx",
+        "src/app/layout.tsx",
+        "src/app/globals.css",
+        "src/**/*loading*.*",
+        "src/**/*Loading*.*",
+        "src/**/*start*.*",
+        "src/**/*Start*.*",
+        "src/**/*home*.*",
+        "src/**/*Home*.*",
+        "src/**/*layout*.*",
+        "src/**/*Layout*.*",
+        "src/app/**/*page*.*",
+        "src/app/**/*loading*.*",
+        "src/app/**/*Loading*.*",
+        "app/**/*page*.*",
+        "app/**/*loading*.*",
+        "src/components/**/*",
+        "components/**/*"
+      ],
+      "verify_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "preview_command": "next dev -H 127.0.0.1 -p {port}",
+      "preview_path": "/test-env/loading-screen",
+      "notes": "Complexity: low. Quick to evaluate: open `/test-env/loading-screen`; it renders `GameLoadingScreen`, not the normal gameplay route. The model should infer theme from supplied UI files rather than inventing a generic style.",
+      "grading": [
+        "First-impression clarity",
+        "Fallen Empire mood",
+        "Visual hierarchy",
+        "Load/start visibility",
+        "Implementation simplicity"
+      ]
+    },
+    {
+      "id": "hud-status-summary",
+      "task_type": "ui",
+      "title": "Add a compact empire status summary",
+      "prompt": "Improve the HUD/status summary visible in the standardized preview at `/test-env/hud-status-summary`. That sandbox boots a paused observer match, so inspect `src/components/ui/GameHUD.tsx`, `src/store/useGameStore.ts`, `src/types/game.ts`, and nearby panel theme components to infer the correct state schema and visual style. Add or refine a compact always-visible summary for morale, supply pressure, territory risk, collapse state, or match pressure. It should feel native to Fallen Empire: dark medieval frame language, parchment/gold labels, terse tactical wording, and no generic sci-fi dashboard treatment. Keep the change visible without deep gameplay and avoid broad architecture changes.",
+      "allowed_paths": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "components/**/*.tsx",
+        "components/**/*.ts",
+        "styles/**/*.css",
+        "src/**/*.css",
+        "app/**/*.css"
+      ],
+      "context_paths": [
+        "README.md",
+        "package.json",
+        "src/lib/testEnvironments.ts",
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/panelThemes/MedievalBuildingPanels.tsx",
+        "src/components/ui/panelThemes/MapRoomPanel.tsx",
+        "src/components/ui/GameHUD.tsx",
+        "src/**/*hud*.*",
+        "src/**/*status*.*",
+        "src/**/*morale*.*",
+        "src/**/*supply*.*",
+        "src/app/**/*page*.*",
+        "src/components/**/*",
+        "app/**/*page*.*",
+        "components/**/*"
+      ],
+      "verify_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "preview_command": "next dev -H 127.0.0.1 -p {port}",
+      "preview_path": "/test-env/hud-status-summary",
+      "notes": "Complexity: low-medium. Quick to evaluate: open `/test-env/hud-status-summary`, inspect the HUD/status area, and confirm the model used existing store/types rather than invented state.",
+      "grading": [
+        "HUD visibility",
+        "Strategic signal quality",
+        "Game terminology fit",
+        "Low-clutter layout",
+        "Implementation simplicity"
+      ]
+    },
+    {
+      "id": "economy-tooltip",
+      "task_type": "economy",
+      "title": "Clarify an economy/resource tooltip",
+      "prompt": "Improve an economy/resource tooltip or inline helper visible in the standardized preview at `/test-env/economy-tooltip`. That sandbox boots a paused economy-active observer match, so inspect `src/components/ui/GameHUD.tsx`, `src/lib/empireEconomy.ts`, `src/lib/gameLoop.ts`, `src/types/game.ts`, and panel theme components to infer resource names, income fields, and existing UI patterns. Explain why a value changed using Fallen Empire concepts such as supply lines, morale pressure, upkeep, territory, villages, markets, or workforce. Match the medieval parchment/gold/dark-panel tone; do not invent unrelated economy schema or generic tooltip styling.",
+      "allowed_paths": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "components/**/*.tsx",
+        "components/**/*.ts",
+        "styles/**/*.css",
+        "src/**/*.css",
+        "app/**/*.css"
+      ],
+      "context_paths": [
+        "README.md",
+        "package.json",
+        "src/lib/testEnvironments.ts",
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/gameLoop.ts",
+        "src/lib/empireEconomy.ts",
+        "src/components/ui/panelThemes/BuilderCottagePanel.tsx",
+        "src/components/ui/GameHUD.tsx",
+        "src/**/*economy*.*",
+        "src/**/*resource*.*",
+        "src/**/*tooltip*.*",
+        "src/components/**/*",
+        "components/**/*"
+      ],
+      "verify_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "preview_command": "next dev -H 127.0.0.1 -p {port}",
+      "preview_path": "/test-env/economy-tooltip",
+      "notes": "Complexity: medium. Quick to evaluate: open `/test-env/economy-tooltip` and inspect an economy/resource UI or tooltip; the model should infer resource schema from supplied code.",
+      "grading": [
+        "Economic explanation accuracy",
+        "Tooltip discoverability",
+        "Supply/morale connection",
+        "UI polish",
+        "Scope control"
+      ]
+    },
+    {
+      "id": "combat-risk-preview",
+      "task_type": "combat",
+      "title": "Add a combat risk preview",
+      "prompt": "Add or improve a combat risk preview visible in the standardized preview at `/test-env/combat-risk-preview`. That sandbox starts the existing battle test and opens the battle report, so inspect `src/components/ui/GameHUD.tsx`, `src/lib/battlePreview.ts`, `src/lib/combat.ts`, `src/lib/military.ts`, `src/types/game.ts`, and existing battle modal code before editing. Summarize attacker strength, defender strength, morale, terrain/wall/stance modifiers, and expected risk using the real types/helpers where possible. Make the result feel like Fallen Empire field intelligence: compact parchment/gold UI, tactical language, restrained danger colors. Do not invent a separate combat schema when existing helpers expose the data.",
+      "allowed_paths": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "components/**/*.tsx",
+        "components/**/*.ts",
+        "tests/**/*.ts",
+        "test/**/*.ts",
+        "scripts/**/*.ts"
+      ],
+      "context_paths": [
+        "README.md",
+        "package.json",
+        "src/lib/testEnvironments.ts",
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/military.ts",
+        "src/lib/combat.ts",
+        "src/lib/battlePreview.ts",
+        "src/components/ui/GameHUD.tsx",
+        "src/**/*combat*.*",
+        "src/**/*battle*.*",
+        "src/**/*skirmish*.*",
+        "src/**/*wall*.*",
+        "src/**/*terrain*.*",
+        "src/**/*simulation*.*",
+        "tests/**/*.ts",
+        "src/components/**/*",
+        "scripts/ml-lora-cohort-guard.ts"
+      ],
+      "verify_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "preview_command": "next dev -H 127.0.0.1 -p {port}",
+      "preview_path": "/test-env/combat-risk-preview",
+      "notes": "Complexity: medium-high. Quick to evaluate: open `/test-env/combat-risk-preview`; the battle test and battle report should expose the risk preview without a long match.",
+      "grading": [
+        "Combat math plausibility",
+        "Risk communication",
+        "Determinism/testability",
+        "Preview accessibility",
+        "Integration cleanliness"
+      ]
+    },
+    {
+      "id": "save-load-api-guard",
+      "task_type": "backend",
+      "title": "Improve save/load or state serialization guard",
+      "prompt": "Improve save/load, serialization, or API response safety for the standardized preview/workflow behind `/test-env/save-load-api-guard`. This is less visual: inspect `src/lib/simStateSerialization.ts`, `src/core/gameCore.ts`, `src/types/game.ts`, `src/app/api/**/*`, multiplayer remap/bridge code, and existing validation patterns before editing. Add a small guard, validation, or clearer typed response shape that protects persisted or wire-format game state. Preserve existing serialized schema compatibility unless the code clearly marks a test-only path. Keep any visible/log wording in the Fallen Empire tone, but prioritize correct TypeScript schema and narrow blast radius.",
+      "allowed_paths": [
+        "src/**/*.ts",
+        "app/api/**/*.ts",
+        "app/**/*.ts",
+        "lib/**/*.ts",
+        "server/**/*.ts",
+        "tests/**/*.ts",
+        "test/**/*.ts",
+        "scripts/**/*.ts"
+      ],
+      "context_paths": [
+        "README.md",
+        "package.json",
+        "src/lib/testEnvironments.ts",
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/multiplayerBridge.ts",
+        "src/lib/multiplayerRemap.ts",
+        "src/core/gameCore.ts",
+        "src/lib/simStateSerialization.ts",
+        "src/**/*save*.*",
+        "src/**/*load*.*",
+        "src/**/*serial*.*",
+        "src/**/*state*.*",
+        "src/app/api/**/*",
+        "app/api/**/*",
+        "tests/**/*.ts",
+        "scripts/ml-lora-cohort-guard.ts"
+      ],
+      "verify_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "preview_command": "next dev -H 127.0.0.1 -p {port}",
+      "preview_path": "/test-env/save-load-api-guard",
+      "notes": "Complexity: medium-high. Evaluate through diff quality, verification logs, and any reachable save/load/API path; the model should infer serialization schema from supplied code.",
+      "grading": [
+        "Data safety",
+        "Validation correctness",
+        "Backward compatibility",
+        "Test coverage",
+        "Diff minimality"
+      ]
+    },
+    {
+      "id": "ai-planning-explanation",
+      "task_type": "planning",
+      "title": "Expose AI planning rationale",
+      "prompt": "Expose a readable AI/planning rationale for the standardized preview at `/test-env/ai-planning-explanation`. That sandbox boots a paused bot-observer state with planning actors initialized, so inspect `src/lib/ai.ts`, `src/lib/aiTactics.ts`, `src/lib/applyAiPlan.ts`, `src/lib/aiParamsSchema.ts`, `src/types/game.ts`, and relevant HUD/panel components before editing. Add a small explanation of why AI prefers expansion, defense, attack, reinforcement, scouting, commander assignment, scroll attachment, or university tasks using real action types and parameters. It should read like Fallen Empire council/war-room intelligence: concise, medieval-strategy phrasing, parchment/gold UI if visual, no invented AI schema.",
+      "allowed_paths": [
+        "src/**/*.ts",
+        "src/**/*.tsx",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "components/**/*.ts",
+        "components/**/*.tsx",
+        "tests/**/*.ts",
+        "test/**/*.ts",
+        "scripts/**/*.ts"
+      ],
+      "context_paths": [
+        "README.md",
+        "package.json",
+        "src/lib/testEnvironments.ts",
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx",
+        "src/lib/aiParamsSchema.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/lib/aiTactics.ts",
+        "src/lib/ai.ts",
+        "src/**/*ai*.*",
+        "src/**/*plan*.*",
+        "src/**/*strategy*.*",
+        "src/**/*decision*.*",
+        "src/components/**/*",
+        "components/**/*",
+        "tests/**/*.ts",
+        "scripts/ml-lora-cohort-guard.ts"
+      ],
+      "verify_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "preview_command": "next dev -H 127.0.0.1 -p {port}",
+      "preview_path": "/test-env/ai-planning-explanation",
+      "notes": "Complexity: high. Evaluate via `/test-env/ai-planning-explanation`, logs, or a reachable panel; the model should infer AI action/schema names from supplied code.",
+      "grading": [
+        "Planning rationale quality",
+        "AI terminology fit",
+        "Inspectability",
+        "Strategic usefulness",
+        "Integration cleanliness"
+      ]
+    }
+  ]
+}

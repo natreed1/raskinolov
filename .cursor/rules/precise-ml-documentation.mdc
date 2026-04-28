@@ -1,0 +1,39 @@
+---
+description: Precise project documentation, session logging, and stack state for fallen-empire-lora
+alwaysApply: true
+---
+
+# ML project documentation discipline
+
+This repo is the **isolated MLX / LoRA lab** for Fallen Empire. Treat documentation as part of the deliverable.
+
+## Canonical files (keep them accurate)
+
+| File | Purpose |
+|------|---------|
+| `docs/PROJECT_STATE.md` | **Single source of truth** for environment, pinned runtime versions, default models, verified commands, known issues, and current training/inference intent. Update it whenever the stack, defaults, or workflow meaningfully changes. |
+| `docs/SESSION_LOG.md` | **Append-only** chronological log of substantive work: date, what changed (files, commands, outcomes), blockers, and next intent. One entry per session or per logical chunk of work. |
+| `docs/WORKFLOW.md` | How to use **`scripts/ml_workflow.py`** (built-in pipeline entry point). |
+| `docs/run_history.md` | **Append-only index** of every `ml_workflow.py` invocation (one table row per run). |
+
+### Automated run documentation
+
+Whenever you (or CI) run **`python scripts/ml_workflow.py …`**, the script **must** write per-run artifacts under `benchmarks/results/runs/<run_id>/` and append **`docs/run_history.md`**. Do not skip that path for “real” training or benchmark passes—if you bypass the orchestrator, manually append `run_history.md` or copy an equivalent manifest.
+
+Do not duplicate long prose across README and `docs/`; README stays high-level pointers; `docs/PROJECT_STATE.md` holds precision.
+
+## Precision standards
+
+- Record **exact** identifiers: Hugging Face repo ids, full paths, CLI flags actually used, `pip freeze` lines for packages that affect reproducibility (at least `mlx`, `mlx-lm`, `transformers`, `huggingface_hub`, Python minor version).
+- When a command is verified, log **command + approximate outcome** (success, error text, timing) in `SESSION_LOG.md` and mirror durable facts in `PROJECT_STATE.md`.
+- When adding or changing scripts under `scripts/`, keep the module docstring aligned with behavior (args, env vars, defaults, and which `mlx-lm` APIs apply).
+- If behavior depends on an `mlx-lm` version quirk (e.g. sampler API vs `temp=`), document it in `PROJECT_STATE.md` under **Known issues / API notes**.
+
+## Agent behavior
+
+After completing work in this repo:
+
+1. Append `docs/SESSION_LOG.md` with what was done and why.
+2. If versions, default model, data layout, or commands changed, update `docs/PROJECT_STATE.md` in the same change set when possible.
+3. For **training or benchmark passes** that should leave an audit trail, use **`python scripts/ml_workflow.py …`** (or append `docs/run_history.md` manually if you must bypass it).
+4. In chat summaries to the user, prefer citing paths to `docs/*` for stack facts rather than re-inventing numbers from memory.

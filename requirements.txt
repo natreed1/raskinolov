@@ -1,0 +1,8 @@
+# Apple Silicon–friendly stack; Python 3.11+ is recommended for new environments.
+# For the recorded local constraints, install with: pip install -r requirements.txt -c requirements.lock.txt
+mlx-lm>=0.21.0
+huggingface_hub>=0.24.0
+safetensors>=0.7.0
+gradio>=4.44,<5
+evalplus>=0.3.1
+rank-bm25>=0.2.2

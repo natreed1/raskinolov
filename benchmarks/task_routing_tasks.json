@@ -1,0 +1,86 @@
+[
+  {
+    "id": "rename-helper",
+    "prompt": "Rename a small helper function and update its README mention.",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Small mechanical code/doc edit."
+  },
+  {
+    "id": "summarize-run-log",
+    "prompt": "Summarize this training run log and explain the validation loss trend.",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Local model can summarize bounded text."
+  },
+  {
+    "id": "security-auth-review",
+    "prompt": "Audit the authentication and authorization flow for security issues before production launch.",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "Security-sensitive, high-cost mistakes."
+  },
+  {
+    "id": "payment-migration",
+    "prompt": "Design a billing migration for payments data with rollback and privacy safeguards.",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "Payments, data safety, architecture."
+  },
+  {
+    "id": "distributed-race-debug",
+    "prompt": "Find the root cause of a distributed race condition causing production data loss.",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "Distributed production incident with data-loss risk."
+  },
+  {
+    "id": "simple-docs",
+    "prompt": "Add docs for how to run the local benchmark script.",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Documentation-only workflow task."
+  },
+  {
+    "id": "performance-review",
+    "prompt": "Review this benchmark implementation and optimize the performance tradeoffs.",
+    "expected_route": "hybrid",
+    "risk": "medium",
+    "reason": "Local draft plus frontier review is useful for optimization tradeoffs."
+  },
+  {
+    "id": "architecture-plan",
+    "prompt": "Plan a large refactor of the training and benchmark architecture across multiple scripts.",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "Broad architecture and large refactor."
+  },
+  {
+    "id": "code-review",
+    "prompt": "Review this pull request for correctness, regressions, and missing tests.",
+    "expected_route": "hybrid",
+    "risk": "medium",
+    "reason": "Local scan plus frontier judgment can reduce missed issues."
+  },
+  {
+    "id": "boilerplate-script",
+    "prompt": "Create a simple boilerplate script that prints the latest run id.",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Small deterministic implementation."
+  },
+  {
+    "id": "cryptography-design",
+    "prompt": "Design a cryptography scheme for signing multiplayer save files.",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "Cryptography requires stronger reasoning and review."
+  },
+  {
+    "id": "compare-models",
+    "prompt": "Compare the local LoRA and frontier model outputs and recommend a routing policy.",
+    "expected_route": "hybrid",
+    "risk": "medium",
+    "reason": "Comparison task naturally uses both local and frontier perspectives."
+  }
+]
