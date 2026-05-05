@@ -1,0 +1,212 @@
+[
+  {
+    "id": "f2bdce6433a72c7d",
+    "prompt": "Create a polished loading screen for Fallen Empire with stronger medieval strategy mood and clearer status messaging.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "05c339dcada62c36",
+    "prompt": "Redesign the game start loading screen so it feels premium, with empire-gold accents and readable progress text.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "daffd473e81005bb",
+    "prompt": "Improve the loading screen typography hierarchy: clearer title, subtitle, and progress states.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "36bf725f6e8c188b",
+    "prompt": "Make the loading page more tactical by adding short simulation status lines while assets initialize.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "81b6b8219667cf3c",
+    "prompt": "Update `/test-env/loading-screen` to look more on-brand for Fallen Empire without changing gameplay logic.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "05be8f942448d039",
+    "prompt": "Tune the loading UI for better first impression: atmospheric background, cleaner panel layout, and stronger callouts.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "76bc49fa5d05f6da",
+    "prompt": "Revamp only the loading/start screen visuals using existing components and CSS tokens.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "cec4405731f257cf",
+    "prompt": "Make the loading screen less generic and more Fallen Empire: dark surfaces, parchment text, restrained warning colors.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "bdc5b4fc7231e18b",
+    "prompt": "Add a compact progress bar and stage labels to the loading screen while keeping it lightweight.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "82e0ed49eb06ce12",
+    "prompt": "Polish the start loading state so users immediately understand the game is preparing simulation systems.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "61b17537bcd36743",
+    "prompt": "Create an alternate loading-screen variant focused on readability for laptop screens and small windows.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d27ece9fa8c7d8f0",
+    "prompt": "Improve loading-screen accessibility: better contrast, clearer labels, and less decorative noise.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "cacb445818bf1a63",
+    "prompt": "Refine the loading state copy so it sounds strategic and concise instead of generic app filler text.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "591bc41cc5fe4b63",
+    "prompt": "Give the loading screen subtle animation cues that feel deliberate and not flashy.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "9e797159f28f8ec1",
+    "prompt": "Adjust the loading screen to communicate three initialization stages with clear progression.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "93d44021d1966033",
+    "prompt": "Produce a moody night-time themed loading screen variant for Fallen Empire test environment.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "50b44ecff3d57f4d",
+    "prompt": "Produce a dawn-themed loading screen variant that is still consistent with empire branding.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "c4d98b14adf0f334",
+    "prompt": "Create a minimalist loading screen mode with fewer decorative elements but preserved brand identity.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "5382e962a9e60451",
+    "prompt": "Improve perceived performance on loading screen by surfacing meaningful progress text and activity indicators.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "a854200daf77030d",
+    "prompt": "Rework loading-screen layout to reduce clutter and improve scanability in under two seconds.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "377d4a09c91b6f1f",
+    "prompt": "Update loading-screen component so test reviewers can instantly judge style quality and implementation simplicity.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "630fc9255cbbf602",
+    "prompt": "Polish only the shared loading components used by the test shell; avoid unrelated route or backend edits.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "261d36fc57fa0ce1",
+    "prompt": "Make the loading screen feel like a command center boot sequence with concise system readouts.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "91a124bdf523a2f4",
+    "prompt": "Improve loading screen messaging for users new to the game so they understand what is being prepared.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "b72379d1db67ef27",
+    "prompt": "Create a high-contrast loading-screen version suitable for stream capture while staying on theme.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "562db0fefe13c8fd",
+    "prompt": "Strengthen visual hierarchy on the loading screen with better spacing and title-to-body balance.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "cc788c068e47d277",
+    "prompt": "Design a loading-state panel that highlights simulation status, readiness, and campaign boot progress.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "080b9862d9984416",
+    "prompt": "Iterate loading-screen microcopy to sound tactical, lore-consistent, and not overly verbose.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "b4cebdaccc0d0819",
+    "prompt": "Build a cleaner loading screen with subtle empire motifs and fewer hard edges in the composition.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "602351f92d22cafe",
+    "prompt": "Final pass: create a production-ready loading/start screen for Fallen Empire that balances mood, clarity, and usability.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "high"
+  }
+]

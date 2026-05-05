@@ -1,5 +1,7 @@
 # Fallen Empire Landing Page Brief
 
+> This brief is a generated/static context packet for landing-page arena prompts. It may embed historical excerpts from repo docs. Do not treat it as canonical project state; use `docs/PROJECT_STATE.md`, `docs/RUNS.md`, and `docs/WORKFLOW.md` for current guidance.
+
 ## Product Intent
 
 Fallen Empire is a hard-sci-fi strategy simulation game about imperial collapse,
@@ -56,12 +58,12 @@ Small **separate** project for experimenting with **LoRA fine-tuning** on open c
    source .venv/bin/activate
    python scripts/ml_workflow.py smoke          # fast sanity: synthetic data + tiny train + benchmark
    export SOURCE_REPO=/Users/natreed/fallen-empire
-   python scripts/ml_workflow.py full --adapter-path checkpoints/fe-lora-latest -- --iters 400
+   python scripts/ml_workflow.py full --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest -- --iters 400
    ```
 
    See **`docs/WORKFLOW.md`** for all subcommands (`prepare`, `train`, `benchmark`, `full`, `smoke`).
 
-3. Manual steps (same as workflow internals): export writes `data/raw/repo_text.jsonl`; `build_lora_dataset.py` builds `data/lora/game_text/*.jsonl`; **`mlx_lm.lora --train -c training/lora_qwen_coder.yaml`** trains. Export hygiene (size caps, secret redaction) is built into `scripts/export_repo_for_training.py`.
+3. Manual steps (same as workflow internals): export writes `data/raw/repo_text.jsonl`; `build_lora_dataset.py` builds `data/lora/qwen25-coder-7b/game_text/*.jsonl`; **`mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml`** trains. Layout: **`docs/DATA_LAYOUT.md`**. Export hygiene (size caps, secret redaction) is built into `scripts/export_repo_for_training.py`.
 
 ## Next steps you’ll add
 
@@ -115,10 +117,10 @@ Install source: `requirements.txt`; resolver pins include `gradio>=4.44,<5` for 
 
 | Field | Value |
 |-------|--------|
-| Hugging Face id | `mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit` |
+| Hugging Face id | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` |
 | Role | Small instruct **code** model, MLX 4-bit, suitable for first downloads and iteration on unified memory |
 
-Alternatives (same org, larger): `mlx-community/Qwen2.5-Coder-3B-Instruct-4bit`, `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` (set `MODEL` env var for scripts or pass `--model`).
+Smaller alternatives (same org): `mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit`, `mlx-community/Qwen2.5-Coder-3B-Instruct-4bit` (set `MODEL` env var for scripts or pass `--model`).
 
 ## Verified commands
 
@@ -145,7 +147,7 @@ python scripts/smoke_base_model.py --max-tokens 96
 
 ```bash
 source .venv/bin/activate
-python -m mlx_lm chat --model mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit
+python -m mlx_lm chat --model mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
 ```
 
 CLI entry points also installed in `.venv/bin/` (e.g. `mlx_lm.lora`, `mlx_lm.generate`).
@@ -197,7 +199,7 @@ python scripts/evolve_benchmark_seasons.py --output benchmarks/results/evolved_t
 - Script: `scripts/export_repo_for_training.py`
 - Default source: `~/fallen-empire` unless `SOURCE_REPO` is set
 - Output: `data/raw/repo_text.jsonl` (gitignored under `data/raw/`)
-- **Hygiene:** max file size **400 KB** (override with `EXPORT_MAX_FILE_BYTES`), extra skip dirs (`.turbo`, `credentials`, …), skip credential-like suffixes (`.pem`, `.key`, …), path substring rules (`secret`, `/.env`, …), NUL / control-char heuristic for “binary-ish” text, and **regex redaction** for common API keys / PEM blocks / obvious GitHub+Slack token shapes.
+- **Hygiene:** max file size **1 MB** default (override with `EXPORT_MAX_FILE_BYTES`), extra skip dirs (`.turbo`, `credentials`, …), skip credential-like suffixes (`.pem`, `.key`, …), path substring rules (`secret`, `/.env`, …), NUL / control-char heuristic for “binary-ish” text, and **regex redaction** for common API keys / PEM blocks / obvious GitHub+Slack token shapes. **`build_lora_dataset.py`** chunks long files by default (`docs/CHUNKED_GAME_TEXT.md`).
 
 ## Human evaluation UI
 
@@ -258,14 +260,14 @@ python scripts/ml_workflow.py train --evaluate --bench-profile general \
   --resume-adapter-file checkpoints/exp-001/adapters.safetensors
 
 # End-to-end non-interactive training pass + eval
-python scripts/ml_workflow.py full --adapter-path checkpoints/fe-lora-latest -- --iters 400
+python scripts/ml_workflow.py full --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest -- --iters 400
 
 # Benchmark only (base model)
 python scripts/ml_workflow.py benchmark
 
 # Benchmark LoRA
-python scripts/ml_workflow.py benchmark --adapter-path checkpoints/fe-lora-latest
-python scripts/ml_workflow.py benchmark --adapter-path checkpoints/fe-lora-latest --profile general
+python scripts/ml_workflow.py benchmark --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest
+python scripts/ml_workflow.py benchmark --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest --profile general
 
 # Execution-based HumanEval+ subset via EvalPlus
 python scripts/ml_workflow.py evalplus --adapter-path checkpoints/fe-lora-30m --limit 5

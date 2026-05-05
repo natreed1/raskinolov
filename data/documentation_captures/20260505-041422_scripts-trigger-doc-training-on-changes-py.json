@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-05T04:14:22Z",
+  "finished_at": "2026-05-05T04:14:43Z",
+  "changed_path": "scripts/trigger_doc_training_on_changes.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What Changed\nThe script `trigger_doc_training_on_changes.py` was modified to include a new feature that triggers documentation capture when specific files are edited. This is done by adding a list of prefixes to ignore and a new function `_spawn` to handle the execution of the capture script asynchronously.\n\n### Why it Matters\nThis change is crucial for automating the documentation capture process, ensuring that changes in the codebase are promptly captured and processed. This automation helps in maintaining up-to-date documentation and reduces manual effort.\n\n### Commands/tests run\nTo test the changes, you can run the script manually and observe if the documentation capture is triggered as expected. Additionally, you can check the logs in the `data/training_triggers/logs` directory to ensure that the capture process is executed correctly.\n\n```bash\n# Run the script manually\npython scripts/trigger_doc_training_on_changes.py\n\n# Check the logs\ncat data/training_triggers/logs/change_doc_capture.log\n```\n\n### Next validation steps\n1. **Manual Testing**: Manually edit files in the watched prefixes and verify that the documentation capture script is triggered.\n2. **Automated Testing**: Add unit tests to ensure that the `_is_watched` function correctly identifies watched and ignored files.\n3. **Integration Testing**: Run the script in a development environment to ensure that it integrates smoothly with the rest of the system.\n4. **Review Logs**: Regularly review the logs to ensure that the documentation capture process is functioning as expected and to identify any issues that need to be addressed.",
+    "load_seconds": 1.815,
+    "generation_seconds": 9.557,
+    "estimated_tokens": 307
+  },
+  "specialized": {
+    "output": "**What changed:** Added `IGNORE_PREFIXES` to skip paths when triggering doc training, and refactored command execution to use `_python_exe` and `_spawn` helpers. **Why it matters:** Prevents unnecessary training when docs are generated, and standardizes command execution. **Commands/tests run:** `python scripts/trigger_doc_training_on_changes.py` runs on file change; verify training queue updates and `scripts/build_run_analysis_rag_corpus.py` executes. **Next validation steps:** Check training queue, run `scripts/build_run_analysis_rag_corpus.py` manually, and inspect `data/training_triggers/logs/change_doc_capture.log` for capture runs.",
+    "load_seconds": 1.355,
+    "generation_seconds": 7.957,
+    "estimated_tokens": 86
+  },
+  "diff_excerpt_chars": 4650
+}

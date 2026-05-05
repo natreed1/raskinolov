@@ -1,0 +1,188 @@
+```tsx src/components/test/overlays/HudStatusSummaryOverlay.tsx
+'use client';
+
+import { useMemo } from 'react';
+import { useGameStore } from '@/store/useGameStore';
+
+type MetricTone = 'stable' | 'warning' | 'danger';
+
+function metricClass(tone: MetricTone): string {
+  if (tone === 'danger') return 'text-red-300';
+  if (tone === 'warning') return 'text-amber-300';
+  return 'text-emerald-200';
+}
+
+/** Compact spectator briefing strip for `/test-env/hud-status-summary` (and in-match HUD context). */
+export function HudStatusSummaryOverlay() {
+  const cycle = useGameStore(s => s.cycle);
+  const players = useGameStore(s => s.players);
+  const cities = useGameStore(s => s.cities);
+  const units = useGameStore(s => s.units);
+  const contested = useGameStore(s => s.contestedZoneHexKeys);
+
+  const human = players.find(p => p.isHuman) ?? players[0];
+  const briefing = useMemo(() => {
+    const humanId = human?.id ?? '';
+    const myCities = cities.filter(c => c.ownerId === humanId).length;
+    const myUnits = units.filter(u => u.ownerId === humanId && u.hp > 0).length;
+    const contestedFronts = contested?.length ?? 0;
+    const moraleRaw = typeof (human as { morale?: number } | undefined)?.morale === 'number'
+      ? (human as { morale?: number }).morale ?? 50
+      : 50;
+    const morale = Math.max(0, Math.min(100, Math.round(moraleRaw)));
+
+    const supplyPressure = myUnits === 0 ? 0 : Math.min(100, Math.round((contestedFronts / Math.max(1, myUnits)) * 125));
+    const territoryRisk = myCities === 0 ? 100 : Math.min(100, Math.round((contestedFronts / myCities) * 70));
+    const collapseState =
+      myCities === 0 || morale < 25 ? 'Near collapse' : morale < 45 ? 'Shaken realm' : 'Crown holds';
+
+    const matchPressure = Math.min(
+      100,
+      Math.round((100 - morale) * 0.45 + supplyPressure * 0.25 + territoryRisk * 0.3),
+    );
+
+    return {
+      myCities,
+      myUnits,
+      gold: human?.gold ?? 0,
+      morale,
+      supplyPressure,
+      territoryRisk,
+      collapseState,
+      matchPressure,
+      moraleTone: morale < 30 ? 'danger' : morale < 50 ? 'warning' : 'stable',
+      pressureTone: matchPressure >= 70 ? 'danger' : matchPressure >= 40 ? 'warning' : 'stable',
+    };
+  }, [human, cities, units, contested]);
+
+  return (
+    <div className="pointer-events-none fixed bottom-3 left-1/2 z-[125] w-[min(48rem,calc(100vw-1.5rem))] -translate-x-1/2 rounded-lg border border-amber-700/40 bg-black/72 px-3 py-2 text-[11px] text-empire-parchment/90 shadow-2xl backdrop-blur-md">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <span className="font-cinzel text-[10px] font-semibold uppercase tracking-[0.18em] text-empire-gold/80">
+          Empire status summary
+        </span>
+        <span className="font-mono text-amber-100/90">Cycle {cycle}</span>
+      </div>
+
+      <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] leading-snug md:grid-cols-3">
+        <span title="Current crown morale">
+          Morale: <span className={metricClass(briefing.moraleTone)}>{briefing.morale}</span>
+        </span>
+        <span title="Estimated supply pressure from active fronts">
+          Supply pressure: <span className={metricClass(briefing.supplyPressure > 60 ? 'danger' : briefing.supplyPressure > 30 ? 'warning' : 'stable')}>{briefing.supplyPressure}%</span>
+        </span>
+        <span title="Estimated territory risk from contested fronts">
+          Territory risk: <span className={metricClass(briefing.territoryRisk > 60 ? 'danger' : briefing.territoryRisk > 30 ? 'warning' : 'stable')}>{briefing.territoryRisk}%</span>
+        </span>
+        <span title="Realm collapse indicator">
+          Collapse state: <span className={metricClass(briefing.collapseState === 'Near collapse' ? 'danger' : briefing.collapseState === 'Shaken realm' ? 'warning' : 'stable')}>{briefing.collapseState}</span>
+        </span>
+        <span title="Combined tactical pressure signal">
+          Match pressure: <span className={metricClass(briefing.pressureTone)}>{briefing.matchPressure}%</span>
+        </span>
+        <span title="Current core holdings">
+          Holdings: {briefing.myCities} cities / {briefing.myUnits} units / {briefing.gold}g
+        </span>
+      </div>
+    </div>
+  );
+}
+```
+
+```tsx src/components/test/TestEnvironmentShell.tsx
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useEffect, useRef } from 'react';
+import { GameLoadingScreen } from '@/components/ui/GameLoadingScreen';
+import { useGameStore } from '@/store/useGameStore';
+import type { TestEnvironmentSpec } from '@/lib/testEnvironments';
+import { HudStatusSummaryOverlay } from '@/components/test/overlays/HudStatusSummaryOverlay';
+
+const GameScene = dynamic(
+  () => import('@/components/game/GameScene'),
+  {
+    ssr: false,
+    loading: () => (
+      <GameLoadingScreen
+        title="Preparing test environment"
+        message="Loading the deterministic sandbox shell..."
+      />
+    ),
+  },
+);
+
+function TestEnvironmentBanner({ environment }: { environment: TestEnvironmentSpec }) {
+  return (
+    <div className="pointer-events-none fixed left-4 top-4 z-[120] max-w-sm rounded border border-sky-400/35 bg-black/70 px-4 py-3 text-sm text-empire-parchment/85 shadow-2xl backdrop-blur-md">
+      <p className="font-cinzel text-xs font-bold uppercase tracking-[0.18em] text-sky-200/90">
+        AI Test Environment
+      </p>
+      <h1 className="mt-1 font-cinzel text-base font-semibold text-empire-gold">
+        {environment.title}
+      </h1>
+      <p className="mt-1 text-xs leading-relaxed text-empire-parchment/60">
+        {environment.description}
+      </p>
+    </div>
+  );
+}
+
+function TestEnvironmentBootstrap({ environment }: { environment: TestEnvironmentSpec }) {
+  const bootedRef = useRef(false);
+
+  useEffect(() => {
+    if (bootedRef.current) return;
+    bootedRef.current = true;
+
+    const store = useGameStore.getState();
+    if (environment.bootMode === 'battle_test') {
+      store.startBattleTest();
+      window.setTimeout(() => {
+        const latest = useGameStore.getState();
+        latest.openBattleModal();
+        latest.setRealTimePaused(true);
+      }, 0);
+      return;
+    }
+
+    if (environment.bootMode === 'spectate') {
+      store.generateWorld({
+        width: 38,
+        height: 38,
+        seed: environment.seed ?? 910_000,
+        ensureCornerLand: true,
+        mapTerrain: 'continents',
+      });
+      store.startSpectateMatch({ opponentCount: environment.opponentCount ?? 1 });
+      window.setTimeout(() => {
+        useGameStore.getState().setRealTimePaused(true);
+      }, 0);
+    }
+  }, [environment]);
+
+  return <TestEnvironmentBanner environment={environment} />;
+}
+
+export function TestEnvironmentShell({ environment }: { environment: TestEnvironmentSpec }) {
+  if (environment.bootMode === 'loading') {
+    return (
+      <main className="relative min-h-screen w-full bg-empire-dark">
+        <GameLoadingScreen
+          title="Awakening the engine"
+          message="Loading screen sandbox: this route intentionally renders the start/loading state only."
+        />
+        <TestEnvironmentBanner environment={environment} />
+      </main>
+    );
+  }
+
+  return (
+    <main className="relative min-h-screen w-full bg-empire-dark">
+      <TestEnvironmentBootstrap environment={environment} />
+      {environment.id === 'hud-status-summary' && <HudStatusSummaryOverlay />}
+      <GameScene />
+    </main>
+  );
+}
+```

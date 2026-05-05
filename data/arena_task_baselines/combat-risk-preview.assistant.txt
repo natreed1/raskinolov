@@ -1,0 +1,208 @@
+```tsx src/components/test/overlays/EconomyContextRibbon.tsx
+'use client';
+
+import { useMemo } from 'react';
+import { useGameStore } from '@/store/useGameStore';
+import { countVillagesInPlayerTerritory } from '@/lib/empireEconomy';
+import { getWeatherHarvestMultiplier } from '@/lib/weather';
+import { computeCityProductionRate } from '@/lib/gameLoop';
+import { POPULATION_TAX_GOLD_MULT, MARKET_GOLD_PER_VILLAGE, BUILDING_JOBS } from '@/types/game';
+import type { CityBuilding } from '@/types/game';
+
+/** Read-only economy readout for `/test-env/economy-tooltip` — mirrors pooled-city logic from the HUD. */
+export function EconomyContextRibbon() {
+  const players = useGameStore(s => s.players);
+  const cities = useGameStore(s => s.cities);
+  const territory = useGameStore(s => s.territory);
+  const tiles = useGameStore(s => s.tiles);
+  const cycle = useGameStore(s => s.cycle);
+  const activeWeather = useGameStore(s => s.activeWeather);
+
+  const human = players.find(p => p.isHuman);
+
+  const stats = useMemo(() => {
+    const cid = human?.id ?? '';
+    const myCities = cities.filter(c => c.ownerId === cid);
+    const villageAdj = countVillagesInPlayerTerritory(cid, cities, territory, tiles);
+    const harvestMult = getWeatherHarvestMultiplier(activeWeather);
+    let grain = 0;
+    let cap = 0;
+    let goldRate = 0;
+    for (const c of myCities) {
+      grain += c.storage.food;
+      cap += c.storageCap.food;
+      const prod = computeCityProductionRate(c, tiles, territory, harvestMult);
+      const taxRate = human?.taxRate ?? 0.3;
+      const baseTax = Math.floor(c.population * taxRate * POPULATION_TAX_GOLD_MULT);
+      const moraleMod = c.morale / 100;
+      let marketGold = 0;
+      for (const b of c.buildings) {
+        if (b.type !== 'market') continue;
+        const jobs = BUILDING_JOBS.market;
+        const assigned = (b as CityBuilding).assignedWorkers ?? 0;
+        const staffRatio = jobs > 0 ? Math.min(1, assigned / jobs) : 0;
+        marketGold += Math.floor(MARKET_GOLD_PER_VILLAGE * villageAdj * moraleMod * staffRatio);
+      }
+      goldRate += baseTax + marketGold;
+    }
+    const pct = cap > 0 ? Math.round((grain / cap) * 100) : 0;
+    return { grain, cap, pct, goldRate, cities: myCities.length };
+  }, [human, cities, territory, tiles, activeWeather]);
+
+  const tip = `Cycle ${cycle} — pooled granaries ${stats.grain}/${stats.cap} (${stats.pct}% full). Crown revenue ≈${stats.goldRate}g/economy cycle from taxes and staffed markets; villages in territory amplify bazaar yields.`;
+
+  return (
+    <div
+      className="pointer-events-auto fixed left-3 top-20 z-[125] max-w-sm cursor-help rounded-lg border border-emerald-800/45 bg-black/75 px-3 py-2 text-[10px] leading-snug text-empire-parchment/88 shadow-2xl backdrop-blur-md"
+      title={tip}
+    >
+      <p className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.2em] text-emerald-200/80">
+        Economy briefing
+      </p>
+      <p className="mt-1 text-empire-parchment/80">{tip}</p>
+      <p className="mt-1 text-[9px] text-empire-parchment/45">Hover for the same legend as a tooltip.</p>
+    </div>
+  );
+}
+```
+
+```tsx src/components/test/overlays/CombatRiskChyron.tsx
+'use client';
+
+import { useMemo } from 'react';
+import { useGameStore } from '@/store/useGameStore';
+import { humanBattleHexKeysFlat, likelyWinnerForHumanBattle } from '@/lib/battlePreview';
+
+/** Lightweight field-intel line while the battle report is open (`/test-env/combat-risk-preview`). */
+export function CombatRiskChyron() {
+  const units = useGameStore(s => s.units);
+  const moraleState = useGameStore(s => s.combatMoraleState);
+  const battleKey = useGameStore(s => s.battleModalHexKey);
+
+  const outlook = useMemo(() => {
+    const hexKeys = humanBattleHexKeysFlat(units);
+    if (hexKeys.length === 0) {
+      return { label: 'No engaged stacks detected', detail: 'Advance units into contact to refresh this readout.' };
+    }
+    const { label, pctYou, lean } = likelyWinnerForHumanBattle(units, hexKeys, moraleState);
+    const detail =
+      lean === 'tossup'
+        ? `HP-weighted outlook ${pctYou}% favored to your line — terrain, walls, and stance still pending in the ledger.`
+        : `HP-weighted outlook ${pctYou}% — ${label}.`;
+    return { label, detail };
+  }, [units, moraleState]);
+
+  return (
+    <div className="pointer-events-none fixed right-3 top-20 z-[125] max-w-sm rounded-lg border border-rose-900/45 bg-black/78 px-3 py-2 text-[10px] leading-snug text-empire-parchment/90 shadow-2xl backdrop-blur-md">
+      <p className="font-cinzel text-[9px] font-semibold uppercase tracking-[0.2em] text-rose-200/80">
+        Combat risk
+      </p>
+      <p className="mt-1 text-empire-parchment/85">{outlook.label}</p>
+      <p className="mt-1 text-[9px] text-empire-parchment/60">{outlook.detail}</p>
+      {battleKey ? (
+        <p className="mt-1 font-mono text-[9px] text-empire-gold/60">Anchor {battleKey}</p>
+      ) : null}
+    </div>
+  );
+}
+```
+
+```tsx src/components/test/TestEnvironmentShell.tsx
+'use client';
+
+import dynamic from 'next/dynamic';
+import { useEffect, useRef } from 'react';
+import { GameLoadingScreen } from '@/components/ui/GameLoadingScreen';
+import { useGameStore } from '@/store/useGameStore';
+import type { TestEnvironmentSpec } from '@/lib/testEnvironments';
+import { EconomyContextRibbon } from '@/components/test/overlays/EconomyContextRibbon';
+import { CombatRiskChyron } from '@/components/test/overlays/CombatRiskChyron';
+
+const GameScene = dynamic(
+  () => import('@/components/game/GameScene'),
+  {
+    ssr: false,
+    loading: () => (
+      <GameLoadingScreen
+        title="Preparing test environment"
+        message="Loading the deterministic sandbox shell..."
+      />
+    ),
+  },
+);
+
+function TestEnvironmentBanner({ environment }: { environment: TestEnvironmentSpec }) {
+  return (
+    <div className="pointer-events-none fixed left-4 top-4 z-[120] max-w-sm rounded border border-sky-400/35 bg-black/70 px-4 py-3 text-sm text-empire-parchment/85 shadow-2xl backdrop-blur-md">
+      <p className="font-cinzel text-xs font-bold uppercase tracking-[0.18em] text-sky-200/90">
+        AI Test Environment
+      </p>
+      <h1 className="mt-1 font-cinzel text-base font-semibold text-empire-gold">
+        {environment.title}
+      </h1>
+      <p className="mt-1 text-xs leading-relaxed text-empire-parchment/60">
+        {environment.description}
+      </p>
+    </div>
+  );
+}
+
+function TestEnvironmentBootstrap({ environment }: { environment: TestEnvironmentSpec }) {
+  const bootedRef = useRef(false);
+
+  useEffect(() => {
+    if (bootedRef.current) return;
+    bootedRef.current = true;
+
+    const store = useGameStore.getState();
+    if (environment.bootMode === 'battle_test') {
+      store.startBattleTest();
+      window.setTimeout(() => {
+        const latest = useGameStore.getState();
+        latest.openBattleModal();
+        latest.setRealTimePaused(true);
+      }, 0);
+      return;
+    }
+
+    if (environment.bootMode === 'spectate') {
+      store.generateWorld({
+        width: 38,
+        height: 38,
+        seed: environment.seed ?? 910_000,
+        ensureCornerLand: true,
+        mapTerrain: 'continents',
+      });
+      store.startSpectateMatch({ opponentCount: environment.opponentCount ?? 1 });
+      window.setTimeout(() => {
+        useGameStore.getState().setRealTimePaused(true);
+      }, 0);
+    }
+  }, [environment]);
+
+  return <TestEnvironmentBanner environment={environment} />;
+}
+
+export function TestEnvironmentShell({ environment }: { environment: TestEnvironmentSpec }) {
+  if (environment.bootMode === 'loading') {
+    return (
+      <main className="relative min-h-screen w-full bg-empire-dark">
+        <GameLoadingScreen
+          title="Awakening the engine"
+          message="Loading screen sandbox: this route intentionally renders the start/loading state only."
+        />
+        <TestEnvironmentBanner environment={environment} />
+      </main>
+    );
+  }
+
+  return (
+    <main className="relative min-h-screen w-full bg-empire-dark">
+      <TestEnvironmentBootstrap environment={environment} />
+      {environment.id === 'economy-tooltip' && <EconomyContextRibbon />}
+      {environment.id === 'combat-risk-preview' && <CombatRiskChyron />}
+      <GameScene />
+    </main>
+  );
+}
+```

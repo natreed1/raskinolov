@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-05T04:11:42Z",
+  "finished_at": "2026-05-05T04:12:06Z",
+  "changed_path": "training/README.md",
+  "trigger_event": "manual-test",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What changed\nThe `training/README.md` file was updated to provide more detailed information about the training flow, including the paths and commands used for dataset capture and training. The file now includes links to other documentation files for canonical paths, current-vs-historical adapters and runs, and CLI examples.\n\n### Why it matters\nThis change improves the documentation by providing more context and links to other relevant files, making it easier for developers to understand the training process and how to use the provided scripts and configurations.\n\n### Commands/tests run\nTo capture the dataset and train the model, the following commands were run:\n```bash\nsource .venv/bin/activate\nexport SOURCE_REPO=/path/to/fallen-empire\npython scripts/export_repo_for_training.py\npython scripts/build_lora_dataset.py --out-dir data/lora/qwen25-coder-7b/game_text\nmlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml\n```\n\n### Next validation steps\nAfter running the training, the next validation steps include:\n1. Checking the training logs for any errors or issues.\n2. Evaluating the model's performance on the validation set.\n3. Comparing the base model and fine-tuned model using the `scripts/chat_gradio.py` or `scripts/run_game_benchmark.py` scripts.\n4. Updating the `docs/DATA_LAYOUT.md` and `docs/RUNS.md` files with the new paths and adapter information.",
+    "load_seconds": 2.296,
+    "generation_seconds": 9.141,
+    "estimated_tokens": 235
+  },
+  "specialized": {
+    "output": "**What changed:** Training runs now capture adapter paths and YAML config under **`docs/RUNS.md`**; this README is for training flow, not adapter history. **`scripts/fe_lineage.py`** holds default paths and YAML names. **`mlx_lm.lora`** defaults changed: **`-c training/lora_qwen25_coder_7b.yaml`** and **`adapter_path checkpoints/fe-lora-qwen25-coder-7b-latest`**. Paths include **`qwen25-coder-7b`** to match YAML names. **`CHUNKED_GAME_TEXT.md`** explains how long files are split. **`scripts/build_lora_dataset.py`** now adds **`# path:`** / **`# part:`** / **`# chars:`** headers to dataset rows. **`docs/DATA_LAYOUT.md`** has canonical paths; **`training/README.md`** is for workflow commands and flags.",
+    "load_seconds": 1.373,
+    "generation_seconds": 10.042,
+    "estimated_tokens": 102
+  },
+  "diff_excerpt_chars": 4058
+}

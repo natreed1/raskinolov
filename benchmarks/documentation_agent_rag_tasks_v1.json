@@ -1,0 +1,124 @@
+[
+  {
+    "id": "doc-rag-manifest-location",
+    "category": "documentation_rag",
+    "prompt": "Where should a documentation/testing agent look for a workflow run manifest, and what nearby file should it read before summarizing the run?",
+    "expect": {
+      "all_contains": [
+        "benchmarks/results/runs",
+        "manifest.json",
+        "RUN.md"
+      ],
+      "none_contains": [
+        "I don't know"
+      ],
+      "min_chars": 120
+    }
+  },
+  {
+    "id": "doc-rag-append-only-history",
+    "category": "documentation_rag",
+    "prompt": "A previous docs/run_history.md row is outdated. What should the documentation agent do instead of rewriting the old row?",
+    "expect": {
+      "all_contains": [
+        "docs/run_history.md",
+        "append",
+        "correction"
+      ],
+      "any_contains": [
+        "dated",
+        "current date",
+        "evidence"
+      ],
+      "none_contains": [
+        "delete the old row"
+      ],
+      "min_chars": 120
+    }
+  },
+  {
+    "id": "doc-rag-fixtures-vs-generated",
+    "category": "documentation_rag",
+    "prompt": "Explain the difference between committed benchmark fixtures and generated benchmark run artifacts in this repo.",
+    "expect": {
+      "all_contains": [
+        "benchmarks/documentation_eval_tasks_v1.json",
+        "data/routing",
+        "benchmarks/results/runs"
+      ],
+      "any_contains": [
+        "committed",
+        "generated",
+        "Committed",
+        "Generated"
+      ],
+      "none_contains": [
+        "same thing"
+      ],
+      "min_chars": 160
+    }
+  },
+  {
+    "id": "doc-rag-verification-command",
+    "category": "documentation_rag",
+    "prompt": "Name the exact routing CLI command before claiming the documentation routing benchmark passes.",
+    "expect": {
+      "all_contains": [
+        "run_routing_benchmark.py",
+        "benchmarks/documentation_eval_tasks_v1.json",
+        "--mode both"
+      ],
+      "any_contains": [
+        "PYTHONPATH=scripts",
+        "python3 -m unittest"
+      ],
+      "none_contains": [
+        "should pass"
+      ],
+      "min_chars": 80
+    }
+  },
+  {
+    "id": "doc-rag-scope-guard",
+    "category": "documentation_rag",
+    "prompt": "What is the documentation adapter's scope guard for fallen-empire-lora versus the Fallen Empire game repo?",
+    "expect": {
+      "all_contains": [
+        "fallen-empire-lora",
+        "documentation",
+        "not"
+      ],
+      "any_contains": [
+        "game implementation",
+        "Fallen Empire game",
+        "cross-repo"
+      ],
+      "none_contains": [
+        "all game code changes"
+      ],
+      "min_chars": 120
+    }
+  },
+  {
+    "id": "doc-rag-current-state-priority",
+    "category": "documentation_rag",
+    "prompt": "When README and PROJECT_STATE disagree about the documentation specialist, which source should the agent prefer and why?",
+    "expect": {
+      "all_contains": [
+        "docs/PROJECT_STATE.md",
+        "README"
+      ],
+      "any_contains": [
+        "authoritative",
+        "more recent",
+        "specific",
+        "source of truth",
+        "updated"
+      ],
+      "none_contains": [
+        "prefer README"
+      ],
+      "min_chars": 120
+    }
+  }
+]

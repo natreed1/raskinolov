@@ -1,0 +1,786 @@
+[
+  {
+    "id": "mixed-probe-ai-planning",
+    "prompt": "Faction strategy dossier summarizing foe empire rationale gleaned from countermoves.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "specialist_probe"
+  },
+  {
+    "id": "mixed-sl-a40c55f031a3a21f",
+    "prompt": "Benchmark serialize + deserialize latency on a large late-game save; keep changes micro and measure before widening scope.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-95e798be9b7e1e2c",
+    "prompt": "Where do manifests land? Mention benchmarks/results/runs/<run_id>/manifest.json beside the docs/run_history.md row.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-ls-82e0ed49eb06ce12",
+    "prompt": "Polish the start loading state so users immediately understand the game is preparing simulation systems.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-f2384f107a04ba62",
+    "prompt": "Refactor the save-export path to return a typed result object instead of silent failures when schema checks fail.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-ls-cc788c068e47d277",
+    "prompt": "Design a loading-state panel that highlights simulation status, readiness, and campaign boot progress.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-05c339dcada62c36",
+    "prompt": "Redesign the game start loading screen so it feels premium, with empire-gold accents and readable progress text.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-e4c28054d218f273",
+    "prompt": "Promotion note: checkpoints/adapters/documentation/cycle1 is shadow-grade until gated; cite training/adapter_registry_v1.json.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-ls-93d44021d1966033",
+    "prompt": "Produce a moody night-time themed loading screen variant for Fallen Empire test environment.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-2a8a019ff7c0c7bb",
+    "prompt": "Editor note: cite HF pins and mlx versions strictly from docs/PROJECT_STATE.md—not the README preamble.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-doc-a1241fa3e9d034b5",
+    "prompt": "How do I regenerate the stewardship JSONL? Point them at python scripts/ml_workflow.py documentation-dataset defaults.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-ls-61b17537bcd36743",
+    "prompt": "Create an alternate loading-screen variant focused on readability for laptop screens and small windows.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-e213ed5efd4b6a22",
+    "prompt": "Improve caching headers for immutable save-derived assets so browsers do not stale-cache broken exports after failed writes.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-d957e02f70df2259",
+    "prompt": "Coach writers using docs/CHUNKED_GAME_TEXT.md when chunked exports omit tail bytes on long typescript files.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-86695a8e276e36f5",
+    "prompt": "When exporting save previews over the API, strip secrets (tokens if any) from diagnostic attachments while preserving simulation fields.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-policy-distributed-race-debug",
+    "prompt": "Find the root cause of a distributed race condition causing production data loss.",
+    "expected_legacy_route": "frontier",
+    "risk": "high",
+    "shard": "policy_fixture",
+    "reason": "Distributed production incident with data-loss risk."
+  },
+  {
+    "id": "mixed-sl-bdeae6e4428aaf7a",
+    "prompt": "Align `gameCore` hydration with `game` types when reading saved game bytes: remove unsafe assertions when reconstructing fleets and provinces from disk.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-fd0d1cd4f98b7c92",
+    "prompt": "Add a lightweight checksum or hash step after serialization of game state so bit rot is caught before writing to disk.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-39d754f3676b6b00",
+    "prompt": "Onboarding: fallen-empire-lora is the MLX lane; SOURCE_REPO differs from GAME_ARENA_ROOT worktrees.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-54cd32a1e6e2baa6",
+    "prompt": "Harden save-game serialization: detect truncated writes and reject bad blobs before they reach `simStateSerialization`.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-eb6e737c8dba4026",
+    "prompt": "Plan a phased rollout for stricter saves: backward compatible reads, strict writes, documented breaking change version bump.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-803fc84086249783",
+    "prompt": "Train config stub: checkpoints/adapters/documentation/cycle1 should pass --data for data/lora/adapters/documentation_specialist/.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-cd9b578b8ad95ece",
+    "prompt": "After load, run a single canonical normalize pass that fills optional fields with safe defaults instead of scattering `??` fixes.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-f863d8194a1baecc",
+    "prompt": "Improve `/test-env/save-load-api-guard`: tighten the TypeScript types that describe the wire-format payload for save slots.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-policy-compare-models",
+    "prompt": "Compare the local LoRA and frontier model outputs and recommend a routing policy.",
+    "expected_legacy_route": "hybrid",
+    "risk": "medium",
+    "shard": "policy_fixture",
+    "reason": "Comparison task naturally uses both local and frontier perspectives."
+  },
+  {
+    "id": "mixed-doc-0eb8c90a03702671",
+    "prompt": "Manifest lineage field documentation_specialist:v1 should accompany synthetic mentions of mlx-lora-docs-normalize.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-policy-performance-review",
+    "prompt": "Review this benchmark implementation and optimize the performance tradeoffs.",
+    "expected_legacy_route": "hybrid",
+    "risk": "medium",
+    "shard": "policy_fixture",
+    "reason": "Local draft plus frontier review is useful for optimization tradeoffs."
+  },
+  {
+    "id": "mixed-ls-bdc5b4fc7231e18b",
+    "prompt": "Add a compact progress bar and stage labels to the loading screen while keeping it lightweight.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-6aad7afd3fde4be6",
+    "prompt": "Tighten API handler validation for `/api` routes that return saved match summaries so response bodies match declared OpenAPI-ish shapes.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-b8dbc4648437a14c",
+    "prompt": "Link writers to SESSION_LOG etiquette when they attempt to revise earlier dated sections instead of appending.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-doc-ed0476272ab74447",
+    "prompt": "Scope guard: the documentation adapter is for fallen-empire-lora run docs, not Fallen Empire game implementation changes.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-b17906d4f1b5cb44",
+    "prompt": "Make serialization errors observable: log structured reasons without leaking full save contents to the client.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-eb53fff1d4e0f9ae",
+    "prompt": "Add request size limits and early rejection for oversized save uploads hitting the preview workflow API.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-eba0884746bd1c7b",
+    "prompt": "Clarify error messages for save failures (disk full vs schema mismatch) while keeping Fallen Empire tone in user-visible strings.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-policy-cryptography-design",
+    "prompt": "Design a cryptography scheme for signing multiplayer save files.",
+    "expected_legacy_route": "frontier",
+    "risk": "high",
+    "shard": "policy_fixture",
+    "reason": "Cryptography requires stronger reasoning and review."
+  },
+  {
+    "id": "mixed-sl-d01c0f596309075b",
+    "prompt": "Add round-trip stress coverage ideas in comments and a tiny helper that asserts serialization is stable for the golden fixtures.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-probe-hud-status",
+    "prompt": "Tighten the HUD waypoint ribbon showing supply crates and ETA status glyphs.",
+    "expected_adapter_id": "hud_status",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "specialist_probe"
+  },
+  {
+    "id": "mixed-ls-cacb445818bf1a63",
+    "prompt": "Refine the loading state copy so it sounds strategic and concise instead of generic app filler text.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-c4fc8f3dd3f223af",
+    "prompt": "Add compatibility shims for older save versions: map legacy keys into the current `game` types without widening unsafe casts.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-ls-91a124bdf523a2f4",
+    "prompt": "Improve loading screen messaging for users new to the game so they understand what is being prepared.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-50ef1b6202c69e0e",
+    "prompt": "Reduce blast radius: if deserialization yields NaN or Infinity for economy counters, clamp or reject the save as invalid.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-ea93d21aff68cb4a",
+    "prompt": "Ensure multiplayer bridge code refuses to apply remote state blobs that fail the same server-side schema used for local saves.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-ls-5382e962a9e60451",
+    "prompt": "Improve perceived performance on loading screen by surfacing meaningful progress text and activity indicators.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-06033ad94b56cea7",
+    "prompt": "Training run review: read benchmarks/results/runs/<run_id>/manifest.json, RUN.md, and training_trajectory.jsonl before summarizing adapter quality.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-doc-0ad29e29e4d4e45b",
+    "prompt": "Note that python scripts/ml_workflow.py arena-dashboard rewires HTML artifacts but skips new benchmarks/results manifests.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-9b757590b9137107",
+    "prompt": "Evaluate current vs proposed Zod (or similar) validator coverage for persisted save state and outline minimal additions only.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-ls-cec4405731f257cf",
+    "prompt": "Make the loading screen less generic and more Fallen Empire: dark surfaces, parchment text, restrained warning colors.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-805cbfdabacaa50a",
+    "prompt": "When autosave runs mid-turn, ensure the serialized snapshot includes a monotonic save revision field for debugging.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-0e5a68fd6f0ba6c2",
+    "prompt": "Token usage routing: low-risk fallen-empire-lora docs and training-run questions should use the local documentation adapter.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-254d46fdb2275390",
+    "prompt": "Tighten auth on internal dev-only save import routes: require an explicit test header and no-op in production builds.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-ls-daffd473e81005bb",
+    "prompt": "Improve the loading screen typography hierarchy: clearer title, subtitle, and progress states.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-50b44ecff3d57f4d",
+    "prompt": "Produce a dawn-themed loading screen variant that is still consistent with empire branding.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-4314462b25e5f902",
+    "prompt": "Instrument save/load with defensive checks so corrupted gzip layers never crash the worker thread.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-9fb909cca39cf883",
+    "prompt": ".cursor/rules/precise-ml-documentation.mdc is the enforced rule file name—mention docs/SESSION_LOG.md discipline too.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-ls-261d36fc57fa0ce1",
+    "prompt": "Make the loading screen feel like a command center boot sequence with concise system readouts.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-d8153e59cc0be609",
+    "prompt": "Document the save slot API for internal reviewers: what fields are stable, what is experimental, and how clients should retry.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-ls-b72379d1db67ef27",
+    "prompt": "Create a high-contrast loading-screen version suitable for stream capture while staying on theme.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-05be8f942448d039",
+    "prompt": "Tune the loading UI for better first impression: atmospheric background, cleaner panel layout, and stronger callouts.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-76bc49fa5d05f6da",
+    "prompt": "Revamp only the loading/start screen visuals using existing components and CSS tokens.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-630fc9255cbbf602",
+    "prompt": "Polish only the shared loading components used by the test shell; avoid unrelated route or backend edits.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-789210525a84d963",
+    "prompt": "Fix edge case where empty string save id collides with quick-save slot naming; enforce non-empty identifiers at the API boundary.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-d794fcdb39bcffec",
+    "prompt": "Append-only rule for docs/SESSION_LOG.md: add dated sections at top; treat prior entries like an audit trail.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-policy-payment-migration",
+    "prompt": "Design a billing migration for payments data with rollback and privacy safeguards.",
+    "expected_legacy_route": "frontier",
+    "risk": "high",
+    "shard": "policy_fixture",
+    "reason": "Payments, data safety, architecture."
+  },
+  {
+    "id": "mixed-ls-a854200daf77030d",
+    "prompt": "Rework loading-screen layout to reduce clutter and improve scanability in under two seconds.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-518356a5692cf64c",
+    "prompt": "Folder symmetry: mirror other specialists so data/lora/adapters/documentation_specialist holds train.jsonl—see docs/DATA_LAYOUT.md.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-sl-5bc90e03fbf3a14e",
+    "prompt": "Split read vs write paths in `simStateSerialization` so read-only preview tools cannot accidentally persist partial state.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-probe-combat-risk",
+    "prompt": "Battle risk calculus over uneven ground and choke lanes.",
+    "expected_adapter_id": "combat_risk",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "specialist_probe"
+  },
+  {
+    "id": "mixed-ls-377d4a09c91b6f1f",
+    "prompt": "Update loading-screen component so test reviewers can instantly judge style quality and implementation simplicity.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-f2bdce6433a72c7d",
+    "prompt": "Create a polished loading screen for Fallen Empire with stronger medieval strategy mood and clearer status messaging.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-policy-architecture-plan",
+    "prompt": "Plan a large refactor of the training and benchmark architecture across multiple scripts.",
+    "expected_legacy_route": "frontier",
+    "risk": "high",
+    "shard": "policy_fixture",
+    "reason": "Broad architecture and large refactor."
+  },
+  {
+    "id": "mixed-sl-d42e0c295640652a",
+    "prompt": "Audit the serialization surface for unintentional prototype pollution vectors when hydrating plain objects into class instances.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-policy-simple-docs",
+    "prompt": "Add docs for how to run the local benchmark script.",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "policy_fixture",
+    "reason": "Documentation-only workflow task."
+  },
+  {
+    "id": "mixed-sl-b995e2bc013141ca",
+    "prompt": "Finalize a production-minded pass on the start/load flow hooks: prioritize schema validation and deterministic ordering of side effects.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-policy-summarize-run-log",
+    "prompt": "Summarize this training run log and explain the validation loss trend.",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "policy_fixture",
+    "reason": "Local model can summarize bounded text."
+  },
+  {
+    "id": "mixed-ls-562db0fefe13c8fd",
+    "prompt": "Strengthen visual hierarchy on the loading screen with better spacing and title-to-body balance.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-3f3e1921f7698f4a",
+    "prompt": "Runbook line: rerun python scripts/ml_workflow.py smoke after venv swaps; jot exit codes inside docs/run_history.md.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-probe-economy-tooltip",
+    "prompt": "Economy tooltip: breakdown of net income and resource deltas on hover.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "specialist_probe"
+  },
+  {
+    "id": "mixed-doc-fe2a1b297131f70e",
+    "prompt": "When renaming checkpoint dirs, synchronize training/adapter_registry_v1.json lines with docs mentioning checkpoints/adapters/documentation paths.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-doc-19ed72e4e321fd38",
+    "prompt": "Cross-link docs/DATA_LAYOUT.md when trainees confuse qwen25-coder-7b game_text lineage with adapters.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-ls-602351f92d22cafe",
+    "prompt": "Final pass: create a production-ready loading/start screen for Fallen Empire that balances mood, clarity, and usability.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "high",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-080b9862d9984416",
+    "prompt": "Iterate loading-screen microcopy to sound tactical, lore-consistent, and not overly verbose.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-policy-security-auth-review",
+    "prompt": "Audit the authentication and authorization flow for security issues before production launch.",
+    "expected_legacy_route": "frontier",
+    "risk": "high",
+    "shard": "policy_fixture",
+    "reason": "Security-sensitive, high-cost mistakes."
+  },
+  {
+    "id": "mixed-policy-boilerplate-script",
+    "prompt": "Create a simple boilerplate script that prints the latest run id.",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "policy_fixture",
+    "reason": "Small deterministic implementation."
+  },
+  {
+    "id": "mixed-ls-81b6b8219667cf3c",
+    "prompt": "Update `/test-env/loading-screen` to look more on-brand for Fallen Empire without changing gameplay logic.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-15443c9880b6bda6",
+    "prompt": "Performance review focused on serialization hot paths—avoid quadratic merges when layering incremental patches onto base saves.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-doc-d3412507225e7576",
+    "prompt": "CI reminder: substantive ml_workflow trains append docs/run_history.md except the arena-dashboard subcommand.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-ls-d27ece9fa8c7d8f0",
+    "prompt": "Improve loading-screen accessibility: better contrast, clearer labels, and less decorative noise.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-da26e5b70222b0e4",
+    "prompt": "Readers skim README; consolidate stack facts inside docs/PROJECT_STATE.md and avoid duplicating run_history anecdotes.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  },
+  {
+    "id": "mixed-policy-rename-helper",
+    "prompt": "Rename a small helper function and update its README mention.",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "policy_fixture",
+    "reason": "Small mechanical code/doc edit."
+  },
+  {
+    "id": "mixed-ls-591bc41cc5fe4b63",
+    "prompt": "Give the loading screen subtle animation cues that feel deliberate and not flashy.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-c4d98b14adf0f334",
+    "prompt": "Create a minimalist loading screen mode with fewer decorative elements but preserved brand identity.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-b4cebdaccc0d0819",
+    "prompt": "Build a cleaner loading screen with subtle empire motifs and fewer hard edges in the composition.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-sl-980c06faf99ac456",
+    "prompt": "Add a narrow validation step on load of persisted empire state so unknown fields never overwrite core simulation invariants.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-sl-3220b521d7c68fbb",
+    "prompt": "Guard against JSON parse errors on the server route that accepts client-offered save payloads; fail closed with a clear error code.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "save_load_eval"
+  },
+  {
+    "id": "mixed-policy-code-review",
+    "prompt": "Review this pull request for correctness, regressions, and missing tests.",
+    "expected_legacy_route": "hybrid",
+    "risk": "medium",
+    "shard": "policy_fixture",
+    "reason": "Local scan plus frontier judgment can reduce missed issues."
+  },
+  {
+    "id": "mixed-ls-36bf725f6e8c188b",
+    "prompt": "Make the loading page more tactical by adding short simulation status lines while assets initialize.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-ls-9e797159f28f8ec1",
+    "prompt": "Adjust the loading screen to communicate three initialization stages with clear progression.",
+    "expected_adapter_id": "loading_screen",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "loading_screen_eval"
+  },
+  {
+    "id": "mixed-doc-422a21172a1d5f96",
+    "prompt": "Registry update note: adapter_registry_v1 should point documentation to the newest shadow checkpoint only after a clean ml_workflow train run.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low",
+    "shard": "documentation_eval"
+  }
+]

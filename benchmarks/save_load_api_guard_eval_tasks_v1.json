@@ -1,0 +1,212 @@
+[
+  {
+    "id": "54cd32a1e6e2baa6",
+    "prompt": "Harden save-game serialization: detect truncated writes and reject bad blobs before they reach `simStateSerialization`.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "980c06faf99ac456",
+    "prompt": "Add a narrow validation step on load of persisted empire state so unknown fields never overwrite core simulation invariants.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "f863d8194a1baecc",
+    "prompt": "Improve `/test-env/save-load-api-guard`: tighten the TypeScript types that describe the wire-format payload for save slots.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "f2384f107a04ba62",
+    "prompt": "Refactor the save-export path to return a typed result object instead of silent failures when schema checks fail.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "805cbfdabacaa50a",
+    "prompt": "When autosave runs mid-turn, ensure the serialized snapshot includes a monotonic save revision field for debugging.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "3220b521d7c68fbb",
+    "prompt": "Guard against JSON parse errors on the server route that accepts client-offered save payloads; fail closed with a clear error code.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "c4fc8f3dd3f223af",
+    "prompt": "Add compatibility shims for older save versions: map legacy keys into the current `game` types without widening unsafe casts.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "6aad7afd3fde4be6",
+    "prompt": "Tighten API handler validation for `/api` routes that return saved match summaries so response bodies match declared OpenAPI-ish shapes.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "4314462b25e5f902",
+    "prompt": "Instrument save/load with defensive checks so corrupted gzip layers never crash the worker thread.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "50ef1b6202c69e0e",
+    "prompt": "Reduce blast radius: if deserialization yields NaN or Infinity for economy counters, clamp or reject the save as invalid.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "ea93d21aff68cb4a",
+    "prompt": "Ensure multiplayer bridge code refuses to apply remote state blobs that fail the same server-side schema used for local saves.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "fd0d1cd4f98b7c92",
+    "prompt": "Add a lightweight checksum or hash step after serialization of game state so bit rot is caught before writing to disk.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "eba0884746bd1c7b",
+    "prompt": "Clarify error messages for save failures (disk full vs schema mismatch) while keeping Fallen Empire tone in user-visible strings.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "5bc90e03fbf3a14e",
+    "prompt": "Split read vs write paths in `simStateSerialization` so read-only preview tools cannot accidentally persist partial state.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "eb53fff1d4e0f9ae",
+    "prompt": "Add request size limits and early rejection for oversized save uploads hitting the preview workflow API.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "cd9b578b8ad95ece",
+    "prompt": "After load, run a single canonical normalize pass that fills optional fields with safe defaults instead of scattering `??` fixes.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "254d46fdb2275390",
+    "prompt": "Tighten auth on internal dev-only save import routes: require an explicit test header and no-op in production builds.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "b17906d4f1b5cb44",
+    "prompt": "Make serialization errors observable: log structured reasons without leaking full save contents to the client.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "789210525a84d963",
+    "prompt": "Fix edge case where empty string save id collides with quick-save slot naming; enforce non-empty identifiers at the API boundary.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "bdeae6e4428aaf7a",
+    "prompt": "Align `gameCore` hydration with `game` types when reading saved game bytes: remove unsafe assertions when reconstructing fleets and provinces from disk.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d01c0f596309075b",
+    "prompt": "Add round-trip stress coverage ideas in comments and a tiny helper that asserts serialization is stable for the golden fixtures.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "86695a8e276e36f5",
+    "prompt": "When exporting save previews over the API, strip secrets (tokens if any) from diagnostic attachments while preserving simulation fields.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "e213ed5efd4b6a22",
+    "prompt": "Improve caching headers for immutable save-derived assets so browsers do not stale-cache broken exports after failed writes.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "b995e2bc013141ca",
+    "prompt": "Finalize a production-minded pass on the start/load flow hooks: prioritize schema validation and deterministic ordering of side effects.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "15443c9880b6bda6",
+    "prompt": "Performance review focused on serialization hot paths\u2014avoid quadratic merges when layering incremental patches onto base saves.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "eb6e737c8dba4026",
+    "prompt": "Plan a phased rollout for stricter saves: backward compatible reads, strict writes, documented breaking change version bump.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "9b757590b9137107",
+    "prompt": "Evaluate current vs proposed Zod (or similar) validator coverage for persisted save state and outline minimal additions only.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d42e0c295640652a",
+    "prompt": "Audit the serialization surface for unintentional prototype pollution vectors when hydrating plain objects into class instances.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d8153e59cc0be609",
+    "prompt": "Document the save slot API for internal reviewers: what fields are stable, what is experimental, and how clients should retry.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "a40c55f031a3a21f",
+    "prompt": "Benchmark serialize + deserialize latency on a large late-game save; keep changes micro and measure before widening scope.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  }
+]

@@ -1,0 +1,156 @@
+[
+  {
+    "id": "2a8a019ff7c0c7bb",
+    "prompt": "Editor note: cite HF pins and mlx versions strictly from docs/PROJECT_STATE.md—not the README preamble.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d794fcdb39bcffec",
+    "prompt": "Append-only rule for docs/SESSION_LOG.md: add dated sections at top; treat prior entries like an audit trail.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "95e798be9b7e1e2c",
+    "prompt": "Where do manifests land? Mention benchmarks/results/runs/<run_id>/manifest.json beside the docs/run_history.md row.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "a1241fa3e9d034b5",
+    "prompt": "How do I regenerate the stewardship JSONL? Point them at python scripts/ml_workflow.py documentation-dataset defaults.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "19ed72e4e321fd38",
+    "prompt": "Cross-link docs/DATA_LAYOUT.md when trainees confuse qwen25-coder-7b game_text lineage with adapters.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "39d754f3676b6b00",
+    "prompt": "Onboarding: fallen-empire-lora is the MLX lane; SOURCE_REPO differs from GAME_ARENA_ROOT worktrees.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "9fb909cca39cf883",
+    "prompt": ".cursor/rules/precise-ml-documentation.mdc is the enforced rule file name—mention docs/SESSION_LOG.md discipline too.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "0eb8c90a03702671",
+    "prompt": "Manifest lineage field documentation_specialist:v1 should accompany synthetic mentions of mlx-lora-docs-normalize.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "e4c28054d218f273",
+    "prompt": "Promotion note: checkpoints/adapters/documentation/cycle1 is shadow-grade until gated; cite training/adapter_registry_v1.json.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "da26e5b70222b0e4",
+    "prompt": "Readers skim README; consolidate stack facts inside docs/PROJECT_STATE.md and avoid duplicating run_history anecdotes.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "0ad29e29e4d4e45b",
+    "prompt": "Note that python scripts/ml_workflow.py arena-dashboard rewires HTML artifacts but skips new benchmarks/results manifests.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "3f3e1921f7698f4a",
+    "prompt": "Runbook line: rerun python scripts/ml_workflow.py smoke after venv swaps; jot exit codes inside docs/run_history.md.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "803fc84086249783",
+    "prompt": "Train config stub: checkpoints/adapters/documentation/cycle1 should pass --data for data/lora/adapters/documentation_specialist/.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "518356a5692cf64c",
+    "prompt": "Folder symmetry: mirror other specialists so data/lora/adapters/documentation_specialist holds train.jsonl—see docs/DATA_LAYOUT.md.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d957e02f70df2259",
+    "prompt": "Coach writers using docs/CHUNKED_GAME_TEXT.md when chunked exports omit tail bytes on long typescript files.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d3412507225e7576",
+    "prompt": "CI reminder: substantive ml_workflow trains append docs/run_history.md except the arena-dashboard subcommand.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "b8dbc4648437a14c",
+    "prompt": "Link writers to SESSION_LOG etiquette when they attempt to revise earlier dated sections instead of appending.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "fe2a1b297131f70e",
+    "prompt": "When renaming checkpoint dirs, synchronize training/adapter_registry_v1.json lines with docs mentioning checkpoints/adapters/documentation paths.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "06033ad94b56cea7",
+    "prompt": "Training run review: read benchmarks/results/runs/<run_id>/manifest.json, RUN.md, and training_trajectory.jsonl before summarizing adapter quality.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "0e5a68fd6f0ba6c2",
+    "prompt": "Token usage routing: low-risk fallen-empire-lora docs and training-run questions should use the local documentation adapter.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "ed0476272ab74447",
+    "prompt": "Scope guard: the documentation adapter is for fallen-empire-lora run docs, not Fallen Empire game implementation changes.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "422a21172a1d5f96",
+    "prompt": "Registry update note: adapter_registry_v1 should point documentation to the newest shadow checkpoint only after a clean ml_workflow train run.",
+    "expected_adapter_id": "documentation",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  }
+]

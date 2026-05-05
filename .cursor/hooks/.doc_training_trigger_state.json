@@ -1,0 +1,18 @@
+{
+  "seen": {
+    "tests/test_run_analysis_rag.py": 1777950873.6697059,
+    "scripts/trigger_doc_training_on_changes.py": 1777954462.273165,
+    "benchmarks/README.md": 1777950817.5583794,
+    "docs/PROJECT_STATE.md": 1777950830.925152,
+    "docs/SESSION_LOG.md": 1777954442.0183845,
+    "scripts/build_run_analysis_rag_corpus.py": 1777950854.2140796,
+    "benchmarks/run_analysis_rag_tasks_v1.json": 1777950899.494961,
+    "scripts/private_dashboard_server.py": 1777995291.0022235,
+    "docs/WORKFLOW.md": 1777954423.9111795,
+    "docs/PRIVATE_DASHBOARD_DEPLOY.md": 1777954433.359391,
+    "scripts/generate_change_documentation_capture.py": 1777954196.1999092,
+    "training/README.md": 1777952947.2377467
+  },
+  "last_ts": "2026-05-05T15:34:51Z",
+  "last_trigger_epoch": 1777995264
+}

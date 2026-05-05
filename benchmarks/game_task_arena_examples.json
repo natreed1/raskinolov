@@ -60,7 +60,7 @@
       "id": "hud-status-summary",
       "task_type": "ui",
       "title": "Add a compact empire status summary",
-      "prompt": "Improve the HUD/status summary visible in the standardized preview at `/test-env/hud-status-summary`. That sandbox boots a paused observer match, so inspect `src/components/ui/GameHUD.tsx`, `src/store/useGameStore.ts`, `src/types/game.ts`, and nearby panel theme components to infer the correct state schema and visual style. Add or refine a compact always-visible summary for morale, supply pressure, territory risk, collapse state, or match pressure. It should feel native to Fallen Empire: dark medieval frame language, parchment/gold labels, terse tactical wording, and no generic sci-fi dashboard treatment. Keep the change visible without deep gameplay and avoid broad architecture changes.",
+      "prompt": "Improve the HUD/status summary visible in the standardized preview at `/test-env/hud-status-summary`. That sandbox boots a paused observer match, so inspect `src/store/useGameStore.ts`, `src/types/game.ts`, `src/components/ui/GameHUD.tsx`, and nearby panel theme components for state schema and visual language. Prefer adding a compact client overlay under something like `src/components/test/overlays/` and importing it into `src/components/test/TestEnvironmentShell.tsx`. Preserve the shipped test-env shell (`<main>` + banner + bootstrap + `<GameScene />`). For spectate bootstrap, mirror upstream exactly: ``generateWorld({ width: 38, height: 38, seed: environment.seed ?? 910_000, ensureCornerLand: true, mapTerrain: 'continents' })`` then ``startSpectateMatch({ opponentCount: environment.opponentCount ?? 1 })`` then defer ``setRealTimePaused(true)`` — never pass ``seed`` into ``startSpectateMatch`` (signature is ``{ opponentCount }`` only). Only insert your overlay import plus ``{environment.id === 'hud-status-summary' && <YourOverlay />}`` immediately **before** ``<GameScene />`` — do **not** add ``<html>`` wrappers or replace banners/bootstrap logic. Surface morale, supply pressure, territory risk, collapse state, or match pressure. It should feel native to Fallen Empire: dark medieval frame language, parchment/gold labels, terse tactical wording, and no generic sci-fi dashboard treatment. Keep the change visible without deep gameplay and avoid broad architecture changes.",
       "allowed_paths": [
         "src/**/*.tsx",
         "src/**/*.ts",
@@ -76,6 +76,7 @@
         "README.md",
         "package.json",
         "src/lib/testEnvironments.ts",
+        "src/components/test/TestEnvironmentShell.tsx",
         "src/types/game.ts",
         "src/store/useGameStore.ts",
         "src/components/ui/panelThemes/MedievalBuildingPanels.tsx",
@@ -108,7 +109,7 @@
       "id": "economy-tooltip",
       "task_type": "economy",
       "title": "Clarify an economy/resource tooltip",
-      "prompt": "Improve an economy/resource tooltip or inline helper visible in the standardized preview at `/test-env/economy-tooltip`. That sandbox boots a paused economy-active observer match, so inspect `src/components/ui/GameHUD.tsx`, `src/lib/empireEconomy.ts`, `src/lib/gameLoop.ts`, `src/types/game.ts`, and panel theme components to infer resource names, income fields, and existing UI patterns. Explain why a value changed using Fallen Empire concepts such as supply lines, morale pressure, upkeep, territory, villages, markets, or workforce. Match the medieval parchment/gold/dark-panel tone; do not invent unrelated economy schema or generic tooltip styling.",
+      "prompt": "Improve an economy/resource tooltip or inline helper visible in the standardized preview at `/test-env/economy-tooltip`. That sandbox boots a paused economy-active observer match, so inspect `src/lib/empireEconomy.ts`, `src/lib/gameLoop.ts`, `src/types/game.ts`, `src/components/ui/GameHUD.tsx`, and panel theme components to infer resource names, income fields, and existing UI patterns. Prefer implementing the helper as a focused client overlay under `src/components/test/overlays/` and importing it into `src/components/test/TestEnvironmentShell.tsx`. Preserve the shipped shell layout. For spectate, mirror upstream exactly: ``generateWorld({ width: 38, height: 38, seed: environment.seed ?? 910_000, ensureCornerLand: true, mapTerrain: 'continents' })`` then ``startSpectateMatch({ opponentCount: environment.opponentCount ?? 1 })`` then defer ``setRealTimePaused(true)`` — never pass ``seed`` into ``startSpectateMatch`` (only ``{ opponentCount }``). Only insert overlay import plus ``{environment.id === 'economy-tooltip' && <YourOverlay />}`` immediately **before** ``<GameScene />``. Do **not** replace ``<main>``, invent ``matches/joinMatch/arena`` flows, nest ``TestEnvironmentBootstrap`` inside itself, or emit ``<html>`` wrappers in this client shell. Use `GameHUD.tsx`, `empireEconomy.ts`, and `gameLoop.ts` strictly as references for pooled-economy copy and selectors. Explain why a value changed using Fallen Empire concepts such as supply lines, morale pressure, upkeep, territory, villages, markets, or workforce. Match the medieval parchment/gold/dark-panel tone; do not invent unrelated economy schema or generic tooltip styling.",
       "allowed_paths": [
         "src/**/*.ts",
         "src/**/*.tsx",
@@ -124,6 +125,7 @@
         "README.md",
         "package.json",
         "src/lib/testEnvironments.ts",
+        "src/components/test/TestEnvironmentShell.tsx",
         "src/types/game.ts",
         "src/store/useGameStore.ts",
         "src/lib/gameLoop.ts",

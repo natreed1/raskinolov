@@ -3,7 +3,7 @@
   "hooks": {
     "afterFileEdit": [
       {
-        "command": "FE_LAB_FILEEDIT_TRAINING_TRIGGER=1 python3 .cursor/hooks/lab_hook_after_fileedit_training_trigger.py"
+        "command": "FE_LAB_FILEEDIT_TRAINING_TRIGGER=1 .venv/bin/python .cursor/hooks/lab_hook_after_fileedit_training_trigger.py"
       }
     ],
     "afterShellExecution": [

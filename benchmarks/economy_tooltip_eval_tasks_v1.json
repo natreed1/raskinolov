@@ -1,0 +1,212 @@
+[
+  {
+    "id": "84968dff035514fd",
+    "prompt": "Improve the economy tooltip at `/test-env/economy-tooltip` so net income shifts read clearly with Fallen Empire tone.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "01def24cd3d99b6a",
+    "prompt": "Refine resource row hover copy: show upkeep pressure and village income without generic fantasy filler.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "f54821729650a649",
+    "prompt": "Tooltip breakdown: split gross village yield from taxes and logistics-drag costs for the warehouse panel.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "965ca27b45a88fc3",
+    "prompt": "Economy helper near the market strip: explain why a resource stockpile dipped after the last turn tick.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "7ca7ae21837fb547",
+    "prompt": "Tighten tooltip typography for food and ore lines so numbers align and labels stay legible on small viewports.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "07a8884a6bb96169",
+    "prompt": "Add a compact icon row to the economy ribbon that maps each resource to its primary income source.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "fa99f0c69a36cc28",
+    "prompt": "When hovering workforce slots, show net upkeep vs gross output using the same schema as `empireEconomy`.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "6a4187359ac1d02a",
+    "prompt": "Explain territory modifiers inside the tooltip: how edges of the empire change resource flow (no new schema).",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "4343ebef237952ea",
+    "prompt": "Economy tooltip readout: footnote upkeep drag and levy gaps that trim effective income on border holdings.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "9d49256ad66b0949",
+    "prompt": "Economy tooltip: surface negative cashflow states with causes (upkeep spike, trade stall, village unrest).",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "26871995a24d0cfa",
+    "prompt": "Inline helper beside the treasury figure: reconcile last tick income with queued building spends.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "de90fa8768948f59",
+    "prompt": "Economy tooltip on pause: freeze numbers but keep hover text that cites the paused observer match context.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "390eaa319be65d04",
+    "prompt": "Match parchment/gold panel styling\u2014economy ribbon should visually echo top chrome ribbons without cloning them verbatim.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "0a2ca906a289bb9d",
+    "prompt": "Expose per-resource delta chips (last 3 ticks) inside the tooltip body for quicker ops review focus.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "489e333611bd5b06",
+    "prompt": "Final pass: production-minded copy tighten for tooltip strings\u2014shorter clauses, sharper verbs.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "74b3fc37a0fbb197",
+    "prompt": "Benchmark-friendly layout: reduce tooltip height while keeping income math legible under load.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "6a07659e688de02d",
+    "prompt": "Contrast fix: darken tooltip backdrop so resource numbers meet WCAG-style contrast on laptop screens.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "97749c1ebe1dd0ab",
+    "prompt": "Reorder tooltip sections to match player scan order (income sources first, upkeep second, stash third).",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "f5431005621720ab",
+    "prompt": "Economy glossary popover wired from tooltip link: definitions for upkeep, levy, caravan cut (copy only).",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "44e314d75fcdf1c6",
+    "prompt": "Bind tooltip values from pooled-city logic mirrored in chrome readouts\u2014avoid duplicate formula forks.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "4cc71ed54e7d53b1",
+    "prompt": "Show trade route income as a separate line item when convoys are active; hide when none.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "2fa2db257ae7c911",
+    "prompt": "Village income tooltip: call out granary bonus and weather penalty using existing types only.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "28f8acbb5517dc47",
+    "prompt": "Resource cap warnings: soft cap text before hard cap blocks new builds (tooltip + inline note).",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d3b3e8c88b564779",
+    "prompt": "Economy tooltip empty state: friendly copy when no resources unlocked yet in the observer match.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "830139d4082f83e6",
+    "prompt": "Keyboard focus path: tooltip should open on focusable chip with same content as hover.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "eaa4e8666f0efed3",
+    "prompt": "Locale-ready number grouping for income lines (no i18n framework change\u2014hook points only).",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "f847220f97d9e1df",
+    "prompt": "Strip noisy debug fields from tooltip payload in production builds while keeping dev-only hints behind flag.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "d64b554abad2f3c0",
+    "prompt": "Compare two resource rows side-by-side in an expanded tooltip mode for economy power users.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "c904e4b0a723c3a2",
+    "prompt": "Audit tooltip copy for accidental modern idioms; keep Fallen Empire voice consistent.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  },
+  {
+    "id": "c1efd84afb8df97d",
+    "prompt": "Optimize tooltip render path: memoize derived income rows when the match snapshot is unchanged.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_legacy_route": "local",
+    "risk": "low"
+  }
+]

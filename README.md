@@ -16,23 +16,29 @@ Small **separate** project for experimenting with **LoRA fine-tuning** on open c
 ## Quick start
 
 1. Install deps: `pip install -r requirements.txt` (or `pip install -r requirements.txt -c requirements.lock.txt` for the recorded reproducibility constraints).
-2. Use the **built-in workflow** (auto-selects `.venv/bin/python` when available; writes `docs/run_history.md` + per-run logs under `benchmarks/results/runs/` every time):
+2. Use the **built-in workflow** (auto-selects `.venv/bin/python` when available; most subcommands write `docs/run_history.md` + per-run logs under `benchmarks/results/runs/`):
 
    ```bash
    source .venv/bin/activate
    .venv/bin/python scripts/ml_workflow.py smoke          # fast sanity: synthetic data + tiny train + benchmark
    export SOURCE_REPO=/Users/natreed/fallen-empire
-   .venv/bin/python scripts/ml_workflow.py full --adapter-path checkpoints/fe-lora-latest -- --iters 400
+   .venv/bin/python scripts/ml_workflow.py full --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest -- --iters 400
    ```
 
-   See **`docs/WORKFLOW.md`** for all subcommands (`prepare`, `train`, `benchmark`, `full`, `smoke`).
+   See **`docs/WORKFLOW.md`** for subcommands (`prepare`, `train`, `benchmark`, `full`, `smoke`, `arena-dashboard`, …).
 
-3. Manual steps (same as workflow internals): export writes `data/raw/repo_text.jsonl`; `build_lora_dataset.py` builds `data/lora/game_text/*.jsonl`; **`mlx_lm.lora --train -c training/lora_qwen_coder.yaml`** trains. Export hygiene (size caps, secret redaction) is built into `scripts/export_repo_for_training.py`.
+3. Manual steps (same as workflow internals): export writes `data/raw/repo_text.jsonl`; `build_lora_dataset.py` builds `data/lora/qwen25-coder-7b/game_text/*.jsonl`; **`mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml`** trains. Layout details: **`docs/DATA_LAYOUT.md`**. Export hygiene (size caps, secret redaction) is built into `scripts/export_repo_for_training.py`.
 
-## Next steps you’ll add
+## Docs Map
 
-- Optional: synthetic instruction–response pairs (`messages` JSONL) for chat-style SFT.
-- Tune LoRA YAML / `--` overrides; compare adapters with `python scripts/ml_workflow.py benchmark --adapter-path …`.
+- `docs/PROJECT_STATE.md` — current verified environment, defaults, and known issues.
+- `docs/RUNS.md` — current adapter/run recommendations vs historical experiments.
+- `docs/WORKFLOW.md` — commands for `scripts/ml_workflow.py`.
+- `docs/DATA_LAYOUT.md` — canonical data/checkpoint paths by model lineage.
+- `docs/CHUNKED_GAME_TEXT.md` — long-file chunking behavior for `game_text`.
+- `docs/SESSION_LOG.md` and `docs/run_history.md` — append-only historical logs.
+- `docs/ARENA_PROGRESSION.md` — comparable arena A/B batches; `docs/ARENA_ROADMAP.md` — dashboard HTML, apply KPIs, promotion gate.
+- `docs/GAME_ARENA_APPLY_CONTRACT.md` — strict output-shape contract to reduce `no_applyable_changes`.
 
 ## Open in Cursor
 

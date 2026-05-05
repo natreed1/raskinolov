@@ -1,0 +1,64 @@
+```ts src/lib/simStateSerialization.ts
+/**
+ * JSON-safe wire format for {@link SimState} (Maps/Sets → arrays) for multiplayer sync.
+ */
+
+import type { SimState } from '../core/gameCore';
+import type { Tile, TerritoryInfo } from '../types/game';
+import type { SupplyCacheEntry } from './military';
+
+export type SerializedSimState = Omit<
+  SimState,
+  'tiles' | 'territory' | 'scoutedHexes' | 'combatMoraleState' | 'supplyCache'
+> & {
+  tiles: [string, Tile][];
+  territory: [string, TerritoryInfo][];
+  scoutedHexes: string[];
+  combatMoraleState: [string, { ownerId: string; morale: number }][];
+  supplyCache?: [string, SupplyCacheEntry][];
+};
+
+/** Fast structural guard for untrusted JSON before calling {@link deserializeSimState}. */
+export function isSerializedSimStateShape(v: unknown): v is SerializedSimState {
+  if (!v || typeof v !== 'object') return false;
+  const o = v as Record<string, unknown>;
+  if (!Array.isArray(o.tiles)) return false;
+  if (!Array.isArray(o.territory)) return false;
+  if (!Array.isArray(o.scoutedHexes)) return false;
+  if (!Array.isArray(o.combatMoraleState)) return false;
+  if (o.supplyCache !== undefined && !Array.isArray(o.supplyCache)) return false;
+  return true;
+}
+
+export function serializeSimState(state: SimState): SerializedSimState {
+  return {
+    ...state,
+    tiles: Array.from(state.tiles.entries()),
+    territory: Array.from(state.territory.entries()),
+    scoutedHexes: Array.from(state.scoutedHexes),
+    combatMoraleState: Array.from(state.combatMoraleState.entries()),
+    supplyCache: state.supplyCache ? Array.from(state.supplyCache.entries()) : undefined,
+  };
+}
+
+export function deserializeSimState(data: SerializedSimState): SimState {
+  return {
+    ...data,
+    tiles: new Map(data.tiles),
+    territory: new Map(data.territory),
+    scoutedHexes: new Set(data.scoutedHexes),
+    combatMoraleState: new Map(data.combatMoraleState),
+    supplyCache: data.supplyCache ? new Map(data.supplyCache) : undefined,
+  };
+}
+
+/** Deserialize with guard; returns `null` instead of throwing on malformed wire payloads. */
+export function tryDeserializeSimState(raw: unknown): SimState | null {
+  if (!isSerializedSimStateShape(raw)) return null;
+  try {
+    return deserializeSimState(raw);
+  } catch {
+    return null;
+  }
+}
+```

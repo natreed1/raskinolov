@@ -1,0 +1,28 @@
+{
+  "trial_id": "20260502-161308_hud-status-summary",
+  "task_id": "hud-status-summary",
+  "intent": "Targeted apply-format repair supervision example for standard-dev HUD task.",
+  "attempts": {
+    "local": {
+      "model_label": "checkpoints/fe-lora-qwen25-coder-7b-chunk6k-20260428",
+      "backend": "local_mlx",
+      "apply_status": "no_applyable_changes"
+    },
+    "frontier": {
+      "model_label": "gpt-5.5",
+      "backend": "frontier_packet",
+      "apply_status": "apply_check_failed",
+      "last_error": "error: corrupt patch at line 211"
+    }
+  },
+  "failure_mode_tags": [
+    "no_applyable_changes",
+    "apply_check_failed",
+    "corrupt_patch"
+  ],
+  "corrected_supervision_target": {
+    "assistant_file": "data/arena_task_baselines/hud-status-summary.assistant.txt",
+    "format": "fenced_full_files",
+    "notes": "Uses parse-safe apply format and avoids malformed unified diff hunks."
+  }
+}
