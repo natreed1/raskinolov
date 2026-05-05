@@ -1,0 +1,47 @@
+[
+  {
+    "id": "run-analysis-manifest-first",
+    "category": "run_analysis_rag",
+    "prompt": "For a recent ml_workflow run id, confirm that machine-parsable facts come from benchmarks/results/runs/<run_id>/manifest.json and narrative detail from benchmarks/results/runs/<run_id>/RUN.md.",
+    "expect": {
+      "all_contains": [
+        "manifest.json",
+        "RUN.md",
+        "benchmarks/results/runs/"
+      ]
+    }
+  },
+  {
+    "id": "run-analysis-primary-vs-specialized-history",
+    "category": "run_analysis_rag",
+    "prompt": "Compare docs/run_history.md and docs/SPECIALIZED_RUN_HISTORY.md in this project and mention how python scripts/ml_workflow.py relates to the primary table.",
+    "expect": {
+      "all_contains": [
+        "docs/run_history.md",
+        "docs/SPECIALIZED_RUN_HISTORY.md",
+        "ml_workflow.py"
+      ]
+    }
+  },
+  {
+    "id": "run-analysis-doc-rag-timeseries",
+    "category": "run_analysis_rag",
+    "prompt": "Which file stores append-only machine-readable trend lines for documentation RAG benchmark runs?",
+    "expect": {
+      "all_contains": [
+        "benchmarks/results/documentation_rag_timeseries.jsonl"
+      ]
+    }
+  },
+  {
+    "id": "run-analysis-session-log-discipline",
+    "category": "run_analysis_rag",
+    "prompt": "When a substantive run-analysis or workflow change is made, which append-only doc should be updated and what detail should it include?",
+    "expect": {
+      "all_contains": [
+        "docs/SESSION_LOG.md",
+        "command"
+      ]
+    }
+  }
+]

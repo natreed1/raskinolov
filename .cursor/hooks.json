@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "command": "FE_LAB_FILEEDIT_TRAINING_TRIGGER=1 python3 .cursor/hooks/lab_hook_after_fileedit_training_trigger.py"
+      }
+    ],
+    "afterShellExecution": [
+      {
+        "command": "FE_LAB_AUTODOC_APPEND=1 python3 .cursor/hooks/lab_hook_after_shell_autodoc.py"
+      }
+    ],
+    "stop": [
+      {
+        "command": "python3 .cursor/hooks/lab_hook_stop_append.py"
+      }
+    ]
+  }
+}

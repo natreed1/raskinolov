@@ -2,9 +2,11 @@
 
 After benchmark or train+benchmark passes, prefer logging them via **`python scripts/ml_workflow.py benchmark`** or **`full`** so **`docs/run_history.md`** and `benchmarks/results/runs/<id>/` stay in sync.
 
-Versioned **task definitions** live here as JSON. The **game** suite (`fallen_empire_tasks.json`) is tuned to this game’s stack (TypeScript, hex `q/r`, Zustand, AI param names). The **general** suite (`general_coding_tasks.json`) uses generic CS trivia (HTTP, SQL, encodings, semver) with a **neutral** system prompt so you can compare **base vs LoRA** without always-on Fallen Empire context. All tasks are scored by **cheap string rules** (`all_contains`, `any_contains`, `none_contains`, `min_chars`).
+This file explains benchmark types and how to run them. Use `docs/RUNS.md` for current-vs-historical adapter interpretation, and keep the full row archive in `docs/run_history.md`.
 
-This measures whether the model follows instructions and uses expected substrings; it does **not** measure code correctness via execution. For open-source execution-based coding checks, use `scripts/run_evalplus_benchmark.py` or `python scripts/ml_workflow.py evalplus`.
+Versioned **task definitions** live here as JSON. The **game** suite (`fallen_empire_tasks.json`) is tuned to this game’s stack (TypeScript, hex `q/r`, Zustand, AI param names). The **general** suite (`general_coding_tasks.json`) uses generic CS trivia (HTTP, SQL, encodings, semver) with a **neutral** system prompt so you can compare **base vs LoRA** without always-on Fallen Empire context. These legacy tasks are scored by **cheap string rules** (`all_contains`, `any_contains`, `none_contains`, `min_chars`) and should be treated as lexical smoke/regression checks.
+
+This measures whether the model follows instructions and uses expected substrings; it does **not** measure game-code task completion via apply/compile/preview. For deterministic game-edit capability, use `scripts/run_arena_acceptance_tests.py` or `python scripts/ml_workflow.py arena-acceptance`, which reports the **Arena Capability Index** from applyability, TypeScript checks, export preservation, preview readiness, retry count, token pressure, and task complexity. For open-source execution-based Python coding checks, use `scripts/run_evalplus_benchmark.py` or `python scripts/ml_workflow.py evalplus`.
 
 ## Run
 
@@ -15,6 +17,7 @@ python scripts/run_game_benchmark.py
 python scripts/run_game_benchmark.py --profile general
 python scripts/run_game_benchmark.py --tier A
 python scripts/run_game_benchmark.py --tasks benchmarks/fallen_empire_tasks.json --output-jsonl benchmarks/results/run.jsonl
+python scripts/ml_workflow.py arena-acceptance --adapter-path checkpoints/fe-lora-qwen25-coder-7b-chunk6k-20260428 --task-id loading-screen-polish
 python scripts/run_evalplus_benchmark.py --suite humaneval --limit 5 --adapter-path checkpoints/fe-lora-30m
 python scripts/run_routing_benchmark.py
 ```
@@ -26,6 +29,34 @@ python scripts/run_routing_benchmark.py
 ### Task routing suite
 
 `benchmarks/task_routing_tasks.json` checks the deterministic local/frontier/hybrid routing policy in `scripts/model_router.py`. It is a dry-run benchmark only: no local model load and no frontier API call.
+
+`benchmarks/documentation_testing_agent_eval_tasks_v1.json` checks low-risk documentation/testing-agent prompts that should stay on the local `documentation` adapter. Regenerate it with:
+
+```bash
+python scripts/build_documentation_testing_agent_eval_tasks_v1.py
+python3 -m unittest tests/test_documentation_testing_agent_benchmark.py -v
+```
+
+`benchmarks/documentation_agent_rag_tasks_v1.json` checks whether the local 7B documentation/testing agent can answer repo-practices questions when supplied with retrieved context from `data/rag/documentation_agent_corpus.json`:
+
+```bash
+python scripts/ml_workflow.py documentation-rag-benchmark
+```
+
+Direct invocation (same script):
+
+```bash
+PYTHONPATH=scripts python3 scripts/run_documentation_agent_benchmark.py --use-rag
+python3 -m unittest tests/test_documentation_rag.py -v
+```
+
+`benchmarks/run_analysis_rag_tasks_v1.json` is a second RAG lane focused on documenting/analyzing runs (`docs/run_history.md`, `docs/SPECIALIZED_RUN_HISTORY.md`, latest `runs/<id>/manifest.json` + `RUN.md`, timeseries):
+
+```bash
+python scripts/build_run_analysis_rag_corpus.py
+PYTHONPATH=scripts python3 scripts/run_run_analysis_agent_benchmark.py --use-rag
+python3 -m unittest tests/test_run_analysis_rag.py -v
+```
 
 ### Tiers (C / B / A)
 

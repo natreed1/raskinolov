@@ -1,0 +1,47 @@
+{
+  "generated_utc": "2026-05-05T03:10:44Z",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "word_count": 362,
+    "keyword_hits": 10,
+    "keywords": [
+      "FE_DASHBOARD_USER",
+      "FE_DASHBOARD_PASSWORD",
+      "FE_DASHBOARD_INGEST_TOKEN",
+      "FE_LAB_REMOTE_INGEST_URL",
+      "FE_LAB_REMOTE_INGEST_TOKEN",
+      "/api/ingest",
+      "/api/summary",
+      "/api/events",
+      "/healthz",
+      "docs/SPECIALIZED_RUN_HISTORY.md"
+    ]
+  },
+  "specialized": {
+    "word_count": 366,
+    "keyword_hits": 4,
+    "keywords": [
+      "/api/ingest",
+      "/api/summary",
+      "/api/events",
+      "/healthz"
+    ]
+  },
+  "codex_authored": {
+    "word_count": 320,
+    "keyword_hits": 10,
+    "keywords": [
+      "FE_DASHBOARD_USER",
+      "FE_DASHBOARD_PASSWORD",
+      "FE_DASHBOARD_INGEST_TOKEN",
+      "FE_LAB_REMOTE_INGEST_URL",
+      "FE_LAB_REMOTE_INGEST_TOKEN",
+      "/api/ingest",
+      "/api/summary",
+      "/api/events",
+      "/healthz",
+      "docs/SPECIALIZED_RUN_HISTORY.md"
+    ]
+  }
+}

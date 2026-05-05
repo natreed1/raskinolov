@@ -14,11 +14,18 @@ This repo is the **isolated MLX / LoRA lab** for Fallen Empire. Treat documentat
 | `docs/PROJECT_STATE.md` | **Single source of truth** for environment, pinned runtime versions, default models, verified commands, known issues, and current training/inference intent. Update it whenever the stack, defaults, or workflow meaningfully changes. |
 | `docs/SESSION_LOG.md` | **Append-only** chronological log of substantive work: date, what changed (files, commands, outcomes), blockers, and next intent. One entry per session or per logical chunk of work. |
 | `docs/WORKFLOW.md` | How to use **`scripts/ml_workflow.py`** (built-in pipeline entry point). |
+| `docs/DATA_LAYOUT.md` | **Default lineage paths**: `data/lora/qwen25-coder-7b/…`, LoRA YAML filename, checkpoint naming for Qwen2.5-Coder-7B. |
+| `docs/CHUNKED_GAME_TEXT.md` | How **`build_lora_dataset.py`** splits long exports into multiple `game_text` rows (default) vs `--no-chunk` legacy. |
 | `docs/run_history.md` | **Append-only index** of every `ml_workflow.py` invocation (one table row per run). |
+| `docs/SPECIALIZED_RUN_HISTORY.md` | **Append-only** auxiliary benchmark index (e.g. documentation-agent RAG + cross-system evals); links to `runs/<id>/` via Notes when applicable. |
+| `docs/ARENA_PROGRESSION.md` | **Comparable arena acceptance batches** (task set, adapter, progressive on/off, ACI, run id). |
+| `docs/ARENA_ROADMAP.md` | **Arena dashboard, apply KPIs, progressive policy freeze, worst-of-six promotion gate** (companion to ARENA_PROGRESSION). |
+| `docs/GAME_ARENA_APPLY_CONTRACT.md` | **Canonical output-shape contract** for applyable arena edits (diff/fenced-file rules, export/typecheck safety). |
+| `data/arena_task_baselines/README.md` | **Curated arena “gold” assistant text** per task; feed `build_arena_baseline_dataset.py` → `data/lora/arena_task_baselines/`. |
 
 ### Automated run documentation
 
-Whenever you (or CI) run **`python scripts/ml_workflow.py …`**, the script **must** write per-run artifacts under `benchmarks/results/runs/<run_id>/` and append **`docs/run_history.md`**. Do not skip that path for “real” training or benchmark passes—if you bypass the orchestrator, manually append `run_history.md` or copy an equivalent manifest.
+Whenever you (or CI) run **`python scripts/ml_workflow.py …`** **except the `arena-dashboard` subcommand**, the script **must** write per-run artifacts under `benchmarks/results/runs/<run_id>/` and append **`docs/run_history.md`**. The **`documentation-rag-benchmark`** subcommand additionally appends **`docs/SPECIALIZED_RUN_HISTORY.md`** and **`benchmarks/results/documentation_rag_timeseries.jsonl`**. Do not skip that path for “real” training or benchmark passes—if you bypass the orchestrator, manually append `run_history.md` or copy an equivalent manifest.
 
 Do not duplicate long prose across README and `docs/`; README stays high-level pointers; `docs/PROJECT_STATE.md` holds precision.
 
