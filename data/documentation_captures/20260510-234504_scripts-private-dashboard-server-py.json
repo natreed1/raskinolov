@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:45:04Z",
+  "finished_at": "2026-05-10T23:45:46Z",
+  "changed_path": "scripts/private_dashboard_server.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What Changed\nThe codebase was updated to include new tables and columns in the SQLite database for capturing feedback and comparing artifacts. The `feedback_entries` table stores individual feedback entries, while the `compare_feedback` and `compare_feedback_spans` tables store comparisons between artifacts.\n\n### Why it Matters\nThis change is crucial for enhancing the dataset capture functionality by allowing users to provide detailed feedback and compare artifacts, which will be essential for training and improving the models.\n\n### Commands/tests run\nTo apply these changes, run the following commands:\n```bash\n# Navigate to the root directory of the repository\ncd /path/to/fallen-empire-lora\n\n# Apply the database migrations\npython scripts/private_dashboard_server.py --migrate\n\n# Run tests to ensure everything is working as expected\npytest tests/\n```\n\n### Next validation steps\n1. **Verify Database Schema**: Check if the new tables and columns have been created correctly by querying the database.\n    ```sql\n    PRAGMA table_info(feedback_entries);\n    PRAGMA table_info(compare_feedback);\n    PRAGMA table_info(compare_feedback_spans);\n    ```\n\n2. **Test Feedback Entry Insertion**: Insert a sample feedback entry and verify that it is stored correctly in the database.\n    ```python\n    from scripts.private_dashboard_server import _insert_feedback, _connect\n\n    conn = _connect()\n    _insert_feedback(conn, track=\"codex_authored\", rating=5, notes=\"Great work!\", source=\"user1\")\n    conn.close()\n    ```\n\n3. **Test Artifact Comparison**: Insert a sample comparison entry and verify that it is stored correctly in the database.\n    ```python\n    from scripts.private_dashboard_server import _insert_compare_feedback, _connect\n\n    conn = _connect()\n    _insert_compare_feedback(conn, left_track=\"codex_authored\", right_track=\"opensource\", winner=\"left\", strength=\"strong\", notes=\"Left is better!\", source=\"user2\")\n    conn.close()\n    ```\n\n4. **Run Integration Tests**: Execute the integration tests to ensure that the new",
+    "load_seconds": 1.501,
+    "generation_seconds": 18.824,
+    "estimated_tokens": 317
+  },
+  "specialized": {
+    "output": "**What changed:** The script `scripts/private_dashboard_server.py` was updated to include new tables for capturing user feedback and compare results, and to add utility functions for hashing text and working with UTC timestamps.\n\n**Why it matters:** These changes enable the private dashboard to capture and store user feedback and compare results, which are essential for training and iterating on the ML models. The new tables provide a structured way to store this data, and the utility functions ensure that the data is stored consistently and efficiently.\n\n**Commands/tests run:** Run `python scripts/private_dashboard_server.py` to rebuild the dashboard. No additional tests are required at this stage.\n\n**Next validation steps:** Verify that the new tables are created in the database and that the script runs without errors. Check that the new tables are populated with data when user feedback and compare results are captured.",
+    "load_seconds": 1.85,
+    "generation_seconds": 19.092,
+    "estimated_tokens": 184
+  },
+  "diff_excerpt_chars": 5000
+}

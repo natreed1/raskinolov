@@ -1,0 +1,131 @@
+{
+  "schema_version": "adapter_registry_v1",
+  "taxonomy_version": "adapter_taxonomy_v1",
+  "policy_version": "router_policy_v1",
+  "rollout_profile": "peak_specialist_v1",
+  "specialist_mix": {
+    "family_specific": 0.85,
+    "shared_anchor": 0.1,
+    "hard_negative": 0.05
+  },
+  "entries": [
+    {
+      "adapter_id": "general_fallback",
+      "task_family": "general_fallback",
+      "task_ids": [],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/general_fallback/champion",
+      "lineage": "general_fallback:v1:champion",
+      "promotion_state": "champion",
+      "is_specialized": false,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "documentation",
+      "task_family": "documentation",
+      "task_ids": [
+        "mlx-lora-docs-normalize"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/documentation/cycle3",
+      "lineage": "documentation_specialist:v1:cycle3+run_analysis_scope_guard",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "loading_screen",
+      "task_family": "loading_screen",
+      "task_ids": [
+        "loading-screen-polish"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/loading_screen/cycle2",
+      "lineage": "loading_screen:v2:cycle2",
+      "promotion_state": "champion",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "hud_status",
+      "task_family": "hud_status",
+      "task_ids": [
+        "hud-status-summary"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/hud_status/cycle2",
+      "lineage": "hud_status:v2:cycle2",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "economy_tooltip",
+      "task_family": "economy_tooltip",
+      "task_ids": [
+        "economy-tooltip"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/economy_tooltip/cycle2",
+      "lineage": "economy_tooltip:v1:cycle2+routing_fastpath_v1",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "combat_risk",
+      "task_family": "combat_risk",
+      "task_ids": [
+        "combat-risk-preview"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/combat_risk/cycle3",
+      "lineage": "combat_risk:v1_tsc_resume:cycle3",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "save_load_api_guard",
+      "task_family": "save_load_api_guard",
+      "task_ids": [
+        "save-load-api-guard"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/save_load_api_guard/champion",
+      "lineage": "save_load_api_guard:v1:champion",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "ai_planning_explanation",
+      "task_family": "ai_planning_explanation",
+      "task_ids": [
+        "ai-planning-explanation"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/ai_planning_explanation/champion",
+      "lineage": "ai_planning_explanation:v1:champion",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T22:47:23Z",
+  "finished_at": "2026-05-10T22:48:03Z",
+  "changed_path": "scripts/private_dashboard_server.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What Changed\nThe codebase was updated to include a new table `feedback_entries` in the SQLite database to store user feedback. Additionally, functions were added to insert and list feedback entries, and a function to estimate the number of tokens based on word count.\n\n### Why It Matters\nThis change enhances the system's ability to capture and manage user feedback, which is crucial for improving the quality and relevance of the generated content. The new functions allow for easy integration of feedback mechanisms, which can help in refining the models and improving their performance over time.\n\n### Commands/Tests Run\nTo verify the changes, the following commands were run:\n1. **Database Migration**: Ensure the new table is created correctly.\n   ```bash\n   sqlite3 db.sqlite3 \"PRAGMA table_info(feedback_entries)\"\n   ```\n2. **Insert Feedback**: Insert a test feedback entry and verify it is stored.\n   ```python\n   from scripts.private_dashboard_server import _connect, _insert_feedback\n   conn = _connect()\n   _insert_feedback(conn, track=\"test_track\", rating=5, notes=\"Great job!\", source=\"user1\")\n   ```\n3. **List Feedback**: Retrieve and print the feedback entries to ensure they are stored and retrieved correctly.\n   ```python\n   from scripts.private_dashboard_server import _connect, _list_feedback\n   conn = _connect()\n   feedback = _list_feedback(conn)\n   print(feedback)\n   ```\n\n### Next Validation Steps\n1. **User Testing**: Conduct user testing to ensure the feedback mechanism is intuitive and easy to use.\n2. **Data Analysis**: Analyze the feedback data to identify trends and areas for improvement in the models.\n3. **Performance Monitoring**: Monitor the performance impact of storing and retrieving feedback entries over time.\n4. **Documentation**: Update the documentation to include information on the new feedback system and how to use it.",
+    "load_seconds": 1.739,
+    "generation_seconds": 15.88,
+    "estimated_tokens": 339
+  },
+  "specialized": {
+    "output": "**What changed:** Added a `feedback_entries` table to capture user feedback and a `_insert_feedback` function to save feedback. Added `_list_feedback` to retrieve feedback entries. Updated `_estimate_tokens_from_words` and `_documentation_token_metrics` to support token estimation for generated documentation. Commands/tests run: `python scripts/private_dashboard_server.py` to apply schema changes. Next validation steps: Run `scripts/run_tests.py` and `scripts/run_smoke_test.py` to ensure the new schema and functions work as expected.",
+    "load_seconds": 1.414,
+    "generation_seconds": 19.598,
+    "estimated_tokens": 78
+  },
+  "diff_excerpt_chars": 5000
+}

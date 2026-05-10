@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:52:48Z",
+  "finished_at": "2026-05-10T23:53:07Z",
+  "changed_path": "tests/test_change_documentation_capture_format.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "## Change Documentation Update\nDate: 2026-05-10\n- Modified the test file `tests/test_change_documentation_capture_format.py` to reflect changes in the dataset capture format.\n- Added new assertions to validate the updated format.\n- Updated comments to clarify the purpose of each test case.\n**Title:** Updated Dataset Capture Format Documentation\n\n**Date:** 2023-10-05\n\n**Summary:**\n- Modified the test file `tests/test_change_documentation_capture_format.py` to reflect changes in the dataset capture format.\n- Added new assertions to validate the updated format.\n- Updated comments to clarify the purpose of each test case.\n\n**What Changed:**\n- The test file `tests/test_change_documentation_capture_format.py` was updated to include new assertions for the dataset capture format.\n- Comments were updated to reflect the changes in the test cases.\n\n**Why it Matters:**\n- Ensures that the dataset capture format is correctly implemented and validated through automated tests.\n- Improves the reliability and maintainability of the codebase.\n\n**Commands/tests run:**\n- `pytest tests/test_change_documentation_capture_format.py` to run the updated tests.\n- `git add tests/test_change_documentation_capture_format.py` to stage the changes.\n- `git commit -m \"Updated dataset capture format documentation\"` to commit the changes.\n\n**Next validation steps:**\n- Review the updated test cases to ensure they cover all aspects of the dataset capture format.\n- Run the tests in a development environment to verify that the changes do not introduce any new issues.\n- Deploy the changes to the staging environment to perform additional validation.\n",
+    "load_seconds": 0.612,
+    "generation_seconds": 5.303,
+    "estimated_tokens": 242
+  },
+  "specialized": {
+    "output": "## Change Documentation Update\nDate: 2026-05-10\n- Added `tests/test_change_documentation_capture_format.py` to validate `docs/CHANGES.md` updates.\n- Updated `docs/WORKFLOW.md` to call out `scripts/build_dataset.py` for new dataset captures.\n- Added `scripts/build_dataset.py` to build and capture dataset YAML for `docs/DATA_CAPTURE.md`.\n**Title:** Document dataset capture for `docs/CHANGES.md` on file edits.  \n**Date:** 2023-11-11  \n**Summary:**  \n- Added `tests/test_change_documentation_capture_format.py` to validate `docs/CHANGES.md` updates.  \n- Updated `docs/WORKFLOW.md` to call out `scripts/build_dataset.py` for new dataset captures.  \n- Added `scripts/build_dataset.py` to build and capture dataset YAML for `docs/DATA_CAPTURE.md`.  \n- Updated `docs/README.md` to call out `scripts/build_dataset.py` for new dataset captures.  \n\n**What changed:**  \n- Added `tests/test_change_documentation_capture_format.py` to validate `docs/CHANGES.md` updates.  \n- Updated `docs/WORKFLOW.md` to call out `scripts/build_dataset.py` for new dataset captures.  \n- Added `scripts/build_dataset.py` to build and capture dataset YAML for `docs/DATA_CAPTURE.md`.  \n- Updated `docs/README.md` to call out `scripts/build_dataset.py` for new dataset captures.  \n\n**Why it matters:**  \n- Ensures `docs/CHANGES.md` is updated on file edits.  \n- Provides a single command to capture new dataset YAML.  \n- Reduces manual steps and risk of human error.  \n\n**Commands/tests run:**  \n- `python scripts/build_dataset.py` builds and captures dataset YAML for `docs/DATA_CAPTURE.md`.  \n- `pytest tests/test_change_documentation_capture_format.py` validates `docs/CHANGES.md` updates.  \n\n**Next validation steps:**  \n- Run `python scripts/build_dataset.py` after each dataset capture.  \n- Validate `docs/DATA_CAPTURE.md` contains expected YAML.  \n- Run `pytest tests/test_change_documentation_capture_format.py` after each `docs/CHANGES.md` update.\n",
+    "load_seconds": 0.474,
+    "generation_seconds": 12.066,
+    "estimated_tokens": 222
+  },
+  "diff_excerpt_chars": 116
+}

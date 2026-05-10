@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T22:58:35Z",
+  "finished_at": "2026-05-10T22:59:03Z",
+  "changed_path": "scripts/private_dashboard_server.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What Changed\nThe codebase was updated to include a new table `feedback_entries` in the SQLite database to store user feedback. Additionally, functions were added to insert and list feedback entries.\n\n### Why it Matters\nThis change enhances the system's ability to capture and manage user feedback, which is crucial for improving the quality and usability of the system.\n\n### Commands/tests run\nTo apply the changes, run:\n```bash\ngit apply path/to/your/patch.diff\n```\n\nTo test the new functionality, you can:\n1. Start the server:\n   ```bash\n   python scripts/private_dashboard_server.py\n   ```\n2. Insert a test feedback entry:\n   ```python\n   import sqlite3\n   conn = sqlite3.connect('path/to/your/database.db')\n   _insert_feedback(conn, track=\"test_track\", rating=5, notes=\"Test feedback\", source=\"user\")\n   ```\n3. List feedback entries:\n   ```python\n   feedback = _list_feedback(conn)\n   print(feedback)\n   ```\n\n### Next validation steps\n1. Verify that the new table `feedback_entries` is created correctly.\n2. Ensure that the `insert_feedback` function works as expected by inserting multiple feedback entries and retrieving them.\n3. Check that the `list_feedback` function returns the correct data and respects the limit parameter.\n4. Review the impact on the overall system performance and ensure that the new functionality does not introduce any bottlenecks.",
+    "load_seconds": 1.636,
+    "generation_seconds": 14.928,
+    "estimated_tokens": 242
+  },
+  "specialized": {
+    "output": "**What changed:** Added a `feedback_entries` table to capture user feedback and a `_insert_feedback` function to save feedback. Added `_list_feedback` to retrieve feedback entries. Updated imports and type hints.\n\n**Why it matters:** Capturing user feedback is critical for iterative improvement. This change enables the dashboard to accept and store feedback, which can inform future training and UI changes.\n\n**Commands/tests run:** Run `scripts/private_dashboard_server.py` to start the server and test the feedback submission and retrieval endpoints. Ensure `docs/run_history.json` and `docs/session_log.json` are writable by the user.\n\n**Next validation steps:** Verify that feedback is saved to `docs/run_history.json` and `docs/session_log.json` when the dashboard is used. Confirm that the feedback list endpoint returns the expected data.",
+    "load_seconds": 1.096,
+    "generation_seconds": 9.929,
+    "estimated_tokens": 145
+  },
+  "diff_excerpt_chars": 5000
+}

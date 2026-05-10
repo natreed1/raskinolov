@@ -1,0 +1,76 @@
+{
+  "schema_version": "documentation_agent_corpus_v1",
+  "description": "Repo-local retrieval corpus for fallen-empire-lora documentation/testing-agent answers.",
+  "sources": [
+    {
+      "path": "docs/DOCUMENTATION_AGENT_PRACTICES.md",
+      "kind": "practice_guide",
+      "weight": 3.0
+    },
+    {
+      "path": "docs/PROJECT_STATE.md",
+      "kind": "current_state",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/WORKFLOW.md",
+      "kind": "runbook",
+      "weight": 2.2
+    },
+    {
+      "path": "docs/RUNS.md",
+      "kind": "run_interpretation",
+      "weight": 2.0
+    },
+    {
+      "path": "docs/DATA_LAYOUT.md",
+      "kind": "data_layout",
+      "weight": 1.8
+    },
+    {
+      "path": "docs/ROUTING_DATASET_CONTRACT.md",
+      "kind": "dataset_contract",
+      "weight": 1.6
+    },
+    {
+      "path": "benchmarks/README.md",
+      "kind": "benchmark_runbook",
+      "weight": 1.8
+    },
+    {
+      "path": "benchmarks/documentation_eval_tasks_v1.json",
+      "kind": "benchmark_fixture",
+      "weight": 1.4
+    },
+    {
+      "path": "benchmarks/documentation_testing_agent_eval_tasks_v1.json",
+      "kind": "benchmark_fixture",
+      "weight": 1.5
+    },
+    {
+      "path": "data/routing/documentation_eval_prompts_v1.jsonl",
+      "kind": "routing_prompts",
+      "weight": 1.2
+    },
+    {
+      "path": "data/routing/documentation_testing_agent_eval_prompts_v1.jsonl",
+      "kind": "routing_prompts",
+      "weight": 1.3
+    },
+    {
+      "path": "training/adapter_registry_v1.json",
+      "kind": "adapter_registry",
+      "weight": 1.7
+    },
+    {
+      "path": "tests/test_documentation_routing_eval.py",
+      "kind": "test",
+      "weight": 1.4
+    },
+    {
+      "path": "tests/test_documentation_testing_agent_benchmark.py",
+      "kind": "test",
+      "weight": 1.4
+    }
+  ]
+}

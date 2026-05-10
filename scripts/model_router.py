@@ -6,6 +6,10 @@ The initial policy is deterministic and auditable: it routes low-risk requests
 local, high-risk/broad tasks to frontier, and review/planning tasks to hybrid.
 Actual frontier calls require `FRONTIER_API_KEY`; dry-run routing never calls a
 paid API.
+
+`GenerationRequest` supports optional `extra_eos_token_ids` (MLX tokenizer
+`add_eos_token`) and `stop_strings` (local: substring cutoffs over
+`mlx_lm.stream_generate`; frontier: OpenAI `stop` list, max four strings).
 """
 
 from __future__ import annotations
@@ -16,9 +20,12 @@ import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-DEFAULT_LOCAL_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+from router.classifier import classify_prompt
+from router.policy import build_plan, plan_to_legacy_route
+
+DEFAULT_LOCAL_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 
 
 @dataclass
@@ -34,6 +41,11 @@ class GenerationRequest:
     temperature: float = 0.0
     force_route: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    # MLX: tokenizer.add_eos_token for each id so stream_generate stops on assistant end markers
+    # (e.g. Qwen <|im_end|> = 151645) in addition to the base model eos_token_id set.
+    extra_eos_token_ids: Optional[Tuple[int, ...]] = None
+    # Stop as soon as decoded text contains any of these substrings (excluded from returned text).
+    stop_strings: Optional[Tuple[str, ...]] = None
 
     @property
     def prompt_text(self) -> str:
@@ -47,6 +59,15 @@ class RouteDecision:
     estimated_input_tokens: int
     estimated_output_tokens: int
     estimated_cost_usd: float
+    adapter_id: str = "general_fallback"
+    execution_tier: str = "mac_pool"
+    council_mode: str = "off"
+    confidence: float = 0.0
+    ambiguity: float = 0.0
+    risk_class: str = "low"
+    complexity: str = "low"
+    policy_version: str = "router_policy_v1"
+    lineage: Dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -63,6 +84,27 @@ class GenerationResult:
 def estimate_tokens(text: str) -> int:
     # Cheap, provider-agnostic approximation. Good enough for routing/cost logs.
     return max(1, len(text) // 4)
+
+
+def _force_frontier_over_save_specialist(lowercase_prompt: str) -> bool:
+    """True when global safety should beat the save-load specialist shortcut.
+
+    The save specialist legitimately overlaps auth/production keywords; cryptography
+    and generic auth audits without save-domain lexicon stay on frontier.
+    """
+    if "cryptography" in lowercase_prompt:
+        return True
+    if (
+        "audit" in lowercase_prompt
+        and (
+            "authentication" in lowercase_prompt
+            or "authorization" in lowercase_prompt
+        )
+        and "save" not in lowercase_prompt
+        and "serialization" not in lowercase_prompt
+    ):
+        return True
+    return False
 
 
 class RoutingPolicy:
@@ -127,25 +169,148 @@ class RoutingPolicy:
         prompt = request.prompt_text.lower()
         input_tokens = estimate_tokens(request.prompt_text)
         output_tokens = request.max_tokens
+        classifier = classify_prompt(request.prompt_text)
+        plan = build_plan(classifier, metadata=request.metadata)
 
         if request.force_route in {"local", "frontier", "hybrid"}:
             route = request.force_route
             reason = f"forced route: {route}"
+            adapter_id = "general_fallback" if route != "local" else classifier.adapter_id
+            execution_tier = "api_judge" if route == "frontier" else "mac_pool"
+            council_mode = "off" if route != "hybrid" else "fast_vote"
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = "router_policy_v1"
+            lineage = plan.lineage
+        elif classifier.adapter_id == "loading_screen" and classifier.risk_class != "high":
+            # Do not override the specialist fast-path with generic frontier/hybrid/local
+            # substring shortcuts (e.g. "performance", "review" in "reviewers", "production").
+            route = plan_to_legacy_route(plan)
+            reason = f"loading_screen specialist route ({plan.route}): {plan.fallback_reason or 'default'}"
+            adapter_id = plan.adapter_id
+            execution_tier = plan.execution_tier
+            council_mode = plan.council_mode
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = plan.policy_version
+            lineage = plan.lineage
+        elif _force_frontier_over_save_specialist(prompt):
+            route = "frontier"
+            reason = (
+                "frontier escalation overrides save-specialist shortcut "
+                "(cryptography or auth audit outside save-domain)"
+            )
+            adapter_id = "general_fallback"
+            execution_tier = "api_judge"
+            council_mode = "api_judge_first"
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = "high"
+            complexity = classifier.complexity
+            policy_version = "router_policy_v1"
+            lineage = plan.lineage
+        elif classifier.adapter_id == "save_load_api_guard":
+            # Same as loading_screen: domain prompts often contain auth/security/api/production/review
+            # substrings that are not reasons to bypass the save/load specialist.
+            route = plan_to_legacy_route(plan)
+            reason = f"save_load_api_guard specialist route ({plan.route}): {plan.fallback_reason or 'default'}"
+            adapter_id = plan.adapter_id
+            execution_tier = plan.execution_tier
+            council_mode = plan.council_mode
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = plan.policy_version
+            lineage = plan.lineage
+        elif classifier.adapter_id == "economy_tooltip":
+            route = plan_to_legacy_route(plan)
+            reason = f"economy_tooltip specialist route ({plan.route}): {plan.fallback_reason or 'default'}"
+            adapter_id = plan.adapter_id
+            execution_tier = plan.execution_tier
+            council_mode = plan.council_mode
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = plan.policy_version
+            lineage = plan.lineage
+        elif classifier.adapter_id == "documentation":
+            route = plan_to_legacy_route(plan)
+            reason = f"documentation specialist route ({plan.route}): {plan.fallback_reason or 'default'}"
+            adapter_id = plan.adapter_id
+            execution_tier = plan.execution_tier
+            council_mode = plan.council_mode
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = plan.policy_version
+            lineage = plan.lineage
         elif any(k in prompt for k in self.frontier_keywords):
             route = "frontier"
             reason = "high-risk or broad reasoning keyword matched"
+            adapter_id = "general_fallback"
+            execution_tier = "api_judge"
+            council_mode = "api_judge_first"
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = "high"
+            complexity = classifier.complexity
+            policy_version = "router_policy_v1"
+            lineage = plan.lineage
         elif input_tokens >= self.long_prompt_tokens:
             route = "frontier"
             reason = "prompt is too long for cheap local-first routing"
+            adapter_id = "general_fallback"
+            execution_tier = "api_judge"
+            council_mode = "off"
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = "router_policy_v1"
+            lineage = plan.lineage
         elif any(k in prompt for k in self.local_keywords):
             route = "local"
             reason = "low-risk local keyword matched"
+            adapter_id = classifier.adapter_id
+            execution_tier = "mac_pool"
+            council_mode = "off"
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = classifier.complexity
+            policy_version = "router_policy_v1"
+            lineage = plan.lineage
         elif any(k in prompt for k in self.hybrid_keywords):
             route = "hybrid"
             reason = "review/planning/optimization task benefits from local draft plus frontier review"
+            adapter_id = classifier.adapter_id
+            execution_tier = plan.execution_tier
+            council_mode = "fast_vote"
+            confidence = classifier.confidence
+            ambiguity = classifier.ambiguity
+            risk_class = classifier.risk_class
+            complexity = "medium"
+            policy_version = "router_policy_v1"
+            lineage = plan.lineage
         else:
-            route = "local"
-            reason = "default local route for routine request"
+            route = plan_to_legacy_route(plan)
+            reason = f"policy ladder route ({plan.route}): {plan.fallback_reason or 'default'}"
+            adapter_id = plan.adapter_id
+            execution_tier = plan.execution_tier
+            council_mode = plan.council_mode
+            confidence = plan.confidence
+            ambiguity = plan.ambiguity
+            risk_class = plan.risk_class
+            complexity = plan.complexity
+            policy_version = plan.policy_version
+            lineage = plan.lineage
 
         cost = 0.0
         if route in {"frontier", "hybrid"}:
@@ -153,7 +318,22 @@ class RoutingPolicy:
                 input_tokens * self.frontier_input_cost_per_million
                 + output_tokens * self.frontier_output_cost_per_million
             ) / 1_000_000
-        return RouteDecision(route, reason, input_tokens, output_tokens, cost)
+        return RouteDecision(
+            route=route,
+            reason=reason,
+            estimated_input_tokens=input_tokens,
+            estimated_output_tokens=output_tokens,
+            estimated_cost_usd=cost,
+            adapter_id=adapter_id,
+            execution_tier=execution_tier,
+            council_mode=council_mode,
+            confidence=confidence,
+            ambiguity=ambiguity,
+            risk_class=risk_class,
+            complexity=complexity,
+            policy_version=policy_version,
+            lineage=lineage,
+        )
 
 
 class LocalMlxBackend:
@@ -173,12 +353,15 @@ class LocalMlxBackend:
         from mlx_lm import generate, load
         from mlx_lm.sample_utils import make_sampler
 
+        from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
+
         self._generate = generate
         self._make_sampler = make_sampler
         load_kw: Dict[str, Any] = {}
         if self.adapter_path:
             load_kw["adapter_path"] = self.adapter_path
         self._model, self._tokenizer = load(self.model_id, **load_kw)
+        register_qwen_coder_instruct_extra_stops(self._tokenizer)
         return self._model, self._tokenizer
 
     def generate(self, request: GenerationRequest) -> str:
@@ -192,6 +375,29 @@ class LocalMlxBackend:
         kwargs: Dict[str, Any] = {"max_tokens": request.max_tokens}
         if request.temperature > 0:
             kwargs["sampler"] = self._make_sampler(temp=request.temperature, top_p=1.0)
+        if request.extra_eos_token_ids:
+            for tid in request.extra_eos_token_ids:
+                try:
+                    tokenizer.add_eos_token(str(int(tid)))
+                except Exception:
+                    continue
+        if request.stop_strings:
+            from mlx_lm import stream_generate
+
+            acc = ""
+            for resp in stream_generate(model, tokenizer, prompt=prompt, **kwargs):
+                acc += resp.text
+                cut_at: Optional[int] = None
+                for st in request.stop_strings:
+                    if not st:
+                        continue
+                    pos = acc.find(st)
+                    if pos >= 0 and (cut_at is None or pos < cut_at):
+                        cut_at = pos
+                if cut_at is not None:
+                    acc = acc[:cut_at]
+                    break
+            return acc
         return self._generate(model, tokenizer, prompt=prompt, verbose=False, **kwargs)
 
 
@@ -211,12 +417,16 @@ class OpenAICompatibleBackend:
     def generate(self, request: GenerationRequest) -> tuple[str, Dict[str, Any]]:
         if not self.api_key:
             raise RuntimeError("FRONTIER_API_KEY or OPENAI_API_KEY is required for frontier calls.")
-        payload = {
+        payload: Dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": m.role, "content": m.content} for m in request.messages],
             "max_tokens": request.max_tokens,
             "temperature": request.temperature,
         }
+        if request.stop_strings:
+            stops = [s for s in request.stop_strings if s][:4]
+            if stops:
+                payload["stop"] = stops
         body = self._post_chat_completion(payload)
         text = body["choices"][0]["message"]["content"]
         return text, body.get("usage", {})
@@ -295,6 +505,8 @@ class ModelRouter:
                 ],
                 max_tokens=request.max_tokens,
                 temperature=request.temperature,
+                extra_eos_token_ids=request.extra_eos_token_ids,
+                stop_strings=request.stop_strings,
             )
             text, usage = self.frontier_backend.generate(review_request)
             backend = "hybrid_local_then_frontier"

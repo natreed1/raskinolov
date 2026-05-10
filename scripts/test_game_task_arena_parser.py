@@ -6,7 +6,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 
-from game_task_arena import apply_fenced_files
+from game_task_arena import apply_fenced_files, parse_exported_identifiers
 
 
 ALLOWED = ["src/**/*.tsx", "src/**/*.ts", "src/**/*.css"]
@@ -27,7 +27,31 @@ def run_case(name: str, text: str, expected_path: str, expected_first_line: str)
         assert not body.startswith(expected_path), f"{name}: wrote path marker as code"
 
 
+def test_parse_exports() -> None:
+    src = """
+export async function Alpha() {}
+export function Beta() {}
+export const Gamma: number = 1;
+export class Delta {}
+export interface Epsilon {}
+export enum Zeta { A }
+export type Eta = string;
+export type { Theta, Iota }
+export { Kappa as Lambda, type Mu }
+export default function NamedDefault() {}
+"""
+    names = parse_exported_identifiers(src)
+    assert "Alpha" in names and "Beta" in names
+    assert "Gamma" in names and "Delta" in names
+    assert "Epsilon" in names and "Zeta" in names
+    assert "Eta" in names
+    assert "Theta" in names and "Iota" in names
+    assert "Lambda" in names and "Mu" in names
+    assert "NamedDefault" in names
+
+
 def main() -> None:
+    test_parse_exports()
     run_case(
         "path attribute",
         """```tsx path="src/components/ui/GameLoadingScreen.tsx"

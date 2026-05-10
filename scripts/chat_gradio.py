@@ -5,11 +5,11 @@ Local web UI to chat with an MLX base model (and optional LoRA adapters).
 Loads the model once at startup, then streams tokens into a Gradio chat.
 
 Environment:
-  MODEL          HF repo id or local path (default: Qwen2.5-Coder-1.5B 4-bit).
+  MODEL          HF repo id or local path (default: Qwen2.5-Coder-7B 4-bit).
 
 Examples:
   python scripts/chat_gradio.py
-  python scripts/chat_gradio.py --model mlx-community/Qwen2.5-Coder-3B-Instruct-4bit --port 7860
+  python scripts/chat_gradio.py --model mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit --port 7860
   ADAPTER_PATH=./checkpoints/my-lora python scripts/chat_gradio.py
 """
 
@@ -17,15 +17,22 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Generator, List, Optional, Tuple
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 import gradio as gr
 from mlx_lm import load, stream_generate
 from mlx_lm.sample_utils import make_sampler
 
-DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
+
+DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 DEFAULT_SYSTEM = (
     "You are Albert, a concise coding assistant for Fallen Empire, a strategy game written in TypeScript. "
     "Prefer short answers with correct code when asked for implementation."
@@ -115,6 +122,8 @@ def main() -> None:
     if args.trust_remote_code:
         load_kw["tokenizer_config"] = {"trust_remote_code": True}
     model, tokenizer = load(args.model, **load_kw)
+    register_qwen_coder_instruct_extra_stops(tokenizer)
+
     print(f"Loaded in {time.perf_counter() - t0:.1f}s")
 
     gen_kwargs: dict = {"max_tokens": args.max_tokens}

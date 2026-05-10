@@ -34,7 +34,7 @@ import benchmark_evolution_lib as bel
 from mlx_lm import generate, load
 from mlx_lm.sample_utils import make_sampler
 
-DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_TASKS_GAME = REPO_ROOT / "benchmarks" / "fallen_empire_tasks.json"
 DEFAULT_TASKS_GENERAL = REPO_ROOT / "benchmarks" / "general_coding_tasks.json"

@@ -3,7 +3,7 @@
 Walk a source repo and emit JSONL: one record per text file suitable for LoRA data prep.
 
 Hygiene (defaults on):
-  - Skips oversize files, sensitive path segments, credential-like extensions
+  - Skips oversize files (default 1 MB; EXPORT_MAX_FILE_BYTES), sensitive path segments, credential-like extensions
   - Redacts common secret patterns in file bodies before writing
 Adjust EXTENSIONS / SKIP_DIRS / MAX_FILE_BYTES / REDACT_PATTERNS as needed.
 """
@@ -81,8 +81,9 @@ SKIP_NAME_SUFFIXES = (
     ".jks",
 )
 
-# Max bytes per file before excluding (prevents multi-meg JSON / bundles dominating LoRA).
-MAX_FILE_BYTES = int(os.environ.get("EXPORT_MAX_FILE_BYTES", "400000"))
+# Max bytes per file before excluding. Default raised so long game sources reach
+# build_lora_dataset.py chunking instead of being dropped entirely (override with EXPORT_MAX_FILE_BYTES).
+MAX_FILE_BYTES = int(os.environ.get("EXPORT_MAX_FILE_BYTES", "1000000"))
 
 # (regex, replacement) — applied to full text; keep patterns tight to avoid false positives.
 REDACT_PATTERNS: Tuple[Tuple[re.Pattern, str], ...] = (

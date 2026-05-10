@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:01:12Z",
+  "finished_at": "2026-05-10T23:01:37Z",
+  "changed_path": "docs/SESSION_LOG.md",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "## What Changed\nThe codebase received updates to enhance dataset capture and improve the user interface of the private dashboard. The primary changes include:\n\n1. **KPI-First Analytics**: The private dashboard now focuses on key performance indicators (KPIs) such as run reliability, accuracy, average run time, and documentation capture reliability.\n2. **Automation for Dataset Quality**: A new script `scripts/trigger_doc_training_on_changes.py` was added to automatically capture change documentation on watched edits, writing artifacts to `data/documentation_captures/`.\n3. **Modern Dashboard UI**: The `scripts/private_dashboard_server.py` was updated to a modern tabbed experience with a blue/white theme and dark-mode toggle. It includes a feedback mode and token-usage estimation.\n4. **Scoring Tab Clarity**: The scoring tab was improved to include deltas, missing-keyword visibility, and a clearer compare panel. Full-document links and side-by-side views were added for better exploration of scoring outputs.\n5. **Curation Workflow**: The compare page was updated to include per-output curation panels with actions like feedback, training inclusion/exclusion, and deletion.\n\n## Why It Matters\nThese changes improve the efficiency and usability of the dataset capture process. By automating documentation captures and providing clearer visualizations and controls, users can more effectively manage and analyze their data. The modernized dashboard and scoring tab enhancements provide better insights and actionable insights, leading to more informed decision-making.\n\n## Commands/Tests Run\nTo verify the changes, the following commands were run:\n\n1. **Python Compilation**:\n   ```bash\n   .venv/bin/python -m py_compile scripts/private_dashboard_server.py\n   ```\n\n2. **Local Server Verification**:\n   - Started the local dashboard server:\n     ```bash\n     .venv/bin/python scripts/private_dashboard_server.py\n     ```\n   - Accessed the server at `http://127.0.0.1:8787` with Basic auth (`admin/localdev`) to verify:\n     - The scoring page includes compare links",
+    "load_seconds": 1.411,
+    "generation_seconds": 10.704,
+    "estimated_tokens": 346
+  },
+  "specialized": {
+    "output": "## 2026-05-05 \u2014 Dataset capture automation + dashboard refresh\n\n**What changed:** \n- **Dataset capture:** `scripts/trigger_doc_training_on_changes.py` now spawns async documentation captures on watched edits, writes artifacts to `data/documentation_captures/`, and triggers dataset rebuilds. Heavy refreshes remain cooldown-gated.\n- **Dashboard:** `scripts/private_dashboard_server.py` UI refreshed with tabs, blue/white theme, and dark mode. Added compare panel, feedback mode, and token savings estimates.\n\n**Why it matters:** \n- **Automation:** Captures run on every edit, enabling iterative improvement. Heavy refreshes are still gated to preserve performance.\n- **UX:** Modernized dashboard with tabs, compare panel, and feedback mode for clearer insights and actionable outputs.\n\n**Commands/tests run:** \n- `python scripts/trigger_doc_training_on_changes.py` (simulated edit to trigger capture)\n- `python scripts/private_dashboard_server.py` (run dashboard to verify UI changes)\n\n**Next validation steps:** \n- Confirm capture artifacts appear in `data/documentation_captures/` and rebuild the documentation dataset.\n- Verify dashboard renders as expected with tabs, compare panel, and feedback mode.",
+    "load_seconds": 0.46,
+    "generation_seconds": 11.047,
+    "estimated_tokens": 188
+  },
+  "diff_excerpt_chars": 5000
+}

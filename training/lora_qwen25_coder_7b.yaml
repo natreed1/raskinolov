@@ -1,9 +1,11 @@
-# mlx_lm.lora — pass with:  mlx_lm.lora --train -c training/lora_qwen_coder.yaml
+# mlx_lm.lora — Qwen2.5-Coder-7B-Instruct-4bit lineage (see scripts/fe_lineage.py, docs/DATA_LAYOUT.md)
+# Pass: mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml
 # CLI flags override YAML when both are set (mlx-lm merges CLI first, then fills from YAML).
+# 7B 4-bit: on ~24 GB unified memory, close other MLX/Gradio jobs; lower --max-seq-length if Metal OOM.
 
-model: mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit
+model: mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
 train: true
-data: data/lora/game_text
+data: data/lora/qwen25-coder-7b/game_text
 
 fine_tune_type: lora
 optimizer: adamw
@@ -19,7 +21,7 @@ steps_per_report: 10
 steps_per_eval: 50
 grad_accumulation_steps: 2
 
-adapter_path: checkpoints/fe-lora-latest
+adapter_path: checkpoints/fe-lora-qwen25-coder-7b-latest
 save_every: 100
 
 max_seq_length: 4096

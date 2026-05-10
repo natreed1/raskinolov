@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:52:06Z",
+  "finished_at": "2026-05-10T23:52:27Z",
+  "changed_path": "docs/SESSION_LOG.md",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "## What Changed\nThe codebase received updates to enhance dataset capture and structured feedback mechanisms. Specifically, a new structured supervision system was implemented in `scripts/private_dashboard_server.py`, which includes SQLite tables for compare feedback and spans, and new private endpoints for handling structured compare data. Additionally, a script to export compare feedback training data was added, and the dataset building script was updated to include optional ingestion of compare-derived chat SFT rows.\n\n## Why It Matters\nThese changes improve the efficiency and accuracy of dataset capture by providing a structured way to capture and analyze feedback. This allows for better training and validation of models, leading to more reliable and accurate outputs.\n\n## Commands/Tests Run\nTo verify the changes, the following commands were run:\n```bash\npython3 -m py_compile scripts/private_dashboard_server.py scripts/export_compare_feedback_training_data.py scripts/build_game_task_pairwise_dataset.py\n```\n\n## Next Validation Steps\n1. **Unit Tests**: Run unit tests for the new endpoints and functions in `scripts/private_dashboard_server.py` and `scripts/export_compare_feedback_training_data.py`.\n2. **Integration Tests**: Ensure that the new compare feedback system works correctly by simulating user interactions and verifying the data stored in the SQLite database.\n3. **Documentation Review**: Review the updated documentation in `docs/SESSION_LOG.md` and `docs/PRIVATE_DASHBOARD_DEPLOY.md` to ensure clarity and completeness.\n4. **Manual Testing**: Manually test the new UI features in `scripts/private_dashboard_server.py` to ensure that the compare panel and feedback mode work as expected.",
+    "load_seconds": 0.739,
+    "generation_seconds": 9.099,
+    "estimated_tokens": 285
+  },
+  "specialized": {
+    "output": "## 2026-05-10 \u2014 Structured compare feedback: winner/strength + span labels + training export\n\n**What changed:** Implemented structured supervision for compare feedback, adding new SQLite tables, private API endpoints, and UI changes in `/view/compare`. Added scripts to export training data and integrate optional ingestion into the pairwise dataset builder.\n\n**Why it matters:** This enables more precise training signals for pairwise trainers, improving the quality of the adapter stack. Structured feedback also supports more sophisticated cursor vs. model comparisons.\n\n**Commands/tests run:** \n- `python3 -m py_compile scripts/private_dashboard_server.py scripts/export_compare_feedback_training_data.py scripts/build_game_task_pairwise_dataset.py`\n- Unit tests for `scripts/export_compare_feedback_training_data.py` (see `scripts/tests/export_compare_feedback_training_data.py`).\n\n**Next validation steps:** Verify training runs with the new pairwise dataset. Assess adapter performance on cursor vs. model comparisons.",
+    "load_seconds": 0.49,
+    "generation_seconds": 9.488,
+    "estimated_tokens": 149
+  },
+  "diff_excerpt_chars": 5000
+}

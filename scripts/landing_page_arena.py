@@ -11,7 +11,7 @@ Examples:
   python scripts/landing_page_arena.py create --task "Design a Fallen Empire landing page"
   python scripts/landing_page_arena.py cursor-packet --trial-id <id> --attempt frontier_cursor
   python scripts/landing_page_arena.py scaffold --trial-id <id> --attempt local_manual
-  python scripts/landing_page_arena.py local-attempt --trial-id <id> --attempt local_300 --adapter-path checkpoints/fe-lora-30m
+  python scripts/landing_page_arena.py local-attempt --trial-id <id> --attempt local_7b --adapter-path checkpoints/fe-lora-qwen25-coder-7b-chunk6k-20260428
   python scripts/landing_page_arena.py serve --trial-id <id> --attempt local_300 --port 8091
   python scripts/landing_page_arena.py rate --trial-id <id> --attempt local_300 --visual-quality 4 --winner yes
   python scripts/landing_page_arena.py ui
@@ -39,10 +39,12 @@ REPO = SCRIPT_DIR.parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+import fe_lineage as _fe
 from model_router import ChatMessage, GenerationRequest, LocalMlxBackend, OpenAICompatibleBackend
 
 TRIALS_ROOT = REPO / "benchmarks" / "results" / "landing_page_trials"
 TRIALS_INDEX = REPO / "benchmarks" / "results" / "landing_page_trials.jsonl"
+DEFAULT_LOCAL_ADAPTER = os.environ.get("ADAPTER_PATH", _fe.DEFAULT_ARENA_ADAPTER_RELPATH)
 COMPARISONS_INDEX = REPO / "benchmarks" / "results" / "landing_page_comparisons.jsonl"
 TRAINING_DATA_INDEX = REPO / "benchmarks" / "results" / "landing_page_training_data.jsonl"
 DEFAULT_BRIEF = REPO / "benchmarks" / "landing_page_brief.md"
@@ -74,6 +76,10 @@ ARENA_CSS = """
   padding: 16px;
   background: rgba(9, 13, 22, 0.72);
   box-shadow: 0 22px 70px rgba(0, 0, 0, 0.35);
+}
+/* Gradio Group's inner flex uses overflow:hidden, which can swallow pointer events for controls below tall previews. */
+.gr-group.fe-shell > div {
+  overflow: visible !important;
 }
 .fe-preview {
   width: 100%;
@@ -800,7 +806,7 @@ def build_app():
                 trial_id=trial.trial_id,
                 attempt=local_name,
                 adapter_path=(local_adapter or "").strip() or None,
-                model_id=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"),
+                model_id=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"),
                 max_tokens=int(max_tokens),
                 temp=float(temp),
             )
@@ -955,7 +961,7 @@ def build_app():
                 trial_id=trial.trial_id,
                 attempt=local_name,
                 adapter_path=(local_adapter or "").strip() or None,
-                model_id=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"),
+                model_id=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"),
                 max_tokens=int(max_tokens),
                 temp=float(temp),
             )
@@ -1067,7 +1073,7 @@ def build_app():
                 trial_id=trial_id.strip(),
                 attempt=attempt.strip() or "local_300",
                 adapter_path=(adapter_path or "").strip() or None,
-                model_id=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"),
+                model_id=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"),
                 max_tokens=int(max_tokens),
                 temp=float(temp),
             )
@@ -1199,7 +1205,7 @@ def build_app():
             i_status = gr.Markdown()
             with gr.Accordion("Settings", open=False):
                 with gr.Row():
-                    i_local_adapter = gr.Textbox(label="Local adapter", value="checkpoints/fe-lora-30m")
+                    i_local_adapter = gr.Textbox(label="Local adapter", value=DEFAULT_LOCAL_ADAPTER)
                     i_frontier_model = gr.Textbox(label="Frontier model", value=os.environ.get("FRONTIER_MODEL", ""))
                     i_frontier_base = gr.Textbox(label="API base URL", value=os.environ.get("FRONTIER_API_BASE_URL", "https://api.openai.com/v1"))
                 with gr.Row():
@@ -1355,8 +1361,8 @@ def main() -> None:
     p_local = sub.add_parser("local-attempt", help="Generate a static-site attempt with local MLX")
     p_local.add_argument("--trial-id", required=True)
     p_local.add_argument("--attempt", default="local_300")
-    p_local.add_argument("--adapter-path", default=os.environ.get("ADAPTER_PATH", "checkpoints/fe-lora-30m"))
-    p_local.add_argument("--model", default=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"))
+    p_local.add_argument("--adapter-path", default=DEFAULT_LOCAL_ADAPTER)
+    p_local.add_argument("--model", default=os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"))
     p_local.add_argument("--max-tokens", type=int, default=DEFAULT_ARENA_MAX_TOKENS)
     p_local.add_argument("--temp", type=float, default=0.0)
 

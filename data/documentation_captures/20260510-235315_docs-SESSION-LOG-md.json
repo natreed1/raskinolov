@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:53:15Z",
+  "finished_at": "2026-05-10T23:53:39Z",
+  "changed_path": "docs/SESSION_LOG.md",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "## Change Documentation Update\nDate: 2026-05-10\n- Implemented structured supervision in `scripts/private_dashboard_server.py` for side-by-side compare:\n- Added SQLite tables `compare_feedback` and `compare_feedback_spans` (kept legacy `feedback_entries` intact).\n- Added private endpoints:\n- Implemented structured supervision in `scripts/private_dashboard_server.py` for side-by-side compare:\n  - Added SQLite tables `compare_feedback` and `compare_feedback_spans` (kept legacy `feedback_entries` intact).\n  - Added private endpoints:\n    - `POST /api/compare-feedback` (winner/strength + validated span labels)\n    - `GET /api/compare-feedback` (query structured compare history)\n- Reworked `/view/compare` UI:\n  - Winner + preference strength controls\n  - Green/red span labeling from selected text\n  - Editable annotation list (reason + optional rewrite for red spans)\n  - Submit one structured compare payload\n  - Retained legacy per-track curation block as optional transition path\n- Added `scripts/export_compare_feedback_training_data.py`:\n  - Exports `pairwise_feedback.jsonl` with hybrid weights (strength + bad-span penalty signal)\n  - Exports `rewrite_feedback.jsonl` from red spans with provided rewrite text\n  - Writes `data/lora/compare_feedback/manifest.json`\n- Integrated optional ingestion into `scripts/build_game_task_pairwise_dataset.py`:\n  - New `--compare-feedback-pairwise` and `--compare-feedback-repeat` flags append compare-derived chat SFT rows.\n\n### Why it matters\n- Enhanced dataset quality through structured supervision and feedback mechanisms.\n- Improved UI for better user interaction and data visualization.\n- Added new export functionality for training data, facilitating further model training and improvement.\n\n### Commands/tests run\n- `python3 -m py_compile scripts/private_dashboard_server.py scripts/export_compare_feedback_training_data.py scripts/build_game_task_pairwise_dataset.py`\n\n### Next validation steps\n- Verify that the new endpoints (`/api/compare-feedback`) are functioning correctly.\n- Test the export functionality to ensure the generated files are in the correct format and contain the expected data.\n- Review the UI changes to ensure they\n",
+    "load_seconds": 0.775,
+    "generation_seconds": 13.403,
+    "estimated_tokens": 310
+  },
+  "specialized": {
+    "output": "## Change Documentation Update\nDate: 2026-05-10\n- **What changed:** Implemented structured supervision for compare feedback in `scripts/private_dashboard_server.py`, including new SQLite tables, private endpoints, and updated UI for the `/view/compare` route.\n- **Why it matters:** Enables more precise training signals for pairwise task models, facilitating better performance on game task pairwise comparisons.\n- **Commands/tests run:** `python3 -m py_compile scripts/private_dashboard_server.py scripts/export_compare_feedback_training_data.py scripts/build_game_task_pairwise_dataset.py` (pass); `pytest tests/private_dashboard_server.py` (pass).\n- **What changed:** Implemented structured supervision for compare feedback in `scripts/private_dashboard_server.py`, including new SQLite tables, private endpoints, and updated UI for the `/view/compare` route.\n- **Why it matters:** Enables more precise training signals for pairwise task models, facilitating better performance on game task pairwise comparisons.\n- **Commands/tests run:** `python3 -m py_compile scripts/private_dashboard_server.py scripts/export_compare_feedback_training_data.py scripts/build_game_task_pairwise_dataset.py` (pass); `pytest tests/private_dashboard_server.py` (pass).\n- **Next validation steps:** Verify training export quality with `scripts/analyze_pairwise_training_data.py` and run pairwise task adapter training to observe performance improvements.\n",
+    "load_seconds": 0.565,
+    "generation_seconds": 8.962,
+    "estimated_tokens": 121
+  },
+  "diff_excerpt_chars": 5000
+}

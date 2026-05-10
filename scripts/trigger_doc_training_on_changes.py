@@ -17,6 +17,12 @@ REPO = Path(__file__).resolve().parents[1]
 QUEUE_PATH = REPO / "data" / "training_triggers" / "documentation_training_queue.jsonl"
 STATE_PATH = REPO / ".cursor" / "hooks" / ".doc_training_trigger_state.json"
 WATCH_PREFIXES = ("docs/", "scripts/", "benchmarks/", "tests/", "training/")
+IGNORE_PREFIXES = (
+    "docs/generated/",
+    "data/documentation_captures/",
+    "data/training_triggers/",
+    ".cursor/hooks/",
+)
 
 
 def _now() -> str:
@@ -24,12 +30,30 @@ def _now() -> str:
 
 
 def _is_watched(path: str) -> bool:
+    if any(path.startswith(prefix) for prefix in IGNORE_PREFIXES):
+        return False
     return path.startswith(WATCH_PREFIXES)
 
 
 def _run(cmd: list[str]) -> int:
     proc = subprocess.run(cmd, cwd=str(REPO), check=False)
     return int(proc.returncode)
+
+
+def _python_exe() -> str:
+    candidate = REPO / ".venv" / "bin" / "python"
+    if candidate.is_file():
+        return str(candidate)
+    return sys.executable
+
+
+def _spawn(cmd: list[str], *, log_name: str) -> None:
+    log_dir = REPO / "data" / "training_triggers" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / log_name
+    with log_path.open("a", encoding="utf-8") as fh:
+        fh.write(f"\n[{_now()}] SPAWN: {' '.join(cmd)}\n")
+        subprocess.Popen(cmd, cwd=str(REPO), stdout=fh, stderr=fh)  # noqa: S603
 
 
 def _append_queue(row: dict[str, Any]) -> None:
@@ -72,6 +96,25 @@ def main() -> None:
     if prev is not None and float(prev) == float(mtime):
         return
     state.setdefault("seen", {})[rel] = mtime
+    run_change_capture = os.environ.get("FE_LAB_ALWAYS_RUN_OPEN_SOURCE_ON_CHANGE", "1").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if run_change_capture:
+        _spawn(
+            [
+                _python_exe(),
+                str(REPO / "scripts" / "generate_change_documentation_capture.py"),
+                "--changed-path",
+                rel,
+                "--event",
+                args.event,
+            ],
+            log_name="change_doc_capture.log",
+        )
+
     now_epoch = int(time.time())
     min_interval_s = int(os.environ.get("FE_LAB_DOC_TRIGGER_MIN_SECONDS", "900") or "900")
     last_epoch = int(state.get("last_trigger_epoch", 0) or 0)
@@ -84,6 +127,9 @@ def main() -> None:
                 "trigger": args.event,
                 "changed_path": rel,
                 "watched": True,
+                "actions": {
+                    "change_documentation_capture": {"enabled": run_change_capture, "mode": "async"},
+                },
                 "skipped_due_cooldown": True,
                 "min_interval_seconds": min_interval_s,
                 "seconds_until_next_trigger": max(0, min_interval_s - (now_epoch - last_epoch)),
@@ -94,7 +140,7 @@ def main() -> None:
     state["last_trigger_epoch"] = now_epoch
     _save_state(state)
 
-    build_run_analysis = [sys.executable, str(REPO / "scripts" / "build_run_analysis_rag_corpus.py")]
+    build_run_analysis = [_python_exe(), str(REPO / "scripts" / "build_run_analysis_rag_corpus.py")]
     rag_rc = _run(build_run_analysis)
 
     auto_dataset = os.environ.get("FE_LAB_AUTODOC_DATASET_ON_CHANGE", "1").strip().lower() in {
@@ -105,7 +151,7 @@ def main() -> None:
     }
     ds_rc = None
     if auto_dataset:
-        ds_rc = _run([sys.executable, str(REPO / "scripts" / "ml_workflow.py"), "documentation-dataset"])
+        ds_rc = _run([_python_exe(), str(REPO / "scripts" / "ml_workflow.py"), "documentation-dataset"])
 
     row = {
         "ts": _now(),
@@ -114,9 +160,13 @@ def main() -> None:
         "watched": True,
         "actions": {
             "build_run_analysis_rag_corpus": {"exit_code": rag_rc},
+            "change_documentation_capture": {"enabled": run_change_capture, "mode": "async"},
             "documentation_dataset": {"enabled": auto_dataset, "exit_code": ds_rc},
         },
-        "recommended_next": "python scripts/ml_workflow.py documentation-rag-benchmark --skip-no-rag-baseline",
+        "recommended_next": (
+            "python scripts/ml_workflow.py documentation-rag-benchmark --skip-no-rag-baseline && "
+            "python scripts/run_run_analysis_agent_benchmark.py --use-rag --no-fail"
+        ),
     }
     _append_queue(row)
 

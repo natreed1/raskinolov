@@ -1,0 +1,369 @@
+
+[2026-05-05T04:11:42Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path training/README.md --event manual-test
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 155344.59it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 21546.08it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260505-041142_training-README-md.json
+
+[2026-05-05T04:13:07Z] SPAWN: /Library/Developer/CommandLineTools/usr/bin/python3 /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/trigger_doc_training_on_changes.py --event afterFileEdit
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 134, in <module>
+    main()
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 108, in main
+    base = _generate_with_mlx(prompt, adapter_path=None)
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 49, in _generate_with_mlx
+    from mlx_lm import generate, load
+ModuleNotFoundError: No module named 'mlx_lm'
+
+[2026-05-05T04:13:43Z] SPAWN: /Library/Developer/CommandLineTools/usr/bin/python3 /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/WORKFLOW.md --event afterFileEdit
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 134, in <module>
+    main()
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 108, in main
+    base = _generate_with_mlx(prompt, adapter_path=None)
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 49, in _generate_with_mlx
+    from mlx_lm import generate, load
+ModuleNotFoundError: No module named 'mlx_lm'
+
+[2026-05-05T04:13:53Z] SPAWN: /Library/Developer/CommandLineTools/usr/bin/python3 /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/PRIVATE_DASHBOARD_DEPLOY.md --event afterFileEdit
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 134, in <module>
+    main()
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 108, in main
+    base = _generate_with_mlx(prompt, adapter_path=None)
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 49, in _generate_with_mlx
+    from mlx_lm import generate, load
+ModuleNotFoundError: No module named 'mlx_lm'
+
+[2026-05-05T04:14:02Z] SPAWN: /Library/Developer/CommandLineTools/usr/bin/python3 /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/SESSION_LOG.md --event afterFileEdit
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 134, in <module>
+    main()
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 108, in main
+    base = _generate_with_mlx(prompt, adapter_path=None)
+  File "/Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py", line 49, in _generate_with_mlx
+    from mlx_lm import generate, load
+ModuleNotFoundError: No module named 'mlx_lm'
+
+[2026-05-05T04:14:22Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/trigger_doc_training_on_changes.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 245121.66it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 166293.99it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260505-041422_scripts-trigger-doc-training-on-changes-py.json
+
+[2026-05-05T04:15:27Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 251658.24it/s]
+
+[2026-05-05T04:15:37Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 201864.90it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 281706.99it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+
+[2026-05-05T04:21:10Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 237413.43it/s]
+
+[2026-05-05T04:21:18Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 199728.76it/s]
+
+[2026-05-05T15:34:24Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 256794.12it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 256794.12it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260505-153424_scripts-private-dashboard-server-py.json
+
+[2026-05-05T15:34:51Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 121770.12it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 373749.86it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260505-153451_scripts-private-dashboard-server-py.json
+
+[2026-05-10T22:46:36Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 256794.12it/s]
+
+[2026-05-10T22:46:43Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 219469.40it/s]
+
+[2026-05-10T22:46:49Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 235929.60it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 142987.64it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 49474.10it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 166293.99it/s]
+
+[2026-05-10T22:47:23Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-224636_scripts-private-dashboard-server-py.json
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 186874.93it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-224643_scripts-private-dashboard-server-py.json
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-224649_scripts-private-dashboard-server-py.json
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 309415.87it/s]
+
+[2026-05-10T22:47:44Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 219469.40it/s]
+
+[2026-05-10T22:47:51Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 150393.37it/s]
+
+[2026-05-10T22:51:14Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 231587.34it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 356120.15it/s]
+
+[2026-05-10T22:51:33Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 243540.23it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225114_scripts-private-dashboard-server-py.json
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 93669.32it/s]
+
+[2026-05-10T22:51:50Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 224694.86it/s]
+
+[2026-05-10T22:52:01Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225134_scripts-private-dashboard-server-py.json
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 226040.34it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 177224.11it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+
+[2026-05-10T22:52:47Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/SESSION_LOG.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 204047.22it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 373749.86it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225247_docs-SESSION-LOG-md.json
+
+[2026-05-10T22:58:28Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 249991.63it/s]
+
+[2026-05-10T22:58:35Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 273541.57it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 290374.89it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 226040.34it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225828_scripts-private-dashboard-server-py.json
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225835_scripts-private-dashboard-server-py.json
+
+[2026-05-10T22:59:12Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 258552.99it/s]
+
+[2026-05-10T22:59:23Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 346318.68it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 152212.65it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 95808.97it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225912_scripts-private-dashboard-server-py.json
+
+[2026-05-10T22:59:46Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 237413.43it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225923_scripts-private-dashboard-server-py.json
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 26924.92it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-225946_scripts-private-dashboard-server-py.json
+
+[2026-05-10T23:00:12Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 237413.43it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 101203.05it/s]
+
+[2026-05-10T23:00:23Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 205156.17it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 79471.02it/s]
+
+[2026-05-10T23:00:39Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 208556.55it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-230012_scripts-private-dashboard-server-py.json
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+
+[2026-05-10T23:01:12Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/SESSION_LOG.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 309415.87it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 389162.23it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-230112_docs-SESSION-LOG-md.json
+
+[2026-05-10T23:26:14Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 256794.12it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+
+[2026-05-10T23:43:57Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 281706.99it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 188743.68it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234357_scripts-private-dashboard-server-py.json
+
+[2026-05-10T23:44:58Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 258552.99it/s]
+
+[2026-05-10T23:45:04Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 214481.45it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 187804.66it/s]
+
+[2026-05-10T23:45:22Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 173159.34it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 256794.12it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234458_scripts-private-dashboard-server-py.json
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 263977.17it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234504_scripts-private-dashboard-server-py.json
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234522_scripts-private-dashboard-server-py.json
+
+[2026-05-10T23:46:09Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/export_compare_feedback_training_data.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 61984.79it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 76414.45it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234609_scripts-export-compare-feedback-training-data-py.json
+
+[2026-05-10T23:46:22Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/build_game_task_pairwise_dataset.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 195589.31it/s]
+
+[2026-05-10T23:46:29Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/build_game_task_pairwise_dataset.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 170039.35it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 22726.51it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 87992.39it/s]
+
+[2026-05-10T23:46:49Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 226040.34it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234622_scripts-build-game-task-pairwise-dataset-py.json
+
+[2026-05-10T23:46:56Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/PRIVATE_DASHBOARD_DEPLOY.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 205156.17it/s]
+
+[2026-05-10T23:47:00Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/DATA_LAYOUT.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 167029.81it/s]
+libc++abi: libc++abi: terminating due to uncaught exception of type std::runtime_error: [METAL] Command buffer execution failed: Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)terminating due to uncaught exception of type std::runtime_error: [METAL] Command buffer execution failed: Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)
+
+libc++abi: terminating due to uncaught exception of type std::runtime_error: [METAL] Command buffer execution failed: Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)
+libc++abi: terminating due to uncaught exception of type std::runtime_error: [METAL] Command buffer execution failed: Insufficient Memory (00000008:kIOGPUCommandBufferCallbackErrorOutOfMemory)
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+
+[2026-05-10T23:47:13Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/SESSION_LOG.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 214481.45it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 29514.26it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-234713_docs-SESSION-LOG-md.json
+
+[2026-05-10T23:50:07Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 167029.81it/s]
+
+[2026-05-10T23:50:15Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/private_dashboard_server.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 251658.24it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 306900.29it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+
+[2026-05-10T23:52:06Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/SESSION_LOG.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 263977.17it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 219469.40it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-235206_docs-SESSION-LOG-md.json
+
+[2026-05-10T23:52:34Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path scripts/generate_change_documentation_capture.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 176395.96it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 73298.52it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-235234_scripts-generate-change-documentation-capture-py.json
+
+[2026-05-10T23:52:48Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path tests/test_change_documentation_capture_format.py --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 164124.94it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 92977.18it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-235248_tests-test-change-documentation-capture-format-py.json
+
+[2026-05-10T23:53:09Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/DOCUMENTATION_AGENT_PRACTICES.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 164124.94it/s]
+
+[2026-05-10T23:53:15Z] SPAWN: /Users/natreed/fallen-empire-lora/.venv/bin/python /Users/natreed/fallen-empire-lora/scripts/generate_change_documentation_capture.py --changed-path docs/SESSION_LOG.md --event afterFileEdit
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 346318.68it/s]
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 271573.64it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-235309_docs-DOCUMENTATION-AGENT-PRACTICES-md.json
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 16912.52it/s]
+Wrote capture artifacts: /Users/natreed/fallen-empire-lora/data/documentation_captures/20260510-235315_docs-SESSION-LOG-md.json

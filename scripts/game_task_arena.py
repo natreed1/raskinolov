@@ -12,6 +12,13 @@ Context for `generate` / `packet` is built by `build_context_pack()` (reserved p
 before globs, BM25 reorder among globs, head/tail truncation). Each attempt logs
 `attempts/<slug>/logs/context_pack.json` when a log directory is available.
 
+`generate` can append extra MLX EOS ids (Qwen chat im_end by default), optional `--stop-string`
+decoded cutoffs via `mlx_lm.stream_generate`, and `--tsc-retries N` to `git reset --hard` and
+re-prompt with `tsc` output after apply. The Gradio **Generate + Apply** path uses one local
+`tsc` retry by default (`tsc_retries=1` for the local lane only). Unless
+`GAME_TASK_ARENA_SKIP_EXPORT_GUARD` is set, generation also refuses to finish a round when
+`git diff` shows a touched file dropped baseline `export` names (see `export_preservation_violations`).
+
 Examples:
   python scripts/game_task_arena.py create --task-id ui-hud-copy
   python scripts/game_task_arena.py packet --trial-id <id> --attempt local
@@ -46,7 +53,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO = SCRIPT_DIR.parent
@@ -56,11 +63,68 @@ RESULTS_ROOT = REPO / "benchmarks" / "results" / "game_task_trials"
 INDEX_PATH = REPO / "benchmarks" / "results" / "game_task_index.jsonl"
 REPORTS_DIR = REPO / "benchmarks" / "results" / "game_task_reports"
 DEFAULT_TASKS = REPO / "benchmarks" / "game_task_arena_examples.json"
+APPLY_CONTRACT_DOC = REPO / "docs" / "GAME_ARENA_APPLY_CONTRACT.md"
+STANDARD_DEV_GUIDE_DOC = REPO / "docs" / "GAME_ARENA_STANDARD_DEV_PATCH_GUIDE.md"
+STANDARD_DEV_TASK_IDS = frozenset({"hud-status-summary", "economy-tooltip"})
+STANDARD_DEV_PRIORITY_CONTEXT_FILES: Dict[str, Tuple[str, ...]] = {
+    "hud-status-summary": (
+        "src/components/test/TestEnvironmentShell.tsx",
+        "src/components/test/overlays/HudStatusSummaryOverlay.tsx",
+        "src/lib/testEnvironments.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx",
+        "src/components/ui/panelThemes/MedievalBuildingPanels.tsx",
+        "src/components/ui/panelThemes/MapRoomPanel.tsx",
+    ),
+    "economy-tooltip": (
+        "src/components/test/TestEnvironmentShell.tsx",
+        "src/components/test/overlays/EconomyContextRibbon.tsx",
+        "src/lib/testEnvironments.ts",
+        "src/lib/empireEconomy.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx",
+        "src/components/ui/panelThemes/BuilderCottagePanel.tsx",
+    ),
+}
+STANDARD_DEV_PROGRESSIVE_ALLOWED_PREFIXES: Dict[str, Tuple[str, ...]] = {
+    "hud-status-summary": (
+        "src/components/test/",
+        "src/components/ui/panelThemes/",
+        "src/components/ui/GameHUD.tsx",
+        "src/lib/testEnvironments.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+    ),
+    "economy-tooltip": (
+        "src/components/test/",
+        "src/components/ui/panelThemes/",
+        "src/components/ui/GameHUD.tsx",
+        "src/lib/testEnvironments.ts",
+        "src/lib/empireEconomy.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+    ),
+}
+_NOISY_CONTEXT_PATH_SUFFIXES = (".bak", "/.DS_Store", ".DS_Store")
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
-from model_router import ChatMessage, GenerationRequest, LocalMlxBackend, OpenAICompatibleBackend, estimate_tokens
+import fe_lineage as _fe
+from model_router import (
+    DEFAULT_LOCAL_MODEL,
+    ChatMessage,
+    GenerationRequest,
+    LocalMlxBackend,
+    OpenAICompatibleBackend,
+    estimate_tokens,
+)
+
+DEFAULT_LOCAL_ADAPTER = os.environ.get("ADAPTER_PATH", _fe.DEFAULT_ARENA_ADAPTER_RELPATH)
 
 
 @dataclass
@@ -210,19 +274,175 @@ def choose_preview_port(requested_port: int, host: str = "127.0.0.1", max_tries:
     raise SystemExit(f"No free preview port found from {requested_port} through {requested_port + max_tries - 1}")
 
 
-def preview_preflight(trial: TrialManifest, attempt: AttemptManifest, port: int) -> Tuple[bool, str]:
+def run_tsc_noemit(
+    trial: TrialManifest,
+    attempt: AttemptManifest,
+    port: int,
+    *,
+    log_path: Optional[Path] = None,
+) -> Tuple[bool, str]:
+    """Run `npx tsc --noEmit` in the attempt worktree (shared by preview preflight and generate retries)."""
     worktree = Path(attempt.worktree_path)
     if not (worktree / "tsconfig.json").is_file():
         return True, "skipped_no_tsconfig"
     ensure_preview_node_modules(trial, attempt)
+    dest = log_path or (attempt_dir(trial.trial_id, attempt.attempt) / "logs" / "preview_preflight_tsc.log")
     code, _ = run_cmd(
         ["npx", "tsc", "--noEmit"],
         cwd=worktree,
-        log_path=attempt_dir(trial.trial_id, attempt.attempt) / "logs" / "preview_preflight_tsc.log",
+        log_path=dest,
         timeout_s=120,
         env=preview_env(trial, port),
     )
     return code == 0, f"tsc_exit_{code}"
+
+
+def preview_preflight(trial: TrialManifest, attempt: AttemptManifest, port: int) -> Tuple[bool, str]:
+    return run_tsc_noemit(trial, attempt, port)
+
+
+def reset_worktree_head(worktree: Path, log_path: Path) -> bool:
+    code, _ = run_cmd(["git", "reset", "--hard", "HEAD"], cwd=worktree, log_path=log_path, timeout_s=180)
+    return code == 0
+
+
+def mlx_extra_eos_token_ids_for_model(model_id: str, disabled: bool) -> Optional[Tuple[int, ...]]:
+    """Extra EOS ids for mlx_lm (e.g. Qwen <|im_end|> = 151645). Override with GAME_TASK_ARENA_EXTRA_EOS_IDS= or empty to clear."""
+    if disabled:
+        return None
+    override = os.environ.get("GAME_TASK_ARENA_EXTRA_EOS_IDS")
+    if override is not None:
+        override = override.strip()
+        if override == "":
+            return None
+        out: List[int] = []
+        for part in override.split(","):
+            part = part.strip()
+            if part.isdigit():
+                out.append(int(part))
+        return tuple(out) if out else None
+    if "qwen" in (model_id or "").lower():
+        return (151645,)
+    return None
+
+
+def arena_stop_strings_from_args(args: argparse.Namespace) -> Optional[Tuple[str, ...]]:
+    raw_list = getattr(args, "stop_strings", None)
+    if raw_list:
+        return tuple(s for s in raw_list if s)
+    env_raw = os.environ.get("GAME_TASK_ARENA_STOP_STRINGS", "").strip()
+    if not env_raw:
+        return None
+    return tuple(s.replace("\\n", "\n") for s in env_raw.split("||") if s.strip())
+
+
+def _parse_export_clause_names(inner: str) -> Set[str]:
+    """Names contributed by `export { ... }` / `export type { ... }` clauses."""
+    out: Set[str] = set()
+    for part in inner.split(","):
+        part = part.strip()
+        if not part or part.startswith("..."):
+            continue
+        if " as " in part:
+            rhs = part.rsplit(" as ", 1)[-1].strip()
+            m = re.match(r"^(\w+)", rhs)
+            if m:
+                out.add(m.group(1))
+            continue
+        part = re.sub(r"^\s*type\s+", "", part)
+        m = re.match(r"^(\w+)", part)
+        if m and m.group(1).isidentifier():
+            out.add(m.group(1))
+    return out
+
+
+def parse_exported_identifiers(source: str) -> Set[str]:
+    """Best-effort exported binding names from TS/JS source (named exports only)."""
+    names: Set[str] = set()
+    names.update(re.findall(r"^\s*export\s+declare\s+function\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+async\s+function\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+function\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+const\s+(\w+)(?:\s*[=:])", source, re.M))
+    names.update(re.findall(r"^\s*export\s+class\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+interface\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+enum\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+type\s+(\w+)\s*(?:=|;|\n)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+default\s+function\s+(\w+)", source, re.M))
+    names.update(re.findall(r"^\s*export\s+default\s+class\s+(\w+)", source, re.M))
+    for m in re.finditer(r"^\s*export\s+type\s*\{([^}]+)\}", source, re.M):
+        names.update(_parse_export_clause_names(m.group(1)))
+    for m in re.finditer(r"^\s*export\s*\{([^}]+)\}", source, re.M):
+        names.update(_parse_export_clause_names(m.group(1)))
+    return {n for n in names if n}
+
+
+def iter_tracked_source_files(worktree: Path, allowed: List[str]) -> List[Path]:
+    """Git-tracked .ts/.tsx/.js/.jsx files under allowlisted patterns."""
+    proc = subprocess.run(
+        ["git", "-C", str(worktree), "ls-files"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if proc.returncode != 0:
+        return []
+    out: List[Path] = []
+    for line in proc.stdout.splitlines():
+        rel = line.strip()
+        if not rel.endswith((".ts", ".tsx", ".js", ".jsx")):
+            continue
+        if not is_safe_repo_path(rel, allowed):
+            continue
+        path = worktree / rel
+        if path.is_file():
+            out.append(path)
+    return out
+
+
+def snapshot_baseline_export_names(worktree: Path, allowed: List[str]) -> Dict[str, Set[str]]:
+    """Map repo-relative path -> exported identifiers at generation start."""
+    snap: Dict[str, Set[str]] = {}
+    for path in iter_tracked_source_files(worktree, allowed):
+        rel = path.relative_to(worktree).as_posix()
+        snap[rel] = parse_exported_identifiers(read_text(path))
+    return snap
+
+
+def git_diff_paths_vs_head(worktree: Path) -> List[str]:
+    proc = subprocess.run(
+        ["git", "-C", str(worktree), "diff", "--name-only", "HEAD"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    if proc.returncode != 0:
+        return []
+    return [ln.strip() for ln in proc.stdout.splitlines() if ln.strip()]
+
+
+def export_preservation_violations(
+    worktree: Path,
+    baseline: Dict[str, Set[str]],
+    allowed: List[str],
+) -> Dict[str, List[str]]:
+    """For each changed tracked file, report baseline exports missing from the new file."""
+    if not baseline:
+        return {}
+    violations: Dict[str, List[str]] = {}
+    for rel in git_diff_paths_vs_head(worktree):
+        if not rel.endswith((".ts", ".tsx", ".js", ".jsx")):
+            continue
+        if not is_safe_repo_path(rel, allowed):
+            continue
+        before = baseline.get(rel)
+        if not before:
+            continue
+        text = read_text(worktree / rel)
+        after = parse_exported_identifiers(text)
+        missing = sorted(before - after)
+        if missing:
+            violations[rel] = missing
+    return violations
 
 
 def append_jsonl(path: Path, row: Dict[str, Any]) -> None:
@@ -265,6 +485,32 @@ def load_task_specs(path: Path = DEFAULT_TASKS) -> Dict[str, TaskSpec]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     tasks = payload.get("tasks", payload)
     return {t["id"]: TaskSpec(**t) for t in tasks}
+
+
+def task_complexity_label(task: TaskSpec) -> str:
+    text = f"{task.notes}".lower()
+    match = re.search(r"complexity:\s*([a-z-]+)", text)
+    if match:
+        return match.group(1)
+    if "medium-high" in text or "medium high" in text:
+        return "medium-high"
+    if "high" in text:
+        return "high"
+    if "low-medium" in text or "low medium" in text:
+        return "low-medium"
+    if "medium" in text:
+        return "medium"
+    if "low" in text:
+        return "low"
+    return "medium"
+
+
+def should_use_progressive_context(mode: str, task: TaskSpec) -> bool:
+    if mode == "off":
+        return False
+    if mode == "on":
+        return True
+    return task_complexity_label(task) != "low"
 
 
 def git_output(repo: Path, args: List[str]) -> str:
@@ -494,10 +740,30 @@ _CONTEXT_BODY_RESERVE_MIN = 2600
 _CONTEXT_HEAD_LINES = 220
 _CONTEXT_TAIL_LINES = 120
 _CONTEXT_BM25_CHUNK_LINES = 72
+_CONTRACT_CONTEXT_MAX_CHARS = 4200
+_STANDARD_DEV_GUIDE_MAX_CHARS = 3600
 
 
 def _tokenize_bm25(text: str) -> List[str]:
     return re.findall(r"[A-Za-z0-9_]+", text.lower())
+
+
+def _load_apply_contract_text(max_chars: int = _CONTRACT_CONTEXT_MAX_CHARS) -> str:
+    if not APPLY_CONTRACT_DOC.is_file():
+        return ""
+    body = read_text(APPLY_CONTRACT_DOC).strip()
+    if len(body) <= max_chars:
+        return body
+    return body[:max_chars].rstrip() + "\n\n[arena: apply contract truncated]\n"
+
+
+def _load_standard_dev_guide_text(max_chars: int = _STANDARD_DEV_GUIDE_MAX_CHARS) -> str:
+    if not STANDARD_DEV_GUIDE_DOC.is_file():
+        return ""
+    body = read_text(STANDARD_DEV_GUIDE_DOC).strip()
+    if len(body) <= max_chars:
+        return body
+    return body[:max_chars].rstrip() + "\n\n[arena: standard-dev guide truncated]\n"
 
 
 def _read_text_for_bm25(path: Path, max_chars: int = 56000) -> str:
@@ -554,6 +820,90 @@ def _context_pattern_sort_key(pattern: str, prompt_lower: str) -> Tuple[int, int
     return (tier, breadth, -overlap, len(pattern), pattern)
 
 
+def _is_noisy_context_path(rel: str) -> bool:
+    rel_lower = rel.lower()
+    return any(rel_lower.endswith(suf.lower()) for suf in _NOISY_CONTEXT_PATH_SUFFIXES)
+
+
+def _prepend_priority_context_paths(repo: Path, task: TaskSpec, paths: List[Path]) -> List[Path]:
+    priority = STANDARD_DEV_PRIORITY_CONTEXT_FILES.get(task.id)
+    if not priority:
+        return paths
+    ordered: List[Path] = []
+    seen: set[str] = set()
+    for rel in priority:
+        p = repo / rel
+        if not p.is_file():
+            continue
+        rel_norm = p.relative_to(repo).as_posix()
+        if rel_norm in seen:
+            continue
+        seen.add(rel_norm)
+        ordered.append(p)
+    for p in paths:
+        rel_norm = p.relative_to(repo).as_posix()
+        if rel_norm in seen:
+            continue
+        seen.add(rel_norm)
+        ordered.append(p)
+    return ordered
+
+
+def _tighten_standard_dev_glob_paths(repo: Path, task: TaskSpec, paths: List[Path], max_items: int = 8) -> List[Path]:
+    prefixes = STANDARD_DEV_PROGRESSIVE_ALLOWED_PREFIXES.get(task.id)
+    if not prefixes:
+        return paths
+    ranked: List[Tuple[int, str, Path]] = []
+    for p in paths:
+        rel = p.relative_to(repo).as_posix()
+        if not any(rel.startswith(pref) for pref in prefixes):
+            continue
+        rel_l = rel.lower()
+        score = 0
+        if "overlay" in rel_l:
+            score += 5
+        if "testenvironment" in rel_l or "/test/" in rel_l:
+            score += 4
+        if "economy" in rel_l or "status" in rel_l or "hud" in rel_l:
+            score += 3
+        if "panelthemes" in rel_l:
+            score += 2
+        ranked.append((score, rel, p))
+    ranked.sort(key=lambda row: (-row[0], row[1]))
+    return [p for _, _, p in ranked[:max_items]]
+
+
+def _tighten_progressive_paths(repo: Path, task: TaskSpec, paths: List[str], limit: int = 6) -> List[str]:
+    prefixes = STANDARD_DEV_PROGRESSIVE_ALLOWED_PREFIXES.get(task.id)
+    if not prefixes:
+        return paths[:limit]
+
+    out: List[str] = []
+    seen: set[str] = set()
+
+    for rel in STANDARD_DEV_PRIORITY_CONTEXT_FILES.get(task.id, ()):
+        p = repo / rel
+        if not p.is_file():
+            continue
+        if rel in seen:
+            continue
+        seen.add(rel)
+        out.append(rel)
+        if len(out) >= limit:
+            return out
+
+    for rel in paths:
+        if rel in seen:
+            continue
+        if not any(rel.startswith(pref) for pref in prefixes):
+            continue
+        seen.add(rel)
+        out.append(rel)
+        if len(out) >= limit:
+            break
+    return out
+
+
 def _collect_context_files(repo: Path, task: TaskSpec) -> Tuple[List[Path], List[Path]]:
     """Literal-pattern files first (stable), then glob-discovered files (BM25-reordered later)."""
     prompt_lower = task.prompt.lower()
@@ -578,6 +928,8 @@ def _collect_context_files(repo: Path, task: TaskSpec) -> Tuple[List[Path], List
             if not path.is_file():
                 continue
             rel = path.relative_to(repo).as_posix()
+            if _is_noisy_context_path(rel):
+                continue
             if rel in seen:
                 continue
             seen.add(rel)
@@ -637,6 +989,8 @@ def build_context_pack(
     meta: Dict[str, Any] = {
         "max_chars": max_chars,
         "use_bm25": use_bm25,
+        "apply_contract_doc": str(APPLY_CONTRACT_DOC),
+        "standard_dev_guide_doc": str(STANDARD_DEV_GUIDE_DOC),
         "literal_paths": [],
         "glob_paths_considered": [],
         "included_files": [],
@@ -647,12 +1001,21 @@ def build_context_pack(
     task_md = render_task_markdown(trial)
     git_chunk = f"## Git Status\n\n```text\n{status}\n```"
     prefix_parts = [task_md, git_chunk]
+    is_standard_dev = task.id in STANDARD_DEV_TASK_IDS
+    apply_contract = _load_apply_contract_text(max_chars=1200 if is_standard_dev else _CONTRACT_CONTEXT_MAX_CHARS)
+    if apply_contract:
+        prefix_parts.append(f"## Arena Apply Contract\n\n```markdown\n{apply_contract}\n```")
+    if is_standard_dev:
+        standard_dev_guide = _load_standard_dev_guide_text(max_chars=1400)
+        if standard_dev_guide:
+            prefix_parts.append(f"## Standard Dev Patch Guide\n\n```markdown\n{standard_dev_guide}\n```")
     package_json = repo / "package.json"
-    if package_json.is_file():
+    if package_json.is_file() and not is_standard_dev:
         pkg_body = read_text(package_json)[:_CONTEXT_PACKAGE_JSON_CAP]
         prefix_parts.append(f"## package.json\n\n```json\n{pkg_body}\n```")
     prefix = "\n\n".join(prefix_parts)
-    max_prefix = max(500, max_chars - _CONTEXT_BODY_RESERVE_MIN)
+    body_reserve_min = 4200 if is_standard_dev else _CONTEXT_BODY_RESERVE_MIN
+    max_prefix = max(500, max_chars - body_reserve_min)
     if len(prefix) > max_prefix:
         prefix = prefix[:max_prefix].rstrip() + "\n\n[arena: prefix truncated for body budget]\n"
     body_budget = max(1200, max_chars - len(prefix) - 40)
@@ -661,8 +1024,22 @@ def build_context_pack(
     meta["literal_paths"] = [p.relative_to(repo).as_posix() for p in literal_paths]
     meta["glob_paths_considered"] = [p.relative_to(repo).as_posix() for p in glob_paths]
 
+    literal_paths = _prepend_priority_context_paths(repo, task, literal_paths)
     ordered_glob = _bm25_order_paths(glob_paths, task) if use_bm25 else glob_paths
+    if is_standard_dev:
+        ordered_glob = _tighten_standard_dev_glob_paths(repo, task, ordered_glob)
     final_paths = [*literal_paths, *ordered_glob]
+    deduped_paths: List[Path] = []
+    seen_final: set[str] = set()
+    for p in final_paths:
+        rel = p.relative_to(repo).as_posix()
+        if rel in seen_final:
+            continue
+        seen_final.add(rel)
+        deduped_paths.append(p)
+    final_paths = deduped_paths
+    if is_standard_dev:
+        final_paths = final_paths[:6]
     literal_resolved = {p.resolve() for p in literal_paths}
 
     body_sections: List[str] = []
@@ -672,7 +1049,8 @@ def build_context_pack(
         raw = read_text(path)
         rel = path.relative_to(repo)
         rel_text = rel.as_posix()
-        per_cap = min(6200, max(900, remaining // max(1, min(n - idx, 8))))
+        min_per_cap = 1200 if is_standard_dev else 900
+        per_cap = min(6200, max(min_per_cap, remaining // max(1, min(n - idx, 8))))
         body = _truncate_file_body(path, raw, per_cap)
         section = f"## `{rel}`\n\n```\n{body}\n```"
         overhead = len(section) - len(body)
@@ -720,6 +1098,145 @@ def selected_context(
     return build_context_pack(trial, max_chars, log_dir=log_dir, use_bm25=use_bm25).text
 
 
+def progressive_probe_context(trial: TrialManifest) -> str:
+    task = trial.task
+    extra_rules = ""
+    if task.id in STANDARD_DEV_TASK_IDS:
+        allowed_prefixes = STANDARD_DEV_PROGRESSIVE_ALLOWED_PREFIXES.get(task.id, ())
+        extra_rules = (
+            "\n## Standard-Dev Retrieval Rules\n\n"
+            "Prioritize minimal, high-signal files used by the `/test-env` sandbox and existing overlays. "
+            "Avoid broad rewrites of `src/components/ui/GameHUD.tsx` unless strictly necessary.\n"
+            "Only request files under these prefixes when possible:\n"
+            + "\n".join(f"- `{p}`" for p in allowed_prefixes)
+        )
+    return "\n\n".join(
+        [
+            "You are planning a code edit. Do not write code yet.",
+            render_task_markdown(trial),
+            "## Available Context Paths\n\n" + "\n".join(f"- `{p}`" for p in task.context_paths),
+            "## Response Format\n\nReturn JSON only: {\"paths\": [\"src/path.tsx\"], \"reason\": \"short reason\"}. "
+            "Request at most 6 repo-relative paths that are most necessary before editing. "
+            "Prefer exact files over globs. Do not request broad directories.",
+            extra_rules,
+        ]
+    )
+
+
+def extract_progressive_paths(raw: str, trial: TrialManifest, limit: int = 6) -> List[str]:
+    candidates: List[str] = []
+    try:
+        start = raw.find("{")
+        end = raw.rfind("}")
+        payload = json.loads(raw[start : end + 1]) if start >= 0 and end > start else {}
+        paths = payload.get("paths") or []
+        if isinstance(paths, list):
+            candidates.extend(str(p) for p in paths)
+    except (json.JSONDecodeError, TypeError, ValueError):
+        pass
+    candidates.extend(m.group(0) for m in re.finditer(r"[A-Za-z0-9_./\[\]-]+\.(?:tsx|ts|jsx|js|json|css|md|html)", raw))
+
+    repo = Path(trial.source_repo)
+    out: List[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        rel = _clean_candidate_path(candidate).lstrip("./")
+        if rel in seen:
+            continue
+        if any(ch in rel for ch in "*?"):
+            continue
+        if not is_safe_repo_path(rel, trial.task.allowed_paths + trial.task.context_paths):
+            continue
+        if not (repo / rel).is_file():
+            continue
+        seen.add(rel)
+        out.append(rel)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def build_progressive_context_sections(trial: TrialManifest, paths: List[str], max_chars: int = 9000) -> str:
+    if not paths:
+        return ""
+    repo = Path(trial.source_repo)
+    per_file = max(900, max_chars // max(1, len(paths)))
+    sections = []
+    used = 0
+    for rel in paths:
+        path = repo / rel
+        raw = read_text(path)
+        body = _truncate_file_body(path, raw, per_file)
+        section = f"## Progressive Context: `{rel}`\n\n```\n{body}\n```"
+        if used + len(section) > max_chars:
+            remaining = max_chars - used - 80
+            if remaining <= 300:
+                break
+            body = _truncate_file_body(path, raw, remaining)
+            section = f"## Progressive Context: `{rel}`\n\n```\n{body}\n```"
+        sections.append(section)
+        used += len(section)
+    return "\n\n".join(sections)
+
+
+def request_progressive_context(
+    trial: TrialManifest,
+    args: argparse.Namespace,
+    log_root: Path,
+    backend_name: str,
+    max_tokens: int,
+    extra_eos: Optional[Tuple[int, ...]],
+    stop_tuple: Optional[Tuple[str, ...]],
+) -> Tuple[str, Dict[str, Any]]:
+    prompt = progressive_probe_context(trial)
+    started = time.perf_counter()
+    usage: Dict[str, Any] = {}
+    if backend_name == "local":
+        backend = LocalMlxBackend(adapter_path=args.adapter_path)
+        raw = backend.generate(
+            GenerationRequest(
+                messages=[
+                    ChatMessage("system", "You are a careful TypeScript game engineer. Request only needed context."),
+                    ChatMessage("user", prompt),
+                ],
+                max_tokens=min(768, max_tokens),
+                temperature=0.0,
+                extra_eos_token_ids=extra_eos,
+                stop_strings=stop_tuple,
+            )
+        )
+    else:
+        backend = OpenAICompatibleBackend(model=args.model)
+        raw, usage = backend.generate(
+            GenerationRequest(
+                messages=[
+                    ChatMessage("system", "You are a careful TypeScript game engineer. Request only needed context."),
+                    ChatMessage("user", prompt),
+                ],
+                max_tokens=min(768, max_tokens),
+                temperature=0.0,
+                stop_strings=stop_tuple,
+            )
+        )
+    paths = extract_progressive_paths(raw, trial)
+    if trial.task.id in STANDARD_DEV_TASK_IDS:
+        repo = Path(trial.source_repo)
+        paths = _tighten_progressive_paths(repo, trial.task, paths, limit=6)
+    extra_context = build_progressive_context_sections(trial, paths)
+    meta = {
+        "enabled": True,
+        "elapsed_s": time.perf_counter() - started,
+        "request_output": raw,
+        "requested_paths": paths,
+        "extra_context_chars": len(extra_context),
+        "usage": usage,
+    }
+    log_root.mkdir(parents=True, exist_ok=True)
+    write_text(log_root / "progressive_context_request.md", raw.strip() + "\n")
+    write_text(log_root / "progressive_context.json", json.dumps(meta, indent=2) + "\n")
+    return extra_context, meta
+
+
 def packet(
     trial_id: str,
     attempt: str,
@@ -748,7 +1265,7 @@ Worktree path:
 
 Before editing, infer the app's schema and visual language from the provided files. This is a Next.js App Router game under `src/app` with React components under `src/components`, Zustand game state in `src/store/useGameStore.ts`, and typed systems under `src/types/game.ts` / `src/lib`. Keep the Fallen Empire vibe: dark medieval strategy UI, parchment text, empire-gold accents, restrained red/amber danger states, compact tactical language, and existing Tailwind classes/components. Do not introduce generic sci-fi dashboards, neon cyberpunk UI, unrelated routes, or invented data shapes when the existing code gives a schema.
 
-Do not edit the main game checkout. For small UI edits, prefer fenced full-file blocks because they are less fragile than partial diffs. Return exactly one of:
+Do not edit the main game checkout. Follow the Arena Apply Contract included in context. For standard-dev tasks, also follow the Standard Dev Patch Guide in context. For small UI edits, prefer fenced full-file blocks because they are less fragile than partial diffs. Return exactly one of:
 
 1. A unified diff that applies with `git apply`, or
 2. Fenced file blocks with repo-relative paths:
@@ -927,6 +1444,22 @@ def save_after_attempt_update(trial: TrialManifest, attempt: AttemptManifest, ev
     save_trial(trial)
     write_attempt_manifest(trial.trial_id, attempt)
     append_index(trial, attempt, event=event)
+
+
+def mark_attempt_generation_failure(
+    trial_id: str,
+    attempt_name: str,
+    apply_status: str,
+    message: str,
+    elapsed_s: float,
+) -> AttemptManifest:
+    trial = load_trial(trial_id)
+    attempt = trial.attempts[attempt_name]
+    attempt.apply_status = apply_status
+    attempt.generation_elapsed_s = elapsed_s
+    attempt.last_error = message
+    save_after_attempt_update(trial, attempt, "generation_failed")
+    return attempt
 
 
 def write_diff_artifacts(trial: TrialManifest, attempt: AttemptManifest) -> None:
@@ -1145,6 +1678,7 @@ def generate_attempt(args: argparse.Namespace) -> Path:
     attempt = trial.attempts[args.attempt]
     adir = attempt_dir(trial.trial_id, attempt.attempt)
     log_root = adir / "logs"
+    worktree = Path(attempt.worktree_path)
     use_bm25_ctx = not getattr(args, "no_context_bm25", False)
     context = build_context_pack(
         trial,
@@ -1162,7 +1696,7 @@ def generate_attempt(args: argparse.Namespace) -> Path:
         "or fenced full-file blocks with repo-relative paths. For small UI edits, fenced "
         "full-file blocks are preferred because they avoid fragile hunk headers. "
     )
-    prompt = (
+    base_user_prompt = (
         format_instruction
         + "Do not "
         "include shell commands, commentary, summaries, or both output formats. Stay within "
@@ -1170,42 +1704,47 @@ def generate_attempt(args: argparse.Namespace) -> Path:
         f"{context}"
     )
     requested_max_tokens = int(args.max_tokens or trial.task.max_tokens or 4096)
-    input_tokens = estimate_tokens("You are a careful TypeScript game engineer.\n" + prompt)
-    ctx_log = log_root / "context_pack.json"
-    if ctx_log.is_file():
+    tsc_retries = max(0, int(getattr(args, "tsc_retries", 0) or 0))
+    dummy_preview_port = 5174
+    mlx_model_id = os.environ.get("MODEL", DEFAULT_LOCAL_MODEL)
+    stop_tuple = arena_stop_strings_from_args(args)
+    extra_eos: Optional[Tuple[int, ...]] = None
+    if args.backend == "local":
+        extra_eos = mlx_extra_eos_token_ids_for_model(mlx_model_id, disabled=bool(getattr(args, "no_extra_eos", False)))
+
+    progressive_mode = str(getattr(args, "progressive_context", "auto") or "auto")
+    progressive_extra_context = ""
+    progressive_meta: Dict[str, Any] = {"enabled": False, "mode": progressive_mode}
+    if args.backend in {"local", "frontier"} and should_use_progressive_context(progressive_mode, trial.task):
         try:
-            pack_log = json.loads(read_text(ctx_log))
-            pack_log["full_user_prompt_est_tokens"] = input_tokens
-            write_text(ctx_log, json.dumps(pack_log, indent=2) + "\n")
-        except (json.JSONDecodeError, OSError):
-            pass
+            progressive_extra_context, progressive_meta = request_progressive_context(
+                trial,
+                args,
+                log_root,
+                args.backend,
+                requested_max_tokens,
+                extra_eos,
+                stop_tuple,
+            )
+            progressive_meta["mode"] = progressive_mode
+        except Exception as exc:
+            progressive_meta = {
+                "enabled": True,
+                "mode": progressive_mode,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
+            write_text(log_root / "progressive_context.json", json.dumps(progressive_meta, indent=2) + "\n")
+
     started = time.perf_counter()
     usage: Dict[str, Any] = {}
     estimated_cost_usd = 0.0
-    if args.backend == "local":
-        backend = LocalMlxBackend(adapter_path=args.adapter_path)
-        text = backend.generate(
-            GenerationRequest(
-                messages=[ChatMessage("system", "You are a careful TypeScript game engineer."), ChatMessage("user", prompt)],
-                max_tokens=requested_max_tokens,
-                temperature=args.temp,
-            )
-        )
-    elif args.backend == "frontier":
-        backend = OpenAICompatibleBackend(model=args.model)
-        text, usage = backend.generate(
-            GenerationRequest(
-                messages=[ChatMessage("system", "You are a careful TypeScript game engineer."), ChatMessage("user", prompt)],
-                max_tokens=requested_max_tokens,
-                temperature=args.temp,
-            )
-        )
-        estimated_cost_usd = (
-            (usage.get("prompt_tokens", input_tokens) * 5.0)
-            + (usage.get("completion_tokens", 0) * 15.0)
-        ) / 1_000_000
-        write_text(adir / "frontier_usage.json", json.dumps(usage, indent=2) + "\n")
-    else:
+    text = ""
+    tsc_round_meta: List[Dict[str, Any]] = []
+    sum_output_tokens = 0
+    sum_prompt_tokens = 0
+    repair_suffix = ""
+
+    if args.backend not in {"local", "frontier"}:
         return packet(
             args.trial_id,
             args.attempt,
@@ -1213,10 +1752,159 @@ def generate_attempt(args: argparse.Namespace) -> Path:
             max_chars=args.context_chars,
             use_bm25=use_bm25_ctx,
         )
-    text = sanitize_model_output(text)
+
+    skip_export_guard = os.environ.get("GAME_TASK_ARENA_SKIP_EXPORT_GUARD", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    baseline_exports: Dict[str, Set[str]] = {}
+    if not skip_export_guard:
+        baseline_exports = snapshot_baseline_export_names(worktree, trial.task.allowed_paths)
+
+    max_rounds = tsc_retries + 1
+    for round_idx in range(max_rounds):
+        if round_idx > 0:
+            reset_worktree_head(worktree, log_root / f"git_reset_before_retry_{round_idx}.log")
+
+        progressive_block = ""
+        if progressive_extra_context:
+            progressive_block = (
+                "\n\n## Additional Targeted Context (requested before editing)\n\n"
+                f"{progressive_extra_context}\n"
+            )
+        user_prompt = base_user_prompt + progressive_block + repair_suffix
+        input_tokens = estimate_tokens("You are a careful TypeScript game engineer.\n" + user_prompt)
+        ctx_log = log_root / "context_pack.json"
+        if ctx_log.is_file():
+            try:
+                pack_log = json.loads(read_text(ctx_log))
+                pack_log["full_user_prompt_est_tokens"] = input_tokens
+                write_text(ctx_log, json.dumps(pack_log, indent=2) + "\n")
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        if args.backend == "local":
+            backend = LocalMlxBackend(adapter_path=args.adapter_path)
+            text = backend.generate(
+                GenerationRequest(
+                    messages=[
+                        ChatMessage("system", "You are a careful TypeScript game engineer."),
+                        ChatMessage("user", user_prompt),
+                    ],
+                    max_tokens=requested_max_tokens,
+                    temperature=args.temp,
+                    extra_eos_token_ids=extra_eos,
+                    stop_strings=stop_tuple,
+                )
+            )
+            round_out = int(estimate_tokens(text))
+            sum_output_tokens += round_out
+            sum_prompt_tokens += input_tokens
+        else:
+            backend = OpenAICompatibleBackend(model=args.model)
+            text, usage = backend.generate(
+                GenerationRequest(
+                    messages=[
+                        ChatMessage("system", "You are a careful TypeScript game engineer."),
+                        ChatMessage("user", user_prompt),
+                    ],
+                    max_tokens=requested_max_tokens,
+                    temperature=args.temp,
+                    stop_strings=stop_tuple,
+                )
+            )
+            round_out = int(usage.get("completion_tokens") or estimate_tokens(text))
+            round_in = int(usage.get("prompt_tokens") or input_tokens)
+            sum_output_tokens += round_out
+            sum_prompt_tokens += round_in
+            write_text(adir / "frontier_usage.json", json.dumps(usage, indent=2) + "\n")
+
+        text = sanitize_model_output(text)
+        write_text(adir / "model_output.md", text)
+        applied = apply_output(argparse.Namespace(trial_id=args.trial_id, attempt=args.attempt, input=str(adir / "model_output.md")))
+        trial = load_trial(args.trial_id)
+        attempt = trial.attempts[args.attempt]
+        worktree = Path(attempt.worktree_path)
+
+        missing_by_file = (
+            {}
+            if skip_export_guard
+            else export_preservation_violations(worktree, baseline_exports, trial.task.allowed_paths)
+        )
+        export_ok = not missing_by_file
+
+        tsc_log_path = adir / "logs" / f"tsc_round_{round_idx}.log"
+        tsc_ok, tsc_status = run_tsc_noemit(trial, attempt, dummy_preview_port, log_path=tsc_log_path)
+        try:
+            shutil.copy2(tsc_log_path, adir / "logs" / "preview_preflight_tsc.log")
+        except OSError:
+            pass
+
+        tsc_round_meta.append(
+            {
+                "round": round_idx,
+                "apply_ok": attempt_applied(applied),
+                "tsc_ok": tsc_ok,
+                "tsc_status": tsc_status,
+                "apply_status": applied.apply_status,
+                "exports_ok": export_ok,
+                "missing_exports": missing_by_file,
+            }
+        )
+
+        apply_ok = attempt_applied(applied)
+        if apply_ok and tsc_ok and export_ok:
+            break
+        if round_idx == max_rounds - 1:
+            break
+        export_hint = ""
+        if not export_ok:
+            exp_lines = [
+                f"- `{rel}`: restore exports " + ", ".join(f"`{n}`" for n in names)
+                for rel, names in sorted(missing_by_file.items())
+            ]
+            export_hint = (
+                "\n\n## Export preservation (must fix)\n"
+                "These exported names existed on the branch **before** your edit and are still imported elsewhere. "
+                "They must remain exported (same names) from the same files unless the task explicitly asked to rename them.\n"
+                + "\n".join(exp_lines)
+                + "\n"
+            )
+        log_body = read_text(tsc_log_path)
+        tail = log_body[-3500:] if len(log_body) > 3500 else log_body
+        apply_hint = ""
+        if not str(applied.apply_status).startswith(("applied", "wrote")):
+            apply_hint = (
+                f"\nApply status was `{applied.apply_status}` (last apply log tail may help):\n"
+                f"```text\n{read_text(adir / 'logs' / 'apply.log')[-2000:]}\n```\n"
+            )
+        typecheck_hint = ""
+        if not apply_ok:
+            typecheck_hint = (
+                "\n\n## Apply follow-up\n"
+                "Your previous answer did not produce any applyable edit. Emit a corrected response in the required format: "
+                "fenced full-file blocks with repo-relative paths or a valid unified diff, using only allowed paths. "
+                "The response must change the disposable game worktree and preserve exports.\n\n"
+                f"{apply_hint}"
+            )
+        elif not tsc_ok:
+            typecheck_hint = (
+                "\n\n## Typecheck follow-up\n"
+                "Your previous answer was written to the disposable worktree but `npx tsc --noEmit` failed. "
+                "Emit a corrected response in the same required format (fenced full-file blocks and allowed paths only). "
+                "Preserve exports and fix every compiler error.\n\n"
+                f"```text\n{tail}\n```\n"
+                f"{apply_hint}"
+            )
+        repair_suffix = export_hint + typecheck_hint
+
     elapsed = time.perf_counter() - started
-    output_tokens = int(usage.get("completion_tokens") or estimate_tokens(text))
-    total_tokens = int(usage.get("total_tokens") or (input_tokens + output_tokens))
+    if args.backend == "frontier":
+        estimated_cost_usd = ((sum_prompt_tokens * 5.0) + (sum_output_tokens * 15.0)) / 1_000_000
+    final_input_tokens = sum_prompt_tokens
+    output_tokens = sum_output_tokens
+    total_tokens = final_input_tokens + output_tokens
     metrics = {
         "trial_id": trial.trial_id,
         "attempt": attempt.attempt,
@@ -1225,14 +1913,30 @@ def generate_attempt(args: argparse.Namespace) -> Path:
         "started_at": utc_now(),
         "elapsed_s": elapsed,
         "max_tokens": requested_max_tokens,
-        "input_tokens": int(usage.get("prompt_tokens") or input_tokens),
+        "tsc_retries_config": tsc_retries,
+        "tsc_rounds": tsc_round_meta,
+        "apply_final_ok": bool(tsc_round_meta[-1]["apply_ok"]) if tsc_round_meta else False,
+        "tsc_final_ok": bool(tsc_round_meta[-1]["tsc_ok"]) if tsc_round_meta else False,
+        "export_guard_skipped": skip_export_guard,
+        "exports_final_ok": bool(tsc_round_meta[-1]["exports_ok"]) if tsc_round_meta else True,
+        "round_final_ok": bool(
+            tsc_round_meta[-1]["apply_ok"]
+            and tsc_round_meta[-1]["tsc_ok"]
+            and tsc_round_meta[-1]["exports_ok"]
+        )
+        if tsc_round_meta
+        else False,
+        "input_tokens": final_input_tokens,
         "output_tokens": output_tokens,
         "total_tokens": total_tokens,
         "estimated_cost_usd": estimated_cost_usd,
         "usage": usage,
+        "mlx_extra_eos_token_ids": list(extra_eos) if extra_eos else [],
+        "stop_strings": list(stop_tuple) if stop_tuple else [],
+        "progressive_context": progressive_meta,
     }
     attempt.generation_elapsed_s = elapsed
-    attempt.generation_input_tokens = metrics["input_tokens"]
+    attempt.generation_input_tokens = final_input_tokens
     attempt.generation_output_tokens = output_tokens
     attempt.generation_total_tokens = total_tokens
     attempt.generation_cost_usd = estimated_cost_usd
@@ -1359,7 +2063,6 @@ body {
 .gradio-container .tabs,
 .gradio-container .tabitem,
 .gradio-container .input-container,
-.gradio-container .wrap,
 .gradio-container .prose,
 .gradio-container .markdown,
 .gradio-container .accordion {
@@ -1411,14 +2114,17 @@ body {
 .gradio-container button.secondary, .gradio-container button {
   border-radius: 14px !important;
 }
-.gradio-container input, .gradio-container textarea, .gradio-container select {
+/* Do not restyle radio/checkbox/range — Gradio uses .wrap for those; our old .wrap rule broke clicks. */
+.gradio-container input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="hidden"]),
+.gradio-container textarea,
+.gradio-container select {
   background: var(--arena-input) !important;
   border: 1px solid var(--arena-border) !important;
   border-radius: 12px !important;
   box-shadow: none !important;
   color: var(--arena-text) !important;
 }
-.gradio-container input::placeholder,
+.gradio-container input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([type="file"]):not([type="hidden"])::placeholder,
 .gradio-container textarea::placeholder {
   color: var(--arena-muted) !important;
   opacity: 0.85 !important;
@@ -1466,7 +2172,7 @@ body {
             base_ref=base_ref or "HEAD",
             trial_id=None,
             attempts=["local", "frontier"],
-            local_adapter="checkpoints/fe-lora-30m",
+            local_adapter=DEFAULT_LOCAL_ADAPTER,
             frontier_model=os.environ.get("FRONTIER_MODEL", "frontier"),
             copy=False,
         )
@@ -1485,12 +2191,13 @@ body {
         local_adapter,
         frontier_model,
         max_tokens,
+        generation_timeout_s,
         local_port,
         frontier_port,
         start_servers,
     ):
         trial_id, create_summary = create_ui(task_id, source_repo, worktree_root, base_ref)
-        generate_status = generate_apply_both_ui(trial_id, local_adapter, frontier_model, max_tokens)
+        generate_status = generate_apply_both_ui(trial_id, local_adapter, frontier_model, max_tokens, generation_timeout_s)
         preview_status, local_link, frontier_link = preview_both_ui(
             trial_id,
             local_port,
@@ -1504,34 +2211,68 @@ body {
         )
         return trial_id, status, local_link, frontier_link
 
-    def generate_apply_both_ui(trial_id, local_adapter, frontier_model, max_tokens):
+    def generate_apply_both_ui(trial_id, local_adapter, frontier_model, max_tokens, generation_timeout_s):
         trial_id = trial_id.strip()
         if not trial_id:
             return "Create a trial first."
         statuses = []
+        timeout_s = max(30, int(generation_timeout_s or os.environ.get("GAME_TASK_ARENA_GENERATION_TIMEOUT_S", "360")))
         for attempt_name, backend in [("local", "local"), ("frontier", "frontier")]:
             try:
                 context_chars = 9000 if backend == "local" else 16000
-                output_path = generate_attempt(
-                    argparse.Namespace(
-                        trial_id=trial_id,
-                        attempt=attempt_name,
-                        backend=backend,
-                        adapter_path=local_adapter or "checkpoints/fe-lora-30m",
-                        model=frontier_model or os.environ.get("FRONTIER_MODEL"),
-                        max_tokens=int(max_tokens or 4096),
-                        temp=0.0,
-                        context_chars=context_chars,
-                        no_context_bm25=False,
+                log_path = attempt_dir(trial_id, attempt_name) / "logs" / "ui_generate.log"
+                argv = [
+                    sys.executable,
+                    str(SCRIPT_DIR / "game_task_arena.py"),
+                    "generate",
+                    "--trial-id",
+                    trial_id,
+                    "--attempt",
+                    attempt_name,
+                    "--backend",
+                    backend,
+                    "--adapter-path",
+                    local_adapter or DEFAULT_LOCAL_ADAPTER,
+                    "--max-tokens",
+                    str(int(max_tokens or 4096)),
+                    "--context-chars",
+                    str(context_chars),
+                    "--tsc-retries",
+                    str(1 if backend == "local" else 0),
+                    "--progressive-context",
+                    "auto",
+                ]
+                if backend == "frontier":
+                    model = frontier_model or os.environ.get("FRONTIER_MODEL")
+                    if model:
+                        argv.extend(["--model", model])
+                code, elapsed_proc = run_cmd(argv, cwd=REPO, log_path=log_path, timeout_s=timeout_s)
+                if code == 124:
+                    manifest = mark_attempt_generation_failure(
+                        trial_id,
+                        attempt_name,
+                        "generation_timeout",
+                        f"Generation timed out after {timeout_s}s. See {log_path}.",
+                        elapsed_proc,
                     )
-                )
-                manifest = apply_output(
-                    argparse.Namespace(trial_id=trial_id, attempt=attempt_name, input=str(output_path))
-                )
+                    statuses.append(f"- `{attempt_name}` timed out after {timeout_s}s; marked `generation_timeout`.")
+                    continue
+                if code != 0:
+                    manifest = mark_attempt_generation_failure(
+                        trial_id,
+                        attempt_name,
+                        f"generation_failed_exit_{code}",
+                        f"Generation exited {code}. See {log_path}.",
+                        elapsed_proc,
+                    )
+                    statuses.append(f"- `{attempt_name}` failed with exit `{code}`; see `{log_path}`.")
+                    continue
+                manifest = load_trial(trial_id).attempts[attempt_name]
                 elapsed = manifest.generation_elapsed_s or 0.0
                 tokens = manifest.generation_total_tokens or 0
+                failure_tail = f"; last error: `{manifest.last_error[-220:]}`" if manifest.last_error and not attempt_applied(manifest) else ""
                 statuses.append(
-                    f"- `{attempt_name}` generated in {elapsed:.1f}s using ~{tokens} tokens; apply status is `{manifest.apply_status}`"
+                    f"- `{attempt_name}` generated in {elapsed:.1f}s using ~{tokens} tokens; apply status is `{manifest.apply_status}`{failure_tail}"
                 )
             except Exception as exc:
                 statuses.append(f"- `{attempt_name}` failed: `{type(exc).__name__}: {exc}`")
@@ -1754,10 +2495,15 @@ body {
 
         with gr.Accordion("Model and preview settings", open=False):
             with gr.Row():
-                gen_local_adapter = gr.Textbox(label="Local adapter", value="checkpoints/fe-lora-30m")
+                gen_local_adapter = gr.Textbox(label="Local adapter", value=DEFAULT_LOCAL_ADAPTER)
                 gen_frontier_model = gr.Textbox(label="Frontier model", value=os.environ.get("FRONTIER_MODEL", ""))
                 gen_tokens = gr.Number(label="Max tokens", value=4096, precision=0)
             with gr.Row():
+                gen_timeout = gr.Number(
+                    label="Generation timeout (seconds)",
+                    value=int(os.environ.get("GAME_TASK_ARENA_GENERATION_TIMEOUT_S", "360")),
+                    precision=0,
+                )
                 local_port = gr.Number(label="Local port", value=5174, precision=0)
                 frontier_port = gr.Number(label="Frontier port", value=5175, precision=0)
                 start_servers = gr.Checkbox(label="Start dev servers", value=True)
@@ -1778,6 +2524,7 @@ body {
                 gen_local_adapter,
                 gen_frontier_model,
                 gen_tokens,
+                gen_timeout,
                 local_port,
                 frontier_port,
                 start_servers,
@@ -1899,7 +2646,7 @@ body {
             attempt_manifest = gr.Textbox(label="Attempt manifest / verify output", lines=10)
             report_md = gr.Markdown()
             create_btn.click(create_ui, inputs=[task_id, source_repo, worktree_root, base_ref], outputs=[trial_id, detail_status])
-            generate_btn.click(generate_apply_both_ui, inputs=[trial_id, gen_local_adapter, gen_frontier_model, gen_tokens], outputs=[detail_status])
+            generate_btn.click(generate_apply_both_ui, inputs=[trial_id, gen_local_adapter, gen_frontier_model, gen_tokens, gen_timeout], outputs=[detail_status])
             preview_btn.click(preview_both_ui, inputs=[trial_id, local_port, frontier_port, start_servers], outputs=[detail_status, local_preview_link, frontier_preview_link])
             packet_btn.click(packet_ui, inputs=[trial_id, attempt], outputs=[packet_path, packet_text, attempt_manifest])
             verify_btn.click(verify_ui, inputs=[trial_id, attempt], outputs=[attempt_manifest])
@@ -1920,7 +2667,7 @@ def main() -> None:
     p_create.add_argument("--base-ref", default="HEAD")
     p_create.add_argument("--trial-id")
     p_create.add_argument("--attempts", nargs="+", default=["local", "frontier"])
-    p_create.add_argument("--local-adapter", default="checkpoints/fe-lora-30m")
+    p_create.add_argument("--local-adapter", default=DEFAULT_LOCAL_ADAPTER)
     p_create.add_argument("--frontier-model", default=os.environ.get("FRONTIER_MODEL", "frontier"))
     p_create.add_argument("--copy", action="store_true", help="Copy source repo instead of git worktree.")
 
@@ -1938,7 +2685,7 @@ def main() -> None:
     p_generate.add_argument("--trial-id", required=True)
     p_generate.add_argument("--attempt", required=True)
     p_generate.add_argument("--backend", choices=["packet", "local", "frontier"], default="packet")
-    p_generate.add_argument("--adapter-path", default="checkpoints/fe-lora-30m")
+    p_generate.add_argument("--adapter-path", default=DEFAULT_LOCAL_ADAPTER)
     p_generate.add_argument("--model", default=os.environ.get("FRONTIER_MODEL"))
     p_generate.add_argument("--max-tokens", type=int, default=4096)
     p_generate.add_argument("--temp", type=float, default=0.0)
@@ -1947,6 +2694,31 @@ def main() -> None:
         "--no-context-bm25",
         action="store_true",
         help="Disable BM25 reordering among glob-matched context files (deterministic order only).",
+    )
+    p_generate.add_argument(
+        "--tsc-retries",
+        type=int,
+        default=0,
+        help="After apply, run `npx tsc --noEmit`; on failure `git reset --hard` and regenerate with compiler output appended to the prompt (default 0).",
+    )
+    p_generate.add_argument(
+        "--progressive-context",
+        choices=["auto", "on", "off"],
+        default="auto",
+        help="Ask the model which extra files it needs before final edit generation (auto = enabled for non-low complexity tasks).",
+    )
+    p_generate.add_argument(
+        "--stop-string",
+        dest="stop_strings",
+        action="append",
+        default=None,
+        metavar="TEXT",
+        help="Decoded substring after which generation stops (repeatable). Or env GAME_TASK_ARENA_STOP_STRINGS with ||-separated pieces (use \\n for newline).",
+    )
+    p_generate.add_argument(
+        "--no-extra-eos",
+        action="store_true",
+        help="Disable default MLX extra EOS token ids for Qwen chat (id 151645). Override list with GAME_TASK_ARENA_EXTRA_EOS_IDS=151645,151646 or empty to clear.",
     )
 
     p_apply = sub.add_parser("apply")

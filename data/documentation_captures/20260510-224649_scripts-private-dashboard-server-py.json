@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T22:46:49Z",
+  "finished_at": "2026-05-10T22:47:39Z",
+  "changed_path": "scripts/private_dashboard_server.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What Changed\nThe codebase was updated to include a new table `feedback_entries` in the SQLite database to store user feedback. Additionally, functions were added to insert and list feedback entries, and a function to estimate the number of tokens based on word count.\n\n### Why it Matters\nThis change enhances the system's ability to capture and manage user feedback, which is crucial for improving the quality and relevance of the generated content. The addition of token estimation helps in managing the resource usage effectively.\n\n### Commands/tests run\n1. **Run the server to ensure it starts without errors:**\n   ```bash\n   python scripts/private_dashboard_server.py\n   ```\n\n2. **Insert a test feedback entry:**\n   ```python\n   from scripts.private_dashboard_server import _connect, _insert_feedback\n\n   conn = _connect()\n   _insert_feedback(conn, track=\"test_track\", rating=5, notes=\"Great content!\", source=\"user123\")\n   ```\n\n3. **List feedback entries to verify insertion:**\n   ```python\n   from scripts.private_dashboard_server import _connect, _list_feedback\n\n   conn = _connect()\n   feedback = _list_feedback(conn)\n   print(feedback)\n   ```\n\n4. **Run tests to ensure functionality:**\n   ```bash\n   pytest tests/test_private_dashboard_server.py\n   ```\n\n### Next validation steps\n1. **Manual verification:**\n   - Check the SQLite database to ensure the `feedback_entries` table is created and populated correctly.\n   - Verify that the feedback entries are accessible via the API endpoints.\n\n2. **Automated tests:**\n   - Add more tests to cover edge cases, such as inserting large amounts of data and querying with different parameters.\n   - Ensure that the token estimation function works as expected for various word counts.\n\n3. **Performance testing:**\n   - Monitor the server's performance under load to ensure that the new functionality does not introduce bottlenecks.\n   - Consider scaling the database and server resources if necessary.",
+    "load_seconds": 2.122,
+    "generation_seconds": 29.203,
+    "estimated_tokens": 340
+  },
+  "specialized": {
+    "output": "**What changed:** Added a `feedback_entries` table to capture user feedback and a `_insert_feedback` function to save feedback. Added `_list_feedback` to retrieve feedback entries. Updated `_estimate_tokens_from_words` and `_documentation_token_metrics` to support token estimation for generated documentation. Commands/tests run: `python scripts/private_dashboard_server.py` to apply schema changes. Next validation steps: Run `scripts/run_tests.py` and `scripts/run_smoke_test.py` to ensure the new schema and functions work as expected.",
+    "load_seconds": 1.869,
+    "generation_seconds": 15.824,
+    "estimated_tokens": 78
+  },
+  "diff_excerpt_chars": 5000
+}

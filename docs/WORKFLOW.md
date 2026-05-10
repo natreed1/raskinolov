@@ -420,13 +420,16 @@ Edit-triggered training prep hook:
 
 - `.cursor/hooks/lab_hook_after_fileedit_training_trigger.py`
 - calls `scripts/trigger_doc_training_on_changes.py` on watched edits
+- always spawns `scripts/generate_change_documentation_capture.py` (open-source + specialized docs for changed path, async)
 - refreshes run-analysis corpus and (cooldown-gated) runs `python scripts/ml_workflow.py documentation-dataset`
 - queue log: `data/training_triggers/documentation_training_queue.jsonl`
+- generated capture artifacts: `data/documentation_captures/`
 
 Useful env controls:
 
 - `FE_LAB_DOC_TRIGGER_MIN_SECONDS` (default `900`)
 - `FE_LAB_AUTODOC_DATASET_ON_CHANGE` (`1`/`0`)
+- `FE_LAB_ALWAYS_RUN_OPEN_SOURCE_ON_CHANGE` (`1`/`0`, default on)
 
 ## Related docs
 

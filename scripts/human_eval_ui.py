@@ -24,11 +24,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
 import gradio as gr
 from mlx_lm import load, stream_generate
 from mlx_lm.sample_utils import make_sampler
 
-DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
+
+DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 DEFAULT_TASKS = Path(__file__).resolve().parent.parent / "benchmarks" / "fallen_empire_tasks.json"
 DEFAULT_OUT = Path(__file__).resolve().parent.parent / "benchmarks" / "results" / "human_eval.jsonl"
 SYSTEM = (
@@ -71,6 +77,7 @@ class Session:
         if self.adapter_path:
             load_kw["adapter_path"] = self.adapter_path
         self.model, self.tokenizer = load(self.model_id, **load_kw)
+        register_qwen_coder_instruct_extra_stops(self.tokenizer)
 
     def prompt_for(self, task_id: str) -> str:
         t = self.by_id[task_id]

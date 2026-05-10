@@ -4,13 +4,15 @@
 
 **Browser UI:** `python scripts/train_ui_gradio.py` (default **http://127.0.0.1:7862**) — export, build, train with live logs; use `ml_workflow.py` when you need the same audit trail on disk.
 
+This file explains the training flow. For canonical paths use `docs/DATA_LAYOUT.md`; for current-vs-historical adapters and runs use `docs/RUNS.md`; for CLI examples use `docs/WORKFLOW.md`.
+
 ## How this fits together
 
 1. **Game text export** (`scripts/export_repo_for_training.py`) writes `data/raw/repo_text.jsonl` — one JSON object per file (`path`, `text`). Large; gitignored.
 
-2. **LoRA dataset build** (`scripts/build_lora_dataset.py`) turns that into the layout **`mlx_lm.lora` requires**: a directory containing **`train.jsonl`**, **`valid.jsonl`**, and **`test.jsonl`**. Each line is `{"text": "# path\\n\\n<file body>"}` so the model does causal LM on code-shaped text (mlx-lm auto-detects `text` vs `messages`).
+2. **LoRA dataset build** (`scripts/build_lora_dataset.py`) turns that into the layout **`mlx_lm.lora` requires**: a directory containing **`train.jsonl`**, **`valid.jsonl`**, and **`test.jsonl`**. Each line is `{"text": "…"}` with a **`# path:` / `# part:` / `# chars:`** header and a **body chunk** (default: long files are **split into multiple rows** so tails are not lost; see **`docs/CHUNKED_GAME_TEXT.md`**). mlx-lm auto-detects `text` vs `messages`.
 
-3. **Training** (`mlx_lm.lora --train -c training/lora_qwen_coder.yaml`) loads the **base MLX model** from Hugging Face, freezes it, injects **LoRA adapters** into the last `num_layers` linear layers (here **`-1` = all layers**), and minimizes cross-entropy on `train`, checking `valid` on a schedule. Adapter weights + `adapter_config.json` land under **`adapter_path`** (default `checkpoints/fe-lora-latest`).
+3. **Training** (`mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml`) loads the **base MLX model** from Hugging Face, freezes it, injects **LoRA adapters** into the last `num_layers` linear layers (here **`-1` = all layers**), and minimizes cross-entropy on `train`, checking `valid` on a schedule. Adapter weights + `adapter_config.json` land under **`adapter_path`** (default `checkpoints/fe-lora-qwen25-coder-7b-latest`). See **`docs/DATA_LAYOUT.md`** for why paths include **`qwen25-coder-7b`**.
 
 4. **Inference** — point **`--adapter-path`** (or `ADAPTER_PATH`) at that folder in `scripts/chat_gradio.py` or `scripts/run_game_benchmark.py` to compare **base vs fine-tuned** Albert.
 
@@ -24,8 +26,8 @@
 source .venv/bin/activate
 export SOURCE_REPO=/path/to/fallen-empire
 python scripts/export_repo_for_training.py
-python scripts/build_lora_dataset.py --out-dir data/lora/game_text
-mlx_lm.lora --train -c training/lora_qwen_coder.yaml
+python scripts/build_lora_dataset.py --out-dir data/lora/qwen25-coder-7b/game_text
+mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml
 ```
 
 ### One-liner wrapper
@@ -42,14 +44,15 @@ mlx_lm.lora --train -c training/lora_qwen_coder.yaml
 Any `mlx_lm.lora` flag can follow the wrapper or be appended to `mlx_lm.lora` directly; **CLI overrides unset YAML fields** (mlx-lm merge rule).
 
 ```bash
-mlx_lm.lora --train -c training/lora_qwen_coder.yaml --iters 800 --learning-rate 5e-6
+mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml --iters 800 --learning-rate 5e-6
 ```
 
 ## Config files
 
 | File | Role |
 |------|------|
-| `training/lora_qwen_coder.yaml` | Default **Qwen2.5-Coder-1.5B-Instruct-4bit** LoRA hyperparameters |
+| `training/lora_qwen25_coder_7b.yaml` | Default **Qwen2.5-Coder-7B-Instruct-4bit** LoRA hyperparameters |
+| `scripts/fe_lineage.py` | Single source of truth for default **HF id**, **JSONL out-dir**, **LoRA YAML**, **adapter path** strings used by the workflow |
 | `training/evolution_config.json` | Benchmark evolution + **named curriculum seasons** for how you *stage* data or eval later |
 
 ## Notes

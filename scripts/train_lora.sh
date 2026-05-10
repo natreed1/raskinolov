@@ -26,5 +26,5 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-python scripts/build_lora_dataset.py "${SYNTH[@]}" --out-dir data/lora/game_text
-exec mlx_lm.lora --train -c training/lora_qwen_coder.yaml "${LORA_ARGS[@]}"
+python scripts/build_lora_dataset.py "${SYNTH[@]}" --out-dir data/lora/qwen25-coder-7b/game_text
+exec mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml "${LORA_ARGS[@]}"

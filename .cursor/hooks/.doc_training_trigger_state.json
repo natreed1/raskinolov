@@ -4,15 +4,20 @@
     "scripts/trigger_doc_training_on_changes.py": 1777954462.273165,
     "benchmarks/README.md": 1777950817.5583794,
     "docs/PROJECT_STATE.md": 1777950830.925152,
-    "docs/SESSION_LOG.md": 1777954442.0183845,
+    "docs/SESSION_LOG.md": 1778457195.441805,
     "scripts/build_run_analysis_rag_corpus.py": 1777950854.2140796,
     "benchmarks/run_analysis_rag_tasks_v1.json": 1777950899.494961,
-    "scripts/private_dashboard_server.py": 1777995291.0022235,
+    "scripts/private_dashboard_server.py": 1778457015.6898696,
     "docs/WORKFLOW.md": 1777954423.9111795,
-    "docs/PRIVATE_DASHBOARD_DEPLOY.md": 1777954433.359391,
-    "scripts/generate_change_documentation_capture.py": 1777954196.1999092,
-    "training/README.md": 1777952947.2377467
+    "docs/PRIVATE_DASHBOARD_DEPLOY.md": 1778456816.353876,
+    "scripts/generate_change_documentation_capture.py": 1778457154.5324774,
+    "training/README.md": 1777952947.2377467,
+    "scripts/export_compare_feedback_training_data.py": 1778456769.217365,
+    "scripts/build_game_task_pairwise_dataset.py": 1778456789.4751883,
+    "docs/DATA_LAYOUT.md": 1778456820.8418574,
+    "tests/test_change_documentation_capture_format.py": 1778457168.3160565,
+    "docs/DOCUMENTATION_AGENT_PRACTICES.md": 1778457189.2242007
   },
-  "last_ts": "2026-05-05T15:34:51Z",
-  "last_trigger_epoch": 1777995264
+  "last_ts": "2026-05-10T23:53:15Z",
+  "last_trigger_epoch": 1778456637
 }

@@ -14,9 +14,13 @@ If you still want Vercel, keep it for a frontend and point it to this private AP
 
 - Server: `scripts/private_dashboard_server.py`
   - `GET /` private HTML dashboard (HTTP Basic auth)
-  - `GET /api/summary` private JSON
+  - `GET /api/summary` private JSON (events + KPI block + token/savings/scoring snapshot)
   - `GET /api/events?limit=100` private JSON
   - `GET /api/scoring` private JSON (Cursor/Codex vs open-source vs specialized scoring snapshot)
+  - `GET /api/feedback` private JSON (review feedback history)
+  - `POST /api/feedback` private JSON (feedback mode submit)
+  - `GET /api/compare-feedback` private JSON (structured compare verdicts + spans)
+  - `POST /api/compare-feedback` private JSON (winner/strength + green/red span labels)
   - `POST /api/ingest` bearer-token ingest endpoint
   - `GET /healthz` public health probe
 - Deployment config: `railway.json`
@@ -64,9 +68,37 @@ python -m unittest tests.test_documentation_rag -v
 
 2. Visit dashboard URL and confirm:
    - `events_total` increased
+   - KPI cards show reliability/accuracy/performance/time + recent runs
    - recent row shows your command + exit code
    - **Scoring vs Cursor Work** tab renders (when `docs/generated/*.comparison.json` exists)
+  - feedback mode can submit and persist notes in **Recent Feedback**
+  - side-by-side compare supports:
+    - winner (`left`/`right`/`tie`) and preference strength
+    - green/red span labels with optional reason
+    - optional rewrite text on red spans
+    - reloadable compare records through `GET /api/compare-feedback`
    - docs snapshot sections render
+
+## Structured compare training export
+
+The compare UI writes structured records into SQLite tables:
+
+- `compare_feedback` (pair-level verdict + strength + artifact refs)
+- `compare_feedback_spans` (span offsets, label, reason, optional rewrite)
+
+Export those labels into training corpora with:
+
+```bash
+python3 scripts/export_compare_feedback_training_data.py \
+  --db-path data/private_dashboard.sqlite3 \
+  --out-dir data/lora/compare_feedback
+```
+
+Outputs:
+
+- `data/lora/compare_feedback/pairwise_feedback.jsonl`
+- `data/lora/compare_feedback/rewrite_feedback.jsonl`
+- `data/lora/compare_feedback/manifest.json`
 
 ## Security notes
 

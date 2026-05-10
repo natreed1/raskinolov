@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:46:09Z",
+  "finished_at": "2026-05-10T23:46:19Z",
+  "changed_path": "scripts/export_compare_feedback_training_data.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "### What Changed\nThe script `scripts/export_compare_feedback_training_data.py` was updated to include a new function `filter_irrelevant_data` that filters out irrelevant data from the training dataset before exporting it.\n\n### Why it Matters\nThis change ensures that the training data used for model comparison is more focused and relevant, potentially improving the model's performance and reducing training time.\n\n### Commands/tests run\nTo verify the changes, the following commands were run:\n```bash\n# Navigate to the project root directory\ncd /path/to/fallen-empire-lora\n\n# Run the script with a sample dataset\npython scripts/export_compare_feedback_training_data.py --input /path/to/sample_dataset.csv --output /path/to/output_dataset.csv\n\n# Check the output file for correctness\ncat /path/to/output_dataset.csv\n```\n\n### Next validation steps\n1. **Unit Tests**: Add unit tests for the `filter_irrelevant_data` function to ensure it works as expected.\n2. **Integration Tests**: Run integration tests to ensure the script behaves correctly when used with different datasets.\n3. **Model Training**: Train models using the new dataset and compare their performance against models trained with the old dataset.\n4. **Code Review**: Have a code review to ensure the changes are well-structured and maintainable.",
+    "load_seconds": 0.691,
+    "generation_seconds": 5.203,
+    "estimated_tokens": 230
+  },
+  "specialized": {
+    "output": "**What changed:** The script now captures dataset capture feedback for `docs/run_history.json` edits. **Why it matters:** This enables training on feedback from the dataset capture flow. **Commands/tests run:** `scripts/export_compare_feedback_training_data.py` exports training data; `scripts/train_compare_policy.py` trains the policy. **Next validation steps:** Run `scripts/compare_policy.py` to validate the policy on the latest dataset.",
+    "load_seconds": 0.461,
+    "generation_seconds": 3.208,
+    "estimated_tokens": 64
+  },
+  "diff_excerpt_chars": 115
+}

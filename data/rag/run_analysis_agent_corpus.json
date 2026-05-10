@@ -1,0 +1,156 @@
+{
+  "schema_version": "run_analysis_agent_corpus_v1",
+  "description": "Run-analysis retrieval corpus for documenting and analyzing workflow runs.",
+  "sources": [
+    {
+      "path": "docs/PROJECT_STATE.md",
+      "kind": "current_state",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/SESSION_LOG.md",
+      "kind": "session_log",
+      "weight": 2.3
+    },
+    {
+      "path": "docs/run_history.md",
+      "kind": "workflow_history",
+      "weight": 2.2
+    },
+    {
+      "path": "docs/SPECIALIZED_RUN_HISTORY.md",
+      "kind": "specialized_history",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/RUNS.md",
+      "kind": "run_interpretation",
+      "weight": 2.0
+    },
+    {
+      "path": "docs/WORKFLOW.md",
+      "kind": "runbook",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260510-232614_c33549/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260510-232614_c33549/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260510-224636_8f4a32/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260510-224636_8f4a32/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-153424_1379f6/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-153424_1379f6/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-035708_c877cb/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-035708_c877cb/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-031331_257735/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-031331_257735/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-031316_f3b5bf/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-031316_f3b5bf/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-012327_c24601/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-012327_c24601/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-012316_bc96ac/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-012316_bc96ac/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-012020_05cb86/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260505-012020_05cb86/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260504-214556_a37ce5/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260504-214556_a37ce5/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260504-214248_2dfb6a/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260504-214248_2dfb6a/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260504-212542_a576dd/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260504-212542_a576dd/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    }
+  ]
+}

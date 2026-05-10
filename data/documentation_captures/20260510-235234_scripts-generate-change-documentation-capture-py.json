@@ -1,0 +1,22 @@
+{
+  "schema_version": "change_documentation_capture_v1",
+  "started_at": "2026-05-10T23:52:34Z",
+  "finished_at": "2026-05-10T23:52:46Z",
+  "changed_path": "scripts/generate_change_documentation_capture.py",
+  "trigger_event": "afterFileEdit",
+  "model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+  "specialized_adapter": "/Users/natreed/fallen-empire-lora/checkpoints/adapters/documentation/cycle3",
+  "opensource": {
+    "output": "## Change Documentation Update\nDate: 2026-05-10\n- Added new functionality to capture dataset metadata.\n- Updated script to handle large datasets efficiently.\n- Fixed bug in file path resolution.\n**Title:** Updated Dataset Capture Script\n\n**Date:** 2023-10-05\n\n**Summary:**\n- Added new functionality to capture dataset metadata.\n- Updated script to handle large datasets efficiently.\n- Fixed bug in file path resolution.\n- Enhanced logging for better debugging.\n\n**What Changed:**\n- The script now captures metadata such as file size, creation date, and modification date.\n- Improved error handling to manage large file sizes.\n- Updated logging to include timestamps and error codes.\n\n**Why it Matters:**\n- Enhanced dataset management by providing detailed metadata.\n- Improved robustness and reliability of the script.\n- Facilitates easier debugging and maintenance.\n\n**Commands/tests run:**\n- `python scripts/generate_change_documentation_capture.py --test`\n- `pytest tests/test_generate_change_documentation_capture.py`\n\n**Next validation steps:**\n- Run the script on a sample dataset to ensure it captures metadata correctly.\n- Review the logs for any errors or warnings.\n- Validate the output against expected metadata values.\n",
+    "load_seconds": 0.646,
+    "generation_seconds": 4.159,
+    "estimated_tokens": 186
+  },
+  "specialized": {
+    "output": "## Change Documentation Update\nDate: 2026-05-10\n- Fixed bug in CSV header detection.\n- Added support for JSONL format.\n- Updated README with new flags.\n**Title:** Dataset Capture Script Update\n\n**Date:** 2023-11-15\n\n**Summary:** \n- Fixed bug in CSV header detection.\n- Added support for JSONL format.\n- Updated README with new flags.\n\n**What changed:** \n- `scripts/generate_change_documentation_capture.py` now handles JSONL files and detects CSV headers more robustly.\n- README was updated to include new flags and usage examples.\n\n**Why it matters:** \n- Enhanced script functionality for diverse dataset formats.\n- Improved user guidance through updated documentation.\n\n**Commands/tests run:** \n- `python scripts/generate_change_documentation_capture.py` runs the script.\n- `pytest tests/capture/` runs relevant tests.\n\n**Next validation steps:** \n- Verify script works with JSONL files.\n- Confirm README updates are clear and accurate.\n",
+    "load_seconds": 0.497,
+    "generation_seconds": 5.646,
+    "estimated_tokens": 136
+  },
+  "diff_excerpt_chars": 115
+}

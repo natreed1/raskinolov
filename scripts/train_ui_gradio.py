@@ -22,6 +22,8 @@ from typing import Generator, List, Optional, Tuple
 
 import gradio as gr
 
+import fe_lineage as _fe
+
 REPO = Path(__file__).resolve().parent.parent
 VENV_MLX = REPO / ".venv" / "bin" / "mlx_lm.lora"
 
@@ -59,7 +61,7 @@ def prepare_data(export_path: str, source_repo: str) -> Generator[Tuple[str, str
                 "--from-export",
                 export_path.strip() or "data/raw/repo_text.jsonl",
                 "--out-dir",
-                "data/lora/game_text",
+                _fe.GAME_TEXT_DIR_RELPATH,
             ],
             "build_lora_dataset",
         ),
@@ -97,9 +99,9 @@ def run_training_job(
         exe,
         "--train",
         "-c",
-        "training/lora_qwen_coder.yaml",
+        _fe.LORA_CONFIG_RELPATH,
         "--adapter-path",
-        adapter_path.strip() or "checkpoints/fe-lora-ui",
+        adapter_path.strip() or _fe.TRAIN_UI_ADAPTER_DEFAULT_RELPATH,
         "--iters",
         str(int(iters)),
         "--batch-size",
@@ -160,7 +162,7 @@ def run_training_job(
             py,
             str(REPO / "scripts" / "run_game_benchmark.py"),
             "--adapter-path",
-            adapter_path.strip() or "checkpoints/fe-lora-ui",
+            adapter_path.strip() or _fe.TRAIN_UI_ADAPTER_DEFAULT_RELPATH,
         ]
         bp = subprocess.run(bargv, cwd=str(REPO), capture_output=True, text=True)
         log += bp.stdout or ""
@@ -185,7 +187,10 @@ def build_app() -> gr.Blocks:
             export_path = gr.Textbox(label="Export JSONL path", value="data/raw/repo_text.jsonl")
             prep_btn = gr.Button("Export + build LoRA dataset")
         with gr.Accordion("2. Training", open=True):
-            adapter_path = gr.Textbox(label="Adapter output directory", value="checkpoints/fe-lora-ui")
+            adapter_path = gr.Textbox(
+                label="Adapter output directory",
+                value=_fe.TRAIN_UI_ADAPTER_DEFAULT_RELPATH,
+            )
             iters = gr.Slider(10, 2000, value=300, step=10, label="Iterations")
             batch_size = gr.Slider(1, 8, value=1, step=1, label="Batch size")
             max_seq_length = gr.Slider(512, 8192, value=4096, step=256, label="Max sequence length")

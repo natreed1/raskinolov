@@ -4,6 +4,63 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-05-10 — Structured compare feedback: winner/strength + span labels + training export
+
+Implemented structured supervision in `scripts/private_dashboard_server.py` for side-by-side compare:
+
+- Added SQLite tables `compare_feedback` and `compare_feedback_spans` (kept legacy `feedback_entries` intact).
+- Added private endpoints:
+  - `POST /api/compare-feedback` (winner/strength + validated span labels)
+  - `GET /api/compare-feedback` (query structured compare history)
+- Reworked `/view/compare` UI:
+  - winner + preference strength controls
+  - green/red span labeling from selected text
+  - editable annotation list (reason + optional rewrite for red spans)
+  - submit one structured compare payload
+  - retained legacy per-track curation block as optional transition path
+
+Added `scripts/export_compare_feedback_training_data.py`:
+
+- Exports `pairwise_feedback.jsonl` with hybrid weights (strength + bad-span penalty signal)
+- Exports `rewrite_feedback.jsonl` from red spans with provided rewrite text
+- Writes `data/lora/compare_feedback/manifest.json`
+
+Integrated optional ingestion into `scripts/build_game_task_pairwise_dataset.py`:
+
+- New `--compare-feedback-pairwise` and `--compare-feedback-repeat` flags append compare-derived chat SFT rows.
+
+Docs updated:
+
+- `docs/PRIVATE_DASHBOARD_DEPLOY.md` (new compare-feedback API + export workflow)
+- `docs/DATA_LAYOUT.md` (new `data/lora/compare_feedback/*` paths)
+
+Verification:
+
+- `python3 -m py_compile scripts/private_dashboard_server.py scripts/export_compare_feedback_training_data.py scripts/build_game_task_pairwise_dataset.py` (pass).
+
+## 2026-05-05 — Clarity upgrade: KPI-first analytics + always-on change documentation captures
+
+Upgraded private dashboard to focus on performance/reliability/accuracy essentials:
+
+- KPI cards now include run reliability %, specialized accuracy vs Cursor reference, avg run time, recent run count, doc-capture reliability %, avg capture time, and capture token totals.
+- Overview now includes **Recent Workflow Runs** and **Recent Documentation Captures** tables with timing/token visibility.
+- Scoring tab clarity improved with deltas vs Cursor + missing-keyword columns.
+
+Automation update for dataset quality:
+
+- `scripts/trigger_doc_training_on_changes.py` now **always** spawns async open-source+specialized change documentation captures via `scripts/generate_change_documentation_capture.py` on watched edits (writes `data/documentation_captures/` artifacts).
+- Heavy refresh (`build_run_analysis_rag_corpus` + `documentation-dataset`) remains cooldown-gated; capture still runs during cooldown.
+
+---
+
+## 2026-05-04 — SaaS-style dashboard refresh + token-savings + feedback mode
+
+Redesigned `scripts/private_dashboard_server.py` UI to a modern tabbed experience with blue/white default theme and dark-mode glow toggle. Added clearer compare panel with explicit deltas vs Cursor/Codex, missing-keyword visibility, and persisted **Feedback Mode** (`POST/GET /api/feedback` stored in SQLite `feedback_entries`).
+
+Added documentation token-usage estimation from generated comparison artifacts (`docs/generated/*.comparison.json`) and surfaced estimated savings cards in Overview. `GET /api/summary` now includes token metrics + scoring payload for downstream clients.
+
+---
+
 ## 2026-05-04 — Private dashboard scoring tab (Cursor vs model outputs)
 
 Updated `scripts/private_dashboard_server.py` to add a tabbed UI with a new **Scoring vs Cursor Work** panel. The server now reads latest `docs/generated/*.comparison.json` (e.g., duplicate-doc artifacts), computes winner by keyword-hit score, and renders side-by-side tracks for `codex_authored`, `opensource`, and `specialized`.
@@ -1162,3 +1219,119 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 **System prompt:** nudges complete structured Markdown/fenced replies for gameplay/UI workloads.
 
 **Docs:** **`docs/ROUTING_DATASET_CONTRACT.md`** — appendix on merging supervisor completions into downstream datasets.
+
+---
+
+## 2026-05-05 — Dashboard scoring clarity: full-doc links + side-by-side view
+
+**Goal:** Make scoring outputs explorable so comparison decisions are not blocked by truncated snippets.
+
+**Changed:** `scripts/private_dashboard_server.py`
+- Scoring now maps each track to a concrete doc artifact (`codex_authored`, `opensource`, `specialized`) when files exist.
+- Added `Docs` column with **Read full** links per scoring row.
+- Added compare shortcuts in scoring tab: Cursor vs Open-source, Cursor vs Specialized, Open-source vs Specialized.
+- Added authenticated view routes:
+  - `GET /view/doc?track=<track>` for full document rendering.
+  - `GET /view/compare?left=<track>&right=<track>` for full side-by-side document comparison.
+
+**Verify:**
+- `.venv/bin/python -m py_compile scripts/private_dashboard_server.py` (ok)
+- Local server at `http://127.0.0.1:8787` with Basic auth (`admin/localdev`) confirmed:
+  - scoring page includes compare links and read-full links,
+  - `/view/doc` renders full output,
+  - `/view/compare` renders both full documents in one view.
+
+---
+
+## 2026-05-10 — Compare-page curation workflow + base-vs-adapter clarity
+
+**Goal:** Make scoring/capture curation actionable and reduce confusion about open-source vs specialized output identity.
+
+**Changed:** `scripts/private_dashboard_server.py`
+- Expanded scoring labels to explicitly state:
+  - Open-source = base model (no adapter),
+  - Specialized = same base model + LoRA adapter.
+- Added a top-level identity signal in scoring (`Open-source vs Specialized identical: yes/no`) so similarity is explicit instead of ambiguous.
+- Reworked side-by-side compare rendering to include **per-output curation panels** directly in each compared output:
+  - action (`feedback`, `train_include`, `train_exclude`),
+  - key details,
+  - language edits,
+  - notes,
+  - save curation context,
+  - delete output (enabled only for `docs/generated` artifacts).
+- Updated `/view/compare` handling to pass track identity and per-track delete eligibility into the compare page so each side is independently actionable.
+- Scoring tab now directs curation into side-by-side compare context, while keeping recent feedback history in-tab.
+
+**Verify:**
+- `.venv/bin/python -m py_compile scripts/private_dashboard_server.py` (ok)
+- Restarted local dashboard (`http://127.0.0.1:8787`) and confirmed:
+  - compare route titles differ by selected pair (`codex/open`, `codex/specialized`, `open/specialized`),
+  - compare page includes in-place curation controls and delete action UI,
+  - scoring page shows base-vs-adapter identity explanation and identical-state indicator.
+
+---
+
+## 2026-05-10 — Docs Snapshot replaced with live Documentation Explorer
+
+**Goal:** Replace static, partial docs snapshot with a complete and automatically refreshing documentation browser.
+
+**Changed:** `scripts/private_dashboard_server.py`
+- Removed fixed `PROJECT_STATE / SESSION_LOG / SPECIALIZED_RUN_HISTORY` snippet rendering in the Docs tab.
+- Added dynamic documentation discovery (`_documentation_catalog`) across:
+  - `docs/**/*.md|json|jsonl`
+  - `data/documentation_captures/*.md|json`
+  - `benchmarks/results/runs/*/RUN.md`
+- Added authenticated docs APIs:
+  - `GET /api/docs/list` (live catalog with category, size, updated timestamp)
+  - `GET /api/docs/content?path=<repo-relative-path>` (full file content)
+- Reworked Docs tab UI into a dropdown explorer:
+  - document selector,
+  - refresh button,
+  - metadata (updated timestamp + bytes),
+  - full-content viewer.
+- Added auto-refresh polling every 15 seconds to keep the list current while the dashboard is open.
+
+**Verify:**
+- `.venv/bin/python -m py_compile scripts/private_dashboard_server.py` (ok)
+- `GET /api/docs/list` returned live catalog (`count 364` in local run).
+- `GET /api/docs/content` returned full content for selected path.
+- Dashboard HTML includes `Documentation Explorer` and dropdown UI.
+
+---
+
+## 2026-05-10 — Docs explorer labels now use content-derived titles
+
+**Goal:** Improve document picker readability by showing what each document is about instead of only raw file paths.
+
+**Changed:** `scripts/private_dashboard_server.py`
+- Added title extraction for docs catalog entries (`title` field) so dropdown labels use semantic document titles.
+- Markdown title extraction:
+  - Uses first heading for general markdown docs.
+  - Uses the **latest** `##` section title for `docs/SESSION_LOG.md` (e.g., `2026-05-10 — Structured compare feedback: ...`).
+- Capture JSON title extraction:
+  - Uses `started_at` + `changed_path` when present.
+- Updated docs dropdown label format to:
+  - `<title> — <path> [category • type]`
+
+**Verify:**
+- `.venv/bin/python -m py_compile scripts/private_dashboard_server.py` (ok)
+- `GET /api/docs/list` returns titles; `docs/SESSION_LOG.md` title now resolves to latest session heading.
+
+---
+
+## 2026-05-10 — Change-doc captures now enforce title/date + immediate bullet summary
+
+**Goal:** Ensure every generated change documentation artifact is quickly scannable for humans and consistently structured for retrieval context.
+
+**Changed:** `scripts/generate_change_documentation_capture.py`, `docs/DOCUMENTATION_AGENT_PRACTICES.md`, `tests/test_change_documentation_capture_format.py`
+- Added a normalization step that rewrites generated change docs to always start with:
+  - `## Change Documentation Update`
+  - `Date: YYYY-MM-DD`
+  - 2-4 summary bullets directly below the date.
+- Added summary extraction logic so bullets are pulled from generated content when possible, with a fallback bullet when structured bullets are absent.
+- Updated generation prompt requirements to request the same title/date/bullets shape from the model.
+- Added a practice rule in `docs/DOCUMENTATION_AGENT_PRACTICES.md` so this format is part of documentation-agent RAG context.
+- Added unit tests to lock the output shape and fallback behavior.
+
+**Verify:**
+- `python3 -m unittest tests/test_change_documentation_capture_format.py -v` (pass; 2 tests).

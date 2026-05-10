@@ -19,8 +19,8 @@
     }
   },
   "lora_ambitious_defaults": {
-    "_comment": "Authoritative knobs live in training/lora_qwen_coder.yaml — this block is a quick mirror for planning.",
-    "config_yaml": "training/lora_qwen_coder.yaml",
+    "_comment": "Authoritative knobs live in training/lora_qwen25_coder_7b.yaml — this block is a quick mirror for planning.",
+    "config_yaml": "training/lora_qwen25_coder_7b.yaml",
     "batch_size": 2,
     "iters_per_season": 400,
     "learning_rate": 1e-5,

@@ -185,3 +185,18 @@ One row per `python scripts/ml_workflow.py …` run. **Full logs**, `manifest.js
 | 2026-04-27T14:40:31Z | `benchmark` | 1 | failed | — | 14/15 | `—` | `checkpoints/fe-lora-dynamics-p050-i160-lr8e6` | `benchmarks/results/runs/20260427-143554_5724e7/` |
 | 2026-04-27T14:42:56Z | `benchmark` | 0 | ok | — | 8/8 | `—` | `checkpoints/fe-lora-dynamics-p050-i160-lr8e6` | `benchmarks/results/runs/20260427-144031_ee99e0/` |
 | 2026-04-27T22:04:29Z | `benchmark` | 0 | ok | — | 8/8 | `—` | `checkpoints/fe-lora-pairwise-r10-from-30m` | `benchmarks/results/runs/20260427-220341_d13b1d/` |
+| 2026-05-04T21:25:24Z | `train` | 0 | ok | 300 | — | `checkpoints/adapters/combat_risk/cycle3` | `—` | `benchmarks/results/runs/20260504-175440_9e0edb/` |
+| 2026-05-04T21:42:34Z | `arena-acceptance` | 1 | failed | — | arena 0/1 | `—` | `checkpoints/adapters/hud_status/cycle2` | `benchmarks/results/runs/20260504-212537_59687b/` |
+| 2026-05-04T21:45:43Z | `arena-acceptance` | 1 | failed | — | arena 0/1 | `—` | `checkpoints/adapters/hud_status/cycle2` | `benchmarks/results/runs/20260504-212542_a576dd/` |
+| 2026-05-04T21:55:48Z | `arena-acceptance` | 1 | failed | — | arena 0/1 | `—` | `checkpoints/adapters/combat_risk/cycle3` | `benchmarks/results/runs/20260504-214248_2dfb6a/` |
+| 2026-05-04T21:56:54Z | `arena-acceptance` | 1 | failed | — | arena 0/1 | `—` | `checkpoints/adapters/combat_risk/cycle3` | `benchmarks/results/runs/20260504-214556_a37ce5/` |
+| 2026-05-05T01:21:30Z | `train` | 0 | ok | 40 | — | `checkpoints/adapters/documentation/cycle2` | `—` | `benchmarks/results/runs/20260505-012020_05cb86/` |
+| 2026-05-05T01:23:16Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260505-012316_bc96ac/` |
+| 2026-05-05T01:24:56Z | `train` | 0 | ok | 40 | — | `checkpoints/adapters/documentation/cycle3` | `—` | `benchmarks/results/runs/20260505-012327_c24601/` |
+| 2026-05-05T03:13:16Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260505-031316_f3b5bf/` |
+| 2026-05-05T03:13:31Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260505-031331_257735/` |
+| 2026-05-05T03:57:08Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260505-035708_c877cb/` |
+| 2026-05-05T15:34:24Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260505-153424_1379f6/` |
+| 2026-05-10T22:46:36Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260510-224636_8f4a32/` |
+| 2026-05-10T23:26:15Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260510-232614_c33549/` |
+| 2026-05-10T23:43:57Z | `documentation-dataset` | 0 | ok | — | — | `—` | `—` | `benchmarks/results/runs/20260510-234357_4f2fc2/` |

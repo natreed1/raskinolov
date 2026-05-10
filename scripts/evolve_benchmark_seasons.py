@@ -116,7 +116,7 @@ def main() -> None:
     parser.add_argument("--seed-tasks", type=Path, default=DEFAULT_SEED)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--with-mlx", action="store_true", help="Score with real model each season (slow)")
-    parser.add_argument("--model", default="mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit")
+    parser.add_argument("--model", default="mlx-community/Qwen2.5-Coder-7B-Instruct-4bit")
     parser.add_argument("--adapter-path", default=None)
     parser.add_argument("--temp", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=42)

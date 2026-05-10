@@ -3,22 +3,31 @@
 Download (if needed) an MLX Community code model and run one short generation.
 Use this to confirm HF access, disk space, and Apple Silicon MLX before LoRA.
 
-Default model fits comfortably on 16–24 GB unified memory (4-bit ~1.5B params).
+Default is 4-bit **7B** (~4 GB weights on disk); allow headroom on unified memory for load, activations, and concurrent MLX/Gradio processes.
 
 Environment:
-  MODEL   Hugging Face repo id or local path (default: Qwen2.5-Coder-1.5B 4-bit).
+  MODEL   Hugging Face repo id or local path (default: Qwen2.5-Coder-7B 4-bit).
 """
 
 from __future__ import annotations
 
 import argparse
 import os
+import sys
 import time
+
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
 
 from mlx_lm import generate, load
 from mlx_lm.sample_utils import make_sampler
 
-DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
+
+DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 
 
 def main() -> None:
@@ -50,6 +59,7 @@ def main() -> None:
     print(f"Loading {args.model!r} …")
     t0 = time.perf_counter()
     model, tokenizer = load(args.model)
+    register_qwen_coder_instruct_extra_stops(tokenizer)
     print(f"Loaded in {time.perf_counter() - t0:.1f}s")
 
     messages = [

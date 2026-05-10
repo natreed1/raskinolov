@@ -19,17 +19,24 @@ from __future__ import annotations
 
 import base64
 import html
+import hashlib
 import json
 import os
+import re
 import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 from urllib.parse import parse_qs
 from wsgiref.simple_server import make_server
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+VALID_TRACKS = {"codex_authored", "opensource", "specialized"}
+COMPARE_WINNERS = {"left", "right", "tie"}
+COMPARE_STRENGTHS = {"weak", "medium", "strong", "tie"}
+SPAN_SIDES = {"left", "right"}
+SPAN_LABELS = {"good", "bad"}
 
 
 def _env(name: str, default: str = "") -> str:
@@ -42,6 +49,10 @@ def _utc_now() -> str:
 
 def _h(text: Any) -> str:
     return html.escape("" if text is None else str(text), quote=True)
+
+
+def _text_sha256(text: str) -> str:
+    return hashlib.sha256((text or "").encode("utf-8")).hexdigest()
 
 
 def _db_path() -> Path:
@@ -66,6 +77,77 @@ def _connect() -> sqlite3.Connection:
         )
         """
     )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS feedback_entries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT NOT NULL,
+            track TEXT NOT NULL,
+            rating INTEGER,
+            notes TEXT NOT NULL,
+            source TEXT NOT NULL,
+            action TEXT NOT NULL DEFAULT 'feedback',
+            key_details TEXT NOT NULL DEFAULT '',
+            language_edits TEXT NOT NULL DEFAULT '',
+            artifact_path TEXT NOT NULL DEFAULT ''
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS compare_feedback (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ts TEXT NOT NULL,
+            left_track TEXT NOT NULL,
+            right_track TEXT NOT NULL,
+            left_artifact_path TEXT NOT NULL,
+            right_artifact_path TEXT NOT NULL,
+            winner TEXT NOT NULL,
+            strength TEXT NOT NULL,
+            notes TEXT NOT NULL DEFAULT '',
+            source TEXT NOT NULL,
+            left_text_hash TEXT NOT NULL,
+            right_text_hash TEXT NOT NULL
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS compare_feedback_spans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            feedback_id INTEGER NOT NULL,
+            side TEXT NOT NULL,
+            start_offset INTEGER NOT NULL,
+            end_offset INTEGER NOT NULL,
+            label TEXT NOT NULL,
+            selected_text TEXT NOT NULL,
+            reason TEXT NOT NULL DEFAULT '',
+            rewrite_text TEXT NOT NULL DEFAULT '',
+            FOREIGN KEY (feedback_id) REFERENCES compare_feedback(id) ON DELETE CASCADE
+        )
+        """
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_compare_feedback_created ON compare_feedback(id DESC)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_compare_feedback_pair ON compare_feedback(left_track, right_track)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_compare_feedback_spans_feedback_id ON compare_feedback_spans(feedback_id)"
+    )
+    # Backward-compatible schema migration for previously created DB files.
+    existing_cols = {row[1] for row in conn.execute("PRAGMA table_info(feedback_entries)").fetchall()}
+    for col, sql_type, default in (
+        ("action", "TEXT", "'feedback'"),
+        ("key_details", "TEXT", "''"),
+        ("language_edits", "TEXT", "''"),
+        ("artifact_path", "TEXT", "''"),
+    ):
+        if col not in existing_cols:
+            conn.execute(
+                f"ALTER TABLE feedback_entries ADD COLUMN {col} {sql_type} NOT NULL DEFAULT {default}"
+            )
     conn.commit()
     return conn
 
@@ -143,6 +225,272 @@ def _insert_event(conn: sqlite3.Connection, row: Dict[str, Any]) -> int:
     return int(cur.lastrowid)
 
 
+def _insert_feedback(
+    conn: sqlite3.Connection,
+    *,
+    track: str,
+    rating: int,
+    notes: str,
+    source: str,
+    action: str = "feedback",
+    key_details: str = "",
+    language_edits: str = "",
+    artifact_path: str = "",
+) -> int:
+    cur = conn.execute(
+        """
+        INSERT INTO feedback_entries (
+            ts, track, rating, notes, source, action, key_details, language_edits, artifact_path
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            _utc_now(),
+            track,
+            rating,
+            notes,
+            source,
+            action,
+            key_details,
+            language_edits,
+            artifact_path,
+        ),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def _list_feedback(conn: sqlite3.Connection, limit: int = 20) -> List[Dict[str, Any]]:
+    rows = conn.execute(
+        """
+        SELECT id, ts, track, rating, notes, source, action, key_details, language_edits, artifact_path
+        FROM feedback_entries
+        ORDER BY id DESC
+        LIMIT ?
+        """,
+        (max(1, min(200, limit)),),
+    ).fetchall()
+    return [
+        {
+            "id": r[0],
+            "ts": r[1],
+            "track": r[2],
+            "rating": r[3],
+            "notes": r[4],
+            "source": r[5],
+            "action": r[6],
+            "key_details": r[7],
+            "language_edits": r[8],
+            "artifact_path": r[9],
+        }
+        for r in rows
+    ]
+
+
+def _validate_compare_spans(
+    *,
+    spans_raw: Any,
+    left_body: str,
+    right_body: str,
+) -> Tuple[bool, str, List[Dict[str, Any]]]:
+    if spans_raw is None:
+        return True, "", []
+    if not isinstance(spans_raw, list):
+        return False, "spans must be a list", []
+
+    cleaned: List[Dict[str, Any]] = []
+    by_side: Dict[str, List[Tuple[int, int]]] = {"left": [], "right": []}
+    for idx, raw in enumerate(spans_raw):
+        if not isinstance(raw, dict):
+            return False, f"span[{idx}] must be an object", []
+        side = str(raw.get("side") or "").strip()
+        label = str(raw.get("label") or "").strip()
+        reason = str(raw.get("reason") or "").strip()
+        rewrite_text = str(raw.get("rewrite_text") or "").strip()
+        try:
+            start = int(raw.get("start"))
+            end = int(raw.get("end"))
+        except (TypeError, ValueError):
+            return False, f"span[{idx}] start/end must be integers", []
+        if side not in SPAN_SIDES:
+            return False, f"span[{idx}] invalid side", []
+        if label not in SPAN_LABELS:
+            return False, f"span[{idx}] invalid label", []
+        if start < 0 or end <= start:
+            return False, f"span[{idx}] invalid range", []
+        body = left_body if side == "left" else right_body
+        if end > len(body):
+            return False, f"span[{idx}] out of bounds", []
+        selected_text = str(raw.get("selected_text") or "")
+        expected = body[start:end]
+        if selected_text != expected:
+            return False, f"span[{idx}] selected_text mismatch for side={side}", []
+        if label == "good" and rewrite_text:
+            return False, f"span[{idx}] rewrite_text only allowed for bad spans", []
+        if len(reason) > 500:
+            return False, f"span[{idx}] reason too long", []
+        if len(rewrite_text) > 8000:
+            return False, f"span[{idx}] rewrite_text too long", []
+        cleaned.append(
+            {
+                "side": side,
+                "label": label,
+                "start": start,
+                "end": end,
+                "selected_text": selected_text,
+                "reason": reason,
+                "rewrite_text": rewrite_text,
+            }
+        )
+        by_side[side].append((start, end))
+
+    for side in SPAN_SIDES:
+        prev_end = -1
+        for start, end in sorted(by_side[side], key=lambda item: (item[0], item[1])):
+            if start < prev_end:
+                return False, f"spans overlap on side={side}", []
+            prev_end = end
+    return True, "", cleaned
+
+
+def _insert_compare_feedback(
+    conn: sqlite3.Connection,
+    *,
+    left_track: str,
+    right_track: str,
+    left_artifact_path: str,
+    right_artifact_path: str,
+    winner: str,
+    strength: str,
+    notes: str,
+    source: str,
+    left_text_hash: str,
+    right_text_hash: str,
+    spans: List[Dict[str, Any]],
+) -> int:
+    cur = conn.execute(
+        """
+        INSERT INTO compare_feedback (
+            ts,
+            left_track,
+            right_track,
+            left_artifact_path,
+            right_artifact_path,
+            winner,
+            strength,
+            notes,
+            source,
+            left_text_hash,
+            right_text_hash
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            _utc_now(),
+            left_track,
+            right_track,
+            left_artifact_path,
+            right_artifact_path,
+            winner,
+            strength,
+            notes,
+            source,
+            left_text_hash,
+            right_text_hash,
+        ),
+    )
+    feedback_id = int(cur.lastrowid)
+    for span in spans:
+        conn.execute(
+            """
+            INSERT INTO compare_feedback_spans (
+                feedback_id, side, start_offset, end_offset, label, selected_text, reason, rewrite_text
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                feedback_id,
+                span["side"],
+                int(span["start"]),
+                int(span["end"]),
+                span["label"],
+                span["selected_text"],
+                span["reason"],
+                span["rewrite_text"],
+            ),
+        )
+    conn.commit()
+    return feedback_id
+
+
+def _list_compare_feedback(
+    conn: sqlite3.Connection,
+    *,
+    limit: int = 20,
+    left_track: str = "",
+    right_track: str = "",
+) -> List[Dict[str, Any]]:
+    sql = (
+        "SELECT id, ts, left_track, right_track, left_artifact_path, right_artifact_path, "
+        "winner, strength, notes, source, left_text_hash, right_text_hash "
+        "FROM compare_feedback"
+    )
+    args: List[Any] = []
+    filters: List[str] = []
+    if left_track:
+        filters.append("left_track = ?")
+        args.append(left_track)
+    if right_track:
+        filters.append("right_track = ?")
+        args.append(right_track)
+    if filters:
+        sql += " WHERE " + " AND ".join(filters)
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(max(1, min(200, limit)))
+    rows = conn.execute(sql, tuple(args)).fetchall()
+    out: List[Dict[str, Any]] = []
+    for row in rows:
+        span_rows = conn.execute(
+            """
+            SELECT id, side, start_offset, end_offset, label, selected_text, reason, rewrite_text
+            FROM compare_feedback_spans
+            WHERE feedback_id = ?
+            ORDER BY id ASC
+            """,
+            (row[0],),
+        ).fetchall()
+        out.append(
+            {
+                "id": row[0],
+                "ts": row[1],
+                "left_track": row[2],
+                "right_track": row[3],
+                "left_artifact_path": row[4],
+                "right_artifact_path": row[5],
+                "winner": row[6],
+                "strength": row[7],
+                "notes": row[8],
+                "source": row[9],
+                "left_text_hash": row[10],
+                "right_text_hash": row[11],
+                "spans": [
+                    {
+                        "id": s[0],
+                        "side": s[1],
+                        "start": s[2],
+                        "end": s[3],
+                        "label": s[4],
+                        "selected_text": s[5],
+                        "reason": s[6],
+                        "rewrite_text": s[7],
+                    }
+                    for s in span_rows
+                ],
+            }
+        )
+    return out
+
+
 def _summary(conn: sqlite3.Connection) -> Dict[str, Any]:
     total = conn.execute("SELECT COUNT(1) FROM events").fetchone()[0]
     today = _utc_now()[:10]
@@ -175,20 +523,277 @@ def _summary(conn: sqlite3.Connection) -> Dict[str, Any]:
     }
 
 
-def _latest_docs_snippets() -> Dict[str, str]:
-    snippets: Dict[str, str] = {}
-    targets = {
-        "project_state": REPO_ROOT / "docs" / "PROJECT_STATE.md",
-        "session_log": REPO_ROOT / "docs" / "SESSION_LOG.md",
-        "specialized_history": REPO_ROOT / "docs" / "SPECIALIZED_RUN_HISTORY.md",
+def _estimate_tokens_from_words(words: int) -> int:
+    # Conservative cross-model estimate for English technical prose.
+    return max(0, int(round(words * 1.33)))
+
+
+def _documentation_token_metrics() -> Dict[str, Any]:
+    generated_dir = REPO_ROOT / "docs" / "generated"
+    if not generated_dir.is_dir():
+        return {"available": False, "reason": "docs/generated is missing"}
+
+    sizes: Dict[str, Dict[str, Any]] = {}
+    comparison_files = sorted(generated_dir.glob("*.comparison.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if comparison_files:
+        try:
+            payload = json.loads(comparison_files[0].read_text(encoding="utf-8"))
+            for src_key, out_key in (
+                ("codex_authored", "cursor_codex"),
+                ("opensource", "opensource"),
+                ("specialized", "specialized"),
+            ):
+                row = payload.get(src_key)
+                if not isinstance(row, dict):
+                    continue
+                words = int(row.get("word_count", 0) or 0)
+                sizes[out_key] = {
+                    "path": str(comparison_files[0].relative_to(REPO_ROOT)),
+                    "words": words,
+                    "estimated_tokens": _estimate_tokens_from_words(words),
+                    "sha1": hashlib.sha1(json.dumps(row, sort_keys=True).encode("utf-8")).hexdigest()[:12],
+                }
+        except json.JSONDecodeError:
+            pass
+
+    # Fallback: direct markdown file estimates when comparison json is unavailable.
+    if not sizes:
+        tracks = {
+            "cursor_codex": generated_dir / "private_dashboard_deploy.comparison.md",
+            "opensource": generated_dir / "private_dashboard_deploy.opensource.md",
+            "specialized": generated_dir / "private_dashboard_deploy.specialized.md",
+        }
+        for key, path in tracks.items():
+            if not path.is_file():
+                continue
+            text = path.read_text(encoding="utf-8", errors="replace")
+            words = len(text.split())
+            sizes[key] = {
+                "path": str(path.relative_to(REPO_ROOT)),
+                "words": words,
+                "estimated_tokens": _estimate_tokens_from_words(words),
+                "sha1": hashlib.sha1(text.encode("utf-8", errors="ignore")).hexdigest()[:12],
+            }
+    if not sizes:
+        return {"available": False, "reason": "No generated markdown docs found"}
+
+    cursor_tokens = sizes.get("cursor_codex", {}).get("estimated_tokens")
+    specialized_tokens = sizes.get("specialized", {}).get("estimated_tokens")
+    opensource_tokens = sizes.get("opensource", {}).get("estimated_tokens")
+    savings_vs_specialized = None
+    savings_vs_opensource = None
+    if isinstance(cursor_tokens, int) and isinstance(specialized_tokens, int):
+        savings_vs_specialized = max(0, cursor_tokens - specialized_tokens)
+    if isinstance(cursor_tokens, int) and isinstance(opensource_tokens, int):
+        savings_vs_opensource = max(0, cursor_tokens - opensource_tokens)
+
+    return {
+        "available": True,
+        "tracks": sizes,
+        "estimated_savings_tokens": {
+            "vs_specialized": savings_vs_specialized,
+            "vs_opensource": savings_vs_opensource,
+        },
+        "notes": "Estimated from generated documentation word counts (1 word ~= 1.33 tokens).",
     }
-    for key, path in targets.items():
-        if not path.is_file():
-            snippets[key] = "(missing)"
+
+
+def _recent_workflow_runs(limit: int = 20) -> List[Dict[str, Any]]:
+    runs_dir = REPO_ROOT / "benchmarks" / "results" / "runs"
+    if not runs_dir.is_dir():
+        return []
+    manifests = sorted(runs_dir.glob("*/manifest.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    rows: List[Dict[str, Any]] = []
+    for path in manifests[: max(1, min(80, limit))]:
+        run_id = path.parent.name
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
             continue
+        rows.append(
+            {
+                "run_id": run_id,
+                "subcommand": payload.get("subcommand", ""),
+                "final_exit_code": payload.get("final_exit_code"),
+                "elapsed_s": float(payload.get("elapsed_s", 0) or 0),
+                "benchmark_summary": payload.get("benchmark_summary", ""),
+                "finished_at": payload.get("finished_at", ""),
+                "started_at": payload.get("started_at", ""),
+                "capability_summary": payload.get("capability_summary", ""),
+                "steps_count": len(payload.get("steps", []) or []),
+                "trained_adapter_path": payload.get("trained_adapter_path"),
+                "benchmark_adapter_path": payload.get("benchmark_adapter_path"),
+            }
+        )
+    return rows
+
+
+def _recent_doc_captures(limit: int = 24) -> List[Dict[str, Any]]:
+    captures_dir = REPO_ROOT / "data" / "documentation_captures"
+    if not captures_dir.is_dir():
+        return []
+    files = sorted(captures_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    rows = []
+    for path in files[: max(1, min(200, limit))]:
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        os_track = payload.get("opensource") or {}
+        sp_track = payload.get("specialized") or {}
+        rows.append(
+            {
+                "file": str(path.relative_to(REPO_ROOT)),
+                "changed_path": payload.get("changed_path", ""),
+                "started_at": payload.get("started_at", ""),
+                "finished_at": payload.get("finished_at", ""),
+                "trigger_event": payload.get("trigger_event", ""),
+                "opensource_tokens": int(os_track.get("estimated_tokens", 0) or 0),
+                "specialized_tokens": int(sp_track.get("estimated_tokens", 0) or 0),
+                "opensource_seconds": float(os_track.get("generation_seconds", 0) or 0)
+                + float(os_track.get("load_seconds", 0) or 0),
+                "specialized_seconds": float(sp_track.get("generation_seconds", 0) or 0)
+                + float(sp_track.get("load_seconds", 0) or 0),
+                "opensource_load_seconds": float(os_track.get("load_seconds", 0) or 0),
+                "specialized_load_seconds": float(sp_track.get("load_seconds", 0) or 0),
+                "opensource_gen_seconds": float(os_track.get("generation_seconds", 0) or 0),
+                "specialized_gen_seconds": float(sp_track.get("generation_seconds", 0) or 0),
+                "has_both": bool(os_track.get("output")) and bool(sp_track.get("output")),
+            }
+        )
+    return rows
+
+
+def _kpi_metrics(summary: Dict[str, Any], scoring: Dict[str, Any], token_metrics: Dict[str, Any]) -> Dict[str, Any]:
+    runs = _recent_workflow_runs(30)
+    captures = _recent_doc_captures(30)
+
+    run_total = len(runs)
+    run_ok = sum(1 for r in runs if r.get("final_exit_code") == 0)
+    run_reliability_pct = round((run_ok / run_total) * 100.0, 1) if run_total else 0.0
+    avg_run_seconds = round(sum(r.get("elapsed_s", 0.0) for r in runs) / run_total, 1) if run_total else 0.0
+
+    cap_total = len(captures)
+    cap_ok = sum(1 for c in captures if c.get("has_both"))
+    cap_reliability_pct = round((cap_ok / cap_total) * 100.0, 1) if cap_total else 0.0
+    avg_cap_seconds = (
+        round(sum(c.get("opensource_seconds", 0.0) + c.get("specialized_seconds", 0.0) for c in captures) / cap_total, 1)
+        if cap_total
+        else 0.0
+    )
+    cap_tokens_total = sum(c.get("opensource_tokens", 0) + c.get("specialized_tokens", 0) for c in captures)
+    cap_open_tokens = sum(c.get("opensource_tokens", 0) for c in captures)
+    cap_specialized_tokens = sum(c.get("specialized_tokens", 0) for c in captures)
+    cap_savings_if_specialized_only = max(0, cap_open_tokens - cap_specialized_tokens)
+
+    accuracy_pct = None
+    if scoring.get("available"):
+        tracks = scoring.get("tracks", {})
+        cursor_hits = int((tracks.get("codex_authored") or {}).get("keyword_hits", 0) or 0)
+        specialized_hits = int((tracks.get("specialized") or {}).get("keyword_hits", 0) or 0)
+        if cursor_hits > 0:
+            accuracy_pct = round((specialized_hits / cursor_hits) * 100.0, 1)
+
+    savings = token_metrics.get("estimated_savings_tokens", {}) if token_metrics.get("available") else {}
+    return {
+        "runs_recent_count": run_total,
+        "run_reliability_pct": run_reliability_pct,
+        "avg_run_seconds": avg_run_seconds,
+        "doc_capture_recent_count": cap_total,
+        "doc_capture_reliability_pct": cap_reliability_pct,
+        "avg_doc_capture_seconds": avg_cap_seconds,
+        "doc_capture_tokens_total": cap_tokens_total,
+        "doc_capture_tokens_opensource": cap_open_tokens,
+        "doc_capture_tokens_specialized": cap_specialized_tokens,
+        "doc_capture_savings_if_specialized_only": cap_savings_if_specialized_only,
+        "specialized_accuracy_vs_cursor_pct": accuracy_pct,
+        "estimated_savings_vs_opensource": savings.get("vs_opensource"),
+        "estimated_savings_vs_specialized": savings.get("vs_specialized"),
+        "recent_runs": runs[:12],
+        "recent_doc_captures": captures[:12],
+        "events_total": summary.get("events_total", 0),
+        "events_failed": summary.get("events_failed", 0),
+    }
+
+
+def _documentation_catalog(limit: int = 500) -> List[Dict[str, Any]]:
+    entries: List[Dict[str, Any]] = []
+    seen: Set[str] = set()
+    patterns = [
+        ("docs", "docs/**/*.md"),
+        ("docs", "docs/**/*.json"),
+        ("docs", "docs/**/*.jsonl"),
+        ("capture", "data/documentation_captures/*.md"),
+        ("capture", "data/documentation_captures/*.json"),
+        ("runs", "benchmarks/results/runs/*/RUN.md"),
+    ]
+    for category, pattern in patterns:
+        for path in REPO_ROOT.glob(pattern):
+            if not path.is_file():
+                continue
+            rel = str(path.relative_to(REPO_ROOT))
+            if rel in seen:
+                continue
+            seen.add(rel)
+            stat = path.stat()
+            entries.append(
+                {
+                    "path": rel,
+                    "category": category,
+                    "title": _doc_display_title(path, category),
+                    "updated_utc": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "size_bytes": int(stat.st_size),
+                    "mtime": float(stat.st_mtime),
+                }
+            )
+    entries.sort(key=lambda row: row.get("mtime", 0.0), reverse=True)
+    trimmed = entries[: max(1, min(2000, limit))]
+    for row in trimmed:
+        row.pop("mtime", None)
+    return trimmed
+
+
+def _doc_display_title(path: Path, category: str) -> str:
+    name = path.name
+    suffix = path.suffix.lower()
+    if suffix == ".md":
+        return _markdown_title(path)
+    if category == "capture" and suffix == ".json":
+        return _capture_json_title(path)
+    return name
+
+
+def _markdown_title(path: Path) -> str:
+    try:
         text = path.read_text(encoding="utf-8", errors="replace")
-        snippets[key] = text[:2500]
-    return snippets
+    except OSError:
+        return path.name
+    # Session log should surface the newest dated section title.
+    if path.name.upper() == "SESSION_LOG.MD":
+        matches = re.findall(r"^##\s+(.+?)\s*$", text, flags=re.MULTILINE)
+        if matches:
+            return matches[-1].strip()
+    for line in text.splitlines():
+        s = line.strip()
+        if not s:
+            continue
+        if s.startswith("#"):
+            return s.lstrip("#").strip()
+    return path.name
+
+
+def _capture_json_title(path: Path) -> str:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return path.name
+    changed_path = str(payload.get("changed_path") or "").strip()
+    started = str(payload.get("started_at") or "").strip()
+    if changed_path and started:
+        return f"{started[:10]} — {changed_path}"
+    if changed_path:
+        return changed_path
+    return path.name
 
 
 def _load_scoring_summary() -> Dict[str, Any]:
@@ -213,7 +818,36 @@ def _load_scoring_summary() -> Dict[str, Any]:
             }
     if not tracks:
         return {"available": False, "reason": f"No scoring tracks in {path.name}"}
+    reference_keywords = set(tracks.get("codex_authored", {}).get("keywords", []))
+    for key, row in tracks.items():
+        kws = set(row.get("keywords", []))
+        row["missing_vs_cursor"] = sorted(reference_keywords - kws) if reference_keywords else []
+        base_hits = tracks.get("codex_authored", {}).get("keyword_hits", 0)
+        row["delta_hits_vs_cursor"] = int(row.get("keyword_hits", 0)) - int(base_hits)
     winner = max(tracks.items(), key=lambda kv: (kv[1]["keyword_hits"], -kv[1]["word_count"]))[0]
+    base_name = path.name.replace(".comparison.json", "")
+    doc_candidates = {
+        "codex_authored": REPO_ROOT / "docs" / "PRIVATE_DASHBOARD_DEPLOY.md",
+        "opensource": path.parent / f"{base_name}.opensource.md",
+        "specialized": path.parent / f"{base_name}.specialized.md",
+    }
+    doc_paths: Dict[str, str] = {}
+    for key, p in doc_candidates.items():
+        if p.is_file():
+            doc_paths[key] = str(p.relative_to(REPO_ROOT))
+    os_vs_spec = {
+        "available": False,
+        "identical": False,
+    }
+    os_rel = doc_paths.get("opensource")
+    sp_rel = doc_paths.get("specialized")
+    if os_rel and sp_rel:
+        os_text = _read_repo_file_text(os_rel).strip()
+        sp_text = _read_repo_file_text(sp_rel).strip()
+        os_vs_spec = {
+            "available": True,
+            "identical": bool(os_text and sp_text and os_text == sp_text),
+        }
     return {
         "available": True,
         "file": str(path.relative_to(REPO_ROOT)),
@@ -222,10 +856,312 @@ def _load_scoring_summary() -> Dict[str, Any]:
         "specialized_adapter": payload.get("specialized_adapter", ""),
         "tracks": tracks,
         "winner": winner,
+        "doc_paths": doc_paths,
+        "opensource_vs_specialized": os_vs_spec,
     }
 
 
-def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], scoring: Dict[str, Any]) -> str:
+def _read_repo_file_text(rel_path: str, *, max_chars: int = 80000) -> str:
+    candidate = (REPO_ROOT / rel_path).resolve()
+    try:
+        candidate.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return "(invalid path)"
+    if not candidate.is_file():
+        return "(missing file)"
+    return candidate.read_text(encoding="utf-8", errors="replace")[:max_chars]
+
+
+def _archive_output_artifact(scoring: Dict[str, Any], track: str) -> Tuple[bool, str]:
+    rel = str((scoring.get("doc_paths") or {}).get(track, "")).strip()
+    if not rel:
+        return False, "no artifact mapped for track"
+    candidate = (REPO_ROOT / rel).resolve()
+    try:
+        candidate.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return False, "artifact path is outside repo root"
+    # Only allow curation deletes for generated comparison outputs.
+    generated_root = (REPO_ROOT / "docs" / "generated").resolve()
+    try:
+        candidate.relative_to(generated_root)
+    except ValueError:
+        return False, "only docs/generated artifacts can be deleted"
+    if not candidate.is_file():
+        return False, "artifact is missing"
+    archived = candidate.with_name(f"{candidate.stem}.deleted-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}{candidate.suffix}")
+    candidate.rename(archived)
+    return True, str(archived.relative_to(REPO_ROOT))
+
+
+def _render_doc_view(title: str, body: str, *, back_href: str = "/") -> str:
+    return (
+        "<!doctype html><html><head><meta charset='utf-8'/>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+        f"<title>{_h(title)}</title>"
+        "<style>"
+        "body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:20px;background:#0b1220;color:#e6eefc}"
+        "a{color:#7cb2ff} pre{white-space:pre-wrap;border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:12px;max-width:1200px}"
+        ".top{display:flex;justify-content:space-between;align-items:center;gap:10px}"
+        "</style></head><body>"
+        "<div class='top'>"
+        f"<h2>{_h(title)}</h2>"
+        f"<a href='{_h(back_href)}'>Back to dashboard</a>"
+        "</div>"
+        f"<pre>{_h(body)}</pre>"
+        "</body></html>"
+    )
+
+
+def _render_compare_view(
+    left_track: str,
+    left_title: str,
+    left_body: str,
+    right_track: str,
+    right_title: str,
+    right_body: str,
+    left_deletable: bool,
+    right_deletable: bool,
+) -> str:
+    identical = left_body == right_body
+    identical_banner = (
+        "<p style='padding:8px 10px;border:1px solid #365f95;border-radius:8px;background:#102846;'>"
+        "These outputs are currently identical. This usually means both tracks were generated from the same base behavior for this artifact."
+        "</p>"
+        if identical
+        else ""
+    )
+    left_text_json = json.dumps(left_body, ensure_ascii=False)
+    right_text_json = json.dumps(right_body, ensure_ascii=False)
+    left_track_json = json.dumps(left_track)
+    right_track_json = json.dumps(right_track)
+    return (
+        "<!doctype html><html><head><meta charset='utf-8'/>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+        "<title>Side-by-side comparison</title>"
+        "<style>"
+        "body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:16px;background:#081224;color:#e6eefc}"
+        "a{color:#7cb2ff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}"
+        ".panel,.verdict{border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:10px}"
+        ".doc{white-space:pre-wrap;border:1px solid #2a3f62;background:#091326;border-radius:10px;padding:12px;max-height:52vh;overflow:auto}"
+        ".doc .hl-good{background:#12442d}.doc .hl-bad{background:#5e1f2a}"
+        "h3,h4{margin:0 0 8px 0}.top{display:flex;justify-content:space-between;align-items:center}"
+        ".row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}"
+        ".row select,.row textarea,.row button,.row input{border:1px solid #335d92;border-radius:8px;background:#081224;color:#e6eefc;padding:8px}"
+        ".row textarea{width:100%;min-height:72px}"
+        ".row button{background:#1e60d6;border-color:#1e60d6;cursor:pointer;font-weight:600}"
+        ".row button.secondary{background:#182640;border-color:#335d92}"
+        ".row button.good{background:#0f7b47;border-color:#0f7b47}.row button.bad{background:#8a2435;border-color:#8a2435}"
+        ".status{font-size:12px;color:#9bc2ff}"
+        ".muted{font-size:12px;color:#9bc2ff}"
+        ".spans{margin-top:10px;border:1px dashed #335d92;border-radius:8px;padding:8px}"
+        ".span-item{border:1px solid #23436d;border-radius:8px;padding:8px;margin-top:8px}"
+        ".span-item.good{border-color:#1f6a48}.span-item.bad{border-color:#7d3340}"
+        ".legacy{margin-top:12px;border-top:1px solid #2a3f62;padding-top:10px}"
+        "</style></head><body>"
+        f"<div class='top'><h2>Compare: {_h(left_title)} vs {_h(right_title)}</h2><a href='/'>Back to dashboard</a></div>"
+        + identical_banner +
+        "<section class='verdict'>"
+        "<h3>Structured training feedback</h3>"
+        "<div class='row'><label>Winner <select id='winner'><option value=''>Select winner</option><option value='left'>Left</option><option value='right'>Right</option><option value='tie'>Tie</option></select></label>"
+        "<label>Preference strength <select id='strength'><option value=''>Select strength</option><option value='weak'>Weak</option><option value='medium'>Medium</option><option value='strong'>Strong</option><option value='tie'>Tie/No preference</option></select></label></div>"
+        "<div class='row'><textarea id='compareNotes' placeholder='Optional overall notes for this comparison'></textarea></div>"
+        "<div class='row'><button id='submitStructured'>Save Structured Feedback</button><span id='structuredStatus' class='status'></span></div>"
+        "<p class='muted'>Highlight text in either panel, then apply green/red labels with optional reason and rewrite for red spans.</p>"
+        "<div id='spanList' class='spans'></div>"
+        "</section>"
+        "<div class='grid'>"
+        f"<section class='panel' data-side='left'><h3>{_h(left_title)}</h3>"
+        "<div class='row'><input class='reason' placeholder='Reason for selected span (optional)'/>"
+        "<button class='good add-span'>Mark Green (good)</button><button class='bad add-span' data-label='bad'>Mark Red (bad)</button></div>"
+        "<div class='row'><textarea class='rewrite' placeholder='Optional rewrite text (used with red spans)'></textarea></div>"
+        "<div class='doc' id='leftDoc'></div>"
+        f"<div class='legacy curate' data-track='{_h(left_track)}' data-deletable='{str(left_deletable).lower()}'>"
+        "<h4>Legacy per-track curation (optional)</h4>"
+        "<div class='row'><select class='action'><option value='feedback'>Feedback only</option><option value='train_include'>Include for training</option><option value='train_exclude'>Exclude from training</option></select>"
+        "<select class='rating'><option value='5'>5</option><option value='4'>4</option><option value='3'>3</option><option value='2'>2</option><option value='1'>1</option></select></div>"
+        "<div class='row'><textarea class='key-details' placeholder='Key details to train on'></textarea></div>"
+        "<div class='row'><textarea class='language-edits' placeholder='Language edits for future output'></textarea></div>"
+        "<div class='row'><textarea class='notes' placeholder='Notes/context for future training'></textarea></div>"
+        "<div class='row'><button class='save secondary'>Save Legacy Curation</button><button class='secondary delete'>Delete Output</button><span class='status'></span></div>"
+        "</div></section>"
+        f"<section class='panel' data-side='right'><h3>{_h(right_title)}</h3>"
+        "<div class='row'><input class='reason' placeholder='Reason for selected span (optional)'/>"
+        "<button class='good add-span'>Mark Green (good)</button><button class='bad add-span' data-label='bad'>Mark Red (bad)</button></div>"
+        "<div class='row'><textarea class='rewrite' placeholder='Optional rewrite text (used with red spans)'></textarea></div>"
+        "<div class='doc' id='rightDoc'></div>"
+        f"<div class='legacy curate' data-track='{_h(right_track)}' data-deletable='{str(right_deletable).lower()}'>"
+        "<h4>Legacy per-track curation (optional)</h4>"
+        "<div class='row'><select class='action'><option value='feedback'>Feedback only</option><option value='train_include'>Include for training</option><option value='train_exclude'>Exclude from training</option></select>"
+        "<select class='rating'><option value='5'>5</option><option value='4'>4</option><option value='3'>3</option><option value='2'>2</option><option value='1'>1</option></select></div>"
+        "<div class='row'><textarea class='key-details' placeholder='Key details to train on'></textarea></div>"
+        "<div class='row'><textarea class='language-edits' placeholder='Language edits for future output'></textarea></div>"
+        "<div class='row'><textarea class='notes' placeholder='Notes/context for future training'></textarea></div>"
+        "<div class='row'><button class='save secondary'>Save Legacy Curation</button><button class='secondary delete'>Delete Output</button><span class='status'></span></div>"
+        "</div></section>"
+        "</div>"
+        "<script>"
+        f"const leftTrack = {left_track_json};"
+        f"const rightTrack = {right_track_json};"
+        f"const state = {{ leftText: {left_text_json}, rightText: {right_text_json}, spans: [] }};"
+        "const leftDoc = document.getElementById('leftDoc');"
+        "const rightDoc = document.getElementById('rightDoc');"
+        "const spanList = document.getElementById('spanList');"
+        "const statusEl = document.getElementById('structuredStatus');"
+        "function escapeHtml(v){return (v || '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}"
+        "function renderSide(side){"
+        "  const text = side === 'left' ? state.leftText : state.rightText;"
+        "  const spans = state.spans.filter((s)=>s.side===side).sort((a,b)=>a.start-b.start || a.end-b.end);"
+        "  let out=''; let cursor=0;"
+        "  for(const s of spans){"
+        "    if (s.start > cursor) out += escapeHtml(text.slice(cursor, s.start));"
+        "    const cls = s.label === 'good' ? 'hl-good' : 'hl-bad';"
+        "    out += `<span class=\"${cls}\">${escapeHtml(text.slice(s.start, s.end))}</span>`;"
+        "    cursor = s.end;"
+        "  }"
+        "  if (cursor < text.length) out += escapeHtml(text.slice(cursor));"
+        "  (side === 'left' ? leftDoc : rightDoc).innerHTML = out;"
+        "}"
+        "function getSelectionOffsets(side){"
+        "  const root = side === 'left' ? leftDoc : rightDoc;"
+        "  const sel = window.getSelection();"
+        "  if (!sel || sel.rangeCount === 0) return null;"
+        "  const range = sel.getRangeAt(0);"
+        "  if (!root.contains(range.commonAncestorContainer)) return null;"
+        "  const text = side === 'left' ? state.leftText : state.rightText;"
+        "  if (range.collapsed) return null;"
+        "  const prefix = range.cloneRange();"
+        "  prefix.selectNodeContents(root);"
+        "  prefix.setEnd(range.startContainer, range.startOffset);"
+        "  const start = prefix.toString().length;"
+        "  const selected = range.toString();"
+        "  const end = start + selected.length;"
+        "  if (start < 0 || end > text.length || end <= start) return null;"
+        "  return {start, end, selected};"
+        "}"
+        "function hasOverlap(side,start,end){"
+        "  return state.spans.some((s)=>s.side===side && start < s.end && end > s.start);"
+        "}"
+        "function renderSpanList(){"
+        "  if (!state.spans.length){ spanList.innerHTML = '<div class=\"muted\">No labeled spans yet.</div>'; return; }"
+        "  const rows = state.spans.slice().sort((a,b)=>a.side.localeCompare(b.side) || a.start-b.start).map((s)=>{"
+        "    const cls = s.label === 'good' ? 'good' : 'bad';"
+        "    return `<div class=\"span-item ${cls}\" data-span-id=\"${s.id}\"><strong>${s.side.toUpperCase()} ${s.label.toUpperCase()}</strong> [${s.start}, ${s.end})` +"
+        "      `<div class=\"muted\">${escapeHtml(s.selected_text.slice(0,200))}</div>` +"
+        "      `<div class=\"row\"><input class=\"span-reason\" value=\"${escapeHtml(s.reason)}\" placeholder=\"Reason (optional)\"/></div>` +"
+        "      `<div class=\"row\"><textarea class=\"span-rewrite\" placeholder=\"Rewrite text for bad spans (optional)\">${escapeHtml(s.rewrite_text)}</textarea></div>` +"
+        "      `<div class=\"row\"><button class=\"secondary span-delete\">Delete span</button></div></div>`;"
+        "  });"
+        "  spanList.innerHTML = rows.join('');"
+        "}"
+        "function renderAll(){ renderSide('left'); renderSide('right'); renderSpanList(); }"
+        "renderAll();"
+        "for (const panel of document.querySelectorAll('.panel[data-side]')) {"
+        "  const side = panel.getAttribute('data-side') || 'left';"
+        "  for (const btn of panel.querySelectorAll('.add-span')) {"
+        "    btn.addEventListener('click', () => {"
+        "      const label = btn.dataset.label === 'bad' ? 'bad' : 'good';"
+        "      const r = getSelectionOffsets(side);"
+        "      if (!r) { statusEl.textContent = 'Select text inside a document first.'; return; }"
+        "      if (hasOverlap(side, r.start, r.end)) { statusEl.textContent = 'Selected span overlaps an existing label.'; return; }"
+        "      const reason = (panel.querySelector('.reason')?.value || '').trim();"
+        "      const rewrite = (panel.querySelector('.rewrite')?.value || '').trim();"
+        "      if (label === 'good' && rewrite) { statusEl.textContent = 'Rewrite text is only for red/bad spans.'; return; }"
+        "      state.spans.push({"
+        "        id: String(Date.now()) + '-' + Math.random().toString(16).slice(2), side, label,"
+        "        start: r.start, end: r.end, selected_text: r.selected, reason, rewrite_text: rewrite"
+        "      });"
+        "      statusEl.textContent = `Added ${label} span (${side}).`;"
+        "      renderAll();"
+        "    });"
+        "  }"
+        "}"
+        "spanList.addEventListener('click', (ev) => {"
+        "  const target = ev.target;"
+        "  if (!(target instanceof HTMLElement)) return;"
+        "  if (!target.classList.contains('span-delete')) return;"
+        "  const card = target.closest('[data-span-id]');"
+        "  if (!card) return;"
+        "  const spanId = card.getAttribute('data-span-id');"
+        "  state.spans = state.spans.filter((s)=>s.id !== spanId);"
+        "  renderAll();"
+        "});"
+        "spanList.addEventListener('input', (ev) => {"
+        "  const target = ev.target;"
+        "  if (!(target instanceof HTMLElement)) return;"
+        "  const card = target.closest('[data-span-id]');"
+        "  if (!card) return;"
+        "  const spanId = card.getAttribute('data-span-id');"
+        "  const span = state.spans.find((s)=>s.id === spanId);"
+        "  if (!span) return;"
+        "  if (target.classList.contains('span-reason')) span.reason = (target.value || '').toString();"
+        "  if (target.classList.contains('span-rewrite')) span.rewrite_text = (target.value || '').toString();"
+        "});"
+        "document.getElementById('submitStructured')?.addEventListener('click', async () => {"
+        "  const winner = (document.getElementById('winner')?.value || '').trim();"
+        "  const strength = (document.getElementById('strength')?.value || '').trim();"
+        "  const notes = (document.getElementById('compareNotes')?.value || '').trim();"
+        "  if (!winner) { statusEl.textContent = 'Select a winner (or tie).'; return; }"
+        "  if (winner !== 'tie' && !strength) { statusEl.textContent = 'Select preference strength.'; return; }"
+        "  statusEl.textContent = 'Saving structured feedback...';"
+        "  try {"
+        "    const payload = {"
+        "      left_track: leftTrack, right_track: rightTrack, winner, strength, notes, source: 'compare_view_structured',"
+        "      spans: state.spans.map((s)=>({ side:s.side, label:s.label, start:s.start, end:s.end, selected_text:s.selected_text, reason:s.reason, rewrite_text:s.rewrite_text }))"
+        "    };"
+        "    const res = await fetch('/api/compare-feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });"
+        "    const body = await res.json();"
+        "    if (!res.ok || !body.ok) throw new Error(body.error || ('HTTP ' + res.status));"
+        "    statusEl.textContent = `Structured feedback saved (#${body.id}).`;"
+        "  } catch (err) { statusEl.textContent = 'Save failed: ' + err; }"
+        "});"
+        "for (const box of document.querySelectorAll('.curate')) {"
+        "  const track = box.getAttribute('data-track') || '';"
+        "  const deletable = (box.getAttribute('data-deletable') || '') === 'true';"
+        "  const saveBtn = box.querySelector('.save');"
+        "  const delBtn = box.querySelector('.delete');"
+        "  const status = box.querySelector('.status');"
+        "  if (!deletable) { delBtn.disabled = true; delBtn.title = 'Only docs/generated outputs can be deleted.'; }"
+        "  saveBtn?.addEventListener('click', async () => {"
+        "    const notes = (box.querySelector('.notes')?.value || '').trim();"
+        "    if (!notes) { status.textContent = 'Add notes before saving.'; return; }"
+        "    status.textContent = 'Saving...';"
+        "    try {"
+        "      const res = await fetch('/api/feedback', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({"
+        "        track, action: box.querySelector('.action')?.value || 'feedback', rating: Number(box.querySelector('.rating')?.value || 3),"
+        "        key_details: box.querySelector('.key-details')?.value || '', language_edits: box.querySelector('.language-edits')?.value || '',"
+        "        notes, source: 'compare_view_legacy_curation'"
+        "      })});"
+        "      const payload = await res.json();"
+        "      if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));"
+        "      status.textContent = 'Saved.';"
+        "    } catch (err) { status.textContent = 'Save failed: ' + err; }"
+        "  });"
+        "  delBtn?.addEventListener('click', async () => {"
+        "    if (!deletable) return;"
+        "    status.textContent = 'Deleting output...';"
+        "    try {"
+        "      const res = await fetch('/api/output-action', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({"
+        "        track, action:'delete_output', reason: (box.querySelector('.notes')?.value || 'deleted from compare view'), source: 'compare_view_legacy_curation'"
+        "      })});"
+        "      const payload = await res.json();"
+        "      if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));"
+        "      status.textContent = 'Deleted. Refresh dashboard scoring.';"
+        "    } catch (err) { status.textContent = 'Delete failed: ' + err; }"
+        "  });"
+        "}"
+        "</script>"
+        "</body></html>"
+    )
+
+
+def _render_dashboard(
+    summary: Dict[str, Any],
+    scoring: Dict[str, Any],
+    token_metrics: Dict[str, Any],
+    feedback_rows: List[Dict[str, Any]],
+    kpis: Dict[str, Any],
+) -> str:
     rows = []
     for item in summary["recent_events"]:
         cmd = _h(item.get("command") or "")
@@ -245,27 +1181,57 @@ def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], sc
         tracks = scoring["tracks"]
         labels = {
             "codex_authored": "Cursor/Codex Authored",
-            "opensource": "Open-source Base",
-            "specialized": "Specialized Adapter",
+            "opensource": "Open-source Base (no adapter)",
+            "specialized": "Specialized (base + LoRA adapter)",
         }
+        doc_paths = scoring.get("doc_paths", {})
         score_rows = []
         for key in ("codex_authored", "opensource", "specialized"):
             if key not in tracks:
                 continue
             row = tracks[key]
+            missing = ", ".join(row.get("missing_vs_cursor", [])) or "-"
+            read_link = "-"
+            if key in doc_paths:
+                read_link = f"<a href='/view/doc?track={_h(key)}'>Read full</a>"
             score_rows.append(
                 "<tr>"
                 f"<td>{_h(labels.get(key,key))}</td>"
                 f"<td>{_h(row['keyword_hits'])}</td>"
+                f"<td>{_h(row.get('delta_hits_vs_cursor', 0))}</td>"
                 f"<td>{_h(row['word_count'])}</td>"
                 f"<td>{_h(', '.join(row['keywords']))}</td>"
+                f"<td>{_h(missing)}</td>"
+                f"<td>{read_link}</td>"
                 "</tr>"
             )
+        winner_label = labels.get(scoring.get("winner", ""), scoring.get("winner", ""))
+        compare_controls = (
+            "<div class='compare-controls'>"
+            "<label>Compare:</label>"
+            "<select id='cmpLeft'>"
+            "<option value='codex_authored'>Cursor/Codex</option>"
+            "<option value='opensource'>Open-source Base</option>"
+            "<option value='specialized'>Specialized Adapter</option>"
+            "</select>"
+            "<span>vs</span>"
+            "<select id='cmpRight'>"
+            "<option value='opensource'>Open-source Base</option>"
+            "<option value='specialized'>Specialized Adapter</option>"
+            "<option value='codex_authored'>Cursor/Codex</option>"
+            "</select>"
+            "<button id='openCompare' type='button'>Open side-by-side</button>"
+            "</div>"
+        )
         scoring_html = (
             f"<p><strong>Latest comparison:</strong> <code>{_h(scoring.get('file',''))}</code></p>"
-            f"<p><strong>Winner by keyword-hit score:</strong> {_h(labels.get(scoring.get('winner',''), scoring.get('winner','')))}</p>"
+            f"<p><strong>Winner by keyword-hit score:</strong> {_h(winner_label)}</p>"
+            "<p class='muted'>Open-source and Specialized intentionally share the same base model. "
+            "The only difference is whether a LoRA adapter is applied; similar or identical outputs are expected on some artifacts.</p>"
+            f"<p class='muted'><strong>Open-source vs Specialized identical:</strong> {_h('yes' if (scoring.get('opensource_vs_specialized') or {}).get('identical') else 'no')}</p>"
+            + compare_controls +
             "<table>"
-            "<thead><tr><th>Track</th><th>Keyword hits</th><th>Word count</th><th>Matched keywords</th></tr></thead>"
+            "<thead><tr><th>Track</th><th>Keyword hits</th><th>Delta vs Cursor</th><th>Word count</th><th>Matched keywords</th><th>Missing vs Cursor</th><th>Docs</th></tr></thead>"
             f"<tbody>{''.join(score_rows)}</tbody>"
             "</table>"
         )
@@ -275,6 +1241,128 @@ def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], sc
             "<p>Generate one with your duplicate-doc run and place the JSON under <code>docs/generated/*.comparison.json</code>.</p>"
         )
 
+    feedback_table = ""
+    if feedback_rows:
+        frows = []
+        for row in feedback_rows:
+            frows.append(
+                "<tr>"
+                f"<td>{_h(row.get('ts',''))}</td>"
+                f"<td>{_h(row.get('track',''))}</td>"
+                f"<td>{_h(row.get('action',''))}</td>"
+                f"<td>{_h(row.get('rating',''))}</td>"
+                f"<td>{_h(row.get('key_details',''))}</td>"
+                f"<td>{_h(row.get('language_edits',''))}</td>"
+                f"<td>{_h(row.get('notes',''))}</td>"
+                "</tr>"
+            )
+        feedback_table = (
+            "<h3>Recent Feedback</h3>"
+            "<table><thead><tr><th>UTC</th><th>Track</th><th>Action</th><th>Rating</th><th>Key details</th><th>Language edits</th><th>Notes</th></tr></thead>"
+            f"<tbody>{''.join(frows)}</tbody></table>"
+        )
+    else:
+        feedback_table = "<p>No feedback submitted yet.</p>"
+
+    token_cards = "<p>No documentation token metrics yet.</p>"
+    if token_metrics.get("available"):
+        tracks = token_metrics.get("tracks", {})
+        cards = []
+        for key, label in (
+            ("cursor_codex", "Cursor/Codex"),
+            ("opensource", "Open-source"),
+            ("specialized", "Specialized"),
+        ):
+            row = tracks.get(key)
+            if not row:
+                continue
+            cards.append(
+                "<div class='metric-card'>"
+                f"<div class='metric-title'>{_h(label)}</div>"
+                f"<div class='metric-value'>{_h(row.get('estimated_tokens'))}</div>"
+                "<div class='metric-sub'>estimated tokens</div>"
+                f"<div class='metric-sub'><code>{_h(row.get('path'))}</code></div>"
+                "</div>"
+            )
+        savings = token_metrics.get("estimated_savings_tokens", {})
+        token_cards = (
+            "<div class='metric-grid'>"
+            + "".join(cards)
+            + "<div class='metric-card glow'>"
+            "<div class='metric-title'>Estimated Savings</div>"
+            f"<div class='metric-value'>{_h(savings.get('vs_specialized'))}</div>"
+            "<div class='metric-sub'>tokens saved vs specialized doc output</div>"
+            f"<div class='metric-sub'>vs open-source: {_h(savings.get('vs_opensource'))}</div>"
+            "</div></div>"
+            f"<p class='muted'>{_h(token_metrics.get('notes',''))}</p>"
+        )
+
+    recent_run_rows = []
+    for row in kpis.get("recent_runs", []):
+        exit_code = row.get("final_exit_code")
+        status_label = "ok" if exit_code == 0 else "failed"
+        detail_lines = [
+            f"Run ID: {row.get('run_id','')}",
+            f"Started: {row.get('started_at','')}",
+            f"Finished: {row.get('finished_at','')}",
+            f"Steps: {row.get('steps_count','')}",
+            f"Capability summary: {row.get('capability_summary','—')}",
+            f"Trained adapter: {row.get('trained_adapter_path') or '—'}",
+            f"Benchmark adapter/model: {row.get('benchmark_adapter_path') or '—'}",
+        ]
+        recent_run_rows.append(
+            "<tr>"
+            f"<td>{_h(row.get('run_id',''))}</td>"
+            f"<td>{_h(row.get('subcommand',''))}</td>"
+            f"<td><span class='status-pill {status_label}'>{_h(exit_code)}</span></td>"
+            f"<td>{_h(row.get('elapsed_s',''))}</td>"
+            f"<td>{_h(row.get('benchmark_summary',''))}</td>"
+            "<td>"
+            "<details>"
+            "<summary>Details</summary>"
+            f"<pre>{_h(chr(10).join(detail_lines))}</pre>"
+            "</details>"
+            "</td>"
+            "</tr>"
+        )
+    recent_runs_table = (
+        "<table><thead><tr><th>Run ID</th><th>Subcommand</th><th>Exit</th><th>Seconds</th><th>Benchmark</th><th>More</th></tr></thead>"
+        f"<tbody>{''.join(recent_run_rows) if recent_run_rows else '<tr><td colspan=6>(no runs found)</td></tr>'}</tbody></table>"
+    )
+
+    cap_rows = []
+    for row in kpis.get("recent_doc_captures", []):
+        detail_lines = [
+            f"Capture file: {row.get('file','')}",
+            f"Trigger event: {row.get('trigger_event','')}",
+            f"Started: {row.get('started_at','')}",
+            f"Finished: {row.get('finished_at','')}",
+            f"Open-source load/gen: {row.get('opensource_load_seconds',0):.3f}s / {row.get('opensource_gen_seconds',0):.3f}s",
+            f"Specialized load/gen: {row.get('specialized_load_seconds',0):.3f}s / {row.get('specialized_gen_seconds',0):.3f}s",
+        ]
+        cap_rows.append(
+            "<tr>"
+            f"<td>{_h(row.get('changed_path',''))}</td>"
+            f"<td>{_h(row.get('opensource_tokens',''))}</td>"
+            f"<td>{_h(row.get('specialized_tokens',''))}</td>"
+            f"<td>{_h(round(float(row.get('opensource_seconds',0)+row.get('specialized_seconds',0)),3))}</td>"
+            f"<td>{_h('yes' if row.get('has_both') else 'no')}</td>"
+            "<td>"
+            "<details>"
+            "<summary>Details</summary>"
+            f"<pre>{_h(chr(10).join(detail_lines))}</pre>"
+            "</details>"
+            "</td>"
+            "</tr>"
+        )
+    recent_caps_table = (
+        "<table><thead><tr><th>Changed Path</th><th>Open-source tokens</th><th>Specialized tokens</th><th>Total seconds</th><th>Both outputs</th><th>More</th></tr></thead>"
+        f"<tbody>{''.join(cap_rows) if cap_rows else '<tr><td colspan=6>(no captures found)</td></tr>'}</tbody></table>"
+    )
+
+    acc_val = kpis.get("specialized_accuracy_vs_cursor_pct")
+    acc_text = "n/a" if acc_val is None else f"{acc_val}%"
+
     return f"""<!doctype html>
 <html>
 <head>
@@ -282,24 +1370,78 @@ def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], sc
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>FE Private Dashboard</title>
   <style>
-    body {{ font-family: -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; margin: 24px; background: #0b1020; color: #e5e7eb; }}
-    .cards {{ display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }}
-    .card {{ border: 1px solid #334155; border-radius: 10px; padding: 12px; background: #111827; }}
+    :root {{
+      --bg: #f4f8ff;
+      --fg: #0d223f;
+      --panel: #ffffff;
+      --panel-border: #cfe0ff;
+      --accent: #2463eb;
+      --muted: #5d7398;
+      --glow: rgba(36, 99, 235, 0.2);
+    }}
+    body.dark {{
+      --bg: #081224;
+      --fg: #e8f1ff;
+      --panel: #0f1b2f;
+      --panel-border: #29466f;
+      --accent: #61a4ff;
+      --muted: #98b5dc;
+      --glow: rgba(97, 164, 255, 0.35);
+    }}
+    body {{ font-family: Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; margin: 24px; background: var(--bg); color: var(--fg); transition: all 0.25s ease; }}
+    .topbar {{ display:flex; align-items:center; justify-content:space-between; gap:12px; }}
+    .brand {{ font-size: 24px; font-weight: 700; letter-spacing: 0.2px; }}
+    .muted {{ color: var(--muted); }}
+    .cards {{ display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }}
+    .card {{ border: 1px solid var(--panel-border); border-radius: 14px; padding: 14px; background: var(--panel); box-shadow: 0 10px 30px rgba(15,23,42,0.08); }}
+    .cards .card strong {{ color: var(--muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }}
+    .cards .card div {{ font-size: 24px; margin-top: 6px; font-weight: 700; color: var(--accent); }}
     .tabs {{ display:flex; gap:8px; margin: 12px 0 16px 0; }}
-    .tab {{ padding: 8px 12px; border:1px solid #334155; border-radius: 8px; background:#0f172a; color:#e5e7eb; cursor:pointer; }}
-    .tab.active {{ background:#1d4ed8; border-color:#1d4ed8; }}
+    .tab {{ padding: 10px 14px; border:1px solid var(--panel-border); border-radius: 10px; background: var(--panel); color:var(--fg); cursor:pointer; font-weight: 600; }}
+    .tab.active {{ background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 4px var(--glow); }}
+    .mode-btn {{ padding: 10px 14px; border:1px solid var(--panel-border); border-radius: 10px; background: var(--panel); color:var(--fg); cursor:pointer; font-weight:600; }}
     .panel {{ display:none; }}
     .panel.active {{ display:block; }}
     h1,h2 {{ margin: 0 0 12px 0; }}
-    table {{ width: 100%; border-collapse: collapse; background: #111827; }}
-    th,td {{ border: 1px solid #334155; padding: 8px; text-align: left; vertical-align: top; }}
-    pre {{ white-space: pre-wrap; background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 10px; max-height: 240px; overflow: auto; }}
-    a {{ color: #93c5fd; }}
+    table {{ width: 100%; border-collapse: collapse; background: var(--panel); border:1px solid var(--panel-border); border-radius: 10px; overflow:hidden; }}
+    th,td {{ border-bottom: 1px solid var(--panel-border); padding: 9px; text-align: left; vertical-align: top; font-size: 14px; }}
+    th {{ color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 0.4px; }}
+    pre {{ white-space: pre-wrap; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 12px; max-height: 260px; overflow: auto; }}
+    code {{ background: rgba(36,99,235,0.09); padding: 1px 5px; border-radius: 6px; }}
+    .metric-grid {{ display:grid; grid-template-columns: repeat(4, minmax(180px,1fr)); gap: 12px; margin: 8px 0 12px 0; }}
+    .metric-card {{ border:1px solid var(--panel-border); border-radius: 12px; background: var(--panel); padding: 12px; }}
+    .metric-card.glow {{ box-shadow: 0 0 0 4px var(--glow), 0 8px 25px var(--glow); }}
+    .metric-title {{ font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }}
+    .metric-value {{ font-size: 26px; font-weight: 700; color: var(--accent); margin-top: 6px; }}
+    .metric-sub {{ font-size: 12px; color: var(--muted); margin-top: 4px; }}
+    .feedback-box {{ border: 1px dashed var(--panel-border); background: var(--panel); border-radius: 10px; padding: 12px; margin: 14px 0; }}
+    .feedback-row {{ display:flex; gap:8px; flex-wrap:wrap; margin-top: 8px; }}
+    .feedback-row select, .feedback-row textarea, .feedback-row button {{
+      border:1px solid var(--panel-border); border-radius: 8px; background: var(--bg); color: var(--fg); padding: 8px;
+    }}
+    .feedback-row textarea {{ min-height: 80px; width: min(880px, 100%); }}
+    .feedback-row button {{ background: var(--accent); color:white; border-color: var(--accent); cursor:pointer; font-weight: 600; }}
+    .compare-controls {{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin: 10px 0 12px 0; }}
+    .compare-controls select, .compare-controls button {{
+      border:1px solid var(--panel-border); border-radius: 8px; background: var(--panel); color: var(--fg); padding: 7px 10px;
+    }}
+    .compare-controls button {{ background: var(--accent); color: white; border-color: var(--accent); cursor: pointer; font-weight: 600; }}
+    .status-pill {{ display:inline-block; padding: 2px 8px; border-radius: 999px; font-weight:700; font-size:12px; }}
+    .status-pill.ok {{ background: rgba(16,185,129,0.18); color: #10b981; border: 1px solid rgba(16,185,129,0.35); }}
+    .status-pill.failed {{ background: rgba(239,68,68,0.18); color: #ef4444; border: 1px solid rgba(239,68,68,0.35); }}
+    details summary {{ cursor: pointer; font-weight: 600; color: var(--accent); }}
+    .workflow-box {{ border:1px solid var(--panel-border); background: var(--panel); border-radius: 10px; padding: 12px; margin: 10px 0 14px 0; }}
+    a {{ color: var(--accent); }}
   </style>
 </head>
 <body>
-  <h1>Fallen Empire Private Dashboard</h1>
-  <p>Generated: {_h(summary['generated_at'])} UTC</p>
+  <div class="topbar">
+    <div>
+      <div class="brand">Fallen Empire Analytics Cloud</div>
+      <p class="muted">Generated: {_h(summary['generated_at'])} UTC</p>
+    </div>
+    <button id="modeToggle" class="mode-btn">Toggle Dark Glow Mode</button>
+  </div>
 
   <div class="tabs">
     <button class="tab active" data-panel="overview">Overview</button>
@@ -309,9 +1451,25 @@ def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], sc
 
   <section id="panel-overview" class="panel active">
     <div class="cards">
-      <div class="card"><strong>Total events</strong><div>{_h(summary['events_total'])}</div></div>
-      <div class="card"><strong>Events today</strong><div>{_h(summary['events_today'])}</div></div>
-      <div class="card"><strong>Failed events</strong><div>{_h(summary['events_failed'])}</div></div>
+      <div class="card"><strong>Run Reliability</strong><div>{_h(kpis.get('run_reliability_pct'))}%</div></div>
+      <div class="card"><strong>Specialized Accuracy</strong><div>{_h(acc_text)}</div></div>
+      <div class="card"><strong>Avg Run Time</strong><div>{_h(kpis.get('avg_run_seconds'))}s</div></div>
+      <div class="card"><strong>Recent Runs</strong><div>{_h(kpis.get('runs_recent_count'))}</div></div>
+      <div class="card"><strong>Doc Capture Reliability</strong><div>{_h(kpis.get('doc_capture_reliability_pct'))}%</div></div>
+      <div class="card"><strong>Avg Capture Time</strong><div>{_h(kpis.get('avg_doc_capture_seconds'))}s</div></div>
+      <div class="card"><strong>Capture Tokens</strong><div>{_h(kpis.get('doc_capture_tokens_total'))}</div></div>
+      <div class="card"><strong>Savings If Specialized Only</strong><div>{_h(kpis.get('doc_capture_savings_if_specialized_only'))}</div></div>
+      <div class="card"><strong>Total Events</strong><div>{_h(summary['events_total'])}</div></div>
+    </div>
+
+    <div class="workflow-box">
+      <strong>Workflow Context</strong>
+      <p class="muted">
+        This page combines three pipelines: (1) workflow runs from <code>benchmarks/results/runs/*/manifest.json</code>,
+        (2) documentation captures generated on watched code edits (open-source + specialized),
+        and (3) scoring artifacts from <code>docs/generated/*.comparison.json</code>.
+        Use each row's <em>Details</em> dropdown to inspect what happened, timings, and model/adapter context.
+      </p>
     </div>
 
     <h2>Recent Events</h2>
@@ -319,26 +1477,74 @@ def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], sc
       <thead><tr><th>UTC</th><th>Source</th><th>Kind</th><th>Command</th><th>Exit</th></tr></thead>
       <tbody>{rows_html}</tbody>
     </table>
+
+    <h2 style="margin-top:16px;">Documentation Token Savings (Estimated)</h2>
+    {token_cards}
+
+    <h2 style="margin-top:16px;">Recent Workflow Runs</h2>
+    {recent_runs_table}
+
+    <h2 style="margin-top:16px;">Recent Documentation Captures</h2>
+    {recent_caps_table}
   </section>
 
   <section id="panel-scoring" class="panel">
     <h2>Scoring Against Cursor Work</h2>
-    <p>This tab compares generated docs against Cursor/Codex-authored reference scoring artifacts.</p>
+    <p class="muted">Compare reference docs vs base-model output vs base+adapter output.</p>
     {scoring_html}
+    <div class="feedback-box">
+      <h3>Output Curation + Training Context</h3>
+      <p class="muted">Open side-by-side and curate each output directly in-place (key details, language edits, notes, include/exclude, delete).</p>
+    </div>
+    {feedback_table}
   </section>
 
   <section id="panel-docs" class="panel">
-    <h2>Project Documentation Snapshot</h2>
-    <p>This section mirrors committed docs in this repo deployment.</p>
-    <h3>PROJECT_STATE</h3>
-    <pre>{_h(docs_snippets.get('project_state',''))}</pre>
-    <h3>SESSION_LOG</h3>
-    <pre>{_h(docs_snippets.get('session_log',''))}</pre>
-    <h3>SPECIALIZED_RUN_HISTORY</h3>
-    <pre>{_h(docs_snippets.get('specialized_history',''))}</pre>
+    <h2>Documentation Explorer</h2>
+    <p class="muted">Live list of every documentation artifact plus recent generated docs. Auto-refresh runs every 15 seconds.</p>
+    <div class="compare-controls">
+      <label for="docsQuery">Search</label>
+      <input id="docsQuery" type="text" placeholder="name or path..." style="min-width:220px;" />
+      <label for="docsCategory">Category</label>
+      <select id="docsCategory">
+        <option value="all">All categories</option>
+        <option value="docs">Docs</option>
+        <option value="capture">Captures</option>
+        <option value="runs">Runs</option>
+      </select>
+      <label for="docsType">Type</label>
+      <select id="docsType">
+        <option value="all">All types</option>
+        <option value="md">Markdown (.md)</option>
+        <option value="json">JSON (.json)</option>
+        <option value="jsonl">JSONL (.jsonl)</option>
+      </select>
+      <label for="docsSort">Sort</label>
+      <select id="docsSort">
+        <option value="recent">Most recent</option>
+        <option value="name_asc">Name A-Z</option>
+        <option value="name_desc">Name Z-A</option>
+        <option value="type">Type then name</option>
+      </select>
+    </div>
+    <div class="compare-controls">
+      <label for="docsSelect">Document</label>
+      <select id="docsSelect" style="min-width:420px;"></select>
+      <button id="docsRefresh" type="button">Refresh list</button>
+      <span id="docsMeta" class="muted"></span>
+    </div>
+    <pre id="docsViewer">(select a document)</pre>
   </section>
 
   <script>
+    const modeToggle = document.getElementById('modeToggle');
+    const savedMode = localStorage.getItem('fe_dash_mode');
+    if (savedMode === 'dark') document.body.classList.add('dark');
+    modeToggle.addEventListener('click', () => {{
+      document.body.classList.toggle('dark');
+      localStorage.setItem('fe_dash_mode', document.body.classList.contains('dark') ? 'dark' : 'light');
+    }});
+
     const tabs = Array.from(document.querySelectorAll('.tab'));
     const panels = Array.from(document.querySelectorAll('.panel'));
     for (const tab of tabs) {{
@@ -351,6 +1557,146 @@ def _render_dashboard(summary: Dict[str, Any], docs_snippets: Dict[str, str], sc
         if (panel) panel.classList.add('active');
       }});
     }}
+
+    const openCompare = document.getElementById('openCompare');
+    const cmpLeft = document.getElementById('cmpLeft');
+    const cmpRight = document.getElementById('cmpRight');
+    openCompare?.addEventListener('click', () => {{
+      const left = (cmpLeft?.value || 'codex_authored');
+      const right = (cmpRight?.value || 'opensource');
+      if (left === right) {{
+        alert('Choose two different outputs to compare.');
+        return;
+      }}
+      window.location.href = '/view/compare?left=' + encodeURIComponent(left) + '&right=' + encodeURIComponent(right);
+    }});
+
+    let docsCatalog = [];
+    let docsFiltered = [];
+    const docsSelect = document.getElementById('docsSelect');
+    const docsViewer = document.getElementById('docsViewer');
+    const docsMeta = document.getElementById('docsMeta');
+    const docsRefresh = document.getElementById('docsRefresh');
+    const docsQuery = document.getElementById('docsQuery');
+    const docsCategory = document.getElementById('docsCategory');
+    const docsType = document.getElementById('docsType');
+    const docsSort = document.getElementById('docsSort');
+
+    function docType(path) {{
+      const p = String(path || '').toLowerCase();
+      if (p.endsWith('.jsonl')) return 'jsonl';
+      if (p.endsWith('.json')) return 'json';
+      if (p.endsWith('.md')) return 'md';
+      return 'other';
+    }}
+
+    function applyDocsFilters() {{
+      const query = (docsQuery?.value || '').trim().toLowerCase();
+      const category = (docsCategory?.value || 'all');
+      const type = (docsType?.value || 'all');
+      const sortBy = (docsSort?.value || 'recent');
+      let rows = docsCatalog.filter((row) => {{
+        const p = String(row.path || '');
+        const cat = String(row.category || '');
+        if (category !== 'all' && cat !== category) return false;
+        if (type !== 'all' && docType(p) !== type) return false;
+        if (query && !p.toLowerCase().includes(query)) return false;
+        return true;
+      }});
+      if (sortBy === 'name_asc') {{
+        rows.sort((a, b) => String(a.path || '').localeCompare(String(b.path || '')));
+      }} else if (sortBy === 'name_desc') {{
+        rows.sort((a, b) => String(b.path || '').localeCompare(String(a.path || '')));
+      }} else if (sortBy === 'type') {{
+        rows.sort((a, b) => {{
+          const ta = docType(a.path);
+          const tb = docType(b.path);
+          if (ta !== tb) return ta.localeCompare(tb);
+          return String(a.path || '').localeCompare(String(b.path || ''));
+        }});
+      }} else {{
+        rows.sort((a, b) => String(b.updated_utc || '').localeCompare(String(a.updated_utc || '')));
+      }}
+      docsFiltered = rows;
+    }}
+
+    function renderDocsSelect(preferredPath) {{
+      if (!docsSelect) return;
+      const current = preferredPath || docsSelect.value || '';
+      docsSelect.innerHTML = '';
+      for (const row of docsFiltered) {{
+        const opt = document.createElement('option');
+        opt.value = row.path || '';
+        const title = String(row.title || row.path || '');
+        opt.textContent = title + ' — ' + (row.path || '') + ' [' + (row.category || 'docs') + ' • ' + docType(row.path) + ']';
+        docsSelect.appendChild(opt);
+      }}
+      if (docsFiltered.length === 0) {{
+        docsSelect.innerHTML = '<option value=\"\">(no documentation files found)</option>';
+        if (docsViewer) docsViewer.textContent = '(no documentation files found)';
+        if (docsMeta) docsMeta.textContent = '0 matches';
+        return;
+      }}
+      docsSelect.value = docsFiltered.some(d => d.path === current) ? current : (docsFiltered[0].path || '');
+    }}
+
+    async function loadDoc(pathValue) {{
+      if (!pathValue) return;
+      if (docsViewer) docsViewer.textContent = 'Loading...';
+      try {{
+        const res = await fetch('/api/docs/content?path=' + encodeURIComponent(pathValue));
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        if (docsViewer) docsViewer.textContent = payload.content || '';
+        const row = docsCatalog.find(d => d.path === pathValue);
+        if (docsMeta && row) {{
+          docsMeta.textContent = docsFiltered.length + ' matches • updated ' + (row.updated_utc || '') + ' • ' + (row.size_bytes || 0) + ' bytes • ' + docType(row.path);
+        }}
+      }} catch (err) {{
+        if (docsViewer) docsViewer.textContent = 'Failed to load document: ' + err;
+      }}
+    }}
+
+    async function refreshDocsList(preserveSelection=true) {{
+      const selected = docsSelect?.value || '';
+      try {{
+        const res = await fetch('/api/docs/list');
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        docsCatalog = payload.docs || [];
+        applyDocsFilters();
+        renderDocsSelect(preserveSelection ? selected : '');
+        await loadDoc(docsSelect?.value || '');
+      }} catch (err) {{
+        if (docsViewer) docsViewer.textContent = 'Failed to refresh docs list: ' + err;
+      }}
+    }}
+
+    docsRefresh?.addEventListener('click', () => refreshDocsList(true));
+    docsSelect?.addEventListener('change', () => loadDoc(docsSelect.value));
+    docsQuery?.addEventListener('input', () => {{
+      applyDocsFilters();
+      renderDocsSelect(docsSelect?.value || '');
+      loadDoc(docsSelect?.value || '');
+    }});
+    docsCategory?.addEventListener('change', () => {{
+      applyDocsFilters();
+      renderDocsSelect(docsSelect?.value || '');
+      loadDoc(docsSelect?.value || '');
+    }});
+    docsType?.addEventListener('change', () => {{
+      applyDocsFilters();
+      renderDocsSelect(docsSelect?.value || '');
+      loadDoc(docsSelect?.value || '');
+    }});
+    docsSort?.addEventListener('change', () => {{
+      applyDocsFilters();
+      renderDocsSelect(docsSelect?.value || '');
+      loadDoc(docsSelect?.value || '');
+    }});
+    refreshDocsList(false);
+    setInterval(() => refreshDocsList(true), 15000);
+
   </script>
 </body>
 </html>
@@ -417,13 +1763,333 @@ def app(environ: Dict[str, Any], start_response):
     finally:
         conn.close()
 
+    scoring_payload = _load_scoring_summary()
+    token_payload = _documentation_token_metrics()
+    kpi_payload = _kpi_metrics(summary, scoring_payload, token_payload)
+
     if path == "/api/summary":
-        status, headers, body = _json("200 OK", summary)
+        status, headers, body = _json(
+            "200 OK",
+            {
+                **summary,
+                "token_metrics": token_payload,
+                "scoring": scoring_payload,
+                "kpis": kpi_payload,
+            },
+        )
         start_response(status, headers)
         return [body]
 
     if path == "/api/scoring":
-        status, headers, body = _json("200 OK", {"ok": True, "scoring": _load_scoring_summary()})
+        status, headers, body = _json("200 OK", {"ok": True, "scoring": scoring_payload})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/docs/list":
+        docs = _documentation_catalog(limit=1200)
+        status, headers, body = _json("200 OK", {"ok": True, "docs": docs})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/docs/content":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        rel = str((qs.get("path") or [""])[0]).strip()
+        if not rel:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "missing path"})
+            start_response(status, headers)
+            return [body]
+        candidate = (REPO_ROOT / rel).resolve()
+        try:
+            candidate.relative_to(REPO_ROOT.resolve())
+        except ValueError:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid path"})
+            start_response(status, headers)
+            return [body]
+        if not candidate.is_file():
+            status, headers, body = _json("404 Not Found", {"ok": False, "error": "file not found"})
+            start_response(status, headers)
+            return [body]
+        content = candidate.read_text(encoding="utf-8", errors="replace")
+        status, headers, body = _json("200 OK", {"ok": True, "path": rel, "content": content})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/feedback" and method == "POST":
+        raw = _read_body(environ)
+        try:
+            payload = json.loads(raw.decode("utf-8") if raw else "{}")
+        except json.JSONDecodeError:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid json"})
+            start_response(status, headers)
+            return [body]
+        track = str(payload.get("track") or "").strip()
+        rating_raw = payload.get("rating", 0)
+        notes = str(payload.get("notes") or "").strip()
+        source = str(payload.get("source") or "dashboard")
+        action = str(payload.get("action") or "feedback").strip()
+        key_details = str(payload.get("key_details") or "").strip()
+        language_edits = str(payload.get("language_edits") or "").strip()
+        artifact_path = str((scoring_payload.get("doc_paths") or {}).get(track, ""))
+        try:
+            rating = int(rating_raw)
+        except (TypeError, ValueError):
+            rating = 0
+        if track not in VALID_TRACKS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid track"})
+            start_response(status, headers)
+            return [body]
+        if action not in {"feedback", "train_include", "train_exclude"}:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid action"})
+            start_response(status, headers)
+            return [body]
+        if rating < 1 or rating > 5:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "rating must be 1..5"})
+            start_response(status, headers)
+            return [body]
+        if len(notes) < 5:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "notes too short"})
+            start_response(status, headers)
+            return [body]
+        conn = _connect()
+        try:
+            row_id = _insert_feedback(
+                conn,
+                track=track,
+                rating=rating,
+                notes=notes[:4000],
+                source=source[:120],
+                action=action,
+                key_details=key_details[:4000],
+                language_edits=language_edits[:4000],
+                artifact_path=artifact_path[:500],
+            )
+        finally:
+            conn.close()
+        status, headers, body = _json("200 OK", {"ok": True, "id": row_id})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/compare-feedback" and method == "POST":
+        raw = _read_body(environ)
+        try:
+            payload = json.loads(raw.decode("utf-8") if raw else "{}")
+        except json.JSONDecodeError:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid json"})
+            start_response(status, headers)
+            return [body]
+        left_track = str(payload.get("left_track") or "").strip()
+        right_track = str(payload.get("right_track") or "").strip()
+        winner = str(payload.get("winner") or "").strip()
+        strength_raw = str(payload.get("strength") or "").strip()
+        notes = str(payload.get("notes") or "").strip()
+        source = str(payload.get("source") or "dashboard").strip()
+        if left_track not in VALID_TRACKS or right_track not in VALID_TRACKS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid track(s)"})
+            start_response(status, headers)
+            return [body]
+        if winner not in COMPARE_WINNERS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "winner must be left|right|tie"})
+            start_response(status, headers)
+            return [body]
+        strength = "tie" if winner == "tie" and not strength_raw else strength_raw
+        if strength not in COMPARE_STRENGTHS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid strength"})
+            start_response(status, headers)
+            return [body]
+        if winner != "tie" and strength == "tie":
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "strength must be weak|medium|strong for non-tie"})
+            start_response(status, headers)
+            return [body]
+        doc_paths = scoring_payload.get("doc_paths", {})
+        left_artifact_path = str(doc_paths.get(left_track, ""))
+        right_artifact_path = str(doc_paths.get(right_track, ""))
+        if not left_artifact_path or not right_artifact_path:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "missing artifact path for selected track(s)"})
+            start_response(status, headers)
+            return [body]
+        left_candidate = (REPO_ROOT / left_artifact_path).resolve()
+        right_candidate = (REPO_ROOT / right_artifact_path).resolve()
+        try:
+            left_candidate.relative_to(REPO_ROOT.resolve())
+            right_candidate.relative_to(REPO_ROOT.resolve())
+        except ValueError:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "artifact path outside repo"})
+            start_response(status, headers)
+            return [body]
+        if not left_candidate.is_file() or not right_candidate.is_file():
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "artifact file missing"})
+            start_response(status, headers)
+            return [body]
+        left_body = _read_repo_file_text(left_artifact_path)
+        right_body = _read_repo_file_text(right_artifact_path)
+        ok_spans, span_error, spans = _validate_compare_spans(
+            spans_raw=payload.get("spans"),
+            left_body=left_body,
+            right_body=right_body,
+        )
+        if not ok_spans:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": span_error})
+            start_response(status, headers)
+            return [body]
+        conn = _connect()
+        try:
+            row_id = _insert_compare_feedback(
+                conn,
+                left_track=left_track,
+                right_track=right_track,
+                left_artifact_path=left_artifact_path[:500],
+                right_artifact_path=right_artifact_path[:500],
+                winner=winner,
+                strength=strength,
+                notes=notes[:4000],
+                source=source[:120],
+                left_text_hash=_text_sha256(left_body),
+                right_text_hash=_text_sha256(right_body),
+                spans=spans,
+            )
+        finally:
+            conn.close()
+        status, headers, body = _json("200 OK", {"ok": True, "id": row_id})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/output-action" and method == "POST":
+        raw = _read_body(environ)
+        try:
+            payload = json.loads(raw.decode("utf-8") if raw else "{}")
+        except json.JSONDecodeError:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid json"})
+            start_response(status, headers)
+            return [body]
+        track = str(payload.get("track") or "").strip()
+        action = str(payload.get("action") or "").strip()
+        reason = str(payload.get("reason") or "").strip()
+        source = str(payload.get("source") or "dashboard")
+        if track not in VALID_TRACKS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid track"})
+            start_response(status, headers)
+            return [body]
+        if action != "delete_output":
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid action"})
+            start_response(status, headers)
+            return [body]
+        ok, msg = _archive_output_artifact(scoring_payload, track)
+        if not ok:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": msg})
+            start_response(status, headers)
+            return [body]
+        conn = _connect()
+        try:
+            row_id = _insert_feedback(
+                conn,
+                track=track,
+                rating=1,
+                notes=(reason or "output archived by dashboard curation")[:4000],
+                source=source[:120],
+                action="delete_output",
+                artifact_path=msg[:500],
+            )
+        finally:
+            conn.close()
+        status, headers, body = _json("200 OK", {"ok": True, "id": row_id, "archived_path": msg})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/feedback" and method == "GET":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        limit = 20
+        if "limit" in qs:
+            try:
+                limit = max(1, min(200, int(qs["limit"][0])))
+            except (ValueError, TypeError):
+                limit = 20
+        conn = _connect()
+        try:
+            rows = _list_feedback(conn, limit=limit)
+        finally:
+            conn.close()
+        status, headers, body = _json("200 OK", {"ok": True, "feedback": rows})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/compare-feedback" and method == "GET":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        limit = 20
+        if "limit" in qs:
+            try:
+                limit = max(1, min(200, int(qs["limit"][0])))
+            except (ValueError, TypeError):
+                limit = 20
+        left_track = str((qs.get("left_track") or [""])[0]).strip()
+        right_track = str((qs.get("right_track") or [""])[0]).strip()
+        if left_track and left_track not in VALID_TRACKS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid left_track"})
+            start_response(status, headers)
+            return [body]
+        if right_track and right_track not in VALID_TRACKS:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid right_track"})
+            start_response(status, headers)
+            return [body]
+        conn = _connect()
+        try:
+            rows = _list_compare_feedback(conn, limit=limit, left_track=left_track, right_track=right_track)
+        finally:
+            conn.close()
+        status, headers, body = _json("200 OK", {"ok": True, "compare_feedback": rows})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/view/doc":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        track = (qs.get("track") or [""])[0]
+        doc_paths = scoring_payload.get("doc_paths", {})
+        rel = doc_paths.get(track)
+        if not rel:
+            status, headers, body = _html("404 Not Found", _render_doc_view("Missing doc", "No documentation artifact mapped for this track."))
+            start_response(status, headers)
+            return [body]
+        content = _read_repo_file_text(rel)
+        title_map = {
+            "codex_authored": "Cursor/Codex Authored Full Documentation",
+            "opensource": "Open-source Full Documentation",
+            "specialized": "Specialized Adapter Full Documentation",
+        }
+        status, headers, body = _html("200 OK", _render_doc_view(title_map.get(track, track), content))
+        start_response(status, headers)
+        return [body]
+
+    if path == "/view/compare":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        left = (qs.get("left") or ["codex_authored"])[0]
+        right = (qs.get("right") or ["opensource"])[0]
+        doc_paths = scoring_payload.get("doc_paths", {})
+        left_rel = doc_paths.get(left, "")
+        right_rel = doc_paths.get(right, "")
+        left_text = _read_repo_file_text(left_rel) if left_rel else "(missing left doc)"
+        right_text = _read_repo_file_text(right_rel) if right_rel else "(missing right doc)"
+        left_abs = (REPO_ROOT / left_rel).resolve() if left_rel else None
+        right_abs = (REPO_ROOT / right_rel).resolve() if right_rel else None
+        generated_root = (REPO_ROOT / "docs" / "generated").resolve()
+        left_deletable = bool(left_abs and left_abs.is_file() and generated_root in left_abs.parents)
+        right_deletable = bool(right_abs and right_abs.is_file() and generated_root in right_abs.parents)
+        labels = {
+            "codex_authored": "Cursor/Codex",
+            "opensource": "Open-source",
+            "specialized": "Specialized",
+        }
+        status, headers, body = _html(
+            "200 OK",
+            _render_compare_view(
+                left,
+                labels.get(left, left),
+                left_text,
+                right,
+                labels.get(right, right),
+                right_text,
+                left_deletable,
+                right_deletable,
+            ),
+        )
         start_response(status, headers)
         return [body]
 
@@ -469,9 +2135,15 @@ def app(environ: Dict[str, Any], start_response):
         start_response(status, headers)
         return [body]
 
-    docs_snippets = _latest_docs_snippets()
-    scoring = _load_scoring_summary()
-    html = _render_dashboard(summary, docs_snippets, scoring)
+    scoring = scoring_payload
+    token_metrics = token_payload
+    kpis = kpi_payload
+    conn = _connect()
+    try:
+        feedback_rows = _list_feedback(conn, limit=12)
+    finally:
+        conn.close()
+    html = _render_dashboard(summary, scoring, token_metrics, feedback_rows, kpis)
     status, headers, body = _html("200 OK", html)
     start_response(status, headers)
     return [body]

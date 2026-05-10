@@ -34,7 +34,7 @@ from evalplus.evaluate import check_correctness, get_groundtruth
 from mlx_lm import generate, load
 from mlx_lm.sample_utils import make_sampler
 
-DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_RESULTS_DIR = REPO_ROOT / "benchmarks" / "results"
 

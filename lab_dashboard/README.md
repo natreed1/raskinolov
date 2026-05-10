@@ -72,15 +72,19 @@ Optional:
 
 - **`.cursor/hooks.json`** → **`.cursor/hooks/lab_hook_after_fileedit_training_trigger.py`**
 - On watched codebase edits (`docs/`, `scripts/`, `benchmarks/`, `tests/`, `training/`), runs:
-  - `scripts/build_run_analysis_rag_corpus.py` (refresh run-analysis RAG corpus)
+  - `scripts/generate_change_documentation_capture.py` (**always**, async): open-source + specialized documentation capture for the changed path
+  - `scripts/build_run_analysis_rag_corpus.py` (refresh run-analysis RAG corpus; cooldown-gated with dataset refresh)
   - `python scripts/ml_workflow.py documentation-dataset` (documentation training dataset refresh; cooldown-gated)
 - Queue/audit rows are appended to:
   - `data/training_triggers/documentation_training_queue.jsonl`
+- Capture artifacts are written to:
+  - `data/documentation_captures/*.json` + `.opensource.md` + `.specialized.md`
 
 Environment controls:
 
 - `FE_LAB_DOC_TRIGGER_MIN_SECONDS` (default `900`) throttle window between heavy refreshes
 - `FE_LAB_AUTODOC_DATASET_ON_CHANGE` (`1`/`0`) enable/disable dataset refresh while still recording triggers
+- `FE_LAB_ALWAYS_RUN_OPEN_SOURCE_ON_CHANGE` (`1`/`0`, default on) control always-on open-source+specialized capture on watched edits
 
 ### Private hosted dashboard (personal-only)
 
