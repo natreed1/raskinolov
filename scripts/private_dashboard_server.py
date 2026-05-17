@@ -36,7 +36,7 @@ VALID_TRACKS = {"codex_authored", "opensource", "specialized"}
 COMPARE_WINNERS = {"left", "right", "tie"}
 COMPARE_STRENGTHS = {"weak", "medium", "strong", "tie"}
 SPAN_SIDES = {"left", "right"}
-SPAN_LABELS = {"good", "bad"}
+SPAN_LABELS = {"good", "bad", "corrupt"}
 
 
 def _env(name: str, default: str = "") -> str:
@@ -181,21 +181,10 @@ def _read_body(environ: Dict[str, Any]) -> bytes:
 
 
 def _basic_ok(environ: Dict[str, Any]) -> bool:
-    expected_user = _env("FE_DASHBOARD_USER", "admin")
-    expected_pass = _env("FE_DASHBOARD_PASSWORD")
-    if not expected_pass:
-        return False
-    auth = environ.get("HTTP_AUTHORIZATION", "")
-    if not auth.startswith("Basic "):
-        return False
-    try:
-        raw = base64.b64decode(auth.split(" ", 1)[1]).decode("utf-8")
-    except Exception:
-        return False
-    if ":" not in raw:
-        return False
-    user, password = raw.split(":", 1)
-    return user == expected_user and password == expected_pass
+    # Viewer auth is intentionally disabled for local dashboard usage.
+    # Ingestion still requires FE_DASHBOARD_INGEST_TOKEN bearer auth.
+    _ = environ
+    return True
 
 
 def _bearer_ok(environ: Dict[str, Any]) -> bool:
@@ -326,7 +315,7 @@ def _validate_compare_spans(
         if selected_text != expected:
             return False, f"span[{idx}] selected_text mismatch for side={side}", []
         if label == "good" and rewrite_text:
-            return False, f"span[{idx}] rewrite_text only allowed for bad spans", []
+            return False, f"span[{idx}] rewrite_text only allowed for bad/corrupt spans", []
         if len(reason) > 500:
             return False, f"span[{idx}] reason too long", []
         if len(rewrite_text) > 8000:
@@ -740,6 +729,7 @@ def _documentation_catalog(limit: int = 500) -> List[Dict[str, Any]]:
                 {
                     "path": rel,
                     "category": category,
+                    "model_track": _doc_model_track(rel, category),
                     "title": _doc_display_title(path, category),
                     "updated_utc": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "size_bytes": int(stat.st_size),
@@ -751,6 +741,128 @@ def _documentation_catalog(limit: int = 500) -> List[Dict[str, Any]]:
     for row in trimmed:
         row.pop("mtime", None)
     return trimmed
+
+
+def _training_data_catalog(limit: int = 400) -> Dict[str, Any]:
+    cache_path = REPO_ROOT / "data" / "training_dashboard" / "training_data_catalog.json"
+    if cache_path.is_file():
+        try:
+            cached = json.loads(cache_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            cached = {}
+        if isinstance(cached, dict) and isinstance(cached.get("datasets"), list):
+            rows = [row for row in cached.get("datasets", []) if isinstance(row, dict)]
+            return {
+                "generated_utc": str(cached.get("generated_utc") or ""),
+                "dataset_count": len(rows),
+                "datasets": rows[: max(1, min(1200, limit))],
+                "source": str(cache_path.relative_to(REPO_ROOT)),
+            }
+
+    adapters_dir = REPO_ROOT / "data" / "lora" / "adapters"
+    rows: List[Dict[str, Any]] = []
+    if adapters_dir.is_dir():
+        for child in sorted(adapters_dir.iterdir()):
+            if not child.is_dir():
+                continue
+            split_paths = {split: child / f"{split}.jsonl" for split in ("train", "valid", "test")}
+            if not any(path.is_file() for path in split_paths.values()):
+                continue
+            splits: Dict[str, Any] = {}
+            total_rows = 0
+            for split, path in split_paths.items():
+                if not path.is_file():
+                    splits[split] = {"path": "", "rows": 0, "size_bytes": 0, "updated_utc": ""}
+                    continue
+                with path.open("r", encoding="utf-8", errors="replace") as fh:
+                    rows_count = sum(1 for _ in fh)
+                stat = path.stat()
+                total_rows += rows_count
+                splits[split] = {
+                    "path": str(path.relative_to(REPO_ROOT)),
+                    "rows": rows_count,
+                    "size_bytes": int(stat.st_size),
+                    "updated_utc": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }
+            manifest_path = child / "manifest.json"
+            rows.append(
+                {
+                    "dataset_id": child.name,
+                    "label": child.name.replace("_", " ").title(),
+                    "path": str(child.relative_to(REPO_ROOT)),
+                    "manifest_path": str(manifest_path.relative_to(REPO_ROOT)) if manifest_path.is_file() else "",
+                    "total_rows": total_rows,
+                    "splits": splits,
+                }
+            )
+    return {
+        "generated_utc": _utc_now(),
+        "dataset_count": len(rows),
+        "datasets": rows[: max(1, min(1200, limit))],
+        "source": "live_scan:data/lora/adapters",
+    }
+
+
+def _read_training_data_content(dataset_id: str, view: str, offset: int, limit: int) -> Dict[str, Any]:
+    safe_id = re.sub(r"[^A-Za-z0-9_.-]", "", dataset_id)
+    if not safe_id or safe_id != dataset_id:
+        return {"ok": False, "error": "invalid dataset id"}
+    dataset_dir = (REPO_ROOT / "data" / "lora" / "adapters" / safe_id).resolve()
+    try:
+        dataset_dir.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return {"ok": False, "error": "invalid dataset path"}
+    if not dataset_dir.is_dir():
+        return {"ok": False, "error": "dataset not found"}
+
+    view = view.strip().lower()
+    if view == "manifest":
+        path = dataset_dir / "manifest.json"
+        if not path.is_file():
+            return {"ok": False, "error": "manifest missing"}
+        content = path.read_text(encoding="utf-8", errors="replace")
+        return {
+            "ok": True,
+            "dataset_id": safe_id,
+            "view": view,
+            "path": str(path.relative_to(REPO_ROOT)),
+            "offset": 0,
+            "limit": 1,
+            "next_offset": 0,
+            "has_more": False,
+            "total_rows": 1,
+            "content": content,
+        }
+
+    if view not in {"train", "valid", "test"}:
+        return {"ok": False, "error": "view must be train|valid|test|manifest"}
+    path = dataset_dir / f"{view}.jsonl"
+    if not path.is_file():
+        return {"ok": False, "error": f"{view}.jsonl missing"}
+    offset = max(0, offset)
+    limit = max(1, min(1000, limit))
+
+    lines: List[str] = []
+    total_rows = 0
+    with path.open("r", encoding="utf-8", errors="replace") as fh:
+        for idx, raw in enumerate(fh):
+            if idx >= offset and len(lines) < limit:
+                lines.append(raw.rstrip("\n"))
+            total_rows = idx + 1
+    next_offset = offset + len(lines)
+    has_more = next_offset < total_rows
+    return {
+        "ok": True,
+        "dataset_id": safe_id,
+        "view": view,
+        "path": str(path.relative_to(REPO_ROOT)),
+        "offset": offset,
+        "limit": limit,
+        "next_offset": next_offset if has_more else offset,
+        "has_more": has_more,
+        "total_rows": total_rows,
+        "content": "\n".join(lines),
+    }
 
 
 def _doc_display_title(path: Path, category: str) -> str:
@@ -794,6 +906,345 @@ def _capture_json_title(path: Path) -> str:
     if changed_path:
         return changed_path
     return path.name
+
+
+def _doc_model_track(rel_path: str, category: str) -> str:
+    rel = (rel_path or "").strip()
+    lower_rel = rel.lower()
+    name = Path(rel).name.lower()
+    if name.endswith(".opensource.md"):
+        return "opensource"
+    if name.endswith(".specialized.md"):
+        return "specialized"
+    if name.endswith(".comparison.md") or lower_rel == "docs/private_dashboard_deploy.md":
+        return "codex_authored"
+    if category == "runs":
+        return "run"
+    if category == "capture":
+        return "capture"
+    return "other"
+
+
+_SPECIALIST_MASS_TASKS: Dict[str, str] = {
+    "loading_screen": "loading_screen_mass_tasks_v1.json",
+    "hud_status": "hud_status_mass_tasks_v1.json",
+    "economy_tooltip": "economy_tooltip_mass_tasks_v1.json",
+    "combat_risk": "combat_risk_mass_tasks_v1.json",
+    "save_load_api_guard": "save_load_api_guard_mass_tasks_v1.json",
+    "ai_planning_explanation": "ai_planning_explanation_mass_tasks_v1.json",
+}
+
+_CONCEPT_LEXICON: Dict[str, Tuple[str, ...]] = {
+    "Loading/Start": ("loading", "start", "queued", "preparing", "ready", "readiness"),
+    "UI Hierarchy": ("title", "subtitle", "hierarchy", "layout", "spacing", "contrast", "badge", "chip", "tooltip"),
+    "Morale": ("morale",),
+    "Supply": ("supply",),
+    "Risk": ("risk", "odds"),
+    "Terrain/Fort": ("terrain", "wall", "fortification", "fortified"),
+    "Economy": ("gold", "income", "upkeep", "market", "workforce", "trade"),
+    "Schema/API": ("schema", "version", "errors", "serialize", "migration", "api"),
+    "Planning Intent": ("defend", "expand", "scout", "reinforce", "intent", "council"),
+}
+
+
+def _bucket_for_category(category: str) -> str:
+    cat = (category or "").lower()
+    if "constraint" in cat:
+        return "constraints"
+    if "ui_change" in cat:
+        return "ui_change"
+    if "transfer" in cat:
+        return "transfer"
+    return "core"
+
+
+def _extract_concepts(prompt: str) -> List[str]:
+    p = (prompt or "").lower()
+    found = [name for name, words in _CONCEPT_LEXICON.items() if any(w in p for w in words)]
+    return found or ["Generic"]
+
+
+def _latest_mass_runs_by_specialist() -> Dict[str, Dict[str, Any]]:
+    runs_dir = REPO_ROOT / "benchmarks" / "results" / "runs"
+    latest: Dict[str, Dict[str, Any]] = {}
+    if not runs_dir.is_dir():
+        return latest
+    for mf in runs_dir.glob("*/manifest.json"):
+        try:
+            payload = json.loads(mf.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if str(payload.get("subcommand")) != "benchmark":
+            continue
+        argv = payload.get("argv") or []
+        if not isinstance(argv, list):
+            continue
+        specialists: List[str] = []
+        tasks_path = ""
+        for idx, token in enumerate(argv):
+            if token == "--specialist" and idx + 1 < len(argv):
+                specialists.append(str(argv[idx + 1]))
+            if token == "--tasks" and idx + 1 < len(argv):
+                tasks_path = str(argv[idx + 1])
+        if len(specialists) != 1:
+            continue
+        specialist = specialists[0]
+        expected_name = _SPECIALIST_MASS_TASKS.get(specialist)
+        if not expected_name:
+            continue
+        if Path(tasks_path).name != expected_name:
+            continue
+        current = latest.get(specialist)
+        finished = str(payload.get("finished_at") or "")
+        if not current or finished > str(current.get("finished_at") or ""):
+            latest[specialist] = {
+                "run_id": str(payload.get("run_id") or mf.parent.name),
+                "finished_at": finished,
+                "benchmark_summary": str(payload.get("benchmark_summary") or "—"),
+                "capability_summary": str(payload.get("capability_summary") or "—"),
+                "manifest": payload,
+            }
+    return latest
+
+
+def _capability_map_payload() -> Dict[str, Any]:
+    latest = _latest_mass_runs_by_specialist()
+    task_lookup: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for specialist, task_file in _SPECIALIST_MASS_TASKS.items():
+        tpath = REPO_ROOT / "benchmarks" / task_file
+        if not tpath.is_file():
+            continue
+        try:
+            tasks = json.loads(tpath.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(tasks, list):
+            continue
+        for row in tasks:
+            if not isinstance(row, dict):
+                continue
+            tid = str(row.get("id") or "")
+            if not tid:
+                continue
+            prompt = str(row.get("prompt") or "")
+            category = str(row.get("category") or "")
+            task_lookup[(specialist, tid)] = {
+                "prompt": prompt,
+                "category": category,
+                "bucket": _bucket_for_category(category),
+                "concepts": _extract_concepts(prompt),
+            }
+
+    rows: List[Dict[str, Any]] = []
+    status_re = re.compile(r"\[(PASS|FAIL)\]\s+([^\s]+)\s+\(([^)]+)\)\s+(\d+) chars\s+([0-9.]+)s\s+cap=([0-9.]+)")
+    for specialist, run in latest.items():
+        log_path = REPO_ROOT / "benchmarks" / "results" / "runs" / run["run_id"] / "logs" / "run_game_benchmark.log"
+        if not log_path.is_file():
+            continue
+        log_text = log_path.read_text(encoding="utf-8", errors="replace")
+        for m in status_re.finditer(log_text):
+            status, task_id, _, chars, seconds, cap = m.groups()
+            meta = task_lookup.get((specialist, task_id), {})
+            rows.append(
+                {
+                    "specialist": specialist,
+                    "task_id": task_id,
+                    "passed": status == "PASS",
+                    "chars": int(chars),
+                    "seconds": float(seconds),
+                    "capability": float(cap),
+                    "bucket": str(meta.get("bucket") or "core"),
+                    "concepts": list(meta.get("concepts") or ["Generic"]),
+                    "prompt": str(meta.get("prompt") or ""),
+                }
+            )
+
+    if not rows:
+        return {
+            "ok": False,
+            "reason": "No mass benchmark rows found. Run specialist mass benchmark suites first.",
+            "runs": latest,
+        }
+
+    bucket_names = ["core", "ui_change", "constraints", "transfer"]
+    concept_names = sorted({c for r in rows for c in r["concepts"]})
+
+    overall_bucket_rate: Dict[str, float] = {}
+    for bucket in bucket_names:
+        vals = [1.0 if r["passed"] else 0.0 for r in rows if r["bucket"] == bucket]
+        overall_bucket_rate[bucket] = (sum(vals) / len(vals)) if vals else 0.0
+
+    edges: List[Dict[str, Any]] = []
+    for concept in concept_names:
+        for bucket in bucket_names:
+            vals = [1.0 if r["passed"] else 0.0 for r in rows if concept in r["concepts"] and r["bucket"] == bucket]
+            if len(vals) < 2:
+                continue
+            local_rate = sum(vals) / len(vals)
+            signed = local_rate - overall_bucket_rate.get(bucket, 0.0)
+            weight = abs(signed)
+            if weight < 0.05:
+                continue
+            edges.append(
+                {
+                    "source": f"concept:{concept}",
+                    "target": f"capability:{bucket}",
+                    "weight": round(weight, 4),
+                    "signed": round(signed, 4),
+                    "sample_count": len(vals),
+                }
+            )
+
+    concept_stats = []
+    for concept in concept_names:
+        crows = [r for r in rows if concept in r["concepts"]]
+        if not crows:
+            continue
+        pass_rate = sum(1.0 for r in crows if r["passed"]) / len(crows)
+        avg_cap = sum(r["capability"] for r in crows) / len(crows)
+        concept_stats.append(
+            {
+                "concept": concept,
+                "task_count": len(crows),
+                "pass_rate": round(pass_rate, 4),
+                "avg_capability": round(avg_cap, 2),
+            }
+        )
+    concept_stats.sort(key=lambda row: (row["pass_rate"], row["task_count"]))
+
+    agent_summary = []
+    for specialist in sorted(_SPECIALIST_MASS_TASKS.keys()):
+        srows = [r for r in rows if r["specialist"] == specialist]
+        if not srows:
+            continue
+        pass_rate = sum(1.0 for r in srows if r["passed"]) / len(srows)
+        agent_summary.append(
+            {
+                "specialist": specialist,
+                "task_count": len(srows),
+                "pass_rate": round(pass_rate, 4),
+                "avg_capability": round(sum(r["capability"] for r in srows) / len(srows), 2),
+                "run_id": str((latest.get(specialist) or {}).get("run_id") or ""),
+            }
+        )
+
+    # Simple deterministic bipartite layout for scroll/zoom rendering.
+    concept_order = [row["concept"] for row in concept_stats] or concept_names
+    cap_order = bucket_names
+    nodes: List[Dict[str, Any]] = []
+    for i, concept in enumerate(concept_order):
+        y = 0.08 + (0.84 * i / max(1, len(concept_order) - 1))
+        nodes.append({"id": f"concept:{concept}", "kind": "concept", "label": concept, "x": 0.2, "y": round(y, 4)})
+    for i, bucket in enumerate(cap_order):
+        y = 0.15 + (0.7 * i / max(1, len(cap_order) - 1))
+        nodes.append({"id": f"capability:{bucket}", "kind": "capability", "label": bucket, "x": 0.82, "y": round(y, 4)})
+
+    prompt_samples = []
+    for r in sorted(rows, key=lambda row: (row["passed"], row["specialist"], row["task_id"]))[:24]:
+        prompt_samples.append(
+            {
+                "specialist": r["specialist"],
+                "task_id": r["task_id"],
+                "bucket": r["bucket"],
+                "passed": r["passed"],
+                "concepts": ", ".join(r["concepts"]),
+                "prompt": (r["prompt"][:140] + "…") if len(r["prompt"]) > 140 else r["prompt"],
+            }
+        )
+
+    # Task-level cosine similarity map over prompt concepts + category bucket one-hot vectors.
+    # cos(theta) = dot(a, b) / (||a|| * ||b||)
+    task_vectors: List[Dict[str, Any]] = []
+    for r in rows:
+        concepts = list(r.get("concepts") or [])
+        concept_set = set(concepts)
+        bucket = str(r.get("bucket") or "core")
+        vector = [1.0 if c in concept_set else 0.0 for c in concept_names]
+        vector.extend(1.0 if bucket == b else 0.0 for b in bucket_names)
+        task_vectors.append(
+            {
+                "id": f"{r['specialist']}:{r['task_id']}",
+                "specialist": r["specialist"],
+                "task_id": r["task_id"],
+                "bucket": bucket,
+                "concepts": concepts,
+                "passed": bool(r["passed"]),
+                "prompt": (r["prompt"][:180] + "…") if len(r["prompt"]) > 180 else r["prompt"],
+                "vector": vector,
+            }
+        )
+
+    def _cosine(a: List[float], b: List[float]) -> float:
+        dot = sum(x * y for x, y in zip(a, b))
+        na = sum(x * x for x in a) ** 0.5
+        nb = sum(y * y for y in b) ** 0.5
+        if na <= 1e-12 or nb <= 1e-12:
+            return 0.0
+        return dot / (na * nb)
+
+    top_pairs: List[Dict[str, Any]] = []
+    for i, a in enumerate(task_vectors):
+        for j in range(i + 1, len(task_vectors)):
+            b = task_vectors[j]
+            sim = _cosine(list(a["vector"]), list(b["vector"]))
+            if sim < 0.25:
+                continue
+            top_pairs.append(
+                {
+                    "a_id": a["id"],
+                    "b_id": b["id"],
+                    "cosine": round(sim, 4),
+                    "a_bucket": a["bucket"],
+                    "b_bucket": b["bucket"],
+                }
+            )
+    top_pairs.sort(key=lambda row: row["cosine"], reverse=True)
+
+    skills_payload: Dict[str, Any] = {"available": False}
+    skills_path = REPO_ROOT / "data" / "routing" / "skills_v1.json"
+    manifolds_path = REPO_ROOT / "data" / "routing" / "skill_manifolds_v1.json"
+    if skills_path.is_file() and manifolds_path.is_file():
+        try:
+            skills_doc = json.loads(skills_path.read_text(encoding="utf-8"))
+            manifolds_doc = json.loads(manifolds_path.read_text(encoding="utf-8"))
+            skills_payload = {
+                "available": True,
+                "skills_path": str(skills_path.relative_to(REPO_ROOT)),
+                "manifolds_path": str(manifolds_path.relative_to(REPO_ROOT)),
+                "retained_skills": skills_doc.get("retained_skills") or [],
+                "exploratory_skills": skills_doc.get("exploratory_skills") or [],
+                "regions": manifolds_doc.get("regions") or [],
+            }
+        except (OSError, json.JSONDecodeError):
+            skills_payload = {"available": False}
+
+    return {
+        "ok": True,
+        "generated_utc": _utc_now(),
+        "runs": latest,
+        "rows_count": len(rows),
+        "nodes": nodes,
+        "edges": sorted(edges, key=lambda e: e["weight"], reverse=True)[:120],
+        "agent_summary": agent_summary,
+        "concept_stats": concept_stats,
+        "bucket_baseline_pass_rate": {k: round(v, 4) for k, v in overall_bucket_rate.items()},
+        "prompt_samples": prompt_samples,
+        "task_similarity": {
+            "formula": "cos(theta)=dot(a,b)/(||a||*||b||)",
+            "dimensions": {
+                "concepts": concept_names,
+                "buckets": bucket_names,
+            },
+            "tasks": task_vectors,
+            "top_pairs": top_pairs[:240],
+        },
+        "skills_v1": skills_payload,
+        "notes": [
+            "Edge signed value = concept-bucket pass-rate delta vs global bucket baseline.",
+            "Positive edge implies a concept lifts that capability bucket; negative implies drag.",
+            "This map is correlation-only and depends on specialist benchmark maturity.",
+        ],
+    }
 
 
 def _load_scoring_summary() -> Dict[str, Any]:
@@ -924,6 +1375,13 @@ def _render_compare_view(
     right_deletable: bool,
 ) -> str:
     identical = left_body == right_body
+    winner_labels = {
+        "codex_authored": "Frontier",
+        "opensource": "Open-source",
+        "specialized": "Specialized",
+    }
+    left_winner_label = winner_labels.get(left_track, left_title)
+    right_winner_label = winner_labels.get(right_track, right_title)
     identical_banner = (
         "<p style='padding:8px 10px;border:1px solid #365f95;border-radius:8px;background:#102846;'>"
         "These outputs are currently identical. This usually means both tracks were generated from the same base behavior for this artifact."
@@ -935,6 +1393,8 @@ def _render_compare_view(
     right_text_json = json.dumps(right_body, ensure_ascii=False)
     left_track_json = json.dumps(left_track)
     right_track_json = json.dumps(right_track)
+    left_winner_label_json = json.dumps(left_winner_label)
+    right_winner_label_json = json.dumps(right_winner_label)
     return (
         "<!doctype html><html><head><meta charset='utf-8'/>"
         "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
@@ -944,37 +1404,29 @@ def _render_compare_view(
         "a{color:#7cb2ff}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}"
         ".panel,.verdict{border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:10px}"
         ".doc{white-space:pre-wrap;border:1px solid #2a3f62;background:#091326;border-radius:10px;padding:12px;max-height:52vh;overflow:auto}"
-        ".doc .hl-good{background:#12442d}.doc .hl-bad{background:#5e1f2a}"
+        ".doc .hl-good{background:#12442d}.doc .hl-bad{background:#5e1f2a}.doc .hl-corrupt{background:#6b3f04}"
         "h3,h4{margin:0 0 8px 0}.top{display:flex;justify-content:space-between;align-items:center}"
         ".row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}"
         ".row select,.row textarea,.row button,.row input{border:1px solid #335d92;border-radius:8px;background:#081224;color:#e6eefc;padding:8px}"
         ".row textarea{width:100%;min-height:72px}"
         ".row button{background:#1e60d6;border-color:#1e60d6;cursor:pointer;font-weight:600}"
         ".row button.secondary{background:#182640;border-color:#335d92}"
-        ".row button.good{background:#0f7b47;border-color:#0f7b47}.row button.bad{background:#8a2435;border-color:#8a2435}"
+        ".row button.good{background:#0f7b47;border-color:#0f7b47}.row button.bad{background:#8a2435;border-color:#8a2435}.row button.corrupt{background:#9a6700;border-color:#9a6700}"
         ".status{font-size:12px;color:#9bc2ff}"
         ".muted{font-size:12px;color:#9bc2ff}"
         ".spans{margin-top:10px;border:1px dashed #335d92;border-radius:8px;padding:8px}"
         ".span-item{border:1px solid #23436d;border-radius:8px;padding:8px;margin-top:8px}"
-        ".span-item.good{border-color:#1f6a48}.span-item.bad{border-color:#7d3340}"
+        ".span-item.good{border-color:#1f6a48}.span-item.bad{border-color:#7d3340}.span-item.corrupt{border-color:#8b5f10}"
         ".legacy{margin-top:12px;border-top:1px solid #2a3f62;padding-top:10px}"
+        ".verdict{margin-top:12px}"
         "</style></head><body>"
         f"<div class='top'><h2>Compare: {_h(left_title)} vs {_h(right_title)}</h2><a href='/'>Back to dashboard</a></div>"
         + identical_banner +
-        "<section class='verdict'>"
-        "<h3>Structured training feedback</h3>"
-        "<div class='row'><label>Winner <select id='winner'><option value=''>Select winner</option><option value='left'>Left</option><option value='right'>Right</option><option value='tie'>Tie</option></select></label>"
-        "<label>Preference strength <select id='strength'><option value=''>Select strength</option><option value='weak'>Weak</option><option value='medium'>Medium</option><option value='strong'>Strong</option><option value='tie'>Tie/No preference</option></select></label></div>"
-        "<div class='row'><textarea id='compareNotes' placeholder='Optional overall notes for this comparison'></textarea></div>"
-        "<div class='row'><button id='submitStructured'>Save Structured Feedback</button><span id='structuredStatus' class='status'></span></div>"
-        "<p class='muted'>Highlight text in either panel, then apply green/red labels with optional reason and rewrite for red spans.</p>"
-        "<div id='spanList' class='spans'></div>"
-        "</section>"
         "<div class='grid'>"
         f"<section class='panel' data-side='left'><h3>{_h(left_title)}</h3>"
         "<div class='row'><input class='reason' placeholder='Reason for selected span (optional)'/>"
-        "<button class='good add-span'>Mark Green (good)</button><button class='bad add-span' data-label='bad'>Mark Red (bad)</button></div>"
-        "<div class='row'><textarea class='rewrite' placeholder='Optional rewrite text (used with red spans)'></textarea></div>"
+        "<button class='good add-span'>Mark Green (good)</button><button class='bad add-span' data-label='bad'>Mark Red (bad)</button><button class='corrupt add-span' data-label='corrupt'>Mark Corrupt (delete/replace)</button></div>"
+        "<div class='row'><textarea class='rewrite' placeholder='Optional rewrite text (used with red/corrupt spans)'></textarea></div>"
         "<div class='doc' id='leftDoc'></div>"
         f"<div class='legacy curate' data-track='{_h(left_track)}' data-deletable='{str(left_deletable).lower()}'>"
         "<h4>Legacy per-track curation (optional)</h4>"
@@ -987,8 +1439,8 @@ def _render_compare_view(
         "</div></section>"
         f"<section class='panel' data-side='right'><h3>{_h(right_title)}</h3>"
         "<div class='row'><input class='reason' placeholder='Reason for selected span (optional)'/>"
-        "<button class='good add-span'>Mark Green (good)</button><button class='bad add-span' data-label='bad'>Mark Red (bad)</button></div>"
-        "<div class='row'><textarea class='rewrite' placeholder='Optional rewrite text (used with red spans)'></textarea></div>"
+        "<button class='good add-span'>Mark Green (good)</button><button class='bad add-span' data-label='bad'>Mark Red (bad)</button><button class='corrupt add-span' data-label='corrupt'>Mark Corrupt (delete/replace)</button></div>"
+        "<div class='row'><textarea class='rewrite' placeholder='Optional rewrite text (used with red/corrupt spans)'></textarea></div>"
         "<div class='doc' id='rightDoc'></div>"
         f"<div class='legacy curate' data-track='{_h(right_track)}' data-deletable='{str(right_deletable).lower()}'>"
         "<h4>Legacy per-track curation (optional)</h4>"
@@ -1000,9 +1452,20 @@ def _render_compare_view(
         "<div class='row'><button class='save secondary'>Save Legacy Curation</button><button class='secondary delete'>Delete Output</button><span class='status'></span></div>"
         "</div></section>"
         "</div>"
+        "<section class='verdict'>"
+        "<h3>Structured training feedback</h3>"
+        f"<div class='row'><label>Winner <select id='winner'><option value=''>Select winner</option><option value='left'>{_h(left_winner_label)}</option><option value='right'>{_h(right_winner_label)}</option><option value='tie'>Tie</option></select></label>"
+        "<label>Preference strength <select id='strength'><option value=''>Select strength</option><option value='weak'>Weak</option><option value='medium'>Medium</option><option value='strong'>Strong</option><option value='tie'>Tie/No preference</option></select></label></div>"
+        "<div class='row'><textarea id='compareNotes' placeholder='Optional overall notes for this comparison'></textarea></div>"
+        "<p class='muted'>Highlight text in either panel, then apply green/red/corrupt labels. Use corrupt for broken formatting/output that should be rewritten or removed.</p>"
+        "<div id='spanList' class='spans'></div>"
+        "<div class='row'><button id='submitStructured'>Save and Exit</button><span id='structuredStatus' class='status'></span></div>"
+        "</section>"
         "<script>"
         f"const leftTrack = {left_track_json};"
         f"const rightTrack = {right_track_json};"
+        f"const leftWinnerLabel = {left_winner_label_json};"
+        f"const rightWinnerLabel = {right_winner_label_json};"
         f"const state = {{ leftText: {left_text_json}, rightText: {right_text_json}, spans: [] }};"
         "const leftDoc = document.getElementById('leftDoc');"
         "const rightDoc = document.getElementById('rightDoc');"
@@ -1015,7 +1478,7 @@ def _render_compare_view(
         "  let out=''; let cursor=0;"
         "  for(const s of spans){"
         "    if (s.start > cursor) out += escapeHtml(text.slice(cursor, s.start));"
-        "    const cls = s.label === 'good' ? 'hl-good' : 'hl-bad';"
+        "    const cls = s.label === 'good' ? 'hl-good' : (s.label === 'corrupt' ? 'hl-corrupt' : 'hl-bad');"
         "    out += `<span class=\"${cls}\">${escapeHtml(text.slice(s.start, s.end))}</span>`;"
         "    cursor = s.end;"
         "  }"
@@ -1045,11 +1508,11 @@ def _render_compare_view(
         "function renderSpanList(){"
         "  if (!state.spans.length){ spanList.innerHTML = '<div class=\"muted\">No labeled spans yet.</div>'; return; }"
         "  const rows = state.spans.slice().sort((a,b)=>a.side.localeCompare(b.side) || a.start-b.start).map((s)=>{"
-        "    const cls = s.label === 'good' ? 'good' : 'bad';"
+        "    const cls = s.label === 'good' ? 'good' : (s.label === 'corrupt' ? 'corrupt' : 'bad');"
         "    return `<div class=\"span-item ${cls}\" data-span-id=\"${s.id}\"><strong>${s.side.toUpperCase()} ${s.label.toUpperCase()}</strong> [${s.start}, ${s.end})` +"
         "      `<div class=\"muted\">${escapeHtml(s.selected_text.slice(0,200))}</div>` +"
         "      `<div class=\"row\"><input class=\"span-reason\" value=\"${escapeHtml(s.reason)}\" placeholder=\"Reason (optional)\"/></div>` +"
-        "      `<div class=\"row\"><textarea class=\"span-rewrite\" placeholder=\"Rewrite text for bad spans (optional)\">${escapeHtml(s.rewrite_text)}</textarea></div>` +"
+        "      `<div class=\"row\"><textarea class=\"span-rewrite\" placeholder=\"Rewrite text for bad/corrupt spans (optional)\">${escapeHtml(s.rewrite_text)}</textarea></div>` +"
         "      `<div class=\"row\"><button class=\"secondary span-delete\">Delete span</button></div></div>`;"
         "  });"
         "  spanList.innerHTML = rows.join('');"
@@ -1060,18 +1523,19 @@ def _render_compare_view(
         "  const side = panel.getAttribute('data-side') || 'left';"
         "  for (const btn of panel.querySelectorAll('.add-span')) {"
         "    btn.addEventListener('click', () => {"
-        "      const label = btn.dataset.label === 'bad' ? 'bad' : 'good';"
+        "      const label = btn.dataset.label === 'corrupt' ? 'corrupt' : (btn.dataset.label === 'bad' ? 'bad' : 'good');"
         "      const r = getSelectionOffsets(side);"
         "      if (!r) { statusEl.textContent = 'Select text inside a document first.'; return; }"
         "      if (hasOverlap(side, r.start, r.end)) { statusEl.textContent = 'Selected span overlaps an existing label.'; return; }"
         "      const reason = (panel.querySelector('.reason')?.value || '').trim();"
         "      const rewrite = (panel.querySelector('.rewrite')?.value || '').trim();"
-        "      if (label === 'good' && rewrite) { statusEl.textContent = 'Rewrite text is only for red/bad spans.'; return; }"
+        "      if (label === 'good' && rewrite) { statusEl.textContent = 'Rewrite text is only for red/corrupt spans.'; return; }"
         "      state.spans.push({"
         "        id: String(Date.now()) + '-' + Math.random().toString(16).slice(2), side, label,"
         "        start: r.start, end: r.end, selected_text: r.selected, reason, rewrite_text: rewrite"
         "      });"
-        "      statusEl.textContent = `Added ${label} span (${side}).`;"
+        "      const sideLabel = side === 'left' ? leftWinnerLabel : rightWinnerLabel;"
+        "      statusEl.textContent = `Added ${label} span (${sideLabel}).`;"
         "      renderAll();"
         "    });"
         "  }"
@@ -1112,7 +1576,8 @@ def _render_compare_view(
         "    const res = await fetch('/api/compare-feedback', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });"
         "    const body = await res.json();"
         "    if (!res.ok || !body.ok) throw new Error(body.error || ('HTTP ' + res.status));"
-        "    statusEl.textContent = `Structured feedback saved (#${body.id}).`;"
+        "    statusEl.textContent = `Structured feedback saved (#${body.id}). Exiting...`;"
+        "    setTimeout(() => { window.location.href = '/'; }, 450);"
         "  } catch (err) { statusEl.textContent = 'Save failed: ' + err; }"
         "});"
         "for (const box of document.querySelectorAll('.curate')) {"
@@ -1150,6 +1615,232 @@ def _render_compare_view(
         "    } catch (err) { status.textContent = 'Delete failed: ' + err; }"
         "  });"
         "}"
+        "</script>"
+        "</body></html>"
+    )
+
+
+def _render_capability_map_view() -> str:
+    return (
+        "<!doctype html><html><head><meta charset='utf-8'/>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+        "<title>Capability Map Explorer</title>"
+        "<style>"
+        "body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:16px;background:#081224;color:#e6eefc}"
+        "a{color:#7cb2ff}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}"
+        ".controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}"
+        "button{border:1px solid #335d92;border-radius:8px;background:#1e60d6;color:#fff;padding:8px 12px;cursor:pointer;font-weight:600}"
+        "button.secondary{background:#102846}"
+        ".muted{color:#9bc2ff;font-size:12px}"
+        "select{border:1px solid #335d92;border-radius:8px;background:#081224;color:#e6eefc;padding:7px 9px}"
+        ".grid{display:grid;grid-template-columns:minmax(600px,2fr) minmax(320px,1fr);gap:12px}"
+        ".panel{border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:10px}"
+        "#mapWrap{height:72vh;overflow:hidden;position:relative;cursor:grab}"
+        "#mapWrap.dragging{cursor:grabbing}"
+        "#capSvg{width:100%;height:100%;display:block;background:#091326;border-radius:8px}"
+        "pre{white-space:pre-wrap;border:1px solid #2a3f62;background:#091326;border-radius:8px;padding:10px;max-height:32vh;overflow:auto}"
+        ".sim-box{border:1px solid #2a3f62;background:#091326;border-radius:8px;padding:9px;margin-top:10px}"
+        "@media (max-width: 1100px){.grid{grid-template-columns:1fr} #mapWrap{height:58vh}}"
+        "</style></head><body>"
+        "<div class='top'><h2>Capability Curvature Map (Docs Site)</h2><a href='/'>Back to dashboard</a></div>"
+        "<p class='muted'>Drag to pan. Mousewheel / trackpad pinch to zoom. Double-click to recenter.</p>"
+        "<div class='controls'>"
+        "<button id='refreshBtn'>Refresh graph data</button>"
+        "<button id='zoomInBtn' class='secondary'>Zoom +</button>"
+        "<button id='zoomOutBtn' class='secondary'>Zoom -</button>"
+        "<button id='resetBtn' class='secondary'>Reset view</button>"
+        "<span id='meta' class='muted'></span>"
+        "</div>"
+        "<div class='grid'>"
+        "<section class='panel'><div id='mapWrap'><svg id='capSvg' viewBox='0 0 1200 800' preserveAspectRatio='xMidYMid meet'><g id='capLayer'></g></svg></div></section>"
+        "<section class='panel'><h3 style='margin:0 0 8px 0'>Diagnostics</h3><pre id='stats'>(loading...)</pre><h3 style='margin:10px 0 8px 0'>Prompt Samples</h3><pre id='samples'></pre><h3 style='margin:10px 0 8px 0'>Task Cosine Similarity</h3><div class='controls'><label for='simTaskA' class='muted'>Task A</label><select id='simTaskA' style='min-width:280px;'></select></div><div class='controls'><label for='simTaskB' class='muted'>Task B</label><select id='simTaskB' style='min-width:280px;'></select><button id='swapTasksBtn' class='secondary'>Swap</button></div><div id='simValue' class='sim-box muted'>(loading)</div><pre id='simNeighbors'>(loading)</pre><h3 style='margin:10px 0 8px 0'>Skills Correlation (v1)</h3><pre id='skillsStats'>(loading)</pre><h3 style='margin:10px 0 8px 0'>Region Stability (v1)</h3><pre id='regionStats'>(loading)</pre></section>"
+        "</div>"
+        "<script>"
+        "const svg = document.getElementById('capSvg');"
+        "const layer = document.getElementById('capLayer');"
+        "const wrap = document.getElementById('mapWrap');"
+        "const meta = document.getElementById('meta');"
+        "const stats = document.getElementById('stats');"
+        "const samples = document.getElementById('samples');"
+        "const simTaskA = document.getElementById('simTaskA');"
+        "const simTaskB = document.getElementById('simTaskB');"
+        "const simValue = document.getElementById('simValue');"
+        "const simNeighbors = document.getElementById('simNeighbors');"
+        "const skillsStats = document.getElementById('skillsStats');"
+        "const regionStats = document.getElementById('regionStats');"
+        "let graph = null;"
+        "const state = { tx: 0, ty: 0, scale: 1, dragging: false, x: 0, y: 0 };"
+        "function applyTransform(){ layer.setAttribute('transform', `translate(${state.tx} ${state.ty}) scale(${state.scale})`); }"
+        "function clampScale(v){ return Math.max(0.4, Math.min(5, v)); }"
+        "function resetView(){ state.tx = 0; state.ty = 0; state.scale = 1; applyTransform(); }"
+        "function zoomAt(screenX, screenY, factor){"
+        "  const rect = svg.getBoundingClientRect();"
+        "  if (!rect.width || !rect.height) return;"
+        "  const vb = svg.viewBox.baseVal;"
+        "  const sx = vb.width / rect.width;"
+        "  const sy = vb.height / rect.height;"
+        "  const px = (screenX - rect.left) * sx;"
+        "  const py = (screenY - rect.top) * sy;"
+        "  const beforeX = (px - state.tx) / state.scale;"
+        "  const beforeY = (py - state.ty) / state.scale;"
+        "  const nextScale = clampScale(state.scale * factor);"
+        "  state.scale = nextScale;"
+        "  state.tx = px - beforeX * state.scale;"
+        "  state.ty = py - beforeY * state.scale;"
+        "  applyTransform();"
+        "}"
+        "wrap.addEventListener('wheel', (ev) => { ev.preventDefault(); const factor = ev.deltaY < 0 ? 1.1 : 0.9; zoomAt(ev.clientX, ev.clientY, factor); }, { passive:false });"
+        "wrap.addEventListener('mousedown', (ev) => { state.dragging = true; state.x = ev.clientX; state.y = ev.clientY; wrap.classList.add('dragging'); });"
+        "window.addEventListener('mouseup', () => { state.dragging = false; wrap.classList.remove('dragging'); });"
+        "window.addEventListener('mousemove', (ev) => {"
+        "  if (!state.dragging) return;"
+        "  const rect = svg.getBoundingClientRect();"
+        "  const vb = svg.viewBox.baseVal;"
+        "  const sx = vb.width / Math.max(1, rect.width);"
+        "  const sy = vb.height / Math.max(1, rect.height);"
+        "  state.tx += (ev.clientX - state.x) * sx;"
+        "  state.ty += (ev.clientY - state.y) * sy;"
+        "  state.x = ev.clientX; state.y = ev.clientY; applyTransform();"
+        "});"
+        "wrap.addEventListener('dblclick', resetView);"
+        "document.getElementById('zoomInBtn')?.addEventListener('click', () => zoomAt(window.innerWidth * 0.5, window.innerHeight * 0.5, 1.15));"
+        "document.getElementById('zoomOutBtn')?.addEventListener('click', () => zoomAt(window.innerWidth * 0.5, window.innerHeight * 0.5, 0.87));"
+        "document.getElementById('resetBtn')?.addEventListener('click', resetView);"
+        "function el(tag, attrs){ const n = document.createElementNS('http://www.w3.org/2000/svg', tag); for(const [k,v] of Object.entries(attrs || {})) n.setAttribute(k, String(v)); return n; }"
+        "function nodeById(id){ return (graph?.nodes || []).find((n)=>n.id===id); }"
+        "function cosine(a,b){"
+        "  let dot = 0; let na = 0; let nb = 0;"
+        "  const n = Math.min((a||[]).length, (b||[]).length);"
+        "  for (let i=0;i<n;i++){ const x = Number(a[i]||0); const y = Number(b[i]||0); dot += x*y; na += x*x; nb += y*y; }"
+        "  if (na <= 1e-12 || nb <= 1e-12) return 0;"
+        "  return dot / (Math.sqrt(na) * Math.sqrt(nb));"
+        "}"
+        "function taskRows(){ return (graph?.task_similarity?.tasks || []); }"
+        "function taskById(id){ return taskRows().find((t)=>t.id===id); }"
+        "function renderSimilarityInspector(){"
+        "  const tasks = taskRows();"
+        "  if (!tasks.length){"
+        "    if (simValue) simValue.textContent = 'No task vectors available.';"
+        "    if (simNeighbors) simNeighbors.textContent = '';"
+        "    return;"
+        "  }"
+        "  if (simTaskA && simTaskA.options.length === 0){"
+        "    for (const t of tasks){"
+        "      const optA = document.createElement('option');"
+        "      optA.value = t.id; optA.textContent = `${t.specialist}/${t.task_id} (${t.bucket})`;"
+        "      simTaskA.appendChild(optA);"
+        "      const optB = document.createElement('option');"
+        "      optB.value = t.id; optB.textContent = `${t.specialist}/${t.task_id} (${t.bucket})`;"
+        "      simTaskB?.appendChild(optB);"
+        "    }"
+        "    if (simTaskA) simTaskA.value = tasks[0].id;"
+        "    if (simTaskB) simTaskB.value = tasks[Math.min(1, tasks.length - 1)].id;"
+        "  }"
+        "  const a = taskById(simTaskA?.value || '');"
+        "  const b = taskById(simTaskB?.value || '');"
+        "  if (!a || !b){"
+        "    if (simValue) simValue.textContent = 'Select two tasks.';"
+        "    return;"
+        "  }"
+        "  const sim = cosine(a.vector || [], b.vector || []);"
+        "  const theta = Math.acos(Math.max(-1, Math.min(1, sim))) * (180/Math.PI);"
+        "  if (simValue){"
+        "    simValue.textContent = `cos(theta) = ${sim.toFixed(4)} | angle = ${theta.toFixed(2)}°` +"
+        "      `\\nA: ${a.specialist}/${a.task_id} [${a.bucket}]` +"
+        "      `\\nB: ${b.specialist}/${b.task_id} [${b.bucket}]`;"
+        "  }"
+        "  const neighbors = tasks"
+        "    .filter((t)=>t.id !== a.id)"
+        "    .map((t)=>({ t, sim: cosine(a.vector || [], t.vector || []) }))"
+        "    .sort((x,y)=>y.sim - x.sim)"
+        "    .slice(0, 10);"
+        "  const lines = neighbors.map((row)=>`${row.sim.toFixed(4)}  ${row.t.specialist}/${row.t.task_id} (${row.t.bucket})\\nConcepts: ${(row.t.concepts || []).join(', ')}\\nPrompt: ${row.t.prompt}`);"
+        "  if (simNeighbors) simNeighbors.textContent = `Nearest neighbors to A (${a.specialist}/${a.task_id}):\\n\\n${lines.join('\\n\\n')}`;"
+        "}"
+        "function renderGraph(payload){"
+        "  graph = payload;"
+        "  layer.innerHTML = '';"
+        "  const width = 1200, height = 800;"
+        "  const mapX = (u) => Math.round(u * width);"
+        "  const mapY = (u) => Math.round(u * height);"
+        "  for (const edge of (payload.edges || [])) {"
+        "    const a = nodeById(edge.source); const b = nodeById(edge.target);"
+        "    if (!a || !b) continue;"
+        "    const stroke = Number(edge.signed || 0) >= 0 ? '#41d694' : '#ef6b7b';"
+        "    const lw = Math.max(1.2, 1 + Number(edge.weight || 0) * 12);"
+        "    const line = el('line', { x1: mapX(a.x), y1: mapY(a.y), x2: mapX(b.x), y2: mapY(b.y), stroke, 'stroke-width': lw, 'stroke-opacity': 0.75 });"
+        "    layer.appendChild(line);"
+        "  }"
+        "  for (const node of (payload.nodes || [])) {"
+        "    const isConcept = node.kind === 'concept';"
+        "    const x = mapX(node.x), y = mapY(node.y);"
+        "    layer.appendChild(el('circle', { cx: x, cy: y, r: isConcept ? 13 : 15, fill: isConcept ? '#2e8cff' : '#a78bfa', stroke: '#dbeafe', 'stroke-width': 1.5 }));"
+        "    const t = el('text', { x: x + (isConcept ? -18 : 18), y: y + 5, fill: '#e6eefc', 'font-size': 14, 'text-anchor': isConcept ? 'end' : 'start' });"
+        "    t.textContent = String(node.label || '');"
+        "    layer.appendChild(t);"
+        "  }"
+        "  const agent = (payload.agent_summary || []).map((r)=>`${r.specialist}: ${Math.round((r.pass_rate||0)*100)}% pass, cap ${r.avg_capability}`).join('\\n');"
+        "  const base = payload.bucket_baseline_pass_rate || {};"
+        "  const baseText = Object.keys(base).map((k)=>`${k}: ${Math.round((base[k]||0)*100)}%`).join(', ');"
+        "  const notes = (payload.notes || []).map((n)=>`- ${n}`).join('\\n');"
+        "  stats.textContent = `Rows: ${payload.rows_count || 0}\\nGenerated: ${payload.generated_utc || ''}\\n\\nBucket baselines: ${baseText}\\n\\nPer-agent:\\n${agent || '(none)'}\\n\\nNotes:\\n${notes}`;"
+        "  samples.textContent = (payload.prompt_samples || []).slice(0, 18).map((s)=>`[${s.passed ? 'PASS' : 'FAIL'}] ${s.specialist} / ${s.task_id} (${s.bucket})\\nConcepts: ${s.concepts}\\nPrompt: ${s.prompt}`).join('\\n\\n');"
+        "  const sk = payload.skills_v1 || {};"
+        "  if (!sk.available) {"
+        "    if (skillsStats) skillsStats.textContent = 'skills_v1 artifacts not found. Run: python3 scripts/extract_skills_v1.py';"
+        "    if (regionStats) regionStats.textContent = '';"
+        "  } else {"
+        "    const retained = (sk.retained_skills || []).slice(0, 8);"
+        "    const exploratory = (sk.exploratory_skills || []).slice(0, 10);"
+        "    const regions = (sk.regions || []).slice().sort((a,b)=>Number(b.stability_z||0)-Number(a.stability_z||0));"
+        "    if (skillsStats) {"
+        "      const lines = [];"
+        "      lines.push(`Retained skills: ${(sk.retained_skills || []).length}`);"
+        "      lines.push(`Exploratory skills: ${(sk.exploratory_skills || []).length}`);"
+        "      lines.push('');"
+        "      lines.push('Top retained (effect):');"
+        "      for (const s of retained) lines.push(`- ${s.skill_id}  effect=${Number(s.effect||0).toFixed(3)}  support=${s.support_tasks}`);"
+        "      lines.push('');"
+        "      lines.push('Top exploratory (effect):');"
+        "      for (const s of exploratory) lines.push(`- ${s.skill_id}  effect=${Number(s.effect||0).toFixed(3)}  support=${s.support_tasks}`);"
+        "      skillsStats.textContent = lines.join('\\n');"
+        "    }"
+        "    if (regionStats) {"
+        "      const lines = [];"
+        "      lines.push('Regions sorted by stability z-score:');"
+        "      lines.push('');"
+        "      for (const r of regions) {"
+        "        lines.push(`- region ${r.region_id}: z=${Number(r.stability_z||0).toFixed(3)}  raw=${Number(r.stability_score||0).toFixed(3)}  stable=${Boolean(r.stable_for_direct_routing)}  tasks=${r.task_count}`);"
+        "      }"
+        "      regionStats.textContent = lines.join('\\n');"
+        "    }"
+        "  }"
+        "  const taskCount = (payload.task_similarity?.tasks || []).length;"
+        "  meta.textContent = `${(payload.nodes || []).length} nodes • ${(payload.edges || []).length} edges • ${taskCount} task vectors`;"
+        "  renderSimilarityInspector();"
+        "}"
+        "async function refresh(){"
+        "  meta.textContent = 'Loading...';"
+        "  try {"
+        "    const res = await fetch('/api/capability-map');"
+        "    const payload = await res.json();"
+        "    if (!res.ok || !payload.ok) throw new Error(payload.reason || payload.error || ('HTTP ' + res.status));"
+        "    renderGraph(payload);"
+        "  } catch (err) {"
+        "    stats.textContent = 'Failed to load map: ' + err;"
+        "    samples.textContent = '';"
+        "    meta.textContent = 'Unavailable';"
+        "  }"
+        "}"
+        "document.getElementById('refreshBtn')?.addEventListener('click', refresh);"
+        "simTaskA?.addEventListener('change', renderSimilarityInspector);"
+        "simTaskB?.addEventListener('change', renderSimilarityInspector);"
+        "document.getElementById('swapTasksBtn')?.addEventListener('click', () => {"
+        "  if (!simTaskA || !simTaskB) return;"
+        "  const a = simTaskA.value; simTaskA.value = simTaskB.value; simTaskB.value = a;"
+        "  renderSimilarityInspector();"
+        "});"
+        "resetView(); refresh();"
         "</script>"
         "</body></html>"
     )
@@ -1399,6 +2090,41 @@ def _render_dashboard(
     .tabs {{ display:flex; gap:8px; margin: 12px 0 16px 0; }}
     .tab {{ padding: 10px 14px; border:1px solid var(--panel-border); border-radius: 10px; background: var(--panel); color:var(--fg); cursor:pointer; font-weight: 600; }}
     .tab.active {{ background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 4px var(--glow); }}
+    .mini-tabs {{ display:flex; gap:8px; flex-wrap:wrap; margin: 10px 0 12px 0; }}
+    .mini-tab {{
+      padding: 8px 10px;
+      border:1px solid var(--panel-border);
+      border-radius: 9px;
+      background: var(--panel);
+      color: var(--fg);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+    }}
+    .mini-tab.active {{ background: var(--accent); border-color: var(--accent); color: #fff; }}
+    .mini-tab .warn-badge {{
+      display:inline-block;
+      margin-left: 6px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      background: #fff7ed;
+    }}
+    .mini-tab .legacy-badge {{
+      display:inline-block;
+      margin-left: 6px;
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      background: #f8fafc;
+    }}
+    .mono-view {{ white-space: pre; overflow: auto; max-height: 62vh; }}
     .mode-btn {{ padding: 10px 14px; border:1px solid var(--panel-border); border-radius: 10px; background: var(--panel); color:var(--fg); cursor:pointer; font-weight:600; }}
     .panel {{ display:none; }}
     .panel.active {{ display:block; }}
@@ -1447,6 +2173,8 @@ def _render_dashboard(
     <button class="tab active" data-panel="overview">Overview</button>
     <button class="tab" data-panel="scoring">Scoring vs Cursor Work</button>
     <button class="tab" data-panel="docs">Docs Snapshot</button>
+    <button class="tab" data-panel="capability-map">Capability Map</button>
+    <button class="tab" data-panel="training">Training Data</button>
   </div>
 
   <section id="panel-overview" class="panel active">
@@ -1502,6 +2230,12 @@ def _render_dashboard(
   <section id="panel-docs" class="panel">
     <h2>Documentation Explorer</h2>
     <p class="muted">Live list of every documentation artifact plus recent generated docs. Auto-refresh runs every 15 seconds.</p>
+    <div id="docsTrackTabs" class="mini-tabs">
+      <button class="mini-tab active" data-track="all">All docs</button>
+      <button class="mini-tab" data-track="opensource">Open-source model only</button>
+      <button class="mini-tab" data-track="specialized">Specialized adapter only</button>
+      <button class="mini-tab" data-track="codex_authored">Cursor/Codex reference only</button>
+    </div>
     <div class="compare-controls">
       <label for="docsQuery">Search</label>
       <input id="docsQuery" type="text" placeholder="name or path..." style="min-width:220px;" />
@@ -1534,6 +2268,49 @@ def _render_dashboard(
       <span id="docsMeta" class="muted"></span>
     </div>
     <pre id="docsViewer">(select a document)</pre>
+  </section>
+
+  <section id="panel-capability-map" class="panel">
+    <h2>Capability Map Explorer</h2>
+    <p class="muted">Pan/zoom interactive concept-capability graph from the latest mass benchmark runs.</p>
+    <div class="compare-controls">
+      <a href="/view/capability-map" target="_blank" rel="noopener">Open in full page</a>
+    </div>
+    <iframe
+      title="Capability map"
+      src="/view/capability-map"
+      style="width:100%; height:74vh; border:1px solid var(--panel-border); border-radius:10px; background:var(--panel);"
+      loading="lazy"
+    ></iframe>
+  </section>
+
+  <section id="panel-training" class="panel">
+    <h2>Training Data Explorer</h2>
+    <p class="muted">Dataset tabs are grouped by adapter family. Select a split tab to inspect rows (paginated) or open the manifest.</p>
+    <div id="trainingDatasetTabs" class="mini-tabs"></div>
+    <div id="trainingSplitTabs" class="mini-tabs">
+      <button class="mini-tab active" data-view="train">train</button>
+      <button class="mini-tab" data-view="valid">valid</button>
+      <button class="mini-tab" data-view="test">test</button>
+      <button class="mini-tab" data-view="manifest">manifest</button>
+    </div>
+    <div class="compare-controls">
+      <label for="trainingLimit">Rows per page</label>
+      <select id="trainingLimit">
+        <option value="100">100</option>
+        <option value="200" selected>200</option>
+        <option value="400">400</option>
+      </select>
+      <label for="trainingHideLegacy" style="display:flex;align-items:center;gap:6px;">
+        <input id="trainingHideLegacy" type="checkbox" checked />
+        Hide legacy datasets
+      </label>
+      <button id="trainingPrev" type="button">Previous</button>
+      <button id="trainingNext" type="button">Next</button>
+      <button id="trainingRefresh" type="button">Refresh datasets</button>
+      <span id="trainingMeta" class="muted"></span>
+    </div>
+    <pre id="trainingViewer" class="mono-view">(loading training datasets...)</pre>
   </section>
 
   <script>
@@ -1581,6 +2358,8 @@ def _render_dashboard(
     const docsCategory = document.getElementById('docsCategory');
     const docsType = document.getElementById('docsType');
     const docsSort = document.getElementById('docsSort');
+    const docsTrackTabs = document.getElementById('docsTrackTabs');
+    let docsTrack = 'all';
 
     function docType(path) {{
       const p = String(path || '').toLowerCase();
@@ -1590,14 +2369,34 @@ def _render_dashboard(
       return 'other';
     }}
 
+    function docTrackLabel(row) {{
+      const track = String(row?.model_track || 'other');
+      if (track === 'opensource') return 'Open-source';
+      if (track === 'specialized') return 'Specialized';
+      if (track === 'codex_authored') return 'Cursor/Codex';
+      if (track === 'capture') return 'Capture';
+      if (track === 'run') return 'Run';
+      return 'Other';
+    }}
+
+    function setActiveDocsTrack(track) {{
+      docsTrack = track || 'all';
+      for (const btn of docsTrackTabs?.querySelectorAll('.mini-tab') || []) {{
+        btn.classList.toggle('active', (btn.getAttribute('data-track') || 'all') === docsTrack);
+      }}
+    }}
+
     function applyDocsFilters() {{
       const query = (docsQuery?.value || '').trim().toLowerCase();
       const category = (docsCategory?.value || 'all');
       const type = (docsType?.value || 'all');
       const sortBy = (docsSort?.value || 'recent');
+      const track = docsTrack || 'all';
       let rows = docsCatalog.filter((row) => {{
         const p = String(row.path || '');
         const cat = String(row.category || '');
+        const rowTrack = String(row.model_track || 'other');
+        if (track !== 'all' && rowTrack !== track) return false;
         if (category !== 'all' && cat !== category) return false;
         if (type !== 'all' && docType(p) !== type) return false;
         if (query && !p.toLowerCase().includes(query)) return false;
@@ -1628,7 +2427,7 @@ def _render_dashboard(
         const opt = document.createElement('option');
         opt.value = row.path || '';
         const title = String(row.title || row.path || '');
-        opt.textContent = title + ' — ' + (row.path || '') + ' [' + (row.category || 'docs') + ' • ' + docType(row.path) + ']';
+        opt.textContent = title + ' — ' + (row.path || '') + ' [' + (row.category || 'docs') + ' • ' + docType(row.path) + ' • ' + docTrackLabel(row) + ']';
         docsSelect.appendChild(opt);
       }}
       if (docsFiltered.length === 0) {{
@@ -1650,7 +2449,7 @@ def _render_dashboard(
         if (docsViewer) docsViewer.textContent = payload.content || '';
         const row = docsCatalog.find(d => d.path === pathValue);
         if (docsMeta && row) {{
-          docsMeta.textContent = docsFiltered.length + ' matches • updated ' + (row.updated_utc || '') + ' • ' + (row.size_bytes || 0) + ' bytes • ' + docType(row.path);
+          docsMeta.textContent = docsFiltered.length + ' matches • updated ' + (row.updated_utc || '') + ' • ' + (row.size_bytes || 0) + ' bytes • ' + docType(row.path) + ' • ' + docTrackLabel(row);
         }}
       }} catch (err) {{
         if (docsViewer) docsViewer.textContent = 'Failed to load document: ' + err;
@@ -1674,6 +2473,15 @@ def _render_dashboard(
 
     docsRefresh?.addEventListener('click', () => refreshDocsList(true));
     docsSelect?.addEventListener('change', () => loadDoc(docsSelect.value));
+    for (const btn of docsTrackTabs?.querySelectorAll('.mini-tab') || []) {{
+      btn.addEventListener('click', () => {{
+        const nextTrack = btn.getAttribute('data-track') || 'all';
+        setActiveDocsTrack(nextTrack);
+        applyDocsFilters();
+        renderDocsSelect(docsSelect?.value || '');
+        loadDoc(docsSelect?.value || '');
+      }});
+    }}
     docsQuery?.addEventListener('input', () => {{
       applyDocsFilters();
       renderDocsSelect(docsSelect?.value || '');
@@ -1694,8 +2502,214 @@ def _render_dashboard(
       renderDocsSelect(docsSelect?.value || '');
       loadDoc(docsSelect?.value || '');
     }});
+    setActiveDocsTrack('all');
     refreshDocsList(false);
     setInterval(() => refreshDocsList(true), 15000);
+
+    let trainingCatalog = [];
+    let selectedDatasetId = '';
+    let selectedTrainingView = 'train';
+    let trainingOffset = 0;
+    const TRAINING_WARN_ROWS = 10;
+    const trainingDatasetTabs = document.getElementById('trainingDatasetTabs');
+    const trainingSplitTabs = document.getElementById('trainingSplitTabs');
+    const trainingLimit = document.getElementById('trainingLimit');
+    const trainingHideLegacy = document.getElementById('trainingHideLegacy');
+    const trainingPrev = document.getElementById('trainingPrev');
+    const trainingNext = document.getElementById('trainingNext');
+    const trainingRefresh = document.getElementById('trainingRefresh');
+    const trainingMeta = document.getElementById('trainingMeta');
+    const trainingViewer = document.getElementById('trainingViewer');
+
+    function isSpecialistDataset(ds) {{
+      const id = String(ds?.dataset_id || '');
+      return id.endsWith('_specialist');
+    }}
+
+    function isLegacyDataset(ds, idSet) {{
+      const id = String(ds?.dataset_id || '');
+      if (!id || isSpecialistDataset(ds)) return false;
+      return idSet.has(id + '_specialist');
+    }}
+
+    function visibleTrainingCatalog() {{
+      const idSet = new Set((trainingCatalog || []).map((d) => String(d?.dataset_id || '')));
+      let rows = (trainingCatalog || []).map((ds) => {{
+        const totalRows = Number(ds?.total_rows || 0);
+        return {{
+          ...ds,
+          is_specialist: isSpecialistDataset(ds),
+          is_legacy: isLegacyDataset(ds, idSet),
+          is_low_rows: totalRows > 0 && totalRows < TRAINING_WARN_ROWS,
+        }};
+      }});
+      if (trainingHideLegacy?.checked) {{
+        rows = rows.filter((ds) => !ds.is_legacy);
+      }}
+      rows.sort((a, b) => {{
+        const sa = a.is_specialist ? 0 : 1;
+        const sb = b.is_specialist ? 0 : 1;
+        if (sa !== sb) return sa - sb;
+        const ra = Number(a.total_rows || 0);
+        const rb = Number(b.total_rows || 0);
+        if (ra !== rb) return rb - ra;
+        return String(a.dataset_id || '').localeCompare(String(b.dataset_id || ''));
+      }});
+      return rows;
+    }}
+
+    function renderTrainingDatasetTabs() {{
+      if (!trainingDatasetTabs) return;
+      trainingDatasetTabs.innerHTML = '';
+      const rows = visibleTrainingCatalog();
+      if (!rows.length) {{
+        trainingDatasetTabs.innerHTML = '<span class="muted">(no training datasets found)</span>';
+        return;
+      }}
+      for (const ds of rows) {{
+        const button = document.createElement('button');
+        button.className = 'mini-tab' + ((ds.dataset_id || '') === selectedDatasetId ? ' active' : '');
+        const totalRows = Number(ds.total_rows || 0);
+        const label = document.createElement('span');
+        label.textContent = (ds.dataset_id || 'dataset') + ' (' + totalRows + ')';
+        button.appendChild(label);
+        if (ds.is_low_rows) {{
+          const warn = document.createElement('span');
+          warn.className = 'warn-badge';
+          warn.textContent = '⚠ under ' + TRAINING_WARN_ROWS;
+          button.appendChild(warn);
+        }}
+        if (ds.is_legacy) {{
+          const legacy = document.createElement('span');
+          legacy.className = 'legacy-badge';
+          legacy.textContent = 'legacy';
+          button.appendChild(legacy);
+        }}
+        button.addEventListener('click', () => {{
+          selectedDatasetId = ds.dataset_id || '';
+          trainingOffset = 0;
+          renderTrainingDatasetTabs();
+          loadTrainingContent();
+        }});
+        trainingDatasetTabs.appendChild(button);
+      }}
+    }}
+
+    function setActiveTrainingView(view) {{
+      selectedTrainingView = view;
+      for (const btn of trainingSplitTabs?.querySelectorAll('.mini-tab') || []) {{
+        btn.classList.toggle('active', (btn.getAttribute('data-view') || '') === view);
+      }}
+    }}
+
+    function currentTrainingLimit() {{
+      const raw = Number(trainingLimit?.value || 200);
+      return Number.isFinite(raw) ? Math.max(1, Math.min(1000, raw)) : 200;
+    }}
+
+    async function loadTrainingContent() {{
+      if (!selectedDatasetId) {{
+        if (trainingViewer) trainingViewer.textContent = '(no dataset selected)';
+        return;
+      }}
+      if (trainingViewer) trainingViewer.textContent = 'Loading training data...';
+      const limit = currentTrainingLimit();
+      const query = '/api/training/content?dataset_id=' + encodeURIComponent(selectedDatasetId)
+        + '&view=' + encodeURIComponent(selectedTrainingView)
+        + '&offset=' + encodeURIComponent(String(trainingOffset))
+        + '&limit=' + encodeURIComponent(String(limit));
+      try {{
+        const res = await fetch(query);
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        if (trainingViewer) trainingViewer.textContent = payload.content || '';
+        const totalRows = Number(payload.total_rows || 0);
+        const offset = Number(payload.offset || 0);
+        const shownCount = (payload.content || '').split('\\n').filter(Boolean).length;
+        const hasMore = Boolean(payload.has_more);
+        if (trainingMeta) {{
+          if (selectedTrainingView === 'manifest') {{
+            trainingMeta.textContent = payload.path + ' • manifest';
+          }} else {{
+            const end = Math.min(totalRows, offset + shownCount);
+            trainingMeta.textContent = payload.path + ' • rows ' + (offset + 1) + '-' + end + ' of ' + totalRows;
+          }}
+        }}
+        if (trainingPrev) trainingPrev.disabled = selectedTrainingView === 'manifest' || offset <= 0;
+        if (trainingNext) trainingNext.disabled = selectedTrainingView === 'manifest' || !hasMore;
+      }} catch (err) {{
+        if (trainingViewer) trainingViewer.textContent = 'Failed to load training data: ' + err;
+      }}
+    }}
+
+    async function refreshTrainingCatalog(preserveSelection=true) {{
+      const prevDataset = selectedDatasetId;
+      try {{
+        const res = await fetch('/api/training/catalog');
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        trainingCatalog = payload.datasets || [];
+        const rows = visibleTrainingCatalog();
+        if (!rows.length) {{
+          selectedDatasetId = '';
+          renderTrainingDatasetTabs();
+          if (trainingViewer) trainingViewer.textContent = '(no visible training datasets found)';
+          if (trainingMeta) trainingMeta.textContent = '0 visible datasets';
+          return;
+        }}
+        if (preserveSelection && rows.some((d) => (d.dataset_id || '') === prevDataset)) {{
+          selectedDatasetId = prevDataset;
+        }} else if (!selectedDatasetId || !rows.some((d) => (d.dataset_id || '') === selectedDatasetId)) {{
+          selectedDatasetId = rows[0].dataset_id || '';
+        }}
+        renderTrainingDatasetTabs();
+        await loadTrainingContent();
+        const visibleCount = rows.length;
+        const hiddenCount = Math.max(0, (trainingCatalog || []).length - visibleCount);
+        const warnedCount = rows.filter((d) => d.is_low_rows).length;
+        if (trainingMeta) {{
+          const parts = [String(visibleCount) + ' visible dataset' + (visibleCount === 1 ? '' : 's')];
+          if (trainingHideLegacy?.checked && hiddenCount > 0) parts.push(String(hiddenCount) + ' legacy hidden');
+          if (warnedCount > 0) parts.push(String(warnedCount) + ' flagged low-row');
+          trainingMeta.textContent = parts.join(' • ');
+        }}
+      }} catch (err) {{
+        if (trainingViewer) trainingViewer.textContent = 'Failed to refresh training datasets: ' + err;
+      }}
+    }}
+
+    trainingSplitTabs?.addEventListener('click', (ev) => {{
+      const target = ev.target;
+      if (!(target instanceof HTMLElement)) return;
+      const view = (target.getAttribute('data-view') || '').trim();
+      if (!view) return;
+      setActiveTrainingView(view);
+      trainingOffset = 0;
+      loadTrainingContent();
+    }});
+    trainingPrev?.addEventListener('click', () => {{
+      trainingOffset = Math.max(0, trainingOffset - currentTrainingLimit());
+      loadTrainingContent();
+    }});
+    trainingNext?.addEventListener('click', () => {{
+      trainingOffset = trainingOffset + currentTrainingLimit();
+      loadTrainingContent();
+    }});
+    trainingLimit?.addEventListener('change', () => {{
+      trainingOffset = 0;
+      loadTrainingContent();
+    }});
+    trainingRefresh?.addEventListener('click', () => {{
+      refreshTrainingCatalog(true);
+    }});
+    trainingHideLegacy?.addEventListener('change', () => {{
+      trainingOffset = 0;
+      refreshTrainingCatalog(true);
+    }});
+
+    setActiveTrainingView('train');
+    refreshTrainingCatalog(false);
+    setInterval(() => refreshTrainingCatalog(true), 15000);
 
   </script>
 </body>
@@ -1811,6 +2825,40 @@ def app(environ: Dict[str, Any], start_response):
             return [body]
         content = candidate.read_text(encoding="utf-8", errors="replace")
         status, headers, body = _json("200 OK", {"ok": True, "path": rel, "content": content})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/capability-map":
+        payload = _capability_map_payload()
+        status_code = "200 OK" if payload.get("ok") else "503 Service Unavailable"
+        status, headers, body = _json(status_code, payload)
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/training/catalog":
+        payload = _training_data_catalog(limit=1200)
+        status, headers, body = _json("200 OK", {"ok": True, **payload})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/training/content":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        dataset_id = str((qs.get("dataset_id") or [""])[0]).strip()
+        view = str((qs.get("view") or ["train"])[0]).strip().lower()
+        try:
+            offset = int((qs.get("offset") or ["0"])[0])
+        except (TypeError, ValueError):
+            offset = 0
+        try:
+            limit = int((qs.get("limit") or ["200"])[0])
+        except (TypeError, ValueError):
+            limit = 200
+        payload = _read_training_data_content(dataset_id=dataset_id, view=view, offset=offset, limit=limit)
+        if not payload.get("ok"):
+            status, headers, body = _json("400 Bad Request", payload)
+            start_response(status, headers)
+            return [body]
+        status, headers, body = _json("200 OK", payload)
         start_response(status, headers)
         return [body]
 
@@ -2093,6 +3141,11 @@ def app(environ: Dict[str, Any], start_response):
         start_response(status, headers)
         return [body]
 
+    if path == "/view/capability-map":
+        status, headers, body = _html("200 OK", _render_capability_map_view())
+        start_response(status, headers)
+        return [body]
+
     if path == "/api/events":
         qs = parse_qs(environ.get("QUERY_STRING", ""))
         limit = 100
@@ -2153,8 +3206,6 @@ def main() -> None:
     host = _env("FE_DASHBOARD_HOST", "0.0.0.0")
     port = int(_env("FE_DASHBOARD_PORT", _env("PORT", "8787")))
 
-    if not _env("FE_DASHBOARD_PASSWORD"):
-        print("WARNING: FE_DASHBOARD_PASSWORD is not set; viewer auth will always fail.", file=sys.stderr)
     if not _env("FE_DASHBOARD_INGEST_TOKEN"):
         print("WARNING: FE_DASHBOARD_INGEST_TOKEN is not set; ingestion will fail.", file=sys.stderr)
 

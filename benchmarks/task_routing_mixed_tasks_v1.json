@@ -1,0 +1,98 @@
+[
+  {
+    "id": "mixed-loading-hud-status",
+    "prompt": "Design loading screen copy that previews morale and supply HUD chips without clutter.",
+    "expected_adapter_id": "loading_screen",
+    "expected_route": "local",
+    "risk": "medium",
+    "reason": "Primary intent is loading UX text; HUD terms are transfer context."
+  },
+  {
+    "id": "mixed-hud-economy-tooltip",
+    "prompt": "Write a compact HUD tooltip tying supply pressure to net income and upkeep trend.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Economic interpretation dominates despite HUD framing."
+  },
+  {
+    "id": "mixed-combat-loading-preview",
+    "prompt": "Draft two loading lines that foreshadow combat risk from terrain and fortified walls.",
+    "expected_adapter_id": "combat_risk",
+    "expected_route": "hybrid",
+    "risk": "medium",
+    "reason": "Combat-risk semantics are dominant; policy maps combat to hybrid."
+  },
+  {
+    "id": "mixed-save-load-reassurance-copy",
+    "prompt": "Create one loading reassurance line about save-state schema version checks before match start.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "Save/load + schema/API safety should prioritize guarded routing."
+  },
+  {
+    "id": "mixed-ai-intent-loading-brief",
+    "prompt": "Write a one-line loading council brief hinting AI intent to defend, scout, and reinforce.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_route": "hybrid",
+    "risk": "medium",
+    "reason": "AI planning intent dominates; hybrid route preferred."
+  },
+  {
+    "id": "mixed-docs-route-policy",
+    "prompt": "Summarize how adapter routing policy should handle loading, combat risk, and save/load prompts in docs.",
+    "expected_adapter_id": "documentation",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Documentation task describing policy, not implementing game behavior."
+  },
+  {
+    "id": "mixed-hud-combat-econ-priority",
+    "prompt": "Propose HUD priority order for morale, supply, combat risk, and income alerts in one compact panel.",
+    "expected_adapter_id": "hud_status",
+    "expected_route": "local",
+    "risk": "medium",
+    "reason": "Primary ask is HUD prioritization layout/ordering."
+  },
+  {
+    "id": "mixed-api-guard-checklist-ui",
+    "prompt": "Provide a short TypeScript checklist for save/load API field guards and a UI warning copy line.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "API guard contract correctness dominates over UI copy."
+  },
+  {
+    "id": "mixed-econ-planning-explain",
+    "prompt": "Explain in two sentences why AI chose expand over defend based on gold income and upkeep pressure.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_route": "hybrid",
+    "risk": "medium",
+    "reason": "Decision rationale request is core planning-explanation behavior."
+  },
+  {
+    "id": "mixed-loading-format-constraints",
+    "prompt": "Give exactly two loading status lines with queued and ready states; plain text only.",
+    "expected_adapter_id": "loading_screen",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Strict loading-copy format task."
+  },
+  {
+    "id": "mixed-combat-api-audit",
+    "prompt": "Audit combat preview API response shape for missing risk fields and migration compatibility.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_route": "frontier",
+    "risk": "high",
+    "reason": "API audit + migration compatibility are high-risk contract concerns."
+  },
+  {
+    "id": "mixed-general-rename-with-routing-note",
+    "prompt": "Rename a helper and add one README note explaining router confidence and ambiguity fields.",
+    "expected_adapter_id": "general_fallback",
+    "expected_route": "local",
+    "risk": "low",
+    "reason": "Small mechanical code/docs update."
+  }
+]
