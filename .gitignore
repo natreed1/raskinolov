@@ -16,3 +16,10 @@ data/lora/
 wandb/
 # Benchmark machine output (optional; keep tasks JSON in git)
 benchmarks/results/
+
+# Local/generated dashboard + trigger state
+.cursor/hooks/.doc_training_trigger_state.json
+data/private_dashboard.sqlite3
+data/private_dashboard.local.sqlite3
+data/training_triggers/documentation_training_queue.jsonl
+lab_dashboard/shell_command_events.jsonl
