@@ -24,6 +24,7 @@ import json
 import os
 import re
 import sqlite3
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -1214,6 +1215,7 @@ def _capability_map_payload() -> Dict[str, Any]:
                 "retained_skills": skills_doc.get("retained_skills") or [],
                 "exploratory_skills": skills_doc.get("exploratory_skills") or [],
                 "regions": manifolds_doc.get("regions") or [],
+                "task_region_assignments": manifolds_doc.get("task_region_assignments") or {},
             }
         except (OSError, json.JSONDecodeError):
             skills_payload = {"available": False}
@@ -1245,6 +1247,134 @@ def _capability_map_payload() -> Dict[str, Any]:
             "This map is correlation-only and depends on specialist benchmark maturity.",
         ],
     }
+
+
+def _validation_artifact_paths(limit: int = 80) -> List[Path]:
+    root = REPO_ROOT / "benchmarks" / "results"
+    return sorted(
+        root.glob("multi_agent_orchestration_validation*.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )[:limit]
+
+
+def _validation_artifact_summary(payload: Dict[str, Any]) -> str:
+    lines = [
+        f"rows={payload.get('rows', 0)}",
+        f"split_valid_rows={payload.get('split_valid_rows', 0)} (rate={float(payload.get('split_valid_rate', 0)):.3f})",
+        f"merge_valid_rows={payload.get('merge_valid_rows', 0)} (rate={float(payload.get('merge_valid_rate', 0)):.3f})",
+        f"multi_agent_rows={payload.get('multi_agent_rows', 0)}",
+    ]
+    optional_keys = [
+        "expected_multi_agent_rows",
+        "expected_multi_agent_hit_rate",
+        "unexpected_multi_agent_rate",
+        "split_unique_adapter_rows",
+        "split_nonempty_rows",
+        "split_priority_sorted_rows",
+        "multi_agent_gate_passed",
+        "unexpected_multi_agent_gate_passed",
+    ]
+    for key in optional_keys:
+        if key in payload:
+            value = payload.get(key)
+            if isinstance(value, float):
+                lines.append(f"{key}={value:.3f}")
+            else:
+                lines.append(f"{key}={value}")
+    return "\n".join(lines)
+
+
+def _validation_artifact_list(limit: int = 80) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    for path in _validation_artifact_paths(limit=limit):
+        rel = path.relative_to(REPO_ROOT).as_posix()
+        rows.append(
+            {
+                "path": rel,
+                "name": path.name,
+                "updated_utc": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "size_bytes": path.stat().st_size,
+            }
+        )
+    return rows
+
+
+def _validation_artifact_payload(rel: str) -> Dict[str, Any]:
+    if not rel:
+        return {"ok": False, "error": "missing path"}
+    candidate = (REPO_ROOT / rel).resolve()
+    try:
+        candidate.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return {"ok": False, "error": "invalid path"}
+    expected_prefix = (REPO_ROOT / "benchmarks" / "results").resolve()
+    try:
+        candidate.relative_to(expected_prefix)
+    except ValueError:
+        return {"ok": False, "error": "path outside benchmarks/results"}
+    if not candidate.is_file():
+        return {"ok": False, "error": "file not found"}
+    if not candidate.name.startswith("multi_agent_orchestration_validation") or candidate.suffix.lower() != ".json":
+        return {"ok": False, "error": "unsupported artifact"}
+    try:
+        payload = json.loads(candidate.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "invalid json"}
+    return {
+        "ok": True,
+        "path": rel,
+        "summary": _validation_artifact_summary(payload),
+        "artifact": payload,
+    }
+
+
+def _run_expanded_validation_from_dashboard() -> Dict[str, Any]:
+    out = REPO_ROOT / "benchmarks" / "results" / "multi_agent_orchestration_validation_dashboard_latest.json"
+    log = REPO_ROOT / "benchmarks" / "results" / "game_task_reports" / "dashboard_validation_run.log"
+    cmd = [
+        sys.executable,
+        str(REPO_ROOT / "scripts" / "validate_multi_agent_orchestration.py"),
+        "--tasks",
+        str(REPO_ROOT / "benchmarks" / "hud_combat_field_flow_low_tasks_v1.json"),
+        "--tasks",
+        str(REPO_ROOT / "benchmarks" / "multi_agent_orchestration_mass_tasks_v1.json"),
+        "--tasks",
+        str(REPO_ROOT / "benchmarks" / "task_routing_mixed_tasks_v1.json"),
+        "--expected-multi-agent-min-rate",
+        "0.6",
+        "--max-unexpected-multi-agent-rate",
+        "0.25",
+        "--output-json",
+        str(out),
+    ]
+    log.parent.mkdir(parents=True, exist_ok=True)
+    started = datetime.now(timezone.utc)
+    with log.open("w", encoding="utf-8") as fh:
+        fh.write("$ " + " ".join(cmd) + "\n\n")
+        fh.flush()
+        proc = subprocess.run(
+            cmd,
+            cwd=str(REPO_ROOT),
+            stdout=fh,
+            stderr=subprocess.STDOUT,
+            check=False,
+        )
+    elapsed_s = (datetime.now(timezone.utc) - started).total_seconds()
+    result: Dict[str, Any] = {
+        "ok": proc.returncode == 0,
+        "exit_code": proc.returncode,
+        "elapsed_s": round(elapsed_s, 3),
+        "output_path": out.relative_to(REPO_ROOT).as_posix(),
+        "log_path": log.relative_to(REPO_ROOT).as_posix(),
+    }
+    if proc.returncode != 0:
+        return result
+    artifact = _validation_artifact_payload(result["output_path"])
+    if artifact.get("ok"):
+        result["summary"] = artifact.get("summary", "")
+        result["artifact"] = artifact.get("artifact", {})
+    return result
 
 
 def _load_scoring_summary() -> Dict[str, Any]:
@@ -1629,18 +1759,42 @@ def _render_capability_map_view() -> str:
         "body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:16px;background:#081224;color:#e6eefc}"
         "a{color:#7cb2ff}.top{display:flex;justify-content:space-between;align-items:center;gap:10px}"
         ".controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}"
+        ".map-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 10px 0}"
+        ".map-tab{border:1px solid #335d92;border-radius:999px;background:#102846;color:#dbeafe;padding:6px 12px;cursor:pointer;font-weight:700}"
+        ".map-tab.active{background:#1e60d6;color:#fff;border-color:#5aa0ff}"
         "button{border:1px solid #335d92;border-radius:8px;background:#1e60d6;color:#fff;padding:8px 12px;cursor:pointer;font-weight:600}"
         "button.secondary{background:#102846}"
         ".muted{color:#9bc2ff;font-size:12px}"
         "select{border:1px solid #335d92;border-radius:8px;background:#081224;color:#e6eefc;padding:7px 9px}"
         ".grid{display:grid;grid-template-columns:minmax(600px,2fr) minmax(320px,1fr);gap:12px}"
+        ".below-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}"
         ".panel{border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:10px}"
         "#mapWrap{height:72vh;overflow:hidden;position:relative;cursor:grab}"
         "#mapWrap.dragging{cursor:grabbing}"
+        ".map-panel{display:none}"
+        ".map-panel.active{display:block}"
         "#capSvg{width:100%;height:100%;display:block;background:#091326;border-radius:8px}"
+        "#manifoldWrap{height:72vh;position:relative}"
+        "#manifoldSvg{width:100%;height:100%;display:block;background:#091326;border-radius:8px}"
+        "#evidenceWrap{height:72vh;overflow:auto;background:#091326;border:1px solid #2a3f62;border-radius:8px;padding:10px}"
+        ".hotlink{display:inline-block;margin-right:10px;color:#9bc2ff;text-decoration:underline;cursor:pointer;font-size:12px}"
         "pre{white-space:pre-wrap;border:1px solid #2a3f62;background:#091326;border-radius:8px;padding:10px;max-height:32vh;overflow:auto}"
+        ".menu{border:1px solid #2a3f62;background:#091326;border-radius:8px;margin:8px 0}"
+        ".menu summary{cursor:pointer;padding:9px 11px;font-weight:700;color:#dbeafe;list-style:none}"
+        ".menu summary::-webkit-details-marker{display:none}"
+        ".menu summary::after{content:'▼';float:right;color:#9bc2ff;font-size:12px}"
+        ".menu[open] summary::after{content:'▲'}"
+        ".menu-content{padding:0 10px 10px 10px}"
         ".sim-box{border:1px solid #2a3f62;background:#091326;border-radius:8px;padding:9px;margin-top:10px}"
-        "@media (max-width: 1100px){.grid{grid-template-columns:1fr} #mapWrap{height:58vh}}"
+        ".node-btn{cursor:pointer}"
+        ".node-btn.selected circle{stroke:#fde047;stroke-width:4;filter:drop-shadow(0 0 6px rgba(253,224,71,0.85))}"
+        ".node-btn.selected text{fill:#fef08a;font-weight:700}"
+        ".edge-line{transition:stroke-opacity 120ms ease, stroke-width 120ms ease}"
+        ".edge-line.inactive{stroke-opacity:0.2}"
+        ".edge-line.active{stroke-opacity:0.98;filter:drop-shadow(0 0 5px rgba(255,255,255,0.65))}"
+        ".clear-selection{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:999px;border:1px solid #f59e0b;background:#7c2d12;color:#fff;font-size:18px;line-height:1;display:none;align-items:center;justify-content:center;padding:0;z-index:3}"
+        ".clear-selection.visible{display:flex}"
+        "@media (max-width: 1100px){.grid{grid-template-columns:1fr} .below-grid{grid-template-columns:1fr} #mapWrap{height:58vh}}"
         "</style></head><body>"
         "<div class='top'><h2>Capability Curvature Map (Docs Site)</h2><a href='/'>Back to dashboard</a></div>"
         "<p class='muted'>Drag to pan. Mousewheel / trackpad pinch to zoom. Double-click to recenter.</p>"
@@ -1652,13 +1806,29 @@ def _render_capability_map_view() -> str:
         "<span id='meta' class='muted'></span>"
         "</div>"
         "<div class='grid'>"
-        "<section class='panel'><div id='mapWrap'><svg id='capSvg' viewBox='0 0 1200 800' preserveAspectRatio='xMidYMid meet'><g id='capLayer'></g></svg></div></section>"
-        "<section class='panel'><h3 style='margin:0 0 8px 0'>Diagnostics</h3><pre id='stats'>(loading...)</pre><h3 style='margin:10px 0 8px 0'>Prompt Samples</h3><pre id='samples'></pre><h3 style='margin:10px 0 8px 0'>Task Cosine Similarity</h3><div class='controls'><label for='simTaskA' class='muted'>Task A</label><select id='simTaskA' style='min-width:280px;'></select></div><div class='controls'><label for='simTaskB' class='muted'>Task B</label><select id='simTaskB' style='min-width:280px;'></select><button id='swapTasksBtn' class='secondary'>Swap</button></div><div id='simValue' class='sim-box muted'>(loading)</div><pre id='simNeighbors'>(loading)</pre><h3 style='margin:10px 0 8px 0'>Skills Correlation (v1)</h3><pre id='skillsStats'>(loading)</pre><h3 style='margin:10px 0 8px 0'>Region Stability (v1)</h3><pre id='regionStats'>(loading)</pre></section>"
+        "<section class='panel'><div class='map-tabs'><button id='tabMap1' class='map-tab active'>Map 1: Capability</button><button id='tabMap2' class='map-tab'>Map 2: Skill Manifold</button><button id='tabMap3' class='map-tab'>Map 3: Region Evidence</button></div><div id='mapPanel1' class='map-panel active'><div id='mapWrap'><button id='clearSelectionBtn' class='clear-selection' title='Clear selected knob (Esc)' aria-label='Clear selected knob'>&times;</button><svg id='capSvg' viewBox='0 0 1200 800' preserveAspectRatio='xMidYMid meet'><g id='capLayer'></g></svg></div></div><div id='mapPanel2' class='map-panel'><div id='manifoldWrap'><svg id='manifoldSvg' viewBox='0 0 1200 800' preserveAspectRatio='xMidYMid meet'><g id='manifoldLayer'></g></svg></div></div><div id='mapPanel3' class='map-panel'><div id='evidenceWrap'><div><span id='hotToNode' class='hotlink'>Open selected node skills</span><span id='hotToRegion' class='hotlink'>Open selected region in manifold</span></div><pre id='regionEvidence'>(select a region or node)</pre></div></div></section>"
+        "<section class='panel'><h3 style='margin:0 0 8px 0'>Diagnostics</h3><details id='menuStats' class='menu'><summary>Map Diagnostics</summary><div class='menu-content'><pre id='stats'>(loading...)</pre></div></details><details id='menuNodeCorrelations' class='menu'><summary>Selected Knob Correlations</summary><div class='menu-content'><pre id='nodeCorrelations'>(click a map node)</pre></div></details><details id='menuKnobSkills' class='menu'><summary>Knob Skill Topology</summary><div class='menu-content'><pre id='knobGuide'></pre><pre id='knobSkills'>(click a knob)</pre><pre id='knobCommonSkills'></pre><pre id='knobBoundaryTasks'></pre></div></details><details id='menuSamples' class='menu'><summary>Prompt Samples</summary><div class='menu-content'><pre id='samples'></pre></div></details><details id='menuSimilarity' class='menu'><summary>Task Cosine Similarity</summary><div class='menu-content'><div class='controls'><label for='simTaskA' class='muted'>Task A</label><select id='simTaskA' style='min-width:280px;'></select></div><div class='controls'><label for='simTaskB' class='muted'>Task B</label><select id='simTaskB' style='min-width:280px;'></select><button id='swapTasksBtn' class='secondary'>Swap</button></div><div id='simValue' class='sim-box muted'>(loading)</div><pre id='simNeighbors'>(loading)</pre></div></details></section>"
+        "</div>"
+        "<div class='below-grid'>"
+        "<section class='panel'><details id='menuSkills' class='menu'><summary>Skills Correlation (v1)</summary><div class='menu-content'><pre id='skillsStats'>(loading)</pre></div></details></section>"
+        "<section class='panel'><details id='menuRegions' class='menu'><summary>Region Stability (v1)</summary><div class='menu-content'><pre id='regionStats'>(loading)</pre></div></details></section>"
         "</div>"
         "<script>"
         "const svg = document.getElementById('capSvg');"
         "const layer = document.getElementById('capLayer');"
+        "const manifoldSvg = document.getElementById('manifoldSvg');"
+        "const manifoldLayer = document.getElementById('manifoldLayer');"
         "const wrap = document.getElementById('mapWrap');"
+        "const mapPanel1 = document.getElementById('mapPanel1');"
+        "const mapPanel2 = document.getElementById('mapPanel2');"
+        "const mapPanel3 = document.getElementById('mapPanel3');"
+        "const tabMap1 = document.getElementById('tabMap1');"
+        "const tabMap2 = document.getElementById('tabMap2');"
+        "const tabMap3 = document.getElementById('tabMap3');"
+        "const regionEvidence = document.getElementById('regionEvidence');"
+        "const hotToNode = document.getElementById('hotToNode');"
+        "const hotToRegion = document.getElementById('hotToRegion');"
+        "const clearSelectionBtn = document.getElementById('clearSelectionBtn');"
         "const meta = document.getElementById('meta');"
         "const stats = document.getElementById('stats');"
         "const samples = document.getElementById('samples');"
@@ -1666,9 +1836,19 @@ def _render_capability_map_view() -> str:
         "const simTaskB = document.getElementById('simTaskB');"
         "const simValue = document.getElementById('simValue');"
         "const simNeighbors = document.getElementById('simNeighbors');"
+        "const nodeCorrelations = document.getElementById('nodeCorrelations');"
+        "const knobGuide = document.getElementById('knobGuide');"
+        "const knobSkills = document.getElementById('knobSkills');"
+        "const knobCommonSkills = document.getElementById('knobCommonSkills');"
+        "const knobBoundaryTasks = document.getElementById('knobBoundaryTasks');"
         "const skillsStats = document.getElementById('skillsStats');"
         "const regionStats = document.getElementById('regionStats');"
+        "const menuNodeCorrelations = document.getElementById('menuNodeCorrelations');"
+        "const menuKnobSkills = document.getElementById('menuKnobSkills');"
         "let graph = null;"
+        "let selectedNodeId = '';"
+        "let selectedRegionId = null;"
+        "let activeMapTab = 'map1';"
         "const state = { tx: 0, ty: 0, scale: 1, dragging: false, x: 0, y: 0 };"
         "function applyTransform(){ layer.setAttribute('transform', `translate(${state.tx} ${state.ty}) scale(${state.scale})`); }"
         "function clampScale(v){ return Math.max(0.4, Math.min(5, v)); }"
@@ -1708,6 +1888,350 @@ def _render_capability_map_view() -> str:
         "document.getElementById('resetBtn')?.addEventListener('click', resetView);"
         "function el(tag, attrs){ const n = document.createElementNS('http://www.w3.org/2000/svg', tag); for(const [k,v] of Object.entries(attrs || {})) n.setAttribute(k, String(v)); return n; }"
         "function nodeById(id){ return (graph?.nodes || []).find((n)=>n.id===id); }"
+        "function nodeDisplayName(id){"
+        "  const n = nodeById(id);"
+        "  return n ? `${n.kind}: ${n.label}` : id;"
+        "}"
+        "function switchMapTab(tab){"
+        "  activeMapTab = tab;"
+        "  const is1 = tab === 'map1'; const is2 = tab === 'map2'; const is3 = tab === 'map3';"
+        "  mapPanel1?.classList.toggle('active', is1);"
+        "  mapPanel2?.classList.toggle('active', is2);"
+        "  mapPanel3?.classList.toggle('active', is3);"
+        "  tabMap1?.classList.toggle('active', is1);"
+        "  tabMap2?.classList.toggle('active', is2);"
+        "  tabMap3?.classList.toggle('active', is3);"
+        "}"
+        "function taskToRegionId(taskId){"
+        "  const m = graph?.skills_v1?.task_region_assignments || {};"
+        "  const raw = m[taskId];"
+        "  return raw === undefined || raw === null ? null : Number(raw);"
+        "}"
+        "function inferRegionForSelectedNode(){"
+        "  const rows = tasksForSelectedNode(nodeById(selectedNodeId));"
+        "  if (!rows.length) return null;"
+        "  const counts = new Map();"
+        "  for (const t of rows){"
+        "    const rid = taskToRegionId(t.id);"
+        "    if (rid === null) continue;"
+        "    counts.set(rid, 1 + Number(counts.get(rid) || 0));"
+        "  }"
+        "  if (!counts.size) return null;"
+        "  return [...counts.entries()].sort((a,b) => b[1]-a[1])[0][0];"
+        "}"
+        "function renderRegionEvidencePanel(){"
+        "  if (!regionEvidence) return;"
+        "  const regions = graph?.skills_v1?.regions || [];"
+        "  if (!regions.length){"
+        "    regionEvidence.textContent = 'No region manifold data found.';"
+        "    return;"
+        "  }"
+        "  const rid = selectedRegionId === null ? inferRegionForSelectedNode() : selectedRegionId;"
+        "  const region = regions.find((r) => Number(r.region_id) === Number(rid));"
+        "  if (!region){"
+        "    const top = regions.slice().sort((a,b) => Number(b.stability_z||0)-Number(a.stability_z||0)).slice(0, 5);"
+        "    const lines = top.map((r) => `- region ${r.region_id}: z=${Number(r.stability_z||0).toFixed(3)} stable=${Boolean(r.stable_for_direct_routing)} tasks=${Number(r.task_count||0)}`);"
+        "    regionEvidence.textContent = `Region evidence map\\n\\nSelect a region in Map 2 or a knob in Map 1.\\n\\nTop stable regions:\\n${lines.join('\\n')}`;"
+        "    return;"
+        "  }"
+        "  const taskIds = region.task_ids || [];"
+        "  const tasks = taskRows();"
+        "  const byId = new Map(tasks.map((t)=>[t.id,t]));"
+        "  const resolved = taskIds.map((id)=>byId.get(id)).filter(Boolean);"
+        "  const sample = resolved.slice(0, 16).map((t)=>`- ${t.specialist}/${t.task_id} [${t.bucket}] concepts=${(t.concepts||[]).join(',')}`);"
+        "  const fit = Object.entries(region.specialist_fit || {}).sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,4).map((r)=>`${r[0]}=${Number(r[1]).toFixed(2)}`);"
+        "  regionEvidence.textContent = `Region ${region.region_id}\\n\\nStability z=${Number(region.stability_z||0).toFixed(3)}\\nStable for direct routing=${Boolean(region.stable_for_direct_routing)}\\nTasks=${Number(region.task_count||0)}\\nMean intra curvature=${Number(region.mean_intra_curvature||0).toFixed(3)}\\nBoundary penalty=${Number(region.boundary_penalty||0).toFixed(3)}\\n\\nSpecialist fit:\\n- ${fit.join('\\n- ')}\\n\\nExample tasks:\\n${sample.join('\\n') || '(none)'}`;"
+        "}"
+        "function renderManifoldMap(){"
+        "  if (!manifoldLayer) return;"
+        "  manifoldLayer.innerHTML = '';"
+        "  const width = 1200, height = 800;"
+        "  const skills = allSkills();"
+        "  const regions = graph?.skills_v1?.regions || [];"
+        "  const minEff = Math.min(-0.6, ...skills.map((s)=>Number(s.effect||0)));"
+        "  const maxEff = Math.max(0.6, ...skills.map((s)=>Number(s.effect||0)));"
+        "  const xOf = (effect) => 90 + ((Number(effect||0) - minEff) / Math.max(1e-9, maxEff - minEff)) * (width - 180);"
+        "  const yOf = (agree) => 60 + (1 - Number(agree||0)) * (height - 140);"
+        "  const kindColor = { concept: '#60a5fa', bucket: '#a78bfa', concept_bucket: '#f59e0b' };"
+        "  for (const s of skills){"
+        "    const x = xOf(s.effect); const y = yOf(s.sign_agreement);"
+        "    const c = el('circle', { cx: x, cy: y, r: 4 + Math.min(8, Number(s.support_tasks||0) / 2), fill: kindColor[s._parsed?.kind || 'concept_bucket'] || '#cbd5e1', 'fill-opacity': 0.85 });"
+        "    c.addEventListener('click', () => {"
+        "      const p = s._parsed || {};"
+        "      if (p.kind === 'concept' && p.concept) { switchMapTab('map1'); selectNode(`concept:${p.concept}`); }"
+        "      else if (p.kind === 'bucket' && p.bucket) { switchMapTab('map1'); selectNode(`capability:${p.bucket}`); }"
+        "      else if (p.kind === 'concept_bucket') { switchMapTab('map1'); if (selectedNodeId.startsWith('capability:')) selectNode(`capability:${p.bucket}`); else selectNode(`concept:${p.concept}`); }"
+        "    });"
+        "    manifoldLayer.appendChild(c);"
+        "  }"
+        "  const top = regions.slice().sort((a,b)=>Number(b.stability_z||0)-Number(a.stability_z||0));"
+        "  for (let i=0;i<top.length;i++){"
+        "    const r = top[i];"
+        "    const x = 100 + (i / Math.max(1, top.length - 1)) * (width - 220);"
+        "    const y = 730;"
+        "    const bubble = el('circle', { cx: x, cy: y, r: 10 + Math.min(26, Number(r.task_count||0) / 1.5), fill: Number(r.stability_z||0) >= 0 ? '#22c55e' : '#ef4444', 'fill-opacity': 0.32, stroke: '#e2e8f0', 'stroke-width': 1.2 });"
+        "    bubble.addEventListener('click', () => { selectedRegionId = Number(r.region_id); switchMapTab('map3'); renderRegionEvidencePanel(); });"
+        "    manifoldLayer.appendChild(bubble);"
+        "    const t = el('text', { x: x, y: y + 4, 'text-anchor': 'middle', fill: '#e6eefc', 'font-size': 11 });"
+        "    t.textContent = `R${r.region_id}`;"
+        "    manifoldLayer.appendChild(t);"
+        "  }"
+        "  const axisX = el('line', { x1: 80, y1: 760, x2: width - 80, y2: 760, stroke: '#334155', 'stroke-width': 1 });"
+        "  manifoldLayer.appendChild(axisX);"
+        "  const axisY = el('line', { x1: 80, y1: 50, x2: 80, y2: 760, stroke: '#334155', 'stroke-width': 1 });"
+        "  manifoldLayer.appendChild(axisY);"
+        "  const lx = el('text', { x: width / 2, y: 790, 'text-anchor': 'middle', fill: '#9bc2ff', 'font-size': 12 });"
+        "  lx.textContent = 'Skill effect (negative -> positive)';"
+        "  manifoldLayer.appendChild(lx);"
+        "  const ly = el('text', { x: 16, y: 390, 'text-anchor': 'middle', fill: '#9bc2ff', 'font-size': 12, transform: 'rotate(-90 16 390)' });"
+        "  ly.textContent = 'Sign agreement (stable at top)';"
+        "  manifoldLayer.appendChild(ly);"
+        "}"
+        "function parseSkill(skill){"
+        "  const sid = String(skill?.skill_id || '');"
+        "  const out = { raw: sid, kind: String(skill?.kind || ''), concept: '', bucket: '' };"
+        "  const parts = sid.split('::');"
+        "  if (parts[0] === 'concept') { out.kind = 'concept'; out.concept = parts[1] || ''; }"
+        "  else if (parts[0] === 'bucket') { out.kind = 'bucket'; out.bucket = parts[1] || ''; }"
+        "  else if (parts[0] === 'concept_bucket') { out.kind = 'concept_bucket'; out.concept = parts[1] || ''; out.bucket = parts[2] || ''; }"
+        "  return out;"
+        "}"
+        "function allSkills(){"
+        "  const sk = graph?.skills_v1 || {};"
+        "  const out = [];"
+        "  const seen = new Set();"
+        "  const push = (rows) => {"
+        "    for (const row of (rows || [])) {"
+        "      const sid = String(row?.skill_id || '');"
+        "      if (!sid || seen.has(sid)) continue;"
+        "      seen.add(sid);"
+        "      out.push({ ...row, _parsed: parseSkill(row) });"
+        "    }"
+        "  };"
+        "  push(sk.retained_skills || []);"
+        "  push(sk.exploratory_skills || []);"
+        "  return out;"
+        "}"
+        "function skillStable(row){"
+        "  const support = Number(row?.support_tasks || 0);"
+        "  const agree = Number(row?.sign_agreement || 0);"
+        "  const lo = Number(row?.ci_low || 0);"
+        "  const hi = Number(row?.ci_high || 0);"
+        "  const nonCrossing = (lo > 0 && hi > 0) || (lo < 0 && hi < 0);"
+        "  return support >= 8 && agree >= 0.8 && nonCrossing;"
+        "}"
+        "function taskMatchesBoundarySkill(task, selectedNode, parsed){"
+        "  const concepts = task?.concepts || [];"
+        "  const bucket = String(task?.bucket || '');"
+        "  if (selectedNode?.kind === 'concept' && parsed.kind === 'concept_bucket' && parsed.concept === selectedNode.label) {"
+        "    return concepts.includes(selectedNode.label) && bucket === parsed.bucket;"
+        "  }"
+        "  if (selectedNode?.kind === 'capability' && parsed.kind === 'concept_bucket' && parsed.bucket === selectedNode.label) {"
+        "    return bucket === selectedNode.label && concepts.includes(parsed.concept);"
+        "  }"
+        "  return false;"
+        "}"
+        "function relatedKnobLabel(selectedNode, parsed){"
+        "  if (selectedNode?.kind === 'concept') return `capability:${parsed.bucket}`;"
+        "  if (selectedNode?.kind === 'capability') return `concept:${parsed.concept}`;"
+        "  return '';"
+        "}"
+        "function tasksForSelectedNode(selectedNode){"
+        "  const tasks = taskRows();"
+        "  if (!selectedNode) return [];"
+        "  if (selectedNode.kind === 'concept') return tasks.filter((t) => (t.concepts || []).includes(selectedNode.label));"
+        "  return tasks.filter((t) => String(t.bucket || '') === String(selectedNode.label || ''));"
+        "}"
+        "function describeSkill(selectedNode, parsed){"
+        "  if (parsed.kind === 'concept') return `Concept skill: prompts involving '${parsed.concept}'.`;"
+        "  if (parsed.kind === 'bucket') return `Bucket skill: tasks in '${parsed.bucket}' capability.`;"
+        "  if (parsed.kind === 'concept_bucket') return `Boundary subskill: '${parsed.concept}' when bucket='${parsed.bucket}'.`;"
+        "  return `Skill: ${parsed.raw}`;"
+        "}"
+        "function inferCenterFromTasks(selectedNode){"
+        "  const rows = tasksForSelectedNode(selectedNode);"
+        "  const assignments = graph?.skills_v1?.task_region_assignments || {};"
+        "  const regionById = new Map((graph?.skills_v1?.regions || []).map((r) => [String(r.region_id), r]));"
+        "  const stableRows = rows.filter((t) => {"
+        "    const rid = String(assignments[t.id] ?? '');"
+        "    const region = regionById.get(rid);"
+        "    return region ? Boolean(region.stable_for_direct_routing) : false;"
+        "  });"
+        "  const source = stableRows.length ? stableRows : rows;"
+        "  const bySpecialist = new Map();"
+        "  const byBucket = new Map();"
+        "  for (const t of source){"
+        "    bySpecialist.set(String(t.specialist || ''), 1 + Number(bySpecialist.get(String(t.specialist || '')) || 0));"
+        "    byBucket.set(String(t.bucket || ''), 1 + Number(byBucket.get(String(t.bucket || '')) || 0));"
+        "  }"
+        "  const topSpec = [...bySpecialist.entries()].sort((a,b) => b[1]-a[1]).slice(0, 3).map((r) => `${r[0]} (${r[1]})`);"
+        "  const topBuckets = [...byBucket.entries()].sort((a,b) => b[1]-a[1]).slice(0, 3).map((r) => `${r[0]} (${r[1]})`);"
+        "  return {"
+        "    total: rows.length,"
+        "    stable: stableRows.length,"
+        "    lines: ["
+        "      `- Stable-region tasks used: ${stableRows.length}/${rows.length}`,"
+        "      `- Dominant specialists: ${topSpec.join(', ') || '(none)'}`,"
+        "      `- Dominant buckets: ${topBuckets.join(', ') || '(none)'}`,"
+        "    ],"
+        "  };"
+        "}"
+        "function renderKnobSkillTopology(){"
+        "  if (!knobGuide || !knobSkills || !knobCommonSkills || !knobBoundaryTasks) return;"
+        "  const selected = nodeById(selectedNodeId);"
+        "  if (!selected){"
+        "    knobGuide.textContent = 'Skill decoder:\\n- concept::<name> = center concept signal\\n- bucket::<name> = center capability signal\\n- concept_bucket::<concept>::<bucket> = boundary subskill crossing knobs';"
+        "    knobSkills.textContent = '(click a knob)';"
+        "    knobCommonSkills.textContent = '';"
+        "    knobBoundaryTasks.textContent = '';"
+        "    return;"
+        "  }"
+        "  const skills = allSkills();"
+        "  const relevant = skills.filter((s) => {"
+        "    const p = s._parsed || {};"
+        "    if (selected.kind === 'concept') return (p.kind === 'concept' && p.concept === selected.label) || (p.kind === 'concept_bucket' && p.concept === selected.label);"
+        "    return (p.kind === 'bucket' && p.bucket === selected.label) || (p.kind === 'concept_bucket' && p.bucket === selected.label);"
+        "  });"
+        "  const direct = relevant.filter((s) => (selected.kind === 'concept' ? s._parsed.kind === 'concept' : s._parsed.kind === 'bucket'));"
+        "  const boundary = relevant.filter((s) => s._parsed.kind === 'concept_bucket');"
+        "  const rank = (rows) => rows.slice().sort((a,b) => Math.abs(Number(b.effect || 0)) - Math.abs(Number(a.effect || 0)));"
+        "  const centerRows = rank(direct).slice(0, 8);"
+        "  const boundaryRows = rank(boundary).slice(0, 10);"
+        "  const centerLines = centerRows.length ? centerRows.map((s) => {"
+        "    const positive = Number(s.effect || 0) >= 0;"
+        "    const polarity = positive ? 'Positive' : 'Negative';"
+        "    return `- ${s.skill_id}\\n  ${describeSkill(selected, s._parsed)}\\n  ${polarity} effect (${Number(s.effect||0).toFixed(3)})  support=${Number(s.support_tasks||0)}  stable=${skillStable(s)}`;"
+        "  }) : [];"
+        "  const boundaryLines = boundaryRows.length ? boundaryRows.map((s) => {"
+        "    const positive = Number(s.effect || 0) >= 0;"
+        "    const polarity = positive ? 'Positive' : 'Negative';"
+        "    return `- ${s.skill_id}\\n  ${describeSkill(selected, s._parsed)}\\n  related knob=${relatedKnobLabel(selected, s._parsed)}\\n  ${polarity} effect (${Number(s.effect||0).toFixed(3)})  support=${Number(s.support_tasks||0)}  sign_agree=${Number(s.sign_agreement||0).toFixed(2)}`;"
+        "  }) : ['- (no cross-knob boundary skills)'];"
+        "  const inferred = inferCenterFromTasks(selected);"
+        "  knobGuide.textContent = `Skill decoder for ${selected.kind}:${selected.label}\\n- Center skills = direct concept/bucket effects\\n- Boundary skills = concept+bucket cross-knob effects\\n- Positive effect = this pattern increases pass-rate\\n- Negative effect = this pattern decreases pass-rate\\n- support = task count; stable=true means strong + consistent`;"
+        "  const centerBlock = centerRows.length"
+        "    ? centerLines.join('\\n\\n')"
+        "    : ['- No direct center skill rows were extracted for this knob in current artifacts.', ...inferred.lines].join('\\n');"
+        "  knobSkills.textContent = `${selected.kind}:${selected.label}\\n\\nCenter skills (inside knob):\\n${centerBlock}\\n\\nBoundary skills (cross-knob):\\n${boundaryLines.join('\\n\\n')}`;"
+        "  const nodeTasks = tasksForSelectedNode(selected);"
+        "  const bucketCounts = new Map();"
+        "  const conceptCounts = new Map();"
+        "  const comboCounts = new Map();"
+        "  for (const t of nodeTasks){"
+        "    const b = String(t.bucket || '');"
+        "    bucketCounts.set(b, 1 + Number(bucketCounts.get(b) || 0));"
+        "    for (const c of (t.concepts || [])){"
+        "      const cs = String(c || '');"
+        "      conceptCounts.set(cs, 1 + Number(conceptCounts.get(cs) || 0));"
+        "      comboCounts.set(`${cs}::${b}`, 1 + Number(comboCounts.get(`${cs}::${b}`) || 0));"
+        "    }"
+        "  }"
+        "  const topConcepts = [...conceptCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 6).map((r)=>`- concept::${r[0]}  freq=${r[1]}`);"
+        "  const topBuckets = [...bucketCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 4).map((r)=>`- bucket::${r[0]}  freq=${r[1]}`);"
+        "  const topCombos = [...comboCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 8).map((r)=>`- concept_bucket::${r[0]}  freq=${r[1]}`);"
+        "  knobCommonSkills.textContent = `Most Common Skills Demonstrated\\n\\nTop concept signals:\\n${topConcepts.join('\\n') || '- (none)'}\\n\\nTop bucket signals:\\n${topBuckets.join('\\n') || '- (none)'}\\n\\nTop concept+bucket subskills:\\n${topCombos.join('\\n') || '- (none)'}\\n\\nInterpretation: this is frequency-based (what appears most), not effect-based (what helps/hurts most).`;"
+        "  const assignments = graph?.skills_v1?.task_region_assignments || {};"
+        "  const regionById = new Map((graph?.skills_v1?.regions || []).map((r) => [String(r.region_id), r]));"
+        "  const tasks = taskRows();"
+        "  const boundaryTaskLines = [];"
+        "  for (const s of boundaryRows.slice(0, 6)) {"
+        "    const p = s._parsed || {};"
+        "    const hitTasks = tasks.filter((t) => taskMatchesBoundarySkill(t, selected, p)).slice(0, 3);"
+        "    if (!hitTasks.length) continue;"
+        "    boundaryTaskLines.push(`${s.skill_id} -> ${relatedKnobLabel(selected, p)}`);"
+        "    for (const t of hitTasks) {"
+        "      const rid = String(assignments[t.id] ?? '');"
+        "      const region = regionById.get(rid);"
+        "      const regionTag = rid ? `region=${rid}${region && !region.stable_for_direct_routing ? ' (boundary)' : ''}` : 'region=n/a';"
+        "      boundaryTaskLines.push(`  - ${t.specialist}/${t.task_id} [${t.bucket}] ${regionTag}`);"
+        "    }"
+        "  }"
+        "  knobBoundaryTasks.textContent = boundaryTaskLines.length ? `Related subskill tasks from other knobs:\\n\\n${boundaryTaskLines.join('\\n')}` : 'Related subskill tasks from other knobs:\\n\\n(none found for selected knob)';"
+        "}"
+        "function renderSelectedNodeCorrelations(){"
+        "  if (!nodeCorrelations) return;"
+        "  if (!selectedNodeId){"
+        "    nodeCorrelations.textContent = '(click a map node)';"
+        "    return;"
+        "  }"
+        "  const rows = (graph?.edges || [])"
+        "    .filter((e)=>e.source === selectedNodeId || e.target === selectedNodeId)"
+        "    .sort((a,b)=>Number(b.weight || 0) - Number(a.weight || 0));"
+        "  if (!rows.length){"
+        "    nodeCorrelations.textContent = `${nodeDisplayName(selectedNodeId)}\\n\\n(no direct correlations available)`;"
+        "    return;"
+        "  }"
+        "  const posCount = rows.filter((e) => Number(e.signed || 0) >= 0).length;"
+        "  const negCount = rows.length - posCount;"
+        "  const lines = rows.slice(0, 8).map((e, idx) => {"
+        "    const otherId = e.source === selectedNodeId ? e.target : e.source;"
+        "    const positive = Number(e.signed || 0) >= 0;"
+        "    const sign = positive ? '+' : '-';"
+        "    const polarity = positive ? 'Positive' : 'Negative';"
+        "    return `${idx + 1}. ${nodeDisplayName(otherId)}\\n   ${polarity} correlation (${sign}${Math.abs(Number(e.signed || 0)).toFixed(3)})  weight=${Number(e.weight || 0).toFixed(3)}  samples=${Number(e.sample_count || 0)}`;"
+        "  });"
+        "  nodeCorrelations.textContent = `${nodeDisplayName(selectedNodeId)}\\nTop related correlations:\\nPositive=${posCount}  Negative=${negCount}\\n\\n${lines.join('\\n\\n')}`;"
+        "}"
+        "function applySelectedNodeStyles(){"
+        "  for (const el of layer.querySelectorAll('.node-btn')){"
+        "    const isSelected = el.getAttribute('data-node-id') === selectedNodeId;"
+        "    el.classList.toggle('selected', isSelected);"
+        "  }"
+        "  const hasSelection = Boolean(selectedNodeId);"
+        "  for (const line of layer.querySelectorAll('.edge-line')){"
+        "    if (!hasSelection){"
+        "      line.classList.remove('inactive');"
+        "      line.classList.remove('active');"
+        "      continue;"
+        "    }"
+        "    const isConnected = line.getAttribute('data-source') === selectedNodeId || line.getAttribute('data-target') === selectedNodeId;"
+        "    line.classList.toggle('active', isConnected);"
+        "    line.classList.toggle('inactive', !isConnected);"
+        "  }"
+        "}"
+        "function syncSelectionControls(){"
+        "  const hasSelection = Boolean(selectedNodeId);"
+        "  clearSelectionBtn?.classList.toggle('visible', hasSelection);"
+        "}"
+        "function selectNode(nodeId){"
+        "  selectedNodeId = nodeId || '';"
+        "  if (!selectedNodeId) selectedRegionId = null;"
+        "  applySelectedNodeStyles();"
+        "  syncSelectionControls();"
+        "  renderSelectedNodeCorrelations();"
+        "  renderKnobSkillTopology();"
+        "  renderRegionEvidencePanel();"
+        "  if (menuNodeCorrelations) menuNodeCorrelations.open = true;"
+        "  if (menuKnobSkills) menuKnobSkills.open = true;"
+        "}"
+        "function setGraphViewBox(payload, width, height){"
+        "  const nodes = payload?.nodes || [];"
+        "  if (!nodes.length){"
+        "    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);"
+        "    return;"
+        "  }"
+        "  const mapX = (u) => u * width;"
+        "  const mapY = (u) => u * height;"
+        "  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;"
+        "  for (const node of nodes){"
+        "    const isConcept = node.kind === 'concept';"
+        "    const x = mapX(Number(node.x || 0));"
+        "    const y = mapY(Number(node.y || 0));"
+        "    const r = isConcept ? 13 : 15;"
+        "    const labelPad = (String(node.label || '').length * 7) + 24;"
+        "    const left = isConcept ? x - r - labelPad : x - r;"
+        "    const right = isConcept ? x + r : x + r + labelPad;"
+        "    minX = Math.min(minX, left);"
+        "    maxX = Math.max(maxX, right);"
+        "    minY = Math.min(minY, y - r - 12);"
+        "    maxY = Math.max(maxY, y + r + 12);"
+        "  }"
+        "  const pad = 30;"
+        "  minX -= pad; minY -= pad; maxX += pad; maxY += pad;"
+        "  const vbW = Math.max(320, maxX - minX);"
+        "  const vbH = Math.max(240, maxY - minY);"
+        "  svg.setAttribute('viewBox', `${minX.toFixed(1)} ${minY.toFixed(1)} ${vbW.toFixed(1)} ${vbH.toFixed(1)}`);"
+        "}"
         "function cosine(a,b){"
         "  let dot = 0; let na = 0; let nb = 0;"
         "  const n = Math.min((a||[]).length, (b||[]).length);"
@@ -1761,6 +2285,7 @@ def _render_capability_map_view() -> str:
         "  graph = payload;"
         "  layer.innerHTML = '';"
         "  const width = 1200, height = 800;"
+        "  setGraphViewBox(payload, width, height);"
         "  const mapX = (u) => Math.round(u * width);"
         "  const mapY = (u) => Math.round(u * height);"
         "  for (const edge of (payload.edges || [])) {"
@@ -1768,17 +2293,28 @@ def _render_capability_map_view() -> str:
         "    if (!a || !b) continue;"
         "    const stroke = Number(edge.signed || 0) >= 0 ? '#41d694' : '#ef6b7b';"
         "    const lw = Math.max(1.2, 1 + Number(edge.weight || 0) * 12);"
-        "    const line = el('line', { x1: mapX(a.x), y1: mapY(a.y), x2: mapX(b.x), y2: mapY(b.y), stroke, 'stroke-width': lw, 'stroke-opacity': 0.75 });"
+        "    const line = el('line', { x1: mapX(a.x), y1: mapY(a.y), x2: mapX(b.x), y2: mapY(b.y), stroke, 'stroke-width': lw, 'stroke-opacity': 0.75, class: 'edge-line', 'data-source': String(edge.source || ''), 'data-target': String(edge.target || '') });"
         "    layer.appendChild(line);"
         "  }"
         "  for (const node of (payload.nodes || [])) {"
         "    const isConcept = node.kind === 'concept';"
         "    const x = mapX(node.x), y = mapY(node.y);"
-        "    layer.appendChild(el('circle', { cx: x, cy: y, r: isConcept ? 13 : 15, fill: isConcept ? '#2e8cff' : '#a78bfa', stroke: '#dbeafe', 'stroke-width': 1.5 }));"
+        "    const g = el('g', { class: 'node-btn', 'data-node-id': String(node.id || '') });"
+        "    const c = el('circle', { cx: x, cy: y, r: isConcept ? 13 : 15, fill: isConcept ? '#2e8cff' : '#a78bfa', stroke: '#dbeafe', 'stroke-width': 1.5 });"
+        "    g.appendChild(c);"
         "    const t = el('text', { x: x + (isConcept ? -18 : 18), y: y + 5, fill: '#e6eefc', 'font-size': 14, 'text-anchor': isConcept ? 'end' : 'start' });"
         "    t.textContent = String(node.label || '');"
-        "    layer.appendChild(t);"
+        "    g.appendChild(t);"
+        "    g.addEventListener('click', (ev) => { ev.stopPropagation(); selectNode(String(node.id || '')); });"
+        "    layer.appendChild(g);"
         "  }"
+        "  if (selectedNodeId && !nodeById(selectedNodeId)) selectedNodeId = '';"
+        "  applySelectedNodeStyles();"
+        "  syncSelectionControls();"
+        "  renderSelectedNodeCorrelations();"
+        "  renderKnobSkillTopology();"
+        "  renderManifoldMap();"
+        "  renderRegionEvidencePanel();"
         "  const agent = (payload.agent_summary || []).map((r)=>`${r.specialist}: ${Math.round((r.pass_rate||0)*100)}% pass, cap ${r.avg_capability}`).join('\\n');"
         "  const base = payload.bucket_baseline_pass_rate || {};"
         "  const baseText = Object.keys(base).map((k)=>`${k}: ${Math.round((base[k]||0)*100)}%`).join(', ');"
@@ -1833,6 +2369,18 @@ def _render_capability_map_view() -> str:
         "  }"
         "}"
         "document.getElementById('refreshBtn')?.addEventListener('click', refresh);"
+        "tabMap1?.addEventListener('click', () => switchMapTab('map1'));"
+        "tabMap2?.addEventListener('click', () => switchMapTab('map2'));"
+        "tabMap3?.addEventListener('click', () => { switchMapTab('map3'); renderRegionEvidencePanel(); });"
+        "hotToNode?.addEventListener('click', () => { switchMapTab('map1'); if (selectedNodeId) { menuKnobSkills && (menuKnobSkills.open = true); } });"
+        "hotToRegion?.addEventListener('click', () => { switchMapTab('map2'); });"
+        "clearSelectionBtn?.addEventListener('click', () => selectNode(''));"
+        "window.addEventListener('keydown', (ev) => {"
+        "  if (ev.key === 'Escape' && selectedNodeId){"
+        "    ev.preventDefault();"
+        "    selectNode('');"
+        "  }"
+        "});"
         "simTaskA?.addEventListener('change', renderSimilarityInspector);"
         "simTaskB?.addEventListener('change', renderSimilarityInspector);"
         "document.getElementById('swapTasksBtn')?.addEventListener('click', () => {"
@@ -2174,6 +2722,7 @@ def _render_dashboard(
     <button class="tab" data-panel="scoring">Scoring vs Cursor Work</button>
     <button class="tab" data-panel="docs">Docs Snapshot</button>
     <button class="tab" data-panel="capability-map">Capability Map</button>
+    <button class="tab" data-panel="arena-validation">Arena Validation</button>
     <button class="tab" data-panel="training">Training Data</button>
   </div>
 
@@ -2282,6 +2831,22 @@ def _render_dashboard(
       style="width:100%; height:74vh; border:1px solid var(--panel-border); border-radius:10px; background:var(--panel);"
       loading="lazy"
     ></iframe>
+  </section>
+
+  <section id="panel-arena-validation" class="panel">
+    <h2>Arena Split/Merge Validation</h2>
+    <p class="muted">Consolidated split/merge orchestration testing from the same dashboard surface.</p>
+    <div class="compare-controls">
+      <label for="validationSelect">Artifact</label>
+      <select id="validationSelect" style="min-width:560px;"></select>
+      <button id="validationRefresh" type="button">Refresh artifacts</button>
+      <button id="validationRun" type="button">Run expanded validation</button>
+      <span id="validationMeta" class="muted"></span>
+    </div>
+    <h3>Summary</h3>
+    <pre id="validationSummary">(select an artifact)</pre>
+    <h3>Raw JSON</h3>
+    <pre id="validationRaw" class="mono-view">(select an artifact)</pre>
   </section>
 
   <section id="panel-training" class="panel">
@@ -2505,6 +3070,89 @@ def _render_dashboard(
     setActiveDocsTrack('all');
     refreshDocsList(false);
     setInterval(() => refreshDocsList(true), 15000);
+
+    let validationCatalog = [];
+    const validationSelect = document.getElementById('validationSelect');
+    const validationRefresh = document.getElementById('validationRefresh');
+    const validationRun = document.getElementById('validationRun');
+    const validationMeta = document.getElementById('validationMeta');
+    const validationSummary = document.getElementById('validationSummary');
+    const validationRaw = document.getElementById('validationRaw');
+
+    function renderValidationSelect(preferredPath) {{
+      if (!validationSelect) return;
+      const prev = preferredPath || validationSelect.value || '';
+      validationSelect.innerHTML = '';
+      for (const row of validationCatalog) {{
+        const opt = document.createElement('option');
+        opt.value = row.path || '';
+        opt.textContent = (row.path || '') + ' • ' + (row.updated_utc || '');
+        validationSelect.appendChild(opt);
+      }}
+      if (!validationCatalog.length) {{
+        validationSelect.innerHTML = '<option value=\"\">(no validation artifacts found)</option>';
+        if (validationSummary) validationSummary.textContent = '(no validation artifacts found)';
+        if (validationRaw) validationRaw.textContent = '';
+        if (validationMeta) validationMeta.textContent = '0 artifacts';
+        return;
+      }}
+      validationSelect.value = validationCatalog.some(r => r.path === prev) ? prev : (validationCatalog[0].path || '');
+    }}
+
+    async function loadValidationArtifact(pathValue) {{
+      if (!pathValue) return;
+      if (validationSummary) validationSummary.textContent = 'Loading validation artifact...';
+      if (validationRaw) validationRaw.textContent = '';
+      try {{
+        const res = await fetch('/api/arena/validation/content?path=' + encodeURIComponent(pathValue));
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        if (validationSummary) validationSummary.textContent = payload.summary || '';
+        if (validationRaw) validationRaw.textContent = JSON.stringify(payload.artifact || {{}}, null, 2);
+        const row = validationCatalog.find((r) => (r.path || '') === pathValue);
+        if (validationMeta) {{
+          validationMeta.textContent = (validationCatalog.length + ' artifacts')
+            + (row ? (' • updated ' + (row.updated_utc || '') + ' • ' + (row.size_bytes || 0) + ' bytes') : '');
+        }}
+      }} catch (err) {{
+        if (validationSummary) validationSummary.textContent = 'Failed to load artifact: ' + err;
+      }}
+    }}
+
+    async function refreshValidationList(preserveSelection=true) {{
+      const selected = validationSelect?.value || '';
+      try {{
+        const res = await fetch('/api/arena/validation/list');
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        validationCatalog = payload.artifacts || [];
+        renderValidationSelect(preserveSelection ? selected : '');
+        await loadValidationArtifact(validationSelect?.value || '');
+      }} catch (err) {{
+        if (validationSummary) validationSummary.textContent = 'Failed to refresh validation artifacts: ' + err;
+      }}
+    }}
+
+    validationRefresh?.addEventListener('click', () => refreshValidationList(true));
+    validationSelect?.addEventListener('change', () => loadValidationArtifact(validationSelect.value));
+    validationRun?.addEventListener('click', async () => {{
+      if (validationSummary) validationSummary.textContent = 'Running expanded validation...';
+      if (validationRun) validationRun.disabled = true;
+      try {{
+        const res = await fetch('/api/arena/validation/run', {{ method: 'POST' }});
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error((payload.error || ('HTTP ' + res.status)) + (payload.log_path ? (' • log=' + payload.log_path) : ''));
+        await refreshValidationList(false);
+        if (validationSelect && payload.output_path) validationSelect.value = payload.output_path;
+        await loadValidationArtifact(payload.output_path || (validationSelect?.value || ''));
+      }} catch (err) {{
+        if (validationSummary) validationSummary.textContent = 'Validation run failed: ' + err;
+      }} finally {{
+        if (validationRun) validationRun.disabled = false;
+      }}
+    }});
+    refreshValidationList(false);
+    setInterval(() => refreshValidationList(true), 30000);
 
     let trainingCatalog = [];
     let selectedDatasetId = '';
@@ -2831,6 +3479,27 @@ def app(environ: Dict[str, Any], start_response):
     if path == "/api/capability-map":
         payload = _capability_map_payload()
         status_code = "200 OK" if payload.get("ok") else "503 Service Unavailable"
+        status, headers, body = _json(status_code, payload)
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/arena/validation/list":
+        status, headers, body = _json("200 OK", {"ok": True, "artifacts": _validation_artifact_list(limit=120)})
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/arena/validation/content":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        rel = str((qs.get("path") or [""])[0]).strip()
+        payload = _validation_artifact_payload(rel)
+        status_code = "200 OK" if payload.get("ok") else "400 Bad Request"
+        status, headers, body = _json(status_code, payload)
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/arena/validation/run" and method == "POST":
+        payload = _run_expanded_validation_from_dashboard()
+        status_code = "200 OK" if payload.get("ok") else "500 Internal Server Error"
         status, headers, body = _json(status_code, payload)
         start_response(status, headers)
         return [body]

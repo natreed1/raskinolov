@@ -1,0 +1,587 @@
+{
+  "generated_utc": "2026-05-17T21:44:07Z",
+  "adapters_root": "data/lora/adapters",
+  "dataset_count": 20,
+  "datasets": [
+    {
+      "dataset_id": "ai_planning_explanation",
+      "label": "Ai Planning Explanation",
+      "path": "data/lora/adapters/ai_planning_explanation",
+      "manifest_path": "data/lora/adapters/ai_planning_explanation/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 2,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/ai_planning_explanation/train.jsonl",
+          "rows": 2,
+          "size_bytes": 10842,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/ai_planning_explanation/valid.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/ai_planning_explanation/test.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "ai_planning_explanation_specialist",
+      "label": "Ai Planning Explanation Specialist",
+      "path": "data/lora/adapters/ai_planning_explanation_specialist",
+      "manifest_path": "data/lora/adapters/ai_planning_explanation_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 122,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 289574,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 9671,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist/test.jsonl",
+          "rows": 1,
+          "size_bytes": 772,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "ai_planning_explanation_specialist_mock_aug_v1",
+      "label": "Ai Planning Explanation Specialist Mock Aug V1",
+      "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v1",
+      "manifest_path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v1/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 210,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v1/train.jsonl",
+          "rows": 180,
+          "size_bytes": 158864,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v1/valid.jsonl",
+          "rows": 15,
+          "size_bytes": 13367,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v1/test.jsonl",
+          "rows": 15,
+          "size_bytes": 13282,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "combat_risk",
+      "label": "Combat Risk",
+      "path": "data/lora/adapters/combat_risk",
+      "manifest_path": "data/lora/adapters/combat_risk/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 4,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/combat_risk/train.jsonl",
+          "rows": 2,
+          "size_bytes": 11188,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/combat_risk/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 5596,
+          "updated_utc": "2026-05-04T09:18:53Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/combat_risk/test.jsonl",
+          "rows": 1,
+          "size_bytes": 5592,
+          "updated_utc": "2026-05-04T09:18:53Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "combat_risk_specialist",
+      "label": "Combat Risk Specialist",
+      "path": "data/lora/adapters/combat_risk_specialist",
+      "manifest_path": "data/lora/adapters/combat_risk_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 122,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/combat_risk_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 260507,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/combat_risk_specialist/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 9701,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/combat_risk_specialist/test.jsonl",
+          "rows": 1,
+          "size_bytes": 9656,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "combat_risk_specialist_mock_aug_v1",
+      "label": "Combat Risk Specialist Mock Aug V1",
+      "path": "data/lora/adapters/combat_risk_specialist_mock_aug_v1",
+      "manifest_path": "data/lora/adapters/combat_risk_specialist_mock_aug_v1/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 210,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/combat_risk_specialist_mock_aug_v1/train.jsonl",
+          "rows": 180,
+          "size_bytes": 156399,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/combat_risk_specialist_mock_aug_v1/valid.jsonl",
+          "rows": 15,
+          "size_bytes": 13137,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/combat_risk_specialist_mock_aug_v1/test.jsonl",
+          "rows": 15,
+          "size_bytes": 13064,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "documentation_specialist",
+      "label": "Documentation Specialist",
+      "path": "data/lora/adapters/documentation_specialist",
+      "manifest_path": "data/lora/adapters/documentation_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 124,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/documentation_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 138907,
+          "updated_utc": "2026-05-17T21:44:07Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/documentation_specialist/valid.jsonl",
+          "rows": 3,
+          "size_bytes": 3715,
+          "updated_utc": "2026-05-17T21:44:07Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/documentation_specialist/test.jsonl",
+          "rows": 1,
+          "size_bytes": 1220,
+          "updated_utc": "2026-05-17T21:44:07Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "economy_tooltip",
+      "label": "Economy Tooltip",
+      "path": "data/lora/adapters/economy_tooltip",
+      "manifest_path": "data/lora/adapters/economy_tooltip/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 2,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/economy_tooltip/train.jsonl",
+          "rows": 2,
+          "size_bytes": 13842,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/economy_tooltip/valid.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/economy_tooltip/test.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "economy_tooltip_specialist",
+      "label": "Economy Tooltip Specialist",
+      "path": "data/lora/adapters/economy_tooltip_specialist",
+      "manifest_path": "data/lora/adapters/economy_tooltip_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 122,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/economy_tooltip_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 289118,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/economy_tooltip_specialist/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 9660,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/economy_tooltip_specialist/test.jsonl",
+          "rows": 1,
+          "size_bytes": 757,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "economy_tooltip_specialist_mock_aug_v1",
+      "label": "Economy Tooltip Specialist Mock Aug V1",
+      "path": "data/lora/adapters/economy_tooltip_specialist_mock_aug_v1",
+      "manifest_path": "data/lora/adapters/economy_tooltip_specialist_mock_aug_v1/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 210,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/economy_tooltip_specialist_mock_aug_v1/train.jsonl",
+          "rows": 180,
+          "size_bytes": 157098,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/economy_tooltip_specialist_mock_aug_v1/valid.jsonl",
+          "rows": 15,
+          "size_bytes": 13201,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/economy_tooltip_specialist_mock_aug_v1/test.jsonl",
+          "rows": 15,
+          "size_bytes": 13122,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "hud_status",
+      "label": "Hud Status",
+      "path": "data/lora/adapters/hud_status",
+      "manifest_path": "data/lora/adapters/hud_status/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 2,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/hud_status/train.jsonl",
+          "rows": 2,
+          "size_bytes": 16252,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/hud_status/valid.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/hud_status/test.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "hud_status_specialist",
+      "label": "Hud Status Specialist",
+      "path": "data/lora/adapters/hud_status_specialist",
+      "manifest_path": "data/lora/adapters/hud_status_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 122,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/hud_status_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 250078,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/hud_status_specialist/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 9707,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/hud_status_specialist/test.jsonl",
+          "rows": 1,
+          "size_bytes": 9662,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "hud_status_specialist_mock_aug_v1",
+      "label": "Hud Status Specialist Mock Aug V1",
+      "path": "data/lora/adapters/hud_status_specialist_mock_aug_v1",
+      "manifest_path": "data/lora/adapters/hud_status_specialist_mock_aug_v1/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 210,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/hud_status_specialist_mock_aug_v1/train.jsonl",
+          "rows": 180,
+          "size_bytes": 157384,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/hud_status_specialist_mock_aug_v1/valid.jsonl",
+          "rows": 15,
+          "size_bytes": 13251,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/hud_status_specialist_mock_aug_v1/test.jsonl",
+          "rows": 15,
+          "size_bytes": 13169,
+          "updated_utc": "2026-05-17T07:35:03Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "hud_status_specialist_mock_aug_v2",
+      "label": "Hud Status Specialist Mock Aug V2",
+      "path": "data/lora/adapters/hud_status_specialist_mock_aug_v2",
+      "manifest_path": "data/lora/adapters/hud_status_specialist_mock_aug_v2/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 256,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/hud_status_specialist_mock_aug_v2/train.jsonl",
+          "rows": 220,
+          "size_bytes": 191959,
+          "updated_utc": "2026-05-17T21:34:05Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/hud_status_specialist_mock_aug_v2/valid.jsonl",
+          "rows": 18,
+          "size_bytes": 15645,
+          "updated_utc": "2026-05-17T21:34:05Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/hud_status_specialist_mock_aug_v2/test.jsonl",
+          "rows": 18,
+          "size_bytes": 15391,
+          "updated_utc": "2026-05-17T21:34:05Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "loading_screen",
+      "label": "Loading Screen",
+      "path": "data/lora/adapters/loading_screen",
+      "manifest_path": "data/lora/adapters/loading_screen/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 2,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/loading_screen/train.jsonl",
+          "rows": 2,
+          "size_bytes": 5226,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/loading_screen/valid.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/loading_screen/test.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "loading_screen_specialist",
+      "label": "Loading Screen Specialist",
+      "path": "data/lora/adapters/loading_screen_specialist",
+      "manifest_path": "data/lora/adapters/loading_screen_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 126,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/loading_screen_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 225718,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/loading_screen_specialist/valid.jsonl",
+          "rows": 3,
+          "size_bytes": 10012,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/loading_screen_specialist/test.jsonl",
+          "rows": 3,
+          "size_bytes": 2638,
+          "updated_utc": "2026-05-17T03:10:42Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "save_load_api_guard",
+      "label": "Save Load Api Guard",
+      "path": "data/lora/adapters/save_load_api_guard",
+      "manifest_path": "data/lora/adapters/save_load_api_guard/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 2,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/save_load_api_guard/train.jsonl",
+          "rows": 2,
+          "size_bytes": 5592,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/save_load_api_guard/valid.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/save_load_api_guard/test.jsonl",
+          "rows": 0,
+          "size_bytes": 0,
+          "updated_utc": "2026-05-04T09:18:30Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "save_load_api_guard_specialist",
+      "label": "Save Load Api Guard Specialist",
+      "path": "data/lora/adapters/save_load_api_guard_specialist",
+      "manifest_path": "data/lora/adapters/save_load_api_guard_specialist/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 122,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/save_load_api_guard_specialist/train.jsonl",
+          "rows": 120,
+          "size_bytes": 291384,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/save_load_api_guard_specialist/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 9676,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/save_load_api_guard_specialist/test.jsonl",
+          "rows": 1,
+          "size_bytes": 770,
+          "updated_utc": "2026-05-17T03:10:43Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "ui_merge_dual_rank8",
+      "label": "Ui Merge Dual Rank8",
+      "path": "data/lora/adapters/ui_merge_dual_rank8",
+      "manifest_path": "data/lora/adapters/ui_merge_dual_rank8/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 248,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/ui_merge_dual_rank8/train.jsonl",
+          "rows": 240,
+          "size_bytes": 478566,
+          "updated_utc": "2026-05-17T05:29:52Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/ui_merge_dual_rank8/valid.jsonl",
+          "rows": 4,
+          "size_bytes": 19763,
+          "updated_utc": "2026-05-17T05:29:52Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/ui_merge_dual_rank8/test.jsonl",
+          "rows": 4,
+          "size_bytes": 12334,
+          "updated_utc": "2026-05-17T05:29:52Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "ui_merge_dual_weighted",
+      "label": "Ui Merge Dual Weighted",
+      "path": "data/lora/adapters/ui_merge_dual_weighted",
+      "manifest_path": "data/lora/adapters/ui_merge_dual_weighted/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 248,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/ui_merge_dual_weighted/train.jsonl",
+          "rows": 240,
+          "size_bytes": 476555,
+          "updated_utc": "2026-05-17T05:29:52Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/ui_merge_dual_weighted/valid.jsonl",
+          "rows": 4,
+          "size_bytes": 19819,
+          "updated_utc": "2026-05-17T05:29:52Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/ui_merge_dual_weighted/test.jsonl",
+          "rows": 4,
+          "size_bytes": 12390,
+          "updated_utc": "2026-05-17T05:29:52Z"
+        }
+      }
+    }
+  ]
+}

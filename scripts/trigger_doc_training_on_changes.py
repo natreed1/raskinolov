@@ -17,6 +17,12 @@ REPO = Path(__file__).resolve().parents[1]
 QUEUE_PATH = REPO / "data" / "training_triggers" / "documentation_training_queue.jsonl"
 STATE_PATH = REPO / ".cursor" / "hooks" / ".doc_training_trigger_state.json"
 WATCH_PREFIXES = ("docs/", "scripts/", "benchmarks/", "tests/", "training/")
+TRAINING_PAGE_PREFIXES = (
+    "docs/WORKFLOW.md",
+    "training/README.md",
+    "training/",
+    "scripts/ml_workflow.py",
+)
 
 
 def _now() -> str:
@@ -25,6 +31,10 @@ def _now() -> str:
 
 def _is_watched(path: str) -> bool:
     return path.startswith(WATCH_PREFIXES)
+
+
+def _is_training_page_change(path: str) -> bool:
+    return path.startswith(TRAINING_PAGE_PREFIXES)
 
 
 def _run(cmd: list[str]) -> int:
@@ -107,6 +117,10 @@ def main() -> None:
     if auto_dataset:
         ds_rc = _run([sys.executable, str(REPO / "scripts" / "ml_workflow.py"), "documentation-dataset"])
 
+    dashboard_cache_rc = None
+    if _is_training_page_change(rel):
+        dashboard_cache_rc = _run([sys.executable, str(REPO / "scripts" / "build_training_data_dashboard_cache.py")])
+
     row = {
         "ts": _now(),
         "trigger": args.event,
@@ -115,6 +129,10 @@ def main() -> None:
         "actions": {
             "build_run_analysis_rag_corpus": {"exit_code": rag_rc},
             "documentation_dataset": {"enabled": auto_dataset, "exit_code": ds_rc},
+            "training_dashboard_cache": {
+                "enabled_on_training_page_change": _is_training_page_change(rel),
+                "exit_code": dashboard_cache_rc,
+            },
         },
         "recommended_next": "python scripts/ml_workflow.py documentation-rag-benchmark --skip-no-rag-baseline",
     }
