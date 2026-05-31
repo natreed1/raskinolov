@@ -7,7 +7,7 @@ append-only row in **committed** `docs/run_history.md`.
 Subcommands
   prepare   SOURCE_REPO export + build_lora_dataset (no training).
   train     mlx_lm.lora --train (expects default lineage game-text JSONL; see docs/DATA_LAYOUT.md).
-  benchmark Run run_game_benchmark.py (--adapter-path optional; --profile game or general).
+  benchmark Run specialist benchmark tasks (run_game_benchmark.py with specialist filters).
   evalplus  Run execution-based EvalPlus benchmark (--suite humaneval|mbpp).
   full      prepare + train + benchmark using the new adapter path.
   smoke     Synthetic data, a few train iters, benchmark base model (CI-friendly).
@@ -18,17 +18,23 @@ Subcommands
   adapter-datasets  Build per-adapter datasets with shared anti-overfit anchor rows.
   loading-screen-dataset  Build richer loading-screen specialist dataset (core + UI transfer).
   economy-tooltip-dataset Build richer economy-tooltip specialist dataset (TSC-focused curator shards).
+  economist-rl-dataset Build economistRL seed dataset for economy RL experiments.
   combat-risk-dataset Build combat-risk specialist dataset (mirrors economy TSC recipe).
   hud-status-dataset    Build HUD specialist dataset (baseline shards, guardrails, filtered pairwise; v2 alignment).
   documentation-dataset Build documentation-steward specialist JSONL (canonical paths, SESSION_LOG/run_history discipline).
+  mock-specialist-pairwise Build mock pairwise training rows from benchmark-style specialist tasks.
   documentation-rag-benchmark Run documentation-agent string tasks with corpus RAG (+ optional no-RAG baseline); appends aggregate telemetry JSONL.
   adapter-gate      Evaluate per-adapter promotion gates (avg-gain objective + rollback guards).
   drift-check       Run drift checks and emit automated action suggestions.
   control-plane-schedule  Run multi-Mac worker heartbeat/capability scheduler scaffolding.
   multi-adapter-report    Publish routing + adapter quality + SLO report artifacts.
-  routing-prompt-lab      Capture live/batch prompts with predicted adapter + legacy route labels.
-  routing-benchmark       Evaluate routing on route-only or dual adapter+route labels.
+  routing-prompt-lab      Capture live/batch prompts with predicted adapter/route + council metadata.
+  routing-benchmark       Evaluate routing on route/adapter/both/council labels.
   routing-dataset         Build deterministic train/valid/test routing classifier dataset.
+  council-dataset         Build train/valid/test council-orchestration dataset from interaction logs.
+  routing-train           Train OSS linear adapter classifier artifacts from dataset splits.
+  routing-gate            Apply combined promotion gates (offline + optional online + roster transitions).
+  council-roster-init     Bootstrap/refresh council roster file with per-expert traits.
 
 Every invocation except **arena-dashboard** creates:
   benchmarks/results/runs/<run_id>/manifest.json
@@ -455,10 +461,18 @@ def _cmd_train(run_dir: Path, steps: List[Dict[str, Any]], extra: List[str], ada
 
 
 def _cmd_benchmark(
-    run_dir: Path, steps: List[Dict[str, Any]], adapter: Optional[str], profile: str = "game"
+    run_dir: Path,
+    steps: List[Dict[str, Any]],
+    adapter: Optional[str],
+    specialists: Optional[List[str]] = None,
+    tasks_path: Optional[Path] = None,
 ) -> Tuple[int, str]:
-    py = sys.executable
-    argv = [py, str(REPO / "scripts" / "run_game_benchmark.py"), "--profile", profile]
+    py = _venv_exe("python")
+    argv = [py, str(REPO / "scripts" / "run_game_benchmark.py")]
+    if tasks_path:
+        argv += ["--tasks", str(tasks_path)]
+    for specialist in specialists or []:
+        argv += ["--specialist", specialist]
     if adapter:
         argv += ["--adapter-path", adapter]
     code, elapsed = _run_cmd(run_dir, "run_game_benchmark", argv)
@@ -733,10 +747,10 @@ def main() -> None:
         help="After a successful train, run run_game_benchmark.py on the new adapter",
     )
     p_train.add_argument(
-        "--bench-profile",
-        choices=["game", "general"],
-        default="game",
-        help="With --evaluate: profile passed to run_game_benchmark.py",
+        "--bench-specialist",
+        action="append",
+        default=[],
+        help="With --evaluate: filter benchmark to one or more specialist task sets.",
     )
     p_train.add_argument(
         "lora_args",
@@ -744,13 +758,19 @@ def main() -> None:
         help="Extra args for mlx_lm.lora (use `-- --iters 200` if your shell needs `--`)",
     )
 
-    p_bench = sub.add_parser("benchmark", help="Run heuristic benchmark suite")
+    p_bench = sub.add_parser("benchmark", help="Run specialist benchmark task suite")
     p_bench.add_argument("--adapter-path", default=None)
     p_bench.add_argument(
-        "--profile",
-        choices=["game", "general"],
-        default="game",
-        help="Forward to run_game_benchmark.py (default: game = Fallen Empire tasks).",
+        "--specialist",
+        action="append",
+        default=[],
+        help="Filter benchmark tasks to one or more specialists.",
+    )
+    p_bench.add_argument(
+        "--tasks",
+        type=Path,
+        default=REPO / "benchmarks" / "specialist_benchmark_tasks.json",
+        help="Specialist benchmark task file (default: benchmarks/specialist_benchmark_tasks.json).",
     )
 
     p_evalplus = sub.add_parser("evalplus", help="Run execution-based EvalPlus benchmark")
@@ -803,10 +823,10 @@ def main() -> None:
     p_full = sub.add_parser("full", help="prepare + train + benchmark")
     p_full.add_argument("--adapter-path", default=_fe.DEFAULT_ADAPTER_LATEST_RELPATH)
     p_full.add_argument(
-        "--bench-profile",
-        choices=["game", "general"],
-        default="game",
-        help="run_game_benchmark.py profile when the benchmark step runs",
+        "--bench-specialist",
+        action="append",
+        default=[],
+        help="Filter post-train benchmark to one or more specialists.",
     )
     p_full.add_argument("lora_args", nargs=argparse.REMAINDER, help="Extra args after -- for mlx_lm.lora")
 
@@ -874,22 +894,30 @@ def main() -> None:
     p_loading_ds.add_argument("--baselines-dir", type=Path, default=REPO / "data" / "arena_task_baselines")
     p_loading_ds.add_argument("--shared-anchor-dir", type=Path, default=REPO / "data" / "lora" / "game_text")
     p_loading_ds.add_argument(
+        "--benchmark-tasks-json",
+        type=Path,
+        default=REPO / "benchmarks" / "loading_screen_mass_tasks_v1.json",
+        help="Loading-screen benchmark tasks used as synthetic supervision prompts.",
+    )
+    p_loading_ds.add_argument(
         "--out-dir",
         type=Path,
         default=REPO / "data" / "lora" / "adapters" / "loading_screen_specialist",
     )
     p_loading_ds.add_argument("--seed", type=int, default=42)
     p_loading_ds.add_argument("--core-ratio", type=float, default=0.70)
-    p_loading_ds.add_argument("--transfer-ratio", type=float, default=0.20)
+    p_loading_ds.add_argument("--transfer-ratio", type=float, default=0.00)
     p_loading_ds.add_argument("--shared-ratio", type=float, default=0.10)
     p_loading_ds.add_argument("--max-core-rows", type=int, default=120)
-    p_loading_ds.add_argument("--max-transfer-rows", type=int, default=80)
+    p_loading_ds.add_argument("--max-transfer-rows", type=int, default=0)
+    p_loading_ds.add_argument("--max-benchmark-rows", type=int, default=120)
+    p_loading_ds.add_argument("--max-shared-rows", type=int, default=80)
     p_loading_ds.add_argument("--min-train-core-rows", type=int, default=120)
     p_loading_ds.add_argument(
         "--transfer-task-id",
         action="append",
         dest="transfer_task_ids",
-        default=["hud-status-summary"],
+        default=[],
     )
 
     p_economy_ds = sub.add_parser(
@@ -904,13 +932,18 @@ def main() -> None:
     p_economy_ds.add_argument("--baselines-dir", type=Path, default=REPO / "data" / "arena_task_baselines")
     p_economy_ds.add_argument("--shared-anchor-dir", type=Path, default=REPO / "data" / "lora" / "game_text")
     p_economy_ds.add_argument(
+        "--benchmark-tasks-json",
+        type=Path,
+        default=REPO / "benchmarks" / "economy_tooltip_mass_tasks_v1.json",
+    )
+    p_economy_ds.add_argument(
         "--out-dir",
         type=Path,
         default=REPO / "data" / "lora" / "adapters" / "economy_tooltip_specialist",
     )
     p_economy_ds.add_argument("--seed", type=int, default=42)
     p_economy_ds.add_argument("--core-ratio", type=float, default=0.70)
-    p_economy_ds.add_argument("--transfer-ratio", type=float, default=0.20)
+    p_economy_ds.add_argument("--transfer-ratio", type=float, default=0.00)
     p_economy_ds.add_argument("--shared-ratio", type=float, default=0.10)
     p_economy_ds.add_argument(
         "--max-core-rows",
@@ -930,14 +963,33 @@ def main() -> None:
         default=8,
         help="Repeat identical assistant with strict TSC-focused user prompts.",
     )
-    p_economy_ds.add_argument("--max-transfer-rows", type=int, default=80)
+    p_economy_ds.add_argument("--max-transfer-rows", type=int, default=0)
+    p_economy_ds.add_argument("--max-benchmark-rows", type=int, default=120)
+    p_economy_ds.add_argument("--max-shared-rows", type=int, default=80)
     p_economy_ds.add_argument("--min-train-core-rows", type=int, default=100)
     p_economy_ds.add_argument(
         "--transfer-task-id",
         action="append",
         dest="transfer_task_ids",
-        default=["loading-screen-polish", "hud-status-summary"],
+        default=[],
     )
+
+    p_economist_rl_ds = sub.add_parser(
+        "economist-rl-dataset",
+        help="Build economistRL seed SFT dataset for economy RL experiments.",
+    )
+    p_economist_rl_ds.add_argument(
+        "--tasks",
+        type=Path,
+        default=REPO / "benchmarks" / "economistRL_tasks_v1.json",
+    )
+    p_economist_rl_ds.add_argument(
+        "--out-dir",
+        type=Path,
+        default=REPO / "data" / "lora" / "adapters" / "economistRL_seed",
+    )
+    p_economist_rl_ds.add_argument("--seed", type=int, default=42)
+    p_economist_rl_ds.add_argument("--repeats", type=int, default=96)
 
     p_combat_ds = sub.add_parser(
         "combat-risk-dataset",
@@ -951,13 +1003,18 @@ def main() -> None:
     p_combat_ds.add_argument("--baselines-dir", type=Path, default=REPO / "data" / "arena_task_baselines")
     p_combat_ds.add_argument("--shared-anchor-dir", type=Path, default=REPO / "data" / "lora" / "game_text")
     p_combat_ds.add_argument(
+        "--benchmark-tasks-json",
+        type=Path,
+        default=REPO / "benchmarks" / "combat_risk_mass_tasks_v1.json",
+    )
+    p_combat_ds.add_argument(
         "--out-dir",
         type=Path,
         default=REPO / "data" / "lora" / "adapters" / "combat_risk_specialist",
     )
     p_combat_ds.add_argument("--seed", type=int, default=42)
     p_combat_ds.add_argument("--core-ratio", type=float, default=0.70)
-    p_combat_ds.add_argument("--transfer-ratio", type=float, default=0.20)
+    p_combat_ds.add_argument("--transfer-ratio", type=float, default=0.00)
     p_combat_ds.add_argument("--shared-ratio", type=float, default=0.10)
     p_combat_ds.add_argument(
         "--max-core-rows",
@@ -965,7 +1022,9 @@ def main() -> None:
         default=40,
         help="Pairwise cap for combat task (baseline shards dominate).",
     )
-    p_combat_ds.add_argument("--max-transfer-rows", type=int, default=80)
+    p_combat_ds.add_argument("--max-transfer-rows", type=int, default=0)
+    p_combat_ds.add_argument("--max-benchmark-rows", type=int, default=120)
+    p_combat_ds.add_argument("--max-shared-rows", type=int, default=80)
     p_combat_ds.add_argument("--min-train-core-rows", type=int, default=110)
     p_combat_ds.add_argument(
         "--baseline-shards",
@@ -983,7 +1042,7 @@ def main() -> None:
         "--transfer-task-id",
         action="append",
         dest="transfer_task_ids",
-        default=["loading-screen-polish", "economy-tooltip", "hud-status-summary"],
+        default=[],
     )
 
     p_hud_ds = sub.add_parser(
@@ -998,13 +1057,18 @@ def main() -> None:
     p_hud_ds.add_argument("--baselines-dir", type=Path, default=REPO / "data" / "arena_task_baselines")
     p_hud_ds.add_argument("--shared-anchor-dir", type=Path, default=REPO / "data" / "lora" / "game_text")
     p_hud_ds.add_argument(
+        "--benchmark-tasks-json",
+        type=Path,
+        default=REPO / "benchmarks" / "hud_status_mass_tasks_v1.json",
+    )
+    p_hud_ds.add_argument(
         "--out-dir",
         type=Path,
         default=REPO / "data" / "lora" / "adapters" / "hud_status_specialist",
     )
     p_hud_ds.add_argument("--seed", type=int, default=42)
     p_hud_ds.add_argument("--core-ratio", type=float, default=0.70)
-    p_hud_ds.add_argument("--transfer-ratio", type=float, default=0.20)
+    p_hud_ds.add_argument("--transfer-ratio", type=float, default=0.00)
     p_hud_ds.add_argument("--shared-ratio", type=float, default=0.10)
     p_hud_ds.add_argument(
         "--max-core-rows",
@@ -1012,7 +1076,9 @@ def main() -> None:
         default=0,
         help="HUD pairwise core cap (default 0: baseline shards + guardrails dominate).",
     )
-    p_hud_ds.add_argument("--max-transfer-rows", type=int, default=80)
+    p_hud_ds.add_argument("--max-transfer-rows", type=int, default=0)
+    p_hud_ds.add_argument("--max-benchmark-rows", type=int, default=120)
+    p_hud_ds.add_argument("--max-shared-rows", type=int, default=80)
     p_hud_ds.add_argument("--min-train-core-rows", type=int, default=100)
     p_hud_ds.add_argument(
         "--baseline-shards",
@@ -1034,7 +1100,7 @@ def main() -> None:
         "--transfer-task-id",
         action="append",
         dest="transfer_task_ids",
-        default=["loading-screen-polish", "economy-tooltip"],
+        default=[],
     )
 
     p_docs_ds = sub.add_parser(
@@ -1048,6 +1114,103 @@ def main() -> None:
     )
     p_docs_ds.add_argument("--seed", type=int, default=11)
     p_docs_ds.add_argument("--min-train-core-rows", type=int, default=120)
+
+    p_mock_pairwise = sub.add_parser(
+        "mock-specialist-pairwise",
+        help="Generate mock pairwise training rows from specialist task files.",
+    )
+    p_mock_pairwise.add_argument(
+        "--task-file",
+        type=Path,
+        action="append",
+        dest="task_files",
+        default=[],
+        help="Task JSON file(s) with specialist-tagged prompts; can repeat.",
+    )
+    p_mock_pairwise.add_argument(
+        "--repeats-per-task",
+        type=int,
+        default=3,
+        help="Mock variants per task/specialist pair.",
+    )
+    p_mock_pairwise.add_argument("--seed", type=int, default=42)
+    p_mock_pairwise.add_argument(
+        "--output-jsonl",
+        type=Path,
+        default=REPO / "benchmarks" / "results" / "mock_specialist_pairwise_training_data_v1.jsonl",
+    )
+
+    p_save_ds = sub.add_parser(
+        "save-load-dataset",
+        help="Build save-load-api-guard specialist dataset from pairwise + benchmark prompts.",
+    )
+    p_save_ds.add_argument(
+        "--pairwise-jsonl",
+        type=Path,
+        default=REPO / "benchmarks" / "results" / "game_task_pairwise_training_data.jsonl",
+    )
+    p_save_ds.add_argument("--shared-anchor-dir", type=Path, default=REPO / "data" / "lora" / "game_text")
+    p_save_ds.add_argument(
+        "--benchmark-tasks-json",
+        type=Path,
+        default=REPO / "benchmarks" / "save_load_api_guard_mass_tasks_v1.json",
+    )
+    p_save_ds.add_argument(
+        "--out-dir",
+        type=Path,
+        default=REPO / "data" / "lora" / "adapters" / "save_load_api_guard_specialist",
+    )
+    p_save_ds.add_argument("--seed", type=int, default=42)
+    p_save_ds.add_argument("--core-ratio", type=float, default=0.70)
+    p_save_ds.add_argument("--transfer-ratio", type=float, default=0.00)
+    p_save_ds.add_argument("--shared-ratio", type=float, default=0.10)
+    p_save_ds.add_argument("--max-core-rows", type=int, default=120)
+    p_save_ds.add_argument("--max-transfer-rows", type=int, default=0)
+    p_save_ds.add_argument("--max-benchmark-rows", type=int, default=120)
+    p_save_ds.add_argument("--max-shared-rows", type=int, default=80)
+    p_save_ds.add_argument("--min-train-core-rows", type=int, default=120)
+    p_save_ds.add_argument(
+        "--transfer-task-id",
+        action="append",
+        dest="transfer_task_ids",
+        default=[],
+    )
+
+    p_ai_ds = sub.add_parser(
+        "ai-planning-dataset",
+        help="Build ai-planning-explanation specialist dataset from pairwise + benchmark prompts.",
+    )
+    p_ai_ds.add_argument(
+        "--pairwise-jsonl",
+        type=Path,
+        default=REPO / "benchmarks" / "results" / "game_task_pairwise_training_data.jsonl",
+    )
+    p_ai_ds.add_argument("--shared-anchor-dir", type=Path, default=REPO / "data" / "lora" / "game_text")
+    p_ai_ds.add_argument(
+        "--benchmark-tasks-json",
+        type=Path,
+        default=REPO / "benchmarks" / "ai_planning_explanation_mass_tasks_v1.json",
+    )
+    p_ai_ds.add_argument(
+        "--out-dir",
+        type=Path,
+        default=REPO / "data" / "lora" / "adapters" / "ai_planning_explanation_specialist",
+    )
+    p_ai_ds.add_argument("--seed", type=int, default=42)
+    p_ai_ds.add_argument("--core-ratio", type=float, default=0.70)
+    p_ai_ds.add_argument("--transfer-ratio", type=float, default=0.00)
+    p_ai_ds.add_argument("--shared-ratio", type=float, default=0.10)
+    p_ai_ds.add_argument("--max-core-rows", type=int, default=120)
+    p_ai_ds.add_argument("--max-transfer-rows", type=int, default=0)
+    p_ai_ds.add_argument("--max-benchmark-rows", type=int, default=120)
+    p_ai_ds.add_argument("--max-shared-rows", type=int, default=80)
+    p_ai_ds.add_argument("--min-train-core-rows", type=int, default=120)
+    p_ai_ds.add_argument(
+        "--transfer-task-id",
+        action="append",
+        dest="transfer_task_ids",
+        default=[],
+    )
 
     p_doc_rag = sub.add_parser(
         "documentation-rag-benchmark",
@@ -1130,12 +1293,23 @@ def main() -> None:
 
     p_route_bench = sub.add_parser(
         "routing-benchmark",
-        help="Run route-only or adapter+route routing benchmark.",
+        help="Run route/adapter/both/council routing benchmark.",
     )
     p_route_bench.add_argument("--tasks", type=Path, default=REPO / "benchmarks" / "task_routing_tasks.json")
-    p_route_bench.add_argument("--mode", choices=["route", "adapter", "both"], default="route")
+    p_route_bench.add_argument("--mode", choices=["route", "adapter", "both", "council"], default="route")
     p_route_bench.add_argument("--output-jsonl", type=Path, default=None)
     p_route_bench.add_argument("--summary-json", type=Path, default=None)
+    p_route_bench.add_argument("--council-specialist-top-k", type=int, default=3)
+    p_route_bench.add_argument(
+        "--council-roster-json",
+        type=Path,
+        default=REPO / "data" / "routing" / "council_roster_v1.json",
+    )
+    p_route_bench.add_argument(
+        "--compare-baseline-vs-council",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+    )
 
     p_route_ds = sub.add_parser(
         "routing-dataset",
@@ -1148,6 +1322,66 @@ def main() -> None:
     p_route_ds.add_argument("--dataset-version", default=datetime.now(timezone.utc).strftime("%Y%m%d"))
     p_route_ds.add_argument("--out-root", type=Path, default=REPO / "data" / "lora" / "routing_classifier")
     p_route_ds.add_argument("--low-confidence-threshold", type=float, default=0.62)
+
+    p_council_ds = sub.add_parser(
+        "council-dataset",
+        help="Build deterministic council train/valid/test dataset from orchestration logs.",
+    )
+    p_council_ds.add_argument("--router-chat-jsonl", type=Path, action="append", default=[])
+    p_council_ds.add_argument("--prompt-lab-jsonl", type=Path, action="append", default=[])
+    p_council_ds.add_argument("--seed", type=int, default=42)
+    p_council_ds.add_argument("--dataset-version", default=datetime.now(timezone.utc).strftime("%Y%m%d"))
+    p_council_ds.add_argument("--out-root", type=Path, default=REPO / "data" / "lora" / "council_orchestration")
+
+    p_route_train = sub.add_parser(
+        "routing-train",
+        help="Train OSS linear adapter classifier from routing dataset splits.",
+    )
+    p_route_train.add_argument("--data-dir", type=Path, required=True)
+    p_route_train.add_argument("--out-dir", type=Path, default=REPO / "training" / "router_classifier_v1")
+    p_route_train.add_argument("--max-vocab", type=int, default=8192)
+    p_route_train.add_argument("--min-count", type=int, default=1)
+    p_route_train.add_argument("--lr", type=float, default=0.2)
+    p_route_train.add_argument("--epochs", type=int, default=100)
+    p_route_train.add_argument("--l2", type=float, default=5e-4)
+    p_route_train.add_argument("--seed", type=int, default=42)
+
+    p_route_gate = sub.add_parser(
+        "routing-gate",
+        help="Evaluate Router council promotion gates from benchmark outputs.",
+    )
+    p_route_gate.add_argument("--summary-json", type=Path, required=True)
+    p_route_gate.add_argument("--rows-jsonl", type=Path, required=True)
+    p_route_gate.add_argument("--output", type=Path, default=REPO / "benchmarks" / "results" / "routing_gate_result.json")
+    p_route_gate.add_argument("--min-overall-acc", type=float, default=0.90)
+    p_route_gate.add_argument("--min-adapter-acc", type=float, default=0.88)
+    p_route_gate.add_argument("--min-route-acc", type=float, default=0.95)
+    p_route_gate.add_argument("--max-high-risk-route-miss-rate", type=float, default=0.05)
+    p_route_gate.add_argument("--max-high-risk-misroutes", type=int, default=0)
+    p_route_gate.add_argument("--min-council-quality-acc", type=float, default=0.88)
+    p_route_gate.add_argument("--min-council-selection-recall", type=float, default=0.80)
+    p_route_gate.add_argument("--min-council-escalation-acc", type=float, default=0.85)
+    p_route_gate.add_argument("--online-json", type=Path, default=None)
+    p_route_gate.add_argument("--min-online-task-outcome", type=float, default=0.80)
+    p_route_gate.add_argument("--min-online-samples", type=int, default=20)
+    p_route_gate.add_argument("--roster-json", type=Path, default=None)
+    p_route_gate.add_argument("--write-roster", action="store_true")
+
+    p_council_roster = sub.add_parser(
+        "council-roster-init",
+        help="Bootstrap or refresh council roster with trait defaults.",
+    )
+    p_council_roster.add_argument(
+        "--adapter-registry",
+        type=Path,
+        default=REPO / "training" / "adapter_registry_v1.json",
+    )
+    p_council_roster.add_argument(
+        "--out-json",
+        type=Path,
+        default=REPO / "data" / "routing" / "council_roster_v1.json",
+    )
+    p_council_roster.add_argument("--merge-existing", action="store_true")
 
     p_smoke = sub.add_parser("smoke", help="Synthetic data + tiny train + benchmark (no export)")
 
@@ -1199,7 +1433,11 @@ def main() -> None:
         adapter_note = args.adapter_path
         if final_code == 0 and args.evaluate:
             c, bench_summary = _cmd_benchmark(
-                run_dir, steps, args.adapter_path, args.bench_profile
+                run_dir,
+                steps,
+                args.adapter_path,
+                specialists=args.bench_specialist,
+                tasks_path=REPO / "benchmarks" / "specialist_benchmark_tasks.json",
             )
             benchmark_adapter_note = args.adapter_path
             final_code = c
@@ -1208,7 +1446,11 @@ def main() -> None:
 
     elif args.command == "benchmark":
         c, bench_summary = _cmd_benchmark(
-            run_dir, steps, args.adapter_path, args.profile
+            run_dir,
+            steps,
+            args.adapter_path,
+            specialists=args.specialist,
+            tasks_path=args.tasks.expanduser().resolve(),
         )
         final_code = c
         adapter_note = "—"
@@ -1270,7 +1512,11 @@ def main() -> None:
         adapter_note = args.adapter_path
         if final_code == 0:
             c, bench_summary = _cmd_benchmark(
-                run_dir, steps, args.adapter_path, args.bench_profile
+                run_dir,
+                steps,
+                args.adapter_path,
+                specialists=args.bench_specialist,
+                tasks_path=REPO / "benchmarks" / "specialist_benchmark_tasks.json",
             )
             benchmark_adapter_note = args.adapter_path
             final_code = c
@@ -1380,6 +1626,8 @@ def main() -> None:
             str(args.sources_dir.expanduser().resolve()),
             "--shared-anchor-dir",
             str(args.shared_anchor_dir.expanduser().resolve()),
+            "--benchmark-tasks-json",
+            str(args.benchmark_tasks_json.expanduser().resolve()),
             "--out-dir",
             str(args.out_dir.expanduser().resolve()),
             "--seed",
@@ -1413,6 +1661,10 @@ def main() -> None:
             str(args.max_core_rows),
             "--max-transfer-rows",
             str(args.max_transfer_rows),
+            "--max-benchmark-rows",
+            str(args.max_benchmark_rows),
+            "--max-shared-rows",
+            str(args.max_shared_rows),
             "--min-train-core-rows",
             str(args.min_train_core_rows),
         ]
@@ -1432,6 +1684,8 @@ def main() -> None:
             str(args.baselines_dir.expanduser().resolve()),
             "--shared-anchor-dir",
             str(args.shared_anchor_dir.expanduser().resolve()),
+            "--benchmark-tasks-json",
+            str(args.benchmark_tasks_json.expanduser().resolve()),
             "--out-dir",
             str(args.out_dir.expanduser().resolve()),
             "--seed",
@@ -1446,6 +1700,10 @@ def main() -> None:
             str(args.max_core_rows),
             "--max-transfer-rows",
             str(args.max_transfer_rows),
+            "--max-benchmark-rows",
+            str(args.max_benchmark_rows),
+            "--max-shared-rows",
+            str(args.max_shared_rows),
             "--min-train-core-rows",
             str(args.min_train_core_rows),
             "--baseline-shards",
@@ -1459,6 +1717,23 @@ def main() -> None:
         adapter_note = "—"
         benchmark_adapter_note = "—"
 
+    elif args.command == "economist-rl-dataset":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "adapters" / "build_economist_rl_dataset.py"),
+            "--tasks",
+            str(args.tasks.expanduser().resolve()),
+            "--out-dir",
+            str(args.out_dir.expanduser().resolve()),
+            "--seed",
+            str(args.seed),
+            "--repeats",
+            str(args.repeats),
+        ]
+        final_code = _cmd_tool(run_dir, steps, "economist_rl_dataset", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "—"
+
     elif args.command == "combat-risk-dataset":
         argv = [
             sys.executable,
@@ -1469,6 +1744,8 @@ def main() -> None:
             str(args.baselines_dir.expanduser().resolve()),
             "--shared-anchor-dir",
             str(args.shared_anchor_dir.expanduser().resolve()),
+            "--benchmark-tasks-json",
+            str(args.benchmark_tasks_json.expanduser().resolve()),
             "--out-dir",
             str(args.out_dir.expanduser().resolve()),
             "--seed",
@@ -1483,6 +1760,10 @@ def main() -> None:
             str(args.max_core_rows),
             "--max-transfer-rows",
             str(args.max_transfer_rows),
+            "--max-benchmark-rows",
+            str(args.max_benchmark_rows),
+            "--max-shared-rows",
+            str(args.max_shared_rows),
             "--min-train-core-rows",
             str(args.min_train_core_rows),
             "--baseline-shards",
@@ -1506,6 +1787,8 @@ def main() -> None:
             str(args.baselines_dir.expanduser().resolve()),
             "--shared-anchor-dir",
             str(args.shared_anchor_dir.expanduser().resolve()),
+            "--benchmark-tasks-json",
+            str(args.benchmark_tasks_json.expanduser().resolve()),
             "--out-dir",
             str(args.out_dir.expanduser().resolve()),
             "--seed",
@@ -1520,6 +1803,10 @@ def main() -> None:
             str(args.max_core_rows),
             "--max-transfer-rows",
             str(args.max_transfer_rows),
+            "--max-benchmark-rows",
+            str(args.max_benchmark_rows),
+            "--max-shared-rows",
+            str(args.max_shared_rows),
             "--min-train-core-rows",
             str(args.min_train_core_rows),
         ]
@@ -1534,10 +1821,84 @@ def main() -> None:
         adapter_note = "—"
         benchmark_adapter_note = "—"
 
+    elif args.command == "save-load-dataset":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "adapters" / "build_save_load_api_guard_specialist_dataset.py"),
+            "--pairwise-jsonl",
+            str(args.pairwise_jsonl.expanduser().resolve()),
+            "--shared-anchor-dir",
+            str(args.shared_anchor_dir.expanduser().resolve()),
+            "--benchmark-tasks-json",
+            str(args.benchmark_tasks_json.expanduser().resolve()),
+            "--out-dir",
+            str(args.out_dir.expanduser().resolve()),
+            "--seed",
+            str(args.seed),
+            "--core-ratio",
+            str(args.core_ratio),
+            "--transfer-ratio",
+            str(args.transfer_ratio),
+            "--shared-ratio",
+            str(args.shared_ratio),
+            "--max-core-rows",
+            str(args.max_core_rows),
+            "--max-transfer-rows",
+            str(args.max_transfer_rows),
+            "--max-benchmark-rows",
+            str(args.max_benchmark_rows),
+            "--max-shared-rows",
+            str(args.max_shared_rows),
+            "--min-train-core-rows",
+            str(args.min_train_core_rows),
+        ]
+        for tid in args.transfer_task_ids:
+            argv.extend(["--transfer-task-id", str(tid)])
+        final_code = _cmd_tool(run_dir, steps, "save_load_dataset", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "—"
+
+    elif args.command == "ai-planning-dataset":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "adapters" / "build_ai_planning_explanation_specialist_dataset.py"),
+            "--pairwise-jsonl",
+            str(args.pairwise_jsonl.expanduser().resolve()),
+            "--shared-anchor-dir",
+            str(args.shared_anchor_dir.expanduser().resolve()),
+            "--benchmark-tasks-json",
+            str(args.benchmark_tasks_json.expanduser().resolve()),
+            "--out-dir",
+            str(args.out_dir.expanduser().resolve()),
+            "--seed",
+            str(args.seed),
+            "--core-ratio",
+            str(args.core_ratio),
+            "--transfer-ratio",
+            str(args.transfer_ratio),
+            "--shared-ratio",
+            str(args.shared_ratio),
+            "--max-core-rows",
+            str(args.max_core_rows),
+            "--max-transfer-rows",
+            str(args.max_transfer_rows),
+            "--max-benchmark-rows",
+            str(args.max_benchmark_rows),
+            "--max-shared-rows",
+            str(args.max_shared_rows),
+            "--min-train-core-rows",
+            str(args.min_train_core_rows),
+        ]
+        for tid in args.transfer_task_ids:
+            argv.extend(["--transfer-task-id", str(tid)])
+        final_code = _cmd_tool(run_dir, steps, "ai_planning_dataset", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "—"
+
     elif args.command == "documentation-dataset":
         argv = [
             sys.executable,
-            str(REPO / "scripts" / "adapters" / "build_documentation_specialist_dataset.py"),
+            str(REPO / "scripts" / "build_documentation_specialist_dataset.py"),
             "--out-dir",
             str(args.out_dir.expanduser().resolve()),
             "--seed",
@@ -1546,6 +1907,23 @@ def main() -> None:
             str(args.min_train_core_rows),
         ]
         final_code = _cmd_tool(run_dir, steps, "documentation_dataset", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "—"
+
+    elif args.command == "mock-specialist-pairwise":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "build_mock_specialist_training_data.py"),
+            "--repeats-per-task",
+            str(args.repeats_per_task),
+            "--seed",
+            str(args.seed),
+            "--output-jsonl",
+            str(args.output_jsonl.expanduser().resolve()),
+        ]
+        for task_file in args.task_files:
+            argv.extend(["--task-file", str(task_file.expanduser().resolve())])
+        final_code = _cmd_tool(run_dir, steps, "mock_specialist_pairwise", argv)
         adapter_note = "—"
         benchmark_adapter_note = "—"
 
@@ -1714,11 +2092,17 @@ def main() -> None:
             str(args.tasks.expanduser().resolve()),
             "--mode",
             str(args.mode),
+            "--council-specialist-top-k",
+            str(args.council_specialist_top_k),
+            "--council-roster-json",
+            str(args.council_roster_json.expanduser().resolve()),
         ]
         if args.output_jsonl:
             argv.extend(["--output-jsonl", str(args.output_jsonl.expanduser().resolve())])
         if args.summary_json:
             argv.extend(["--summary-json", str(args.summary_json.expanduser().resolve())])
+        if not args.compare_baseline_vs_council:
+            argv.append("--no-compare-baseline-vs-council")
         final_code = _cmd_tool(run_dir, steps, "routing_benchmark", argv)
         log_text = (run_dir / "logs" / "routing_benchmark.log").read_text(
             encoding="utf-8", errors="replace"
@@ -1747,6 +2131,106 @@ def main() -> None:
         for p in args.curated_jsonl:
             argv.extend(["--curated-jsonl", str(p.expanduser().resolve())])
         final_code = _cmd_tool(run_dir, steps, "routing_dataset", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "—"
+
+    elif args.command == "council-dataset":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "build_council_training_dataset.py"),
+            "--seed",
+            str(args.seed),
+            "--dataset-version",
+            str(args.dataset_version),
+            "--out-root",
+            str(args.out_root.expanduser().resolve()),
+        ]
+        for p in args.router_chat_jsonl:
+            argv.extend(["--router-chat-jsonl", str(p.expanduser().resolve())])
+        for p in args.prompt_lab_jsonl:
+            argv.extend(["--prompt-lab-jsonl", str(p.expanduser().resolve())])
+        final_code = _cmd_tool(run_dir, steps, "council_dataset", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "—"
+
+    elif args.command == "routing-train":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "train_routing_classifier.py"),
+            "--data-dir",
+            str(args.data_dir.expanduser().resolve()),
+            "--out-dir",
+            str(args.out_dir.expanduser().resolve()),
+            "--max-vocab",
+            str(args.max_vocab),
+            "--min-count",
+            str(args.min_count),
+            "--lr",
+            str(args.lr),
+            "--epochs",
+            str(args.epochs),
+            "--l2",
+            str(args.l2),
+            "--seed",
+            str(args.seed),
+        ]
+        final_code = _cmd_tool(run_dir, steps, "routing_train", argv)
+        adapter_note = str(args.out_dir.expanduser().resolve())
+        benchmark_adapter_note = "router_classifier_v1"
+
+    elif args.command == "routing-gate":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "router_promotion_gate.py"),
+            "--summary-json",
+            str(args.summary_json.expanduser().resolve()),
+            "--rows-jsonl",
+            str(args.rows_jsonl.expanduser().resolve()),
+            "--output",
+            str(args.output.expanduser().resolve()),
+            "--min-overall-acc",
+            str(args.min_overall_acc),
+            "--min-adapter-acc",
+            str(args.min_adapter_acc),
+            "--min-route-acc",
+            str(args.min_route_acc),
+            "--max-high-risk-route-miss-rate",
+            str(args.max_high_risk_route_miss_rate),
+            "--max-high-risk-misroutes",
+            str(args.max_high_risk_misroutes),
+            "--min-council-quality-acc",
+            str(args.min_council_quality_acc),
+            "--min-council-selection-recall",
+            str(args.min_council_selection_recall),
+            "--min-council-escalation-acc",
+            str(args.min_council_escalation_acc),
+            "--min-online-task-outcome",
+            str(args.min_online_task_outcome),
+            "--min-online-samples",
+            str(args.min_online_samples),
+        ]
+        if args.online_json:
+            argv.extend(["--online-json", str(args.online_json.expanduser().resolve())])
+        if args.roster_json:
+            argv.extend(["--roster-json", str(args.roster_json.expanduser().resolve())])
+        if args.write_roster:
+            argv.append("--write-roster")
+        final_code = _cmd_tool(run_dir, steps, "routing_gate", argv)
+        adapter_note = "—"
+        benchmark_adapter_note = "router_policy_v3_council_adapter_first"
+
+    elif args.command == "council-roster-init":
+        argv = [
+            sys.executable,
+            str(REPO / "scripts" / "init_council_roster.py"),
+            "--adapter-registry",
+            str(args.adapter_registry.expanduser().resolve()),
+            "--out-json",
+            str(args.out_json.expanduser().resolve()),
+        ]
+        if args.merge_existing:
+            argv.append("--merge-existing")
+        final_code = _cmd_tool(run_dir, steps, "council_roster_init", argv)
         adapter_note = "—"
         benchmark_adapter_note = "—"
 
@@ -1794,7 +2278,12 @@ def main() -> None:
                 adapter_note,
             )
         if final_code == 0:
-            c, bench_summary = _cmd_benchmark(run_dir, steps, None, "game")
+            c, bench_summary = _cmd_benchmark(
+                run_dir,
+                steps,
+                None,
+                tasks_path=REPO / "benchmarks" / "specialist_benchmark_tasks.json",
+            )
             benchmark_adapter_note = "base"
             final_code = c
 

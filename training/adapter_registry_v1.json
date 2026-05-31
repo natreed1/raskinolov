@@ -1,0 +1,367 @@
+{
+  "schema_version": "adapter_registry_v1",
+  "taxonomy_version": "adapter_taxonomy_v2_measured_roles",
+  "policy_version": "router_policy_v1",
+  "rollout_profile": "peak_specialist_v1",
+  "specialist_mix": {
+    "family_specific": 0.85,
+    "shared_anchor": 0.1,
+    "hard_negative": 0.05
+  },
+  "entries": [
+    {
+      "adapter_id": "general_fallback",
+      "task_family": "general_fallback",
+      "task_ids": [],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/general_fallback/champion",
+      "lineage": "general_fallback:v1:champion",
+      "promotion_state": "champion",
+      "is_specialized": false,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "documentation",
+      "task_family": "documentation",
+      "task_ids": [
+        "mlx-lora-docs-normalize"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/documentation/cycle3",
+      "lineage": "documentation_specialist:v1:cycle3+run_analysis_scope_guard",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto"
+    },
+    {
+      "adapter_id": "loading_screen",
+      "task_family": "loading_screen",
+      "task_ids": [
+        "loading-screen-polish"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/loading_screen/cycle2",
+      "lineage": "loading_screen:v2:cycle2",
+      "promotion_state": "champion",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "ui_surface_composer",
+      "role": "UI surface composition specialist for HUD/loading visual hierarchy, panels, sprites, overlays, and theme integration.",
+      "routing_tags": [
+        "ui",
+        "hud",
+        "visual_surface",
+        "panel_theme",
+        "sprite_overlay",
+        "isometric_display",
+        "loading_screen",
+        "render_contract"
+      ],
+      "demoted_tags": [
+        "economy_simulation",
+        "ai_strategy",
+        "combat_math",
+        "targeting_policy",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain"
+      ],
+      "adapter_aliases": [
+        "ui_surface_composer"
+      ],
+      "legacy_adapter_id": "loading_screen"
+    },
+    {
+      "adapter_id": "hud_status",
+      "task_family": "hud_status",
+      "task_ids": [
+        "hud-status-summary"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/hud_status/cycle3",
+      "lineage": "hud_status:v3:cycle3",
+      "promotion_state": "champion",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "ui_state_signals",
+      "role": "HUD state-signal specialist for compact status readouts, resource/status indicators, UI contracts, and input flow.",
+      "routing_tags": [
+        "ui",
+        "hud",
+        "status_signal",
+        "resource_signal",
+        "state_exposure",
+        "indicator_logic",
+        "ui_contract",
+        "input_flow"
+      ],
+      "demoted_tags": [
+        "economy_simulation",
+        "ai_strategy",
+        "combat_math",
+        "targeting_policy",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity",
+        "army_operations"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain"
+      ],
+      "adapter_aliases": [
+        "ui_state_signals"
+      ],
+      "legacy_adapter_id": "hud_status"
+    },
+    {
+      "adapter_id": "economy_tooltip",
+      "task_family": "economy_tooltip",
+      "task_ids": [
+        "economy-tooltip"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/economy_tooltip/cycle2",
+      "lineage": "economy_tooltip:v1:cycle2+routing_fastpath_v1",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "resource_ui_projection",
+      "role": "Resource projection/UI helper for economy-facing signals, tooltips, signed deltas, production display, and resource cache surfaces.",
+      "routing_tags": [
+        "resource_projection",
+        "economy_ui",
+        "tooltip",
+        "cost_display",
+        "production_signal",
+        "resource_cache",
+        "signed_delta"
+      ],
+      "demoted_tags": [
+        "economy_simulation",
+        "market_dynamics",
+        "ai_strategy",
+        "combat_math",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain"
+      ],
+      "adapter_aliases": [
+        "resource_ui_projection"
+      ],
+      "legacy_adapter_id": "economy_tooltip"
+    },
+    {
+      "adapter_id": "combat_risk",
+      "task_family": "combat_risk",
+      "task_ids": [
+        "combat-risk-preview"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/combat_risk/cycle4",
+      "lineage": "combat_risk:v2_tsc_resume:cycle4",
+      "promotion_state": "champion",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "army_ui_flow",
+      "role": "Army UI/order-flow specialist for formation flow, selection, order dispatch, tactical controls, and combat-preview presentation.",
+      "routing_tags": [
+        "army_ui",
+        "formation_flow",
+        "order_dispatch",
+        "movement_ui",
+        "combat_preview",
+        "tactical_controls",
+        "selection_flow"
+      ],
+      "demoted_tags": [
+        "combat_math",
+        "targeting_policy",
+        "economy_simulation",
+        "ai_strategy",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity",
+        "army_operations"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain",
+        "hard_combat_logic"
+      ],
+      "adapter_aliases": [
+        "army_ui_flow"
+      ],
+      "legacy_adapter_id": "combat_risk"
+    },
+    {
+      "adapter_id": "save_load_api_guard",
+      "task_family": "save_load_api_guard",
+      "task_ids": [
+        "save-load-api-guard"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/save_load_api_guard/champion",
+      "lineage": "save_load_api_guard:v1:champion",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "state_contract_guard",
+      "role": "State/API contract guard for persistence, serialization, request validation, identity integrity, snapshots, and deployment contracts.",
+      "routing_tags": [
+        "state_persistence",
+        "serialization",
+        "snapshot_schema",
+        "request_validation",
+        "identity_integrity",
+        "api_guard",
+        "cross_node_state",
+        "deploy_contract"
+      ],
+      "demoted_tags": [
+        "ai_strategy",
+        "combat_math",
+        "targeting_policy",
+        "market_dynamics",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "state_perstitence_integrity",
+        "hud_status",
+        "army_operations"
+      ],
+      "measured_weaknesses": [
+        "ai_strategy_and_planning",
+        "multidomain",
+        "economy_simulation"
+      ],
+      "adapter_aliases": [
+        "state_contract_guard"
+      ],
+      "legacy_adapter_id": "save_load_api_guard"
+    },
+    {
+      "adapter_id": "ai_planning_explanation",
+      "task_family": "ai_planning_explanation",
+      "task_ids": [
+        "ai-planning-explanation"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/ai_planning_explanation/champion",
+      "lineage": "ai_planning_explanation:v1:champion",
+      "promotion_state": "shadow",
+      "is_specialized": true,
+      "policy_version": "router_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "crossdomain_state_patch",
+      "role": "Crossdomain state-patch specialist for generic state logic, schema updates, shared logic, and repair-candidate patches; not a proven AI-policy specialist.",
+      "routing_tags": [
+        "general_patch",
+        "state_logic",
+        "crossdomain",
+        "schema_update",
+        "shared_logic",
+        "repair_candidate",
+        "fallback_specialist"
+      ],
+      "demoted_tags": [
+        "ai_strategy",
+        "planner_policy",
+        "combat_math",
+        "targeting_policy",
+        "market_dynamics"
+      ],
+      "measured_strengths": [
+        "state_perstitence_integrity",
+        "hud_status",
+        "economy"
+      ],
+      "measured_weaknesses": [
+        "ai_strategy_and_planning",
+        "multidomain",
+        "hard_combat_logic"
+      ],
+      "adapter_aliases": [
+        "crossdomain_state_patch"
+      ],
+      "legacy_adapter_id": "ai_planning_explanation"
+    },
+    {
+      "adapter_id": "economistRL",
+      "task_family": "economistRL",
+      "task_ids": [
+        "economistRL-food-steady-state-01",
+        "economistRL-market-elasticity-02",
+        "economistRL-worker-wage-productivity-03",
+        "economistRL-spoilage-food-decay-04",
+        "economistRL-army-upkeep-scaling-05",
+        "economistRL-production-cache-invalid-06"
+      ],
+      "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+      "adapter_path": "checkpoints/adapters/economistRL/seed_sft",
+      "lineage": "economistRL:v1:seed_sft+rl_experiment",
+      "promotion_state": "experimental",
+      "is_specialized": true,
+      "policy_version": "economist_rl_policy_v1",
+      "council_thresholds_version": "council_thresholds_v1",
+      "progressive_context_default": "auto",
+      "display_name": "economistRL",
+      "role": "Experimental RL-focused economy systems specialist for elusive resource dynamics, market elasticity, population/food feedback, wages, spoilage, and upkeep balance.",
+      "routing_tags": [
+        "economy_simulation",
+        "market_dynamics",
+        "population_dynamics",
+        "food_economy",
+        "labor_economy",
+        "progressive_costs",
+        "resource_projection",
+        "feedback_control",
+        "rl_reward_model"
+      ],
+      "experiment": {
+        "type": "rl_lora_adapter",
+        "task_bank": "benchmarks/economistRL_tasks_v1.json",
+        "scorer": "scripts/economist_rl_tasks.py",
+        "seed_dataset_builder": "scripts/adapters/build_economist_rl_dataset.py",
+        "training_config": "training/economistRL_lora_qwen25_coder_7b.yaml",
+        "goal": "Test whether reward-scored rollouts improve hard economy mechanics that prior specialists failed to learn."
+      }
+    }
+  ],
+  "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+}

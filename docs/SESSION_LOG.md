@@ -4,6 +4,1986 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-05-31 — economistRL execution-oriented reward schema
+
+**Goal:** Replace the old keyword-dominant `economistRL` reward with a schema that rewards executable behavior while preserving small prompt/guardrail checks.
+
+**Changes:**
+
+- Updated `benchmarks/economistRL_tasks_v1.json`:
+  - default reward weights now target `simulation_behavior` (`45%`), `targeted_tests` (`20%`), `static_code_mechanics` (`15%`), `formula_signal` (`10%`), `instruction_contract` (`5%`), `concision` (`3%`), and `anti_overfit` (`2%`),
+  - each seed task now has a 20-tick `simulation_spec` with relevant state, scenario, scored goals, and benchmarks,
+  - each task now defines `targeted_tests`, `static_code_mechanics`, `formula_signal`, `instruction_contract`, and `anti_overfit_guards`.
+- Updated `scripts/economist_rl_tasks.py`:
+  - renamed the base weights to `DEFAULT_BASE_REWARD_WEIGHTS`,
+  - scoring now consumes rollout JSON evidence for simulation results, targeted tests, static code mechanics, formula signals, instruction policy caps, and reward-gaming/potential checks,
+  - legacy `expect.*` keyword checks remain guardrails/debug signals, not the main reward,
+  - `add-task` now emits the full execution-oriented task scaffold.
+- Updated `docs/ECONOMIST_RL_ADAPTER.md` with the new reward components and example rollout JSONL.
+
+---
+
+## 2026-05-31 — economistRL compile gate reward
+
+**Goal:** Add a compile gate where compile success gives a decaying curriculum bonus, but compile failure always remains a catastrophic penalty even after the compile bonus weight becomes small.
+
+**Changes:**
+
+- Updated `scripts/economist_rl_tasks.py`:
+  - added `compile_gate_reward(compiled, rolling_compile_rate, base_reward)`,
+  - compile failures cap final reward at `0.10`, `0.05`, or `0.0` depending on maturity,
+  - compile success bonus decays from `0.35` to `0.03` as rolling compile rate rises,
+  - `score` now infers compile status from rollout fields like `compiled`, `compile_passed`, `typecheck_status`, `tsc_status`, or `verify_status`,
+  - `score` accepts `--rolling-compile-rate`.
+- Updated `benchmarks/economistRL_tasks_v1.json` with compile-gate scoring policy metadata.
+- Updated `docs/ECONOMIST_RL_ADAPTER.md` with the exact gate equation.
+
+---
+
+## 2026-05-31 — economistRL 70/30 curriculum target
+
+**Goal:** Make `economistRL` expand toward a 500-prompt RL curriculum with 70% economy specialization and 30% common/generalist RL framework skills.
+
+**Changes:**
+
+- Updated `benchmarks/economistRL_tasks_v1.json` with `curriculum_policy`:
+  - target total: `500` prompts,
+  - `350` economy prompts,
+  - `150` generalist prompts,
+  - economy and generalist subsection targets.
+- Added `curriculum_track` to current seed tasks (`economy`).
+- Updated `scripts/economist_rl_tasks.py`:
+  - `validate` now reports current track counts, rates, and remaining tasks to target,
+  - `add-task` accepts `--curriculum-track economy|generalist`,
+  - scoring rows include `curriculum_track`.
+- Updated `scripts/adapters/build_economist_rl_dataset.py` to preserve `curriculum_track` and report split counts in the generated manifest.
+- Updated `docs/ECONOMIST_RL_ADAPTER.md` and `docs/PROJECT_STATE.md`.
+
+---
+
+## 2026-05-30 — economistRL adapter framework created
+
+**Goal:** Start a new experimental LoRA adapter, `economistRL`, to test whether RL-style reward scoring can improve elusive Fallen Empire economy mechanics beyond the current economy tooltip/UI specialist.
+
+**Changed files:**
+
+- Added `benchmarks/economistRL_tasks_v1.json` with seed hard/standard economy tasks for:
+  - food-supported population steady state,
+  - market elasticity from stock pressure,
+  - worker wage/productivity tradeoffs,
+  - warehouse spoilage/food decay,
+  - progressive army upkeep,
+  - resource projection cache invalidation.
+- Added `scripts/economist_rl_tasks.py`:
+  - `validate` checks task-bank shape and duplicate ids,
+  - `add-task` appends new tasks with rubric/mechanics scaffolding,
+  - `score` grades rollout JSONL with rubric, mechanics, instruction, concision, and anti-overfit reward components.
+- Added `scripts/adapters/build_economist_rl_dataset.py` and `python scripts/ml_workflow.py economist-rl-dataset` for seed SFT data under `data/lora/adapters/economistRL_seed`.
+- Added `training/economistRL_lora_qwen25_coder_7b.yaml` targeting `checkpoints/adapters/economistRL/seed_sft`.
+- Updated `training/adapter_registry_v1.json` with `adapter_id: economistRL`, `promotion_state: experimental`, routing tags, and framework paths.
+- Updated router keyword/coarse-policy metadata so explicit economy simulation/RL prompts can select `economistRL`.
+- Added `docs/ECONOMIST_RL_ADAPTER.md` and updated project/taxonomy docs.
+
+**Verification:**
+
+- `python3 scripts/economist_rl_tasks.py validate` passed (`6` tasks, no duplicate ids).
+- `python3 scripts/ml_workflow.py economist-rl-dataset` succeeded and wrote run artifacts under `benchmarks/results/runs/20260531-053043_2b4179`.
+- Direct rebuild via `python3 scripts/adapters/build_economist_rl_dataset.py` wrote `data/lora/adapters/economistRL_seed/` with `96` train, `4` valid, and `4` test rows.
+- Reference-answer scorer smoke passed all six seed tasks at `100.0`.
+- Router probe selected `economistRL` for explicit economy simulation / market elasticity / food-buffer prompts.
+- `python3 -m py_compile scripts/economist_rl_tasks.py scripts/adapters/build_economist_rl_dataset.py scripts/model_router.py scripts/router/policy.py scripts/ml_workflow.py scripts/launch_lambda_parallel_ablation.py scripts/score_adapter_scorecard.py` passed.
+- JSON validation passed for the task bank, adapter registry, routing prototypes, and generated seed dataset manifest.
+- `ReadLints` reported no diagnostics for edited Python files.
+
+---
+
+## 2026-05-30 — Automatic Lambda GPU telemetry summaries
+
+**Goal:** Ensure future Lambda eval artifacts include parsed GPU usage numbers without a separate post-run probe.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py` shared remote lifecycle:
+  - artifact collector now parses `~/cloud-eval-logs/gpu-smi*.csv` before each checkpoint/final tarball,
+  - writes `cloud-eval-logs/gpu-telemetry-summary.json` and `cloud-eval-logs/gpu-telemetry-summary.md`,
+  - records sample counts, average/median/p95/max GPU utilization, memory MiB, power draw, and temperature,
+  - uses GNU tar `--warning=no-file-changed --ignore-failed-read` so live GPU CSV writes do not fail checkpoint tarballs.
+- Updated `docs/PROJECT_STATE.md` and `docs/WORKFLOW.md` with the new artifact contract.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py` (pass).
+- Local synthetic `gpu-smi` CSV smoke of the generated shell summarizer produced expected `avg_gpu_util_pct=50.0` and `max_gpu_util_pct=90.0`.
+- `ReadLints` reported no diagnostics for the edited files.
+
+---
+
+## 2026-05-30 — Measured specialist role renames and routing tags
+
+**Goal:** Rename user-facing specialist identities and tags to match the full crossdomain 121-task skill map without breaking stable adapter IDs or checkpoint paths.
+
+**Changed files:**
+
+- Updated `training/adapter_registry_v1.json`:
+  - kept stable `adapter_id` values unchanged,
+  - added measured `display_name`, `role`, `routing_tags`, `demoted_tags`, `measured_strengths`, and `measured_weaknesses`,
+  - recorded `measured_role_source=full_crossdomain_121_task_baseline_20260530`.
+- Updated routing metadata:
+  - `data/routing/specialist_skill_profiles_v1.json`
+  - `data/routing/specialist_skill_profiles_v2.json`
+  - `data/routing/council_roster_v1.json`
+  - `data/routing/manifold_prototype_prompts_v2.json`
+- Updated deterministic router wording:
+  - `scripts/model_router.py` specialist keyword surfaces now favor `ui_surface_composer`, `ui_state_signals`, `resource_ui_projection`, `army_ui_flow`, `state_contract_guard`, and `crossdomain_state_patch` concepts.
+  - `scripts/router/policy.py` coarse buckets now use measured role names while still selecting the legacy adapter IDs.
+- Updated docs:
+  - `docs/ROUTER_TASK_TAXONOMY.md`
+  - `docs/PROJECT_STATE.md`
+
+**Measured role map:**
+
+- `loading_screen` -> `ui_surface_composer`
+- `hud_status` -> `ui_state_signals`
+- `economy_tooltip` -> `resource_ui_projection`
+- `combat_risk` -> `army_ui_flow`
+- `save_load_api_guard` -> `state_contract_guard`
+- `ai_planning_explanation` -> `crossdomain_state_patch`
+
+**Compatibility note:**
+
+- Adapter IDs are intentionally unchanged because they key checkpoint paths, router labels, training data, and historical artifact recovery.
+
+---
+
+## 2026-05-30 — Full crossdomain 121-task specialist baseline launched
+
+**Goal:** Establish baselines by running every game specialist against the full 121-task manifest (`--specialist-suite --specialist-suite-all-tasks --max-tasks 121`), rather than only its mapped domain slice.
+
+**Command:**
+
+- Loaded Lambda credentials from `/Users/natreed/.ssh/fallen-empirelora.env`.
+- Ran:
+  - `python scripts/launch_lambda_parallel_ablation.py --launch-instances --specialist-suite --specialist-suite-all-tasks --max-tasks 121 --name-prefix fe-specialist-crossdomain-full121-baseline --region us-west-1 --instance-type gpu_1x_a10 --fallback-region us-east-1 --fallback-instance-type gpu_1x_a100_sxm4 --artifact-upload-every-steps 5 --artifact-upload-every-minutes 10 --watchdog-idle-minutes 60 --watchdog-check-minutes 5 --setup-command-retries 1 --setup-retry-sleep-seconds 10`
+
+**Launch state:**
+
+- Lambda capacity preflight selected `gpu_1x_a10@us-west-1` after transient HTTP `429` retries.
+- Six `gpu_1x_a10` workers launched in `us-west-1` with `Evaluation-Runs` attached.
+- Bootstrap mount checks passed for `/lambda/nfs/Evaluation-Runs`.
+- Repo sync and all six adapter syncs completed.
+- Adapter fallback paths were used for missing local `champion` directories:
+  - `save_load_api_guard`: `checkpoints/adapters/save_load_api_guard/cycle2`
+  - `ai_planning_explanation`: `checkpoints/adapters/ai_planning_explanation/mock_aug_v2_cycle1`
+- All six remote tmux jobs reached `parallel_ablation_started`.
+- Remote progress sample confirmed active tmux sessions, `task_count=121`, `task_domains=` empty for all-task coverage, first rows written, and checkpoint artifacts artifacts
+
+---
+
+## 2026-05-30 — Specialist 121 crossdomain smoke with capacity fallback
+
+**Goal:** Run a bounded smoke for the full specialist eval shape (`--specialist-suite --specialist-suite-all-tasks`) without running all 121 tasks per worker.
+
+**Command:**
+
+- Loaded Lambda credentials from `/Users/natreed/.ssh/fallen-empirelora.env`.
+- Ran:
+  - `python scripts/launch_lambda_parallel_ablation.py --launch-instances --specialist-suite --specialist-suite-all-tasks --max-tasks 1 --name-prefix fe-specialist-crossdomain-smoke121-fallback --region us-west-1 --instance-type gpu_1x_a10 --fallback-region us-east-1 --fallback-instance-type gpu_1x_a100_sxm4 --artifact-upload-every-steps 1 --artifact-upload-every-minutes 0 --watchdog-idle-minutes 30 --watchdog-check-minutes 2 --setup-command-retries 1 --setup-retry-sleep-seconds 10`
+
+**Outcome:**
+
+- Lambda capacity preflight reported `gpu_1x_a10` capacity in `us-east-1,us-west-1`; `gpu_1x_a100_sxm4` capacity in `asia-south-1,us-east-1,us-west-2`.
+- Candidate order was `gpu_1x_a10@us-west-1`, `gpu_1x_a10@us-east-1`, then `gpu_1x_a100_sxm4@us-east-1`; the first candidate was selected after two transient HTTP 429 retries.
+- Six `gpu_1x_a10` workers launched in `us-west-1` with `Evaluation-Runs` attached and reached `parallel_ablation_started`.
+- Remote eval path started with `task_count=121`, `validation_status=PASS`, `variant=single_specialist_local`, `max_tasks=1`, and empty `task_domains` for all-task specialist coverage.
+- Workers completed the one-task smoke and auto-terminated; final Lambda poll returned `active_like_instances 0`.
+
+**Instance IDs:**
+
+- `fc2b63928d434540ba575c6a04ad9908` — `loading_screen`
+- `4c7e5c09aa9648aa8b6c2d1ee1ecaede` — `hud_status`
+- `b0efafee70bf4dd8aa6dceb5c002f94c` — `economy_tooltip`
+- `5cfd1f05cd0245009e0b049f94640101` — `combat_risk`
+- `9f8df797a5a64501ba3e81ae52fce59e` — `save_load_api_guard`
+- `1b5276318350443ba2e2c3607f7c0fdd` — `ai_planning_explanation`
+
+**Artifacts:**
+
+- Staging root: `/lambda/nfs/Evaluation-Runs/fallen-empire-lora-artifacts`.
+- Artifact probe confirmed `artifact_count=66` total and two new tarballs for each smoke worker:
+  - `checkpoint_1-<instance_id>-20260530T0550xxZ.tar.gz`
+  - `cleanup_exit_0-<instance_id>-20260530T0550xxZ.tar.gz` (last worker at `20260530T055118Z`)
+- Inspected worker tarballs contain `cloud-eval-logs/fe-ablation-specialist_*.log`, `cloud-eval-logs/gpu-smi-specialist_*.csv`, `benchmarks/results/cloud_ablation_rows_specialist_*.jsonl`, and one `benchmarks/results/game_task_trials/20260530-05501*-single_specialist_local-`* trial directory.
+- Temporary artifact probe instance `c81d040f39664dc2875cf843c8ab264e` was terminated after inspection; final active-like Lambda instance count was `0`.
+
+**Next intent:**
+
+- The bounded all-task specialist-suite path is now smoke-verified. A full `--specialist-suite --specialist-suite-all-tasks --max-tasks 121` run can use the same fallback shape when budget/capacity allows.
+
+---
+
+## 2026-05-29 — Lambda capacity-aware launch fallback
+
+**Goal:** Reduce Lambda insufficient-capacity failures for parallel ablation launches while preserving partial-launch cleanup safety.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added Lambda `GET /instance-types` capacity preflight parsing for `regions_with_capacity_available`,
+  - added repeatable/comma-separated `--fallback-region` and `--fallback-instance-type`,
+  - orders launch candidates with the requested instance type/region first, then requested type in fallback/available regions, then fallback types in preferred regions,
+  - retries insufficient-capacity and partial/wrong-quantity launches on the next candidate after best-effort terminating any partial instances,
+  - logs capacity decisions and the selected launch type/region to stdout.
+- Updated `docs/PROJECT_STATE.md` with the durable launcher behavior.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+- `python3 scripts/launch_lambda_parallel_ablation.py --help` inspection confirms the new fallback flags are exposed.
+
+---
+
+## 2026-05-29 — Specialist 121 crossdomain smoke cleanup
+
+**Goal:** Run a bounded Lambda smoke for the specialist 121-task eval shape without launching the full 121-task suite.
+
+**Command:**
+
+- Loaded Lambda credentials from `/Users/natreed/.ssh/fallen-empirelora.env`.
+- Ran:
+  - `python scripts/launch_lambda_parallel_ablation.py --launch-instances --specialist-suite --specialist-suite-all-tasks --max-tasks 1 --name-prefix fe-specialist-crossdomain-smoke121-retry --instance-type gpu_1x_a10 --artifact-upload-every-steps 1 --artifact-upload-every-minutes 0 --watchdog-idle-minutes 30 --watchdog-check-minutes 2 --setup-command-retries 1 --setup-retry-sleep-seconds 10`
+
+**Outcome:**
+
+- Initial launch attempt with `fe-specialist-crossdomain-smoke121` failed immediately with Lambda `insufficient-capacity`.
+- Retry launched six `gpu_1x_a10` instances in `us-west-1`, but setup failed before remote tmux/eval start when adapter checkpoint sync lost SSH connectivity across workers (`Can't assign requested address`, then `Network is unreachable`).
+- Setup cleanup triggered before remote start and terminated all six launched instances:
+  - `a47480cfd62c4e66bd464939134dbe13`
+  - `d96a6314a116402a85d0bf1ba33be6a1`
+  - `15ecd2df77c743a4b6d322f78cc2d728`
+  - `c492b13ca9c742459022945c3eb2d3ff`
+  - `2c5004f5c64a4965ba008123a1eb133f`
+  - `ca0946018bf44ea9a3608036126f538f`
+- Final Lambda instance poll returned `count: 0`; no workers were left active.
+- Because the failure happened before remote lifecycle start, no eval rows, remote run artifacts, or `gpu-smi-*.csv` telemetry were produced for this smoke attempt.
+
+**Next intent:**
+
+- Retry later when Lambda networking/capacity is healthier, or run the already-proven mapped-domain smoke (`--specialist-suite --max-tasks 1` without `--specialist-suite-all-tasks`) before another crossdomain smoke/full run.
+
+---
+
+## 2026-05-29 — Lambda GPU telemetry artifacts
+
+**Goal:** Capture per-worker GPU utilization in future Lambda eval artifacts.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - starts a background GPU monitor in the shared remote lifecycle prelude,
+  - writes `nvidia-smi` CSV samples every 5 seconds to `~/cloud-eval-logs/gpu-smi-<cell>.csv`,
+  - stops the monitor during remote cleanup so the existing artifact collector includes the CSV.
+- Updated `scripts/launch_lambda_council_eval.py` to pass a council GPU monitor log path into the shared lifecycle helper.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py` (pass).
+
+---
+
+## 2026-05-29 — Lambda rsync timeout guard
+
+**Goal:** Prevent Lambda setup from hanging indefinitely when repo or adapter `rsync` stalls over SSH.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added shared rsync timeout defaults: connect timeout 30 seconds, idle I/O timeout 120 seconds,
+  - added `--contimeout=30` and `--timeout=120` to ML repo sync, game repo sync, and adapter checkpoint sync,
+  - added SSH transport options for rsync: `ConnectTimeout=30`, `ServerAliveInterval=30`, `ServerAliveCountMax=4`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+
+---
+
+## 2026-05-29 — Rename current RAG dataset surface
+
+**Goal:** Rename the failure-guided style RAG surface to the current RAG naming requested for prompts, ablations, and data artifacts.
+
+**Changed files:**
+
+- Renamed `data/rag/style_prompt_rag_v2_failure_guided.json` to `data/rag/current_rag_dataset.json` and updated its `schema_version` to `current_rag_dataset`.
+- Renamed the optional base corpus to `data/rag/current_rag_base_dataset.json` and updated its schema reference.
+- Renamed `scripts/build_style_prompt_rag_from_failures.py` to `scripts/build_current_rag_dataset.py`:
+  - default output now writes `data/rag/current_rag_dataset.json`,
+  - default stats output now writes `benchmarks/results/current_rag_dataset_stats.json`,
+  - CLI description now describes the current RAG dataset.
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - renamed helper functions and local variables from style-RAG terms to `rag_current` terms,
+  - replaced `--prompt-style-rag-`* flags with `--prompt-rag-current-`*,
+  - changed runtime logging from `style_rag_entries` to `rag_current_entries`.
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - default matrix cell `style_rag` is now `rag_current`,
+  - combined cell `style_plus_max_potential` is now `rag_current_plus_max_potential`,
+  - default corpus path now points to `data/rag/current_rag_dataset.json`,
+  - pass-through argument is now `--rag-current-corpus-path`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/build_current_rag_dataset.py scripts/run_final_mass_testing_system.py scripts/launch_lambda_parallel_ablation.py` (pass).
+- IDE lint check on edited scripts and `data/rag/current_rag_dataset.json` (pass).
+
+---
+
+## 2026-05-29 — Crossdomain rerun killed after adapter-sync hang
+
+**Goal:** Stop the second full crossdomain specialist rerun and diagnose why it did not reach eval start.
+
+**Observed:**
+
+- Launched `fe-specialist-crossdomain-full121-rerun-`* with `--specialist-suite --specialist-suite-all-tasks --max-tasks 121`.
+- Six `gpu_1x_a10` instances became active in `us-west-1`.
+- Bootstrap/repo sync progressed, and adapter directories existed on all six workers.
+- The launcher never printed `parallel_ablation_started`; no remote tmux sessions, eval logs, or `run_final_mass_testing_system.py` processes existed.
+- Local process inspection showed three adapter `rsync` commands hung for ~40 minutes (`loading_screen/cycle2`, `hud_status/cycle3`, `economy_tooltip/cycle2`), even though remote probes showed no matching remote rsync/eval processes.
+- Manually terminated the six rerun instances through the Lambda API; they moved to `terminating`.
+- Manually stopped the hung local launcher and child rsync/ssh processes.
+
+**Diagnosis:**
+
+- The previous successful specialist matrix used `--specialist-suite --max-tasks 121` without `--specialist-suite-all-tasks`, so each specialist ran its mapped domain slice and reached `start_ok`.
+- The failed reruns used `--specialist-suite-all-tasks` for the crossdomain matrix. They still failed before eval work started, but the setup surface was now longer/more expensive and exposed that setup command retries do not cover hung `rsync`; no hard subprocess timeout exists yet.
+
+**Next intent:**
+
+- Add hard setup subprocess timeouts for rsync/ssh/scp so a hung command exits, retries once, and then triggers setup cleanup termination.
+
+---
+
+## 2026-05-29 — Lambda setup-failure cleanup guard
+
+**Goal:** Prevent newly launched Lambda specialist workers from being stranded when launcher setup fails before the remote eval script installs its own watchdog/cleanup trap.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added best-effort parent-side termination for incomplete bulk launches and partial one-by-one launch failures,
+  - added default `--cleanup-on-setup-failure` behavior with `--no-cleanup-on-setup-failure` escape hatch,
+  - wrapped wait/bootstrap/repo sync/adapter sync/start setup so newly launched instances that never reach remote start are terminated on setup exceptions,
+  - added bounded setup command retries: each failed bootstrap/sync/adapter-sync/start command retries once by default (`--setup-command-retries 1`), then setup cleanup terminates launched instances if the retry also fails.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+
+---
+
+## 2026-05-28 — Full 121-task specialist matrix launched
+
+**Goal:** Start the full six-specialist Lambda matrix evaluation across the 121-task final mass-testing manifest.
+
+**Command:**
+
+- Loaded Lambda credentials from `/Users/natreed/.ssh/fallen-empirelora.env`.
+- Ran:
+  - `python scripts/launch_lambda_parallel_ablation.py --launch-instances --specialist-suite --max-tasks 121 --name-prefix fe-specialist-matrix-full121 --instance-type gpu_1x_a10 --artifact-upload-every-steps 5 --artifact-upload-every-minutes 10 --watchdog-idle-minutes 60 --watchdog-check-minutes 5`
+
+**Launch state:**
+
+- Lambda initially returned transient `429` responses; the launcher retry/backoff path continued and completed the six-instance launch.
+- Six `gpu_1x_a10` workers are active in `us-west-1`, all with `file_system_names=["Evaluation-Runs"]`.
+- Bootstrap mount checks passed for `/lambda/nfs/Evaluation-Runs`.
+- Repo sync and all six adapter syncs completed.
+- Adapter fallback paths were again used where local registry `champion` paths were absent:
+  - `save_load_api_guard`: `checkpoints/adapters/save_load_api_guard/cycle2`
+  - `ai_planning_explanation`: `checkpoints/adapters/ai_planning_explanation/mock_aug_v2_cycle1`
+- All six remote tmux jobs reached `start_ok`.
+- Remote progress sample confirmed `mount True`, active tmux sessions, manifest `task_count=121`, and row files already being written:
+  - `loading_screen`: 3 rows
+  - `hud_status`: 3 rows
+  - `economy_tooltip`: 1 row
+  - `combat_risk`: 4 rows
+  - `save_load_api_guard`: 3 rows
+  - `ai_planning_explanation`: 4 rows
+
+**Runtime controls:**
+
+- Auto-termination enabled.
+- Idle-log watchdog enabled: 60 minute idle threshold, 5 minute check interval.
+- Artifact staging: `/lambda/nfs/Evaluation-Runs/fallen-empire-lora-artifacts`.
+- Checkpoints: every 5 completed rows or every 10 minutes.
+
+---
+
+## 2026-05-28 — Specialist matrix smoke completed
+
+**Goal:** Run the six-worker Lambda specialist-suite smoke before attempting the full mass specialist benchmark.
+
+**Command:**
+
+- Loaded Lambda credentials from `/Users/natreed/.ssh/fallen-empirelora.env`.
+- Ran:
+  - `python scripts/launch_lambda_parallel_ablation.py --launch-instances --specialist-suite --max-tasks 1 --name-prefix fe-specialist-matrix-smoke2 --instance-type gpu_1x_a10 --artifact-upload-every-steps 1 --artifact-upload-every-minutes 0 --watchdog-idle-minutes 30 --watchdog-check-minutes 2`
+
+**Observed:**
+
+- Six `gpu_1x_a10` workers launched in `us-west-1` with `file_system_names=["Evaluation-Runs"]`.
+- Bootstrap mount checks passed for `/lambda/nfs/Evaluation-Runs`.
+- Repo sync and all six adapter syncs completed.
+- Adapter fallback paths were used where registry `champion` paths were absent locally:
+  - `save_load_api_guard`: `checkpoints/adapters/save_load_api_guard/cycle2`
+  - `ai_planning_explanation`: `checkpoints/adapters/ai_planning_explanation/mock_aug_v2_cycle1`
+- All six remote tmux jobs reached `start_ok`.
+- Remote inspection confirmed `mount True` and durable artifact staging under `/lambda/nfs/Evaluation-Runs/fallen-empire-lora-artifacts`.
+- Completed-worker logs showed one-task pass output and final cleanup artifact collection before Lambda termination; all workers then disappeared from the active instance list.
+- Lambda instance poll after completion returned `count 0`; no GPUs were left running.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py` to retry transient Lambda API failures (`429`, `5xx`) with short backoff during API calls.
+- Updated `docs/PROJECT_STATE.md` with the retry behavior and smoke outcome.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+- Lint check for `scripts/launch_lambda_parallel_ablation.py` returned no errors.
+
+---
+
+## 2026-05-28 — Lambda file system mount probe resolved
+
+**Goal:** Resolve whether `Evaluation-Runs` actually mounts on Lambda instances before running the mass specialist benchmark.
+
+**Observed:**
+
+- Launched a single probe instance with payload:
+  - `region_name=us-west-1`
+  - `instance_type_name=gpu_1x_a10`
+  - `ssh_key_names=["lambda-cloud-cursor"]`
+  - `file_system_names=["Evaluation-Runs"]`
+- While active, Lambda reported:
+  - `file_system_names=["Evaluation-Runs"]`
+  - `file_system_mounts=[{"mount_point": "/lambda/nfs/Evaluation-Runs", "file_system_id": "5795235886dd4e45a5adcdb5637de9d6"}]`
+- SSH verification passed:
+  - `/lambda/nfs/Evaluation-Runs is a mountpoint`
+  - `df -h /lambda/nfs/Evaluation-Runs` reported the mounted filesystem,
+  - wrote `fs_probe_marker_20260528T215740Z.txt`.
+- Probe instance was terminated through Lambda API.
+
+**Conclusion:**
+
+- The file system attachment path works. The earlier `file_system_names: []` observation came from inspecting terminating/detached instance records, not active mounted workers.
+- Keep the new bootstrap `mountpoint -q` guard because it is the strongest runtime proof that artifact staging is durable before eval work starts.
+
+**Changed files:**
+
+- Updated `docs/PROJECT_STATE.md` to replace the earlier blocker note with the successful mount-probe result.
+
+---
+
+## 2026-05-28 — Specialist matrix smoke attempt and file-system blocker
+
+**Goal:** Run a one-task smoke for each game specialist before the mass specialist benchmark.
+
+**Observed:**
+
+- First `--specialist-suite --launch-instances --max-tasks 1` attempt partially launched 5 workers, then Lambda/Cloudflare returned HTTP 429 on the sixth launch.
+- A sixth worker was launched after cooldown; all six became active.
+- Retried with `--instance-ids ... --specialist-suite --max-tasks 1 --auto-terminate`.
+- Bootstrap/sync completed and all six remote sessions started:
+  - `loading_screen`
+  - `hud_status`
+  - `economy_tooltip`
+  - `combat_risk`
+  - `save_load_api_guard`
+  - `ai_planning_explanation`
+- Adapter sync surfaced missing local registry paths:
+  - `save_load_api_guard` expected `checkpoints/adapters/save_load_api_guard/champion`; fallback used `cycle2`.
+  - `ai_planning_explanation` expected `checkpoints/adapters/ai_planning_explanation/champion`; fallback used `mock_aug_v2_cycle1`.
+- Remote logs showed all six workers entering model/Hugging Face load.
+- Auto-termination fired; final Lambda API state had only one lingering `terminating` instance, and a repeat terminate request returned Lambda HTTP 500 because the VM was already in termination flow.
+
+**Blocker:**
+
+- The persistent file system did not actually attach. Lambda launch payloads included `file_system_names=["Evaluation-Runs"]`, but later `GET /instances` reported `file_system_names: []`, and `GET /file-systems` still reported `bytes_used: 7`.
+- Because the file system was not mounted, result tarballs were not preserved on `Evaluation-Runs`. This blocks trusting a mass unattended run until mount attachment is verified at bootstrap.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - adapter sync now creates absolute remote paths instead of quoted `~` paths,
+  - missing registry checkpoint paths fall back to the newest available local adapter cycle and copy it into the registry-expected remote path,
+  - bootstrap now verifies the configured Lambda file system mount with `mountpoint -q` before doing eval setup.
+- Updated `docs/PROJECT_STATE.md` with the file-system attachment finding and bootstrap mount guard.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+
+---
+
+## 2026-05-28 — Lambda file system artifact staging
+
+**Goal:** Auto-attach the persistent Lambda file system for benchmark workers and write artifact bundles there before termination.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added default Lambda file system id `5795235886dd4e45a5adcdb5637de9d6`,
+  - resolves the id/name through `GET /file-systems`,
+  - passes `file_system_names` to the Lambda launch payload,
+  - defaults launch region to the file system region (`us-west-1`) when attached,
+  - stages artifact bundles at the file-system mount by default,
+  - added `--file-system-id`, `--file-system-name`, `--no-file-system`, and `--artifact-staging-dir`.
+- Updated `scripts/launch_lambda_council_eval.py` for compatibility with the shared launch/lifecycle helper signature.
+- Updated `docs/PROJECT_STATE.md` with file system id, mount point, region, and controls.
+
+**Verification:**
+
+- Lambda API resolved file system id `5795235886dd4e45a5adcdb5637de9d6` to `Evaluation-Runs`, mount `/lambda/nfs/Evaluation-Runs`, region `us-west-1`.
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py` (pass).
+- Launcher `--help` includes file-system controls.
+
+---
+
+## 2026-05-28 — Lambda specialist matrix mode
+
+**Goal:** Add a safe pre-training Lambda benchmark mode that runs all active game specialists in parallel before additional training.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added `--specialist-suite` to create one worker per game specialist,
+  - added repeatable `--specialist-id` to run a subset,
+  - maps specialists to normalized task domains:
+    - `loading_screen` -> `hud_status`,
+    - `hud_status` -> `hud_status`,
+    - `economy_tooltip` -> `economy`,
+    - `combat_risk` -> `army_operations`,
+    - `save_load_api_guard` -> `state_perstitence_integrity`,
+    - `ai_planning_explanation` -> `ai_strategy_and_planning`,
+  - rejects `documentation` in this game-patch suite because it uses a documentation-specific eval path,
+  - syncs each selected worker's adapter checkpoint independently.
+- Updated `docs/PROJECT_STATE.md` with specialist-suite usage and scope.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+- Launcher `--help` includes `--specialist-suite` and `--specialist-id`.
+- Unsupported `--specialist-id documentation` is rejected with the expected game-domain mapping error.
+
+---
+
+## 2026-05-28 — Lambda economy specialist smoke
+
+**Goal:** Observe one Lambda GPU smoke run for the `economy_tooltip` specialist path, including Hugging Face model load, row/artifact capture, and termination behavior.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added `--task-domain` filtering before `--max-tasks`, enabling one-task domain-specific smoke runs.
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added `--only-cell`, `--max-tasks`, `--task-domain`, and `--single-specialist-adapter-id` pass-through,
+  - normalizes copied `LAMBDA_CLOUD_BASE_URL` values ending in `/instances`,
+  - remote termination now sends a normal `User-Agent`,
+  - periodic artifact checkpoint labels now defer `FE_ARTIFACT_COMPLETED_STEPS` expansion until checkpoint time,
+  - forced `single_specialist_local` runs sync the selected adapter checkpoint directory after the normal repo sync.
+- Updated `docs/PROJECT_STATE.md` with one-task Lambda smoke controls and adapter sync behavior.
+
+**Observed run:**
+
+- Command shape: one `baseline` cell, `--variant single_specialist_local`, `--single-specialist-adapter-id economy_tooltip`, `--task-domain economy`, `--max-tasks 1`, `gpu_1x_a10` in `us-east-1`.
+- Instance: `20856e1900c74c86a793b2e77cefe030` / `fe-economy-tooltip-smoke-1779997510`.
+- Local artifact copy: `benchmarks/results/lambda_smoke_economy_tooltip_20260528/`.
+- Hugging Face model path worked unauthenticated but logged the expected HF_TOKEN warning.
+- Eval selected `patch-builder-automation-rebalance-15` (`economy`, `resource_projection_cache_invalidation`), wrote `src/lib/builderAutomation.ts`, and failed verification (`verify_failed_unknown`).
+- Smoke exposed that the first run missed adapter weights because `checkpoints/` are excluded from bulk sync; the launcher now syncs the selected adapter for future forced-specialist runs.
+- Remote termination hit Lambda HTTP 403 before the `User-Agent` fix; artifacts were copied back manually, and the instance was terminated from the local Lambda API.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py scripts/run_final_mass_testing_system.py scripts/run_council_conversation_eval.py` (pass).
+- Generated remote lifecycle shell syntax checks (`bash -n`) pass.
+
+---
+
+## 2026-05-28 — Lambda artifact checkpoints and termination gating
+
+**Goal:** Preserve maximum eval/conversation/routing data before any Lambda GPU termination.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py` and `scripts/run_council_conversation_eval.py`:
+  - after each JSONL row append, runners can invoke `FE_ARTIFACT_CHECKPOINT_COMMAND`,
+  - checkpoint cadence is controlled by `FE_ARTIFACT_UPLOAD_EVERY_STEPS` and `FE_ARTIFACT_UPLOAD_EVERY_SECONDS`.
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - generated remote scripts now create `/tmp/fe_collect_lambda_artifacts.sh`,
+  - artifact bundles include cloud logs, benchmark results, adapter registry, eval scripts, router scripts, and the final mass task manifest,
+  - added `--artifact-export-command`, `--artifact-upload-every-steps`, `--artifact-upload-every-minutes`, `--require-artifact-export-before-terminate`, and `--allow-terminate-without-artifact-export`,
+  - cleanup/watchdog termination now runs artifact collection/export before calling Lambda terminate.
+- Updated `scripts/launch_lambda_council_eval.py` with the same artifact export controls.
+- Updated `docs/PROJECT_STATE.md` with the artifact preservation lifecycle.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py scripts/run_final_mass_testing_system.py scripts/run_council_conversation_eval.py` (pass).
+- `bash -n` on generated lifecycle prelude and collector script (pass).
+- Launcher `--help` output includes artifact export flags.
+
+---
+
+## 2026-05-28 — Lambda idle-log watchdog
+
+**Goal:** Reduce runaway Lambda GPU billing risk when a detached remote eval hangs without exiting.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added a shared remote idle-log watchdog in `_remote_lifecycle_prelude`,
+  - added `--watchdog`, `--no-watchdog`, `--watchdog-idle-minutes`, and `--watchdog-check-minutes`,
+  - watchdog defaults on when auto-termination is on,
+  - generated ablation runners pass their `~/cloud-eval-logs/fe-ablation-*.log` path to the watchdog.
+- Updated `scripts/launch_lambda_council_eval.py` with the same watchdog flags and log-idle termination behavior.
+- Updated `docs/PROJECT_STATE.md` with the watchdog defaults and controls.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py` (pass).
+- `python3 scripts/launch_lambda_parallel_ablation.py --help` and `python3 scripts/launch_lambda_council_eval.py --help` include watchdog flags.
+
+---
+
+## 2026-05-28 — Lambda max-runtime removal
+
+**Goal:** Remove max-runtime timeout behavior from Lambda Cloud launchers.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - removed `--max-runtime-hours`,
+  - removed `FE_MAX_RUNTIME_SECONDS`,
+  - removed the remote `timeout --foreground` wrapper.
+- Updated `scripts/launch_lambda_council_eval.py` with the same timeout removal.
+- Updated `docs/PROJECT_STATE.md` so Lambda lifecycle docs now describe exit-based auto-termination only.
+
+---
+
+## 2026-05-28 — Lambda Cloud env naming alignment
+
+**Goal:** Make Lambda Cloud launcher environment variables match the active local env file.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - defaults `--api-base` from `LAMBDA_CLOUD_BASE_URL`,
+  - keeps legacy `LAMBDA_API_BASE` as a fallback,
+  - renames the remote cleanup base-url env to `FE_LAMBDA_CLOUD_BASE_URL`.
+- Updated `scripts/launch_lambda_council_eval.py` to use the same base-url resolver.
+- Updated `docs/PROJECT_STATE.md` with the canonical Lambda Cloud env names.
+
+---
+
+## 2026-05-26 — Unbiased council adjudication
+
+**Goal:** Remove router-selection bias from council winner selection and make adapter loading auditable in traces.
+
+**Changed files:**
+
+- Updated `scripts/router/council.py`:
+  - adjudication now assigns blind answer ids and scores drafts with an equal-prior deterministic rubric,
+  - removed dependency on participant identity, router-selected specialist status, and inherited confidence for winner ranking,
+  - contribution metadata now includes `blind_id` and `rubric_scores`.
+- Updated `scripts/run_council_conversation_eval.py`:
+  - council traces now use neutral `confidence` / `task_outcome_score` metadata,
+  - specialist outputs explicitly record that this batch eval path does not load per-specialist adapters.
+- Updated `scripts/router_chat_gradio.py`:
+  - live council lane now uses neutral scoring metadata and records `adapter_requested`, `resolved_mlx_adapter`, and `adapter_loaded`.
+- Added `tests/test_council_adjudication.py` for equal-prior and blind-scoring smoke coverage.
+- Updated `docs/ROUTER_ARCHITECTURE.md` and `docs/PROJECT_STATE.md` with the new adjudication semantics.
+
+---
+
+## 2026-05-26 — Council credit optimization implementation
+
+**Goal:** Complete the staged council credit optimization plan without editing the plan file.
+
+**Changed files:**
+
+- Updated `scripts/router_promotion_gate.py`:
+  - emits `personality_credit` with attempts, wins, top-2 proxy rate, correctness, and escalation-help counts,
+  - feeds personality offline scores and sample counts into roster gating.
+- Updated `scripts/router/roster.py`:
+  - persists `offline_sample_count` per personality,
+  - keeps expert-level online metrics optional during early offline exploration.
+- Updated `scripts/router/council.py` and `scripts/model_router.py`:
+  - added bandit-style personality ranking with observed offline/online correctness, sample-count exploration bonus, and state bias,
+  - added `ROUTER_COUNCIL_PERSONALITY_SELECTION_POLICY` and `ROUTER_COUNCIL_PERSONALITY_EXPLORATION_RATE`.
+- Updated `scripts/run_council_conversation_eval.py`:
+  - added `--selective-generation`, `--selective-min-ambiguity`, `--selective-max-confidence`, and repeatable `--selective-risk` to spend generation on high-value cases first.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md`, `docs/PROJECT_STATE.md`, and `docs/WORKFLOW.md` now document personality credit, bandit selection, and selective generation.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/roster.py scripts/router/council.py scripts/model_router.py scripts/run_routing_benchmark.py scripts/router_promotion_gate.py scripts/run_council_conversation_eval.py` (pass).
+- `python3 -m unittest tests/test_council_adjudication.py` (pass).
+- Lint check for touched Python files returned no errors.
+- Smoke-tested `scripts/router_promotion_gate.py` with temporary summary/rows/roster files; output included `personality_credit` and promoted `combat_risk::risk_auditor` to `active`.
+- Smoke-tested `scripts/run_council_conversation_eval.py --mock-generation --selective-generation --max-tasks 1` with `/tmp` outputs; selective path completed and wrote one mock council row.
+
+---
+
+## 2026-05-26 — Council behavior baselines from Lambda traces
+
+**Goal:** Preserve the recovered council run's winning persona behaviors as reusable baselines for later real-adapter council runs.
+
+**Changed files:**
+
+- Added `benchmarks/council_behavior_baselines/lambda_council_behavior_baselines_20260526.json`:
+  - records per-base-expert behavior stats, registry lineage, winner counts, contribution scores, variants, domains, terms, and example winning outputs.
+- Added `benchmarks/council_behavior_baselines/lambda_council_behavior_baselines_20260526.md`:
+  - human-readable ranking and example excerpts for the recovered Lambda council traces.
+
+**Interpretation note:**
+
+- These are behavior/persona baselines from one-base-model generation. Lineage fields come from `training/adapter_registry_v1.json`; the recovered run does not prove per-participant LoRA weights were loaded.
+
+---
+
+## 2026-05-26 — RAG improvements/failures strategy writeup
+
+**Goal:** Capture the current state of RAG improvements, the new failure modes revealed by retrieval audits and specialist failures, and the next experiment direction.
+
+**Changed files:**
+
+- Added `docs/RAG_IMPROVEMENTS_FAILURES_NEXT_STEPS.md`:
+  - summarizes the current RAG lanes (`bug_fix`, `run_analysis`, `router`, and failure-guided style RAG),
+  - records the main style-RAG improvements: retrieval-surface separation, prompt-only versus `max_potential` split, cosine ranking/margin gates, multidomain suppression, and targeted repair entries,
+  - highlights remaining failures: compile/type errors still dominate acceptance loss, prompt-only cross-domain ambiguity persists, failure buckets are too coarse, and one-shot style guidance is weaker than verifier-aware repair,
+  - recommends a 3-cell ablation: baseline, prompt-only RAG v2, and prompt-only RAG v2 plus verifier/error-text repair loop.
+
+**Verification:**
+
+- Documentation-only change; no runtime tests run.
+
+---
+
+## 2026-05-26 — Recovered all active Lambda host artifacts
+
+**Goal:** Pull all remaining Lambda worker outputs before terminating instances from the dashboard.
+
+**Recovered artifacts:**
+
+- Copied per-host result files and logs into `benchmarks/results/lambda_recovery/hosts-20260526-184501/`.
+- Host `150.136.71.190`: recovered `style_rag` ablation (`cloud_ablation_rows`_*, summary JSON/MD, runtime tasks JSON, and `fe-ablation-style_rag.log`). Summary reports 121 tasks, 39 accepted, 59 verify-passed.
+- Host `150.136.244.198`: recovered `context_max_potential` ablation. Summary reports 121 tasks, 30 accepted, 60 verify-passed.
+- Host `157.151.155.138`: recovered `style_plus_max_potential` ablation. Summary reports 121 tasks, 26 accepted, 65 verify-passed.
+- Host `129.80.20.32`: recovered council conversation eval outputs/log again. Summary reports 121 rows.
+
+**Operational status:**
+
+- All listed active Lambda eval hosts have recoverable output copied locally and are safe to terminate from a data-preservation standpoint.
+
+---
+
+## 2026-05-26 — Recovered Lambda council eval artifacts before shutdown
+
+**Goal:** Preserve remote Lambda eval output before stopping instances that would erase local VM disks.
+
+**Recovered artifacts:**
+
+- Copied council run outputs from `129.80.20.32` into `benchmarks/results/lambda_recovery/council121-20260526/`:
+  - `council_conversation_eval_rows_council121-20260526.jsonl`
+  - `council_conversation_eval_summary_council121-20260526.json`
+  - `council_conversation_remote_smoke_rows.jsonl`
+  - `council_conversation_remote_smoke_summary.json`
+  - `fe-council-eval-council121-20260526.log`
+- Summary confirms the council eval completed all 121 rows with 95 escalations, average 6.3 participants, and average 2.0 rounds.
+
+**Blocker:**
+
+- The ablation worker terminal was killed during bootstrap before final host mappings were printed. Local logs only preserve the stopped baseline IP and the council IP. Recovering ablation artifacts requires the active instance IPs from the Lambda dashboard or a working Lambda instance-control API key.
+
+---
+
+## 2026-05-26 — Lambda eval auto-termination guard
+
+**Goal:** Stop Lambda Cloud eval workers from continuing to bill after detached remote runs finish or hang.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - newly launched workers now default to remote `auto_terminate=1`,
+  - reused `--instance-ids` remain non-terminating by default unless `--auto-terminate` is set,
+  - remote cell scripts call Lambda `/instance-operations/terminate` on exit when auto-termination is enabled. Note: a later 2026-05-28 update removed the temporary max-runtime timeout guard.
+- Updated `scripts/launch_lambda_council_eval.py` with the same auto-terminate/default reuse policy.
+- Updated `.env.example` to remove a real-looking Lambda token from the example and document separate `LAMBDA_API_KEY` / `LAMBDA_API_BASE` instance-control settings.
+- Updated `docs/PROJECT_STATE.md` with the Lambda launcher lifecycle policy.
+
+**Operational finding:**
+
+- Existing Lambda launchers started detached `tmux` sessions and returned locally; they did not previously terminate the VM after eval completion.
+- Current local shell did not have `LAMBDA_API_KEY`; reading the repo `.env` value reached Lambda Cloud but returned `403 Forbidden` for `/instances`, so this session could not list or terminate active instances from the available credentials.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py scripts/launch_lambda_council_eval.py` (pass).
+- `python3 scripts/launch_lambda_parallel_ablation.py --help` (pass).
+- `python3 scripts/launch_lambda_council_eval.py --help` (pass).
+- Lint check for both touched launcher scripts returned no errors.
+
+---
+
+## 2026-05-26 — Personality-level council credit gate
+
+**Goal:** Add a cheap optimization loop for council personalities before scaling conversation generation or training.
+
+**Changed files:**
+
+- Updated `scripts/router/roster.py`:
+  - personality entries now carry `state`, `offline_score`, `online_task_outcome`, and `online_sample_count`,
+  - added nested personality gate transitions: `candidate`, `active`, `cooldown`, `retired`,
+  - retired personalities are excluded from planning via `personalities_map()`.
+- Updated `scripts/router_promotion_gate.py`:
+  - aggregates personality offline credit from routing benchmark `council_selected_personalities`,
+  - also supports richer council conversation rows using `rounds[].participants` and `adjudication.winner_ids`,
+  - accepts optional online personality metrics under `online.personalities`.
+- Updated `scripts/run_routing_benchmark.py`:
+  - emits `council_selected_personalities` so benchmark rows can seed personality credit.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md`, `docs/PROJECT_STATE.md`, and `docs/WORKFLOW.md` describe two-level expert/personality elimination.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/roster.py scripts/router/council.py scripts/model_router.py scripts/run_routing_benchmark.py scripts/router_promotion_gate.py` (pass).
+- Lint check for touched Python files returned no errors.
+- Smoke-tested `ExpertRoster.apply_combined_gate(...)` with synthetic personality credit; the parent `combat_risk` expert became active while only the passing `risk_auditor` personality became active.
+
+---
+
+## 2026-05-26 — Roster-defined expert personalities
+
+**Goal:** Move council personality options into expert roster metadata instead of relying only on fixed cautious/balanced/assertive deltas.
+
+**Changed files:**
+
+- Updated `scripts/router/roster.py`:
+  - added `personalities` to roster entries,
+  - normalizes named personalities with direct trait knobs and optional `trait_deltas`,
+  - exposes `personalities_map()` for council planning.
+- Updated `scripts/router/council.py`:
+  - council planning now prefers roster-defined personalities for selected specialists,
+  - `ROUTER_COUNCIL_SPECIALIST_PERSONALITY_VARIANTS` now caps per-expert personalities,
+  - generic cautious/balanced/assertive variants remain only as fallback.
+- Updated `scripts/model_router.py` and `scripts/run_routing_benchmark.py` to pass roster personalities into council planning.
+- Updated docs:
+  - `docs/PROJECT_STATE.md`, `docs/ROUTER_ARCHITECTURE.md`, and `docs/WORKFLOW.md` describe roster-defined personalities and correctness-only adjudication boundaries.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/roster.py scripts/router/council.py scripts/model_router.py scripts/run_routing_benchmark.py scripts/init_council_roster.py` (pass).
+- Lint check for touched Python files returned no errors.
+- Smoke-tested `build_council_plan(...)` with custom `probability_hawk` and `field_commander` personalities; participant ids used the roster-defined names.
+
+---
+
+## 2026-05-26 — Correctness-only council adjudication
+
+**Goal:** Separate council inference policy from final adjudication so expert traits shape interaction but do not decide winners.
+
+**Changed files:**
+
+- Updated `scripts/router/council.py`:
+  - removed assertiveness and personality trait terms from adjudication scoring,
+  - limited adjudication contribution metadata to correctness inputs (`task_outcome_score`, confidence, answer presence via score),
+  - kept traits available on participant traces for inference/prompt shaping.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md`, `docs/PROJECT_STATE.md`, and `docs/WORKFLOW.md` now describe variants as inference-time interaction behavior and adjudication as correctness-only.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/council.py` (pass).
+- Lint check for `scripts/router/council.py` returned no errors.
+
+---
+
+## 2026-05-25 — Skip baseline by default in parallel Lambda ablations
+
+**Goal:** Avoid rerunning the unchanged baseline cell on every cloud prompt ablation and stop the currently running baseline worker to save GPU cost.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - removed `baseline` from the default cell list,
+  - added `--include-baseline` for explicit fresh-control runs,
+  - default parallel runs now launch only `style_rag`, `context_max_potential`, and `style_plus_max_potential`.
+
+**Cloud operation:**
+
+- Stopped `fe-ablation-baseline` on `158.101.101.166`.
+- Terminated the idle baseline Lambda instance (`7d54b63d95f944809f2226a8cab80abc`).
+- Confirmed the remaining three non-baseline sessions are still running.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+- CLI help confirms `--include-baseline`.
+
+---
+
+## 2026-05-25 — Parallel Lambda launcher recovery and active 4-worker run
+
+**Goal:** Restore cloud-parallel ablation execution after fresh Lambda workers stalled during serial bootstrap/sync.
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - added fallback one-by-one instance launches for Lambda accounts that reject `quantity > 1`,
+  - parallelized worker bootstrap and repo sync with `ThreadPoolExecutor`,
+  - reduced ML repo rsync payload by excluding large local-only paths (`checkpoints`, `models`, `data/raw`, `data/lora`),
+  - installed global TS tooling on workers during sync (`ts-node`, `tsconfig-paths`, `typescript`),
+  - added progress prints (`bootstrap_ok`, `sync_ok`, `start_ok`) for faster confirmation.
+
+**Cloud execution:**
+
+- Reused/started 4 active `gpu_1x_a10` Lambda workers.
+- Confirmed active tmux sessions:
+  - `baseline` -> `fe-ablation-baseline`
+  - `style_rag` -> `fe-ablation-style_rag`
+  - `context_max_potential` -> `fe-ablation-context_max_potential`
+  - `style_plus_max_potential` -> `fe-ablation-style_plus_max_potential`
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+- Remote session/log check confirmed all four `fe-ablation-`* sessions and log files exist.
+
+---
+
+## 2026-05-25 — Parallel Lambda launcher aligned with final prompt modes
+
+**Goal:** Ensure cloud-parallel ablation infrastructure remains runnable after context-engineering mode consolidation (`off` + `max_potential`).
+
+**Changed files:**
+
+- Updated `scripts/launch_lambda_parallel_ablation.py`:
+  - replaced deprecated matrix cells:
+    - `context_heavy` -> `context_max_potential`
+    - `style_plus_context` -> `style_plus_max_potential`
+  - switched context-engineering args from `heavy` to `max_potential`,
+  - updated default style corpus to `data/rag/style_prompt_rag_v2_failure_guided.json`.
+- Updated `docs/PROJECT_STATE.md`:
+  - corrected final-system prompt context modes to `off` and `max_potential`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+- `python3 scripts/launch_lambda_parallel_ablation.py --help` (pass).
+
+---
+
+## 2026-05-25 — Add `max_potential` context-engineering prompt mode
+
+**Goal:** Support an explicitly non-realistic, "maximize model ceiling" prompt profile for context-engineering experiments, independent from RAG realism constraints.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added `--prompt-context-engineering max_potential`,
+  - `max_potential` prompt injection now includes:
+    - domain/subskill-aware execution brief,
+    - expanded ranked context/verify/edit-scope sections,
+    - label-aware advanced style guidance retrieval with wider budget,
+    - explicit execution strategy + pre-output self-check checklist,
+    - strict output contract block.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_final_mass_testing_system.py` (pass).
+- Lint check for updated file (no issues).
+
+---
+
+## 2026-05-25 — Context engineering `sharp_v2` mode for prompt precision
+
+**Goal:** Replace broad context-heavy prompt injection with a sharper, budgeted context mode that prioritizes failure-targeted guidance and strict output-shape compliance.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added `--prompt-context-engineering sharp_v2`,
+  - added `--prompt-sharp-v2-components` (comma-separated `style,constraints,contract`) for component-level prompt ablations,
+  - implemented failure-profile-focused style retrieval in `sharp_v2` (stronger score/margin gates, reduced snippet count/char budget),
+  - added ranked/truncated context path selection and tighter constraints formatting for high-signal context only,
+  - added concise strict output-contract section to reduce non-applyable output drift.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_final_mass_testing_system.py` (pass).
+- Lint check for updated file (no issues).
+
+---
+
+## 2026-05-25 — Prompt-only miss artifact + targeted repair entry generation
+
+**Goal:** Materialize the remaining prompt-only retrieval misses into an auditable artifact and automatically add targeted subskill repair entries for uncovered misses.
+
+**Changed files:**
+
+- Generated `benchmarks/results/style_prompt_rag_prompt_only_misses_v1.json`:
+  - full list of prompt-only top-retrieval misses (`40` rows).
+- Updated `data/rag/style_prompt_rag_v2_failure_guided.json`:
+  - auto-added `34` targeted `subskill_failure_profile` repair entries (`targeted_repair` tag) for missing/under-covered miss subskills.
+- Generated `benchmarks/results/style_prompt_rag_targeted_repair_stats.json`:
+  - `miss_count=40`, `unique_missing_subskills=39`, `repairs_added=34`.
+
+**Verification (121-task retrieval audit):**
+
+- Prompt-only mode improved from previous state to:
+  - `strict (domain+subskill): 80/121`
+  - `broad (domain+subskill or domain-only): 105/121`
+  - `no-label-match: 16/121`
+- Heavy mode:
+  - `strict: 88/121`
+  - `domain-only: 33/121`
+  - no `no_snippet` rows observed in this pass.
+
+---
+
+## 2026-05-25 — Prompt-only multidomain suppression policy for style-RAG retrieval
+
+**Goal:** Reduce broad `multidomain` over-selection in realistic prompt-only retrieval while preserving label-aware heavy-mode behavior.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py` retrieval policy:
+  - in prompt-only mode (`use_label_signals=False`), suppress `multidomain` entries unless prompt-domain inference indicates cross-domain intent,
+  - apply mild multidomain score demotion for cross-domain prompt-only retrieval so explicit domain matches win when available,
+  - keep heavy/tag-aware mode permissive (no extra multidomain filter) to avoid reducing retrieval coverage in prompting experiments.
+
+**Verification (121-task local retrieval audit):**
+
+- Prompt-only mode:
+  - `wrong_multidomain_top`: `18` -> `5`
+  - `domain+subskill`: `51` -> `46`
+  - `domain-only`: `30` -> `35`
+  - `no-label-match`: `40` (unchanged)
+- Heavy mode preserved strong coverage:
+  - `domain+subskill=51`, `domain-only=66`, `subskill-only=1`, `no-snippet=3`.
+
+---
+
+## 2026-05-25 — Retrieval-surface RAG entries + prompt-only audit rerun
+
+**Goal:** Improve prompt-only style-RAG sorting by separating retrieval features from final guidance text (examples/symptoms/aliases/signatures), mirroring specialist-router-style discriminative retrieval surfaces.
+
+**Changed files:**
+
+- Updated `scripts/build_style_prompt_rag_from_failures.py`:
+  - added retrieval-surface fields to generated entries:
+    - `retrieval_description`
+    - `retrieval_aliases`
+    - `retrieval_symptoms`
+    - `retrieval_task_signatures`
+    - `retrieval_examples`
+  - added runtime-task prompt intake (`--tasks-json` / `--tasks-glob`) to attach representative example prompts per domain/subskill.
+  - default output now excludes base entries unless explicitly enabled (`--include-base-entries`).
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - style-RAG vectors now embed retrieval surface fields (fallback to `text` if missing) rather than embedding guidance text only.
+- Regenerated `data/rag/style_prompt_rag_v2_failure_guided.json` and `benchmarks/results/style_prompt_rag_v2_failure_stats.json`.
+
+**Commands / verification:**
+
+- `python3 scripts/build_style_prompt_rag_from_failures.py` (pass):
+  - `rows=484`, `task_prompts=121`, `generated_entries=46`, `output_entries=46`.
+- Retrieval audit over 121 tasks (local, no generation):
+  - prompt-only mode:
+    - before: `domain+subskill=3`, `domain-only=18`, `no-label-match=78`, `no-snippet=22`
+    - after: `domain+subskill=51`, `domain-only=30`, `no-label-match=40`, `no-snippet=0`
+  - heavy mode (label-aware): `domain+subskill=51`, `domain-only=66`, `subskill-only=1`, `no-snippet=3`.
+- `python3 -m py_compile scripts/build_style_prompt_rag_from_failures.py scripts/run_final_mass_testing_system.py` (pass).
+
+**Outcome:**
+
+- Prompt-only retrieval quality improved materially after adding discriminative retrieval surfaces, reducing arbitrary cross-domain picks caused by near-duplicate guidance text embeddings.
+
+---
+
+## 2026-05-25 — Router-inspired style-RAG sorting (cosine + margin gates)
+
+**Goal:** Reuse proven router ranking patterns for style-RAG sorting to reduce noisy snippet selection and ambiguous top-k retrieval.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added sparse TF + cosine helpers (`_sparse_tf`, `_cosine_sparse`),
+  - style corpus entries now cache sparse vectors (`vector`) for retrieval scoring,
+  - `_retrieve_style_snippets(...)` now ranks candidates by cosine similarity instead of raw token-overlap count,
+  - added calibration gates:
+    - `--prompt-style-rag-min-score` (default `0.08`) to suppress weak matches,
+    - `--prompt-style-rag-min-margin` (default `0.02`) to collapse near ties to top-1,
+  - preserved the realism split:
+    - prompt-only retrieval by default,
+    - label/tag-aware candidate narrowing only in `--prompt-context-engineering heavy`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_final_mass_testing_system.py` (pass).
+
+---
+
+## 2026-05-25 — RAG retrieval realism split: prompt-only by default, label-aware in heavy context mode
+
+**Goal:** Prevent label leakage in style-RAG retrieval for realistic runs while preserving label-aware retrieval in explicit context-heavy prompting experiments.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - `_retrieve_style_snippets(...)` now accepts `use_label_signals: bool`,
+  - when `use_label_signals=False`, retrieval query uses prompt text only and does not apply domain/subskill tag bonus,
+  - when `use_label_signals=True`, existing domain/subskill-aware behavior is preserved.
+  - `_augment_task_prompt(...)` now sets:
+    - `use_label_signals = (context_engineering_mode == "heavy")`.
+
+**Behavioral impact:**
+
+- Style-RAG-only runs now retrieve using prompt-only information (realistic setting).
+- Context-heavy prompt experiments (`--prompt-context-engineering heavy`) still allow label/tag-informed retrieval.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_final_mass_testing_system.py` (pass).
+
+---
+
+## 2026-05-25 — Rewrite failure-guided RAG text to actionable-only guidance
+
+**Goal:** Remove non-actionable provenance prose from failure-guided RAG entries so retrieved snippets stay concise and instruction-focused for generation.
+
+**Changed files:**
+
+- Updated `scripts/build_style_prompt_rag_from_failures.py`:
+  - changed `_entry_text(...)` to emit compact action guidance (`For domain/subskill ...`) instead of counts/sample prose.
+- Regenerated `data/rag/style_prompt_rag_v2_failure_guided.json`:
+  - rewrote all entry text to concise imperative guidance, no `Observed failure profile...` metrics in snippet text.
+- Updated `benchmarks/results/style_prompt_rag_v2_failure_stats.json` notes to reflect text rewrite.
+
+**Commands / verification:**
+
+- `python3 scripts/build_style_prompt_rag_from_failures.py` (pass)
+- post-process cleanup retained failure-only entries (`final_entries 46`).
+
+---
+
+## 2026-05-25 — Clean v2 style RAG corpus to failure-only entries
+
+**Goal:** Remove carried-over v1 handcrafted entries from the generated v2 corpus so retrieval uses only failure-guided guidance.
+
+**Changed files:**
+
+- Updated `data/rag/style_prompt_rag_v2_failure_guided.json`:
+  - removed the original v1 entries,
+  - retained only generated `failure_profile`_* entries (`46` total).
+- Updated `benchmarks/results/style_prompt_rag_v2_failure_stats.json`:
+  - adjusted metadata to reflect `base_entries=0`,
+  - updated `output_entries` and added cleanup note.
+
+**Verification:**
+
+- One-shot cleanup script output: `entries_after_cleanup 46`.
+
+---
+
+## 2026-05-25 — Failure-guided style RAG corpus generation from cloud ablation rows
+
+**Goal:** Replace sparse static-only style guidance with retrieval snippets grounded in observed failure patterns by domain + subskill from the 2x2 Lambda prompt ablation outputs.
+
+**Changed files:**
+
+- Added `scripts/build_style_prompt_rag_from_failures.py`:
+  - ingests benchmark row JSONL files (default `benchmarks/results/cloud_ablation_rows_*.jsonl`),
+  - classifies failures (`no_applyable_changes`, `verify_`*, runtime/rejected buckets),
+  - aggregates dominant failures by domain and domain+subskill,
+  - emits a merged corpus with original v1 entries plus generated failure-profile entries,
+  - writes a machine-readable stats report for auditability.
+- Generated `data/rag/style_prompt_rag_v2_failure_guided.json`:
+  - includes the 10 original v1 entries plus 46 generated failure-profile entries (`56` total).
+- Generated `benchmarks/results/style_prompt_rag_v2_failure_stats.json`:
+  - captures top failure domains/subskills and bucket counts used to build v2.
+
+**Commands / verification:**
+
+- `python3 scripts/build_style_prompt_rag_from_failures.py` (pass):
+  - `rows=484`, `row_files=4`, `base_entries=10`, `generated_entries=46`, `output_entries=56`.
+
+**Outcome:**
+
+- Produced a failure-informed style corpus that can be used for the next ablation cycle to provide targeted guidance (especially where `no_applyable_changes` and `verify_failed_unknown` dominate).
+
+---
+
+## 2026-05-24 — Parallel Lambda ablation launcher (multi-worker cell fanout)
+
+**Goal:** Enable true cloud-parallel experiment execution by dispatching one ablation cell per Lambda GPU worker instead of running cells sequentially on one instance.
+
+**Changed files:**
+
+- Added `scripts/launch_lambda_parallel_ablation.py`:
+  - launches Lambda workers (or reuses provided instance ids),
+  - waits for active instances + SSH reachability,
+  - bootstraps runtime dependencies on each worker,
+  - syncs ML + game repos (optional `--skip-sync`),
+  - starts one tmux session per ablation cell (`baseline`, `style_rag`, `context_heavy`, `style_plus_context`),
+  - writes isolated per-cell artifacts under `benchmarks/results/cloud_ablation_`*.
+
+**Usage shape:**
+
+- New instances:
+  - `python scripts/launch_lambda_parallel_ablation.py --launch-instances --instance-type gpu_1x_a10 --region us-east-1 --ssh-key-name lambda-cloud-cursor`
+- Existing workers:
+  - `python scripts/launch_lambda_parallel_ablation.py --instance-ids <id1,id2,id3,id4> --skip-sync`
+
+**Verification:**
+
+- Local syntax check:
+  - `python3 -m py_compile scripts/launch_lambda_parallel_ablation.py` (pass).
+
+---
+
+## 2026-05-24 — Arena generation backend caching for faster cloud ablations
+
+**Goal:** Remove per-task model reload overhead during ablation runs by reusing initialized generation backends across tasks.
+
+**Changed files:**
+
+- Updated `scripts/game_task_arena.py`:
+  - added in-process backend caches:
+    - `_LOCAL_BACKEND_CACHE` keyed by `(local_model_id, adapter_path)`
+    - `_FRONTIER_BACKEND_CACHE` keyed by `(model, base_url)`
+  - `generate_attempt()` now reuses cached backend instances instead of constructing/loading a new backend on every task.
+
+**Cloud follow-up:**
+
+- Synced updated `game_task_arena.py` to Lambda worker.
+- Restarted tmux session `fe-prompt-ablation` so the 2x2 matrix uses the caching behavior from task 1 onward.
+
+**Expected impact:**
+
+- Eliminates repeated local model weight loading for every single task within a run process.
+- Improves throughput for long 121-task experiment sweeps and ablation matrices.
+
+---
+
+## 2026-05-24 — Prompt ablation matrix (style-RAG + context engineering) setup and cloud launch
+
+**Goal:** Evaluate whether quality improves without additional training by adding (a) style-based RAG snippets and (b) heavier prompt context engineering.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added optional style-RAG prompt augmentation:
+    - `--prompt-style-rag-corpus`
+    - `--prompt-style-rag-top-k`
+    - `--prompt-style-rag-max-chars`
+  - added optional context-engineering augmentation:
+    - `--prompt-context-engineering off|heavy`
+  - implemented lightweight lexical retrieval + prompt augmentation pipeline that attaches style snippets and/or structured execution constraints to each task prompt before generation.
+- Added `data/rag/style_prompt_rag_v1.json`:
+  - style guidance entries for global apply-contract discipline plus domain-specific tags (HUD/economy/combat/save-load/planning).
+
+**Cloud execution launched:**
+
+- Started tmux session `fe-prompt-ablation` on Lambda with a sequential 2x2 matrix (all on `qwen_7_5b_only`, full 121-task manifest):
+  1. `baseline`
+  2. `style_rag`
+  3. `context_heavy`
+  4. `style_plus_context`
+- Artifacts per cell are written under `benchmarks/results/`:
+  - `cloud_ablation_rows_<cell>.jsonl`
+  - `cloud_ablation_summary_<cell>.json`
+  - `cloud_ablation_summary_<cell>.md`
+  - `cloud_ablation_runtime_tasks_<cell>.json`
+
+**Verification:**
+
+- Local syntax check passed for `scripts/run_final_mass_testing_system.py`.
+- Cloud run log confirms matrix start and successful baseline initialization/load.
+
+---
+
+## 2026-05-24 — Specialist cloud failure playbook (verify-signature + output-shape analysis)
+
+**Goal:** Convert the completed six-specialist cloud 121-task runs into actionable failure buckets for targeted retraining and prompt/guardrail fixes.
+
+**Changed files:**
+
+- Added `docs/SPECIALIST_FAILURE_PLAYBOOK_20260524.md`:
+  - aggregated failure mix across six specialist runs (`495` failed rows),
+  - ranked top recurring TypeScript verify signatures (top 20),
+  - identified dominant non-apply output-shape bucket (`fenced_non_contract_output`),
+  - documented concrete remediation plan (prompt controls, repair-set training data, symbol-validation guardrail loop, and instrumentation split for `verify_failed_unknown`).
+
+**Commands / analysis run:**
+
+- Queried cloud artifacts and trial logs under `benchmarks/results/` and `benchmarks/results/game_task_trials/` on the Lambda worker.
+- Parsed verify logs to normalize recurring TS signatures and counted frequency.
+- Parsed `model_output.md` for `no_applyable_changes` trials to classify output-shape failures.
+
+**Outcome:**
+
+- Dominant failure bucket confirmed as compile/type verification failures (`419/495`), with output-shape non-apply failures secondary (`76/495`).
+- Produced a prioritized remediation sequence for next training/eval cycle.
+
+---
+
+## 2026-05-23 — Linux local-backend fallback for cloud Qwen runs (model_router)
+
+**Goal:** Unblock Lambda/Linux execution for local Qwen lanes by removing the hard MLX-only dependency in `LocalMlxBackend`.
+
+**Changed files:**
+
+- Updated `scripts/model_router.py`:
+  - `LocalMlxBackend` now supports backend selection via `LOCAL_BACKEND` (`mlx` or `transformers`), with automatic fallback to transformers when MLX import/load is unavailable.
+  - added a Linux transformers generation path (`AutoModelForCausalLM` + `AutoTokenizer`) with greedy decode when `temperature=0.0` and sampled decode when `temperature>0`.
+  - added model-id normalization for MLX-style model ids (for example `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` -> `Qwen/Qwen2.5-Coder-7B-Instruct`) in transformers fallback.
+  - local-route telemetry now reports backend as `local_transformers` when the fallback is active.
+  - added explicit guard that MLX adapter paths are not yet supported under transformers fallback.
+
+**Cloud execution notes:**
+
+- Launched Lambda worker `fe-specialist-eval-worker` (`gpu_1x_a10`, `us-east-1`) and configured detached tmux runners.
+- `gpt_5_5_only` cloud ablation run completed (`121` rows written).
+- Linux fallback smoke was validated (`LOCAL_BACKEND=transformers`, local route output returned expected one-line response).
+- `qwen_7_5b_only` cloud run was started with `LOCAL_BACKEND=transformers` and progressed past model load.
+
+**Verification:**
+
+- Local syntax check: `source .venv/bin/activate && python -m py_compile scripts/model_router.py` (pass).
+- Remote smoke test (Lambda, transformers fallback): model loaded + generated expected single-line response.
+- Remote `qwen_7_5b_only` run startup confirmed in `~/cloud-eval-logs/fe-qwen-eval.log`.
+
+---
+
+## 2026-05-23 — Add Lambda Cloud env template for OpenAI-compatible frontier lane
+
+**Goal:** Make provider switching explicit by documenting Lambda Cloud-compatible environment values in the repo-level env template.
+
+**Changed files:**
+
+- Updated `.env.example`:
+  - added a provider-oriented layout with a default OpenAI block and a commented Lambda Cloud block,
+  - documented `FRONTIER_API_BASE_URL=https://api.lambda.ai/v1` and placeholder model/id values for quick copy into local `.env`.
+
+**Verification:**
+
+- Manual config check: variable names remain unchanged (`FRONTIER_API_KEY`, `FRONTIER_MODEL`, `FRONTIER_API_BASE_URL`), so existing scripts that load `.env` continue to work without code changes.
+
+---
+
+## 2026-05-17 — Prompt-site consolidation: embedded arena split/merge validation controls
+
+**Goal:** Consolidate testing workflow into the primary prompt/dashboard site so arena split/merge validation can be viewed and executed without switching to the separate arena Gradio app.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - added new dashboard tab/panel **Arena Validation** in the main web UI,
+  - added validation artifact APIs:
+    - `GET /api/arena/validation/list`
+    - `GET /api/arena/validation/content?path=...`
+    - `POST /api/arena/validation/run`
+  - added backend helpers for:
+    - listing `benchmarks/results/multi_agent_orchestration_validation*.json`,
+    - loading/summarizing selected artifact metrics,
+    - running expanded multi-source validation from dashboard and writing:
+      - `benchmarks/results/multi_agent_orchestration_validation_dashboard_latest.json`
+      - `benchmarks/results/game_task_reports/dashboard_validation_run.log`
+  - added front-end controls inside dashboard panel:
+    - artifact selector,
+    - refresh button,
+    - run-expanded-validation button,
+    - summary + raw JSON viewer with auto-refresh.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- `source .venv/bin/activate && python3 - <<'PY' ... _validation_artifact_list(limit=3) ... PY` (pass, artifacts discovered).
+- `source .venv/bin/activate && python3 - <<'PY' ... _validation_artifact_payload(...) ... PY` (pass, summary generated).
+
+---
+
+## 2026-05-17 — High-tier run on 50-task HUD+combat field-flow suite
+
+**Goal:** Execute the renamed 50-task field-flow benchmark under high complexity tier scoring.
+
+**Run command:**
+
+- `.venv/bin/python scripts/run_game_benchmark.py --model mlx-community/Qwen2.5-Coder-7B-Instruct-4bit --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --tier A --adapter-path checkpoints/fe-lora-qwen25-coder-7b-chunk6k-20260428 --output-jsonl benchmarks/results/hud_combat_field_flow_high_tier_rows_20260518.jsonl`
+
+**Outcome:**
+
+- Summary: `19/50` (`38%`) with non-zero exit because benchmark requires full pass for exit `0`.
+- Capability Index: `78.1/100` (`correctness 86.1`, `instruction 100.0`, `concision 24.1`, `speed 31.0`).
+- Advanced ACI: `64.1/100` (`weighted 78.1`, `domain-balance 38.0`, `multi-domain 38.0`).
+- Dominant misses: strict required-keyword misses (`hud`, `risk`, `attacker/defender`, `wall`, `reinforcement`, `skirmish`) and occasional fenced-output token violations (````` present).
+
+---
+
+## 2026-05-17 — Massive split/merge validation expansion (suite builder + validator v2 + multi-source audits)
+
+**Goal:** Materially increase split/merge validation coverage (volume, variety, edge controls) with auditable and repeatable artifacts.
+
+**Changed files:**
+
+- Added `scripts/build_multi_agent_validation_suite.py`:
+  - deterministic generator for large validation corpus with:
+    - dual-specialist coverage across all specialist pairs,
+    - tri-specialist cross-domain prompts,
+    - single-specialist controls,
+    - high-risk frontier controls,
+    - mechanical/ambiguous controls.
+- Updated `scripts/validate_multi_agent_orchestration.py` (backwards-compatible v2 output):
+  - supports repeatable multi-source input via repeated `--tasks` and optional `--tasks-glob`,
+  - preserves legacy top-level fields (`tasks_path`, `rows`, split/merge metrics),
+  - adds robustness metrics:
+    - `expected_multi_agent_rows/hit_rows/hit_rate`,
+    - `unexpected_multi_agent_rows/rate`,
+    - `priority_valid_rows/rate`,
+    - `unique_adapter_rows/rate`,
+    - `empty_subtasks_rows`,
+    - `coarse_bucket_counts`, `source_counts`, `category_metrics`,
+    - per-row `validation_errors`,
+  - adds optional gates (`--expected-multi-agent-min-rate`, `--max-unexpected-multi-agent-rate`) while keeping default behavior compatible.
+
+**Commands run:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/validate_multi_agent_orchestration.py scripts/build_multi_agent_validation_suite.py`
+- `source .venv/bin/activate && python scripts/build_multi_agent_validation_suite.py --output benchmarks/multi_agent_orchestration_mass_tasks_v1.json`
+- Baseline validation:
+  - `source .venv/bin/activate && python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_baseline_v2.json`
+- Expanded validation (multi-source + gates):
+  - `source .venv/bin/activate && python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --tasks benchmarks/multi_agent_orchestration_mass_tasks_v1.json --tasks benchmarks/task_routing_mixed_tasks_v1.json --expected-multi-agent-min-rate 0.6 --max-unexpected-multi-agent-rate 0.25 --output-json benchmarks/results/multi_agent_orchestration_validation_expanded_v2.json`
+- Expanded validation with stricter secondary confidence:
+  - `source .venv/bin/activate && python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --tasks benchmarks/multi_agent_orchestration_mass_tasks_v1.json --tasks benchmarks/task_routing_mixed_tasks_v1.json --secondary-min-confidence 0.35 --expected-multi-agent-min-rate 0.55 --max-unexpected-multi-agent-rate 0.35 --output-json benchmarks/results/multi_agent_orchestration_validation_expanded_v2_conf35.json`
+- Expanded validation under similarity mode:
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 ROUTER_SIMILARITY_MIN_SCORE=0.08 ROUTER_SIMILARITY_MIN_MARGIN=0.02 python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --tasks benchmarks/multi_agent_orchestration_mass_tasks_v1.json --tasks benchmarks/task_routing_mixed_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_expanded_v2_similarity.json`
+
+**Outcomes:**
+
+- Generated suite `benchmarks/multi_agent_orchestration_mass_tasks_v1.json`:
+  - `rows=284`,
+  - `expected_multi_agent_rows=180`,
+  - `expected_single_agent_rows=104`.
+- Baseline (single-source legacy set, 50 rows):
+  - `split_valid_rate=1.0`, `merge_valid_rate=1.0`,
+  - `multi_agent_rows=35`,
+  - `expected_multi_agent_hit_rate=0.70`.
+- Expanded multi-source run (`rows=346`) surfaced major orchestration-policy gaps:
+  - split/merge structure still perfect (`1.0/1.0`),
+  - `expected_multi_agent_hit_rate=0.6478`,
+  - `unexpected_multi_agent_rate=0.5776` (high over-splitting on control categories),
+  - useful per-category failure visibility added via `category_metrics`.
+- Stricter secondary confidence (`0.35`) reduced unexpected splitting sharply (`0.0345`) but collapsed expected split coverage (`0.2826`), revealing confidence-threshold tradeoff.
+- Similarity-mode expanded run increased splitting (`multi_agent_rows=190`) but retained high unexpected split rate (`0.5603`), confirming mode-level policy imbalance.
+
+---
+
+## 2026-05-17 — Arena UI integration for split/merge validity viewing + rerun
+
+**Goal:** Integrate expanded split/merge validation into the arena website so results can be viewed and re-tested directly in UI.
+
+**Changed files:**
+
+- Updated `scripts/game_task_arena.py`:
+  - added validation artifact helpers:
+    - `validation_artifact_paths()`
+    - `summarize_validation_artifact()`
+  - added arena UI controls under new accordion **Split/Merge Validity Testing**:
+    - artifact picker for `benchmarks/results/multi_agent_orchestration_validation*.json`,
+    - refresh button for artifact list,
+    - run button to execute expanded validation suite from UI,
+    - human-readable summary panel + raw JSON viewer.
+  - wired run action to execute:
+    - `scripts/validate_multi_agent_orchestration.py` over low-task + mass-suite + mixed tasks
+    - writes latest output to `benchmarks/results/multi_agent_orchestration_validation_arena_latest.json`
+    - logs command output to `benchmarks/results/game_task_reports/arena_validation_run.log`
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/game_task_arena.py` (pass).
+
+---
+
+## 2026-05-17 — Dual-usage optimization pass #2 (expanded routing corpus + retrain + comparative eval)
+
+**Goal:** Improve dual-usage routing outcomes by expanding supervised routing labels beyond the tiny benchmark-only split.
+
+**Commands run:**
+
+- Expanded dataset build:
+  - `source .venv/bin/activate && python scripts/ml_workflow.py routing-dataset --benchmark-tasks benchmarks/task_routing_mixed_tasks_v1.json --curated-jsonl data/routing/router_cases_v1.jsonl --curated-jsonl data/routing/router_cases_v2.jsonl --dataset-version 20260518_dualopt --low-confidence-threshold 0.58`
+- Retrain classifier:
+  - `source .venv/bin/activate && python scripts/ml_workflow.py routing-train --data-dir data/lora/routing_classifier/20260518_dualopt --out-dir training/router_classifier_v1`
+- Routing benchmark (hybrid policy, classifier-enabled):
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=hybrid ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 python scripts/ml_workflow.py routing-benchmark --mode both --tasks benchmarks/task_routing_mixed_tasks_v1.json`
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=hybrid ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 python scripts/ml_workflow.py routing-benchmark --mode both --tasks benchmarks/task_routing_tasks.json`
+- Multi-agent split/merge validation:
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=hybrid ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_dual_posttrain_v2.json`
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 ROUTER_SIMILARITY_MIN_SCORE=0.08 ROUTER_SIMILARITY_MIN_MARGIN=0.02 python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_dual_posttrain_similarity_v2.json`
+- Similarity-mode mixed benchmark cross-check:
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 ROUTER_SIMILARITY_MIN_SCORE=0.08 ROUTER_SIMILARITY_MIN_MARGIN=0.02 ROUTER_UNKNOWN_REVIEW_CONFIDENCE_THRESHOLD=0.58 python scripts/ml_workflow.py routing-benchmark --mode both --tasks benchmarks/task_routing_mixed_tasks_v1.json`
+
+**Outcomes:**
+
+- Expanded routing dataset succeeded (`run_id=20260518-061115_4383c5`):
+  - `rows_total=52` (`train=44`, `valid=5`, `test=3`) with all 8 adapter labels represented.
+- Retrain succeeded (`run_id=20260518-061124_88148f`) but emitted numeric warnings in classifier training (`overflow/invalid matmul`), likely due aggressive LR on sparse features:
+  - summary: `train_acc=1.0`, `valid_acc=0.4`, `test_acc=0.3333`.
+- Hybrid-policy benchmarks improved materially vs prior pass:
+  - mixed (`run_id=20260518-061138_459207`): **overall `10/12`**, route `11/12`, adapter `10/12`.
+  - core routing tasks (`run_id=20260518-061143_8acfcd`): **overall `11/12`**, route `12/12`, adapter `11/12`.
+- Multi-agent orchestration contract remained valid in both modes:
+  - hybrid: `split_valid=1.0`, `merge_valid=1.0`, `multi_agent_rows=10`.
+  - similarity: `split_valid=1.0`, `merge_valid=1.0`, `multi_agent_rows=35`.
+- Similarity-mode mixed benchmark stayed weaker (`run_id=20260518-061208_57da6b`): overall `6/12`.
+
+**Interpretation:**
+
+- For optimizing benchmark correctness now, **hybrid mode + updated classifier is best**.
+- For maximizing dual-split frequency, similarity mode still yields more secondary subtasks, but at substantial routing accuracy cost.
+- Next technical fix should lower classifier LR / add gradient clipping to eliminate numeric instability and improve validation/test accuracy.
+
+---
+
+## 2026-05-17 — Dual-usage routing optimization run (dataset/train/benchmark + orchestration validation)
+
+**Goal:** Execute dual-usage optimization workflow and verify whether task-building/routing outcomes improved.
+
+**Commands run:**
+
+- `source .venv/bin/activate && python scripts/ml_workflow.py routing-dataset`
+- `source .venv/bin/activate && python scripts/ml_workflow.py routing-train --data-dir data/lora/routing_classifier/20260518 --out-dir training/router_classifier_v1`
+- `source .venv/bin/activate && python scripts/ml_workflow.py routing-benchmark --mode both --tasks benchmarks/task_routing_mixed_tasks_v1.json`
+- Tuned retry:
+  - `source .venv/bin/activate && ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 ROUTER_SIMILARITY_MIN_SCORE=0.08 ROUTER_SIMILARITY_MIN_MARGIN=0.02 ROUTER_UNKNOWN_REVIEW_CONFIDENCE_THRESHOLD=0.58 python scripts/ml_workflow.py routing-benchmark --mode both --tasks benchmarks/task_routing_mixed_tasks_v1.json`
+- `source .venv/bin/activate && python scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_dual_posttrain.json`
+
+**Outcomes:**
+
+- `routing-dataset` succeeded (`run_id=20260518-060422_1404f5`):
+  - dataset written under `data/lora/routing_classifier/20260518`,
+  - rows: `train=10`, `valid=1`, `test=1` (very small split).
+- `routing-train` succeeded (`run_id=20260518-060438_347778`):
+  - artifacts refreshed in `training/router_classifier_v1`,
+  - reported `train/valid/test accuracy=1.0` on tiny split.
+- Mixed dual-label benchmark failed baseline (`run_id=20260518-060443_d31396`):
+  - route `8/12`, adapter `5/12`, overall `5/12`.
+- Tuned-threshold benchmark improved slightly but still failed (`run_id=20260518-060516_5e94c2`):
+  - route `9/12`, adapter `6/12`, overall `6/12`.
+- Multi-agent orchestration contract validation succeeded:
+  - `benchmarks/results/multi_agent_orchestration_validation_dual_posttrain.json`
+  - `rows=50`, `split_valid_rate=1.0`, `merge_valid_rate=1.0`, `multi_agent_rows=35`.
+
+**Interpretation:**
+
+- Task split/merge mechanics are healthy.
+- Mixed routing accuracy remains below promotion quality despite small gains from threshold tuning.
+- Main blocker is label/data coverage (current routing-train split is too small for reliable generalization).
+
+---
+
+## 2026-05-17 — Added “Most Common Skills Demonstrated” to knob topology
+
+**Goal:** Show what skills a selected knob expresses most often (frequency view), in addition to effect-based center/boundary skill analysis.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` knob topology panel:
+  - added new `Most Common Skills Demonstrated` block,
+  - computes and displays top frequencies for:
+    - `concept::<...>` signals,
+    - `bucket::<...>` signals,
+    - `concept_bucket::<concept>::<bucket>` subskills,
+  - included explicit note clarifying this section is **frequency-based**, not effect-based.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Added Map 2 + Map 3 with tabbed capability explorer flow and relation hotlinks
+
+**Goal:** Build additional manifold/evidence maps with a cleaner, organized UI flow and quick relation navigation.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability explorer (`/view/capability-map`):
+  - introduced tabbed map flow:
+    - `Map 1: Capability`
+    - `Map 2: Skill Manifold`
+    - `Map 3: Region Evidence`
+  - added `Map 2` manifold visualization:
+    - skill points by effect/sign-agreement with support-weighted marker size,
+    - region bubbles (`R<id>`) sized by task count and colored by stability sign,
+    - click region bubble to open `Map 3` evidence for that region,
+    - click skill point to hotlink back to `Map 1` node-level skill inspection.
+  - added `Map 3` region evidence panel:
+    - region stability/curvature/boundary metrics,
+    - specialist-fit summary,
+    - task evidence list with concepts and buckets.
+  - added relation hotlinks in evidence pane:
+    - `Open selected node skills` (returns to node skill topology)
+    - `Open selected region in manifold`
+  - synchronized tab events and map render lifecycle so map 2/3 update alongside map 1 selection state.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Preserve edge polarity colors on selection; use glow emphasis
+
+**Goal:** Keep positive/negative edge color cues readable when a knob is selected, while still clearly emphasizing connected edges.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map CSS:
+  - changed `.edge-line.active` from forced gold stroke to glow-only emphasis,
+  - kept each edge’s original stroke color so polarity remains visually obvious.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Explicit positive/negative correlation labeling in knob inspector
+
+**Goal:** Make selected-knob diagnostics explicitly state polarity (positive/negative), not just signed numbers.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map UI:
+  - selected-knob correlation list now labels each row as **Positive correlation** or **Negative correlation**,
+  - selected-knob header now includes positive/negative correlation counts,
+  - knob skill topology rows now label each effect as **Positive effect** or **Negative effect**,
+  - skill decoder copy now clearly explains effect polarity semantics.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Knob skill topology decoder for human-readable docs insight
+
+**Goal:** Convert raw code-like skill IDs in capability-map topology into understandable documentation output, including clear center-vs-boundary interpretation.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map UI:
+  - added a **Skill decoder** block in `Knob Skill Topology` that explains skill types and metrics in plain language,
+  - added per-skill human-readable descriptions (`concept`, `bucket`, `concept_bucket`) instead of ID-only rows,
+  - added inferred-center fallback when direct center rows are missing:
+    - reports stable-region coverage,
+    - reports dominant specialists and buckets from selected-knob task rows,
+  - kept boundary-subskill + cross-knob task traceability while improving wording/labels.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Capability map knob deselect UX (Esc + top-right clear button)
+
+**Goal:** Make selected knob state easy to exit using keyboard and explicit UI control.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map view:
+  - added top-right clear-selection `×` button inside the map viewport,
+  - button appears only when a knob is selected,
+  - added `Escape` key handler to clear current knob selection,
+  - unified selection-control visibility updates with selection state (`syncSelectionControls`).
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Knob skill topology: center vs boundary skills + cross-knob subskill tasks
+
+**Goal:** Extend capability-map knob selection so each selected knob shows center skills, boundary skills, and related subskill tasks crossing into other knobs.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - extended capability-map payload to include `skills_v1.task_region_assignments` from `skill_manifolds_v1.json`,
+  - added new diagnostics dropdown: **Knob Skill Topology**,
+  - implemented per-selected-knob skill parsing and grouping:
+    - **Center skills**: direct `concept::` / `bucket::` skills for the selected knob,
+    - **Boundary skills**: `concept_bucket::...` cross-knob skills touching the selected knob,
+  - added **Related subskill tasks from other knobs** listing (sample tasks per boundary skill) and annotated region ids, including unstable boundary-region markers.
+  - auto-opens the new skill-topology menu when a knob is selected.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Capability map crop + dropdown menus + stronger knob selection highlight
+
+**Goal:** Fix capability-map viewport cropping, collapse side sections into dropdown-style menus by default, and make selected knob state unmistakable.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map page:
+  - added dynamic SVG `viewBox` fitting from rendered node/label bounds to remove large trailing empty map area,
+  - converted diagnostics/similarity/skills/region blocks into `<details>` dropdown menus (collapsed by default),
+  - upgraded selected-node styling (strong yellow ring + glow + label emphasis),
+  - added edge-state styling to emphasize connected edges for the selected node and dim unrelated edges,
+  - auto-opens the Selected Knob Correlations dropdown when a node is clicked.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-17 — Capability map layout: move skills/region below map
+
+**Goal:** Improve docs-site capability-map structure by moving secondary analytics sections below the map area.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map page:
+  - moved `Skills Correlation (v1)` and `Region Stability (v1)` out of the right diagnostics stack,
+  - added a new `below-grid` section rendered under the map/diagnostics row,
+  - made the new section responsive (two columns on wide screens, one column on narrow screens).
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- Restarted docs server; confirmed it is serving on `http://0.0.0.0:8787`.
+
+---
+
+## 2026-05-17 — Non-routed baseline run on 180-task ACI suite
+
+**Goal:** Run the same 180-task specialist benchmark corpus without routed-policy env overrides and compare against the prior hierarchical-policy-tagged run.
+
+**Command run:**
+
+- `.venv/bin/python scripts/run_game_benchmark.py --tasks benchmarks/specialist_benchmark_tasks.json --output-jsonl benchmarks/results/aci_180_non_routed_rows_latest.jsonl`
+
+**Outcome:**
+
+- Summary: `133/180` (`74%`)
+- Capability Index: `88.5/100` (`correctness 88.2`, `instruction 99.4`, `concision 72.1`, `speed 92.4`)
+- Advanced ACI: `81.8/100` (`weighted 88.8`, `domain-balance 67.0`, `multi-domain 71.7`)
+- Runtime: ~180s
+
+**Comparison vs prior run (`aci_180_hier_policy_rows_latest`):**
+
+- Pass count: unchanged (`133/180`)
+- Advanced ACI: `81.9` -> `81.8` (effectively unchanged)
+- Main delta was speed subscore (`94.7` -> `92.4`) from longer generation latency; quality dimensions stayed the same.
+
+---
+
+## 2026-05-17 — Re-run 180-task specialist ACI load under default hierarchical routing policy
+
+**Goal:** Re-run the full 180-task specialist benchmark corpus after confirming hierarchical adapter-first routing remains default policy.
+
+**Commands run:**
+
+- Attempted workflow run with unsupported passthrough arg (rejected by CLI):
+  - `python3 scripts/ml_workflow.py benchmark --tasks benchmarks/specialist_benchmark_tasks.json --output-jsonl ...`
+- Executed full benchmark directly with venv Python and hierarchical-routing env:
+  - `ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 .venv/bin/python scripts/run_game_benchmark.py --tasks benchmarks/specialist_benchmark_tasks.json --output-jsonl benchmarks/results/aci_180_hier_policy_rows_latest.jsonl`
+
+**Outcomes:**
+
+- Full 180-task run completed in ~149s.
+- Summary: `133/180` (`74%`).
+- Capability Index: `88.7/100` (`correctness 88.2`, `instruction 99.4`, `concision 72.1`, `speed 94.7`).
+- Advanced ACI: `81.9/100` (`weighted 88.9`, `domain-balance 67.0`, `multi-domain 71.7`).
+- Per-task rows written to:
+  - `benchmarks/results/aci_180_hier_policy_rows_latest.jsonl`
+
+---
+
+## 2026-05-17 — Expand all specialist suites to 30 + advanced multi-domain ACI scoring
+
+**Goal:** Bring every specialist benchmark suite to `30` tasks (matching loading-screen), feed those tasks into the main benchmark run, and upgrade ACI-style scoring to reward multi-domain performance.
+
+**Changed files:**
+
+- Updated `scripts/build_mass_specialist_benchmark_tasks.py`:
+  - expanded generated suites to `30` rows each for `hud_status`, `economy_tooltip`, `combat_risk`, `save_load_api_guard`, and `ai_planning_explanation`,
+  - added explicit `domains` metadata to generated tasks,
+  - emits an aggregate `benchmarks/specialist_benchmark_tasks.json` from all six `*_mass_tasks_v1.json` files (now `180` total rows).
+- Regenerated benchmark suites:
+  - `benchmarks/hud_status_mass_tasks_v1.json`
+  - `benchmarks/economy_tooltip_mass_tasks_v1.json`
+  - `benchmarks/combat_risk_mass_tasks_v1.json`
+  - `benchmarks/save_load_api_guard_mass_tasks_v1.json`
+  - `benchmarks/ai_planning_explanation_mass_tasks_v1.json`
+  - `benchmarks/specialist_benchmark_tasks.json`
+- Updated `scripts/run_game_benchmark.py`:
+  - added task domain inference + task weighting (difficulty/category/multi-domain),
+  - added `advanced_aci` summary combining weighted capability, domain-balance, and multi-domain mastery,
+  - includes `task_weight`, `domains`, and `multi_domain` in per-task JSONL rows.
+
+**Commands run:**
+
+- `python3 scripts/build_mass_specialist_benchmark_tasks.py`
+- `python3 -m py_compile scripts/build_mass_specialist_benchmark_tasks.py scripts/run_game_benchmark.py`
+- `python3 -c "import json,glob; ..."` task-count checks
+- `python3 -c "import json,collections; ..."` specialist + multi-domain distribution checks
+
+**Outcomes:**
+
+- All specialist mass suites now report `30` rows each.
+- `benchmarks/specialist_benchmark_tasks.json` now contains `180` rows (`30` per specialist).
+- Aggregate benchmark set now includes substantial cross-domain coverage (`134` rows flagged as transfer/multi-domain-like by validation script).
+
+---
+
+## 2026-05-17 — Restore arena-acceptance runner + re-check split/merge routing
+
+**Goal:** Unblock `ml_workflow.py arena-acceptance` after missing script error, then re-verify multi-agent split/merge routing behavior.
+
+**Changed files:**
+
+- Added `scripts/run_arena_acceptance_tests.py`:
+  - restored expected `ml_workflow.py arena-acceptance` entrypoint (`create -> generate -> apply -> verify -> preview -> cleanup`),
+  - added deterministic acceptance summary output (`arena_acceptance_summary_v2`) with `passed_count` and `arena_capability` payload,
+  - printed ACI headline line compatible with workflow parsing (`=== Arena Capability Index: ... ===`),
+  - supported existing workflow flags (`--task-id`, `--suite`, `--summary`, `--no-cleanup`, retries/context/token controls).
+
+**Verification / runs:**
+
+- `python3 -m py_compile scripts/run_arena_acceptance_tests.py` (pass).
+- Focused arena acceptance check:
+  - `.venv/bin/python scripts/ml_workflow.py arena-acceptance --adapter-path checkpoints/fe-lora-qwen25-coder-7b-chunk6k-20260428 --task-id loading-screen-polish --task-id hud-status-summary --tsc-retries 0 --max-tokens 4096`
+  - run id: `20260518-041101_2920b1`
+  - result: `passed_count=0/2`, `ACI=20.0`; row details written to `benchmarks/results/runs/20260518-041101_2920b1/arena_acceptance_summary.json`.
+- Multi-agent split/merge validation:
+  - `python3 scripts/validate_multi_agent_orchestration.py --tasks benchmarks/ui_merge_dual_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_20260518_focus.json`
+  - result: `42/42` split-valid, `42/42` merge-valid, `31` prompts using multi-agent (secondary subtask emitted).
+
+---
+
+## 2026-05-17 — Add low-complexity loading+combat dual-domain task set (50)
+
+**Goal:** Create a larger low-complexity mixed-domain benchmark focused on strongest specialists (`loading_screen` + `combat_risk`) for split-routing and multi-agent orchestration checks.
+
+**Changed files:**
+
+- Added `benchmarks/hud_combat_field_flow_low_tasks_v1.json` with **50** tasks:
+  - each task is dual-tagged with specialists `loading_screen` + `combat_risk`,
+  - domains are explicitly multi-domain (`loading`, `combat`, `ui`),
+  - prompts are low-complexity microcopy/UI guidance spanning both domains in one request,
+  - expectation blocks enforce dual-domain signal (`loading` + combat/risk keywords), min-char checks, and plain-text guardrails where relevant.
+
+**Verification / runs:**
+
+- `python3 scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_loading_combat_dual_low_20260518.json`
+- Result: `rows=50`, `split_valid_rows=50`, `merge_valid_rows=50`, `multi_agent_rows=40` (split/merge valid rate `1.0`).
+
+---
+
+## 2026-05-17 — Replace synthetic loading+combat set with real field-flow HUD+combat tasks
+
+**Goal:** Replace overly synthetic low-complexity prompts with realistic, in-game graphical field needs using tightly related specialists.
+
+**Changed files:**
+
+- Replaced `benchmarks/hud_combat_field_flow_low_tasks_v1.json`:
+  - switched specialist pairing from broad loading/combat copy to `**hud_status` + `combat_risk`** (shared in-match field UI domain),
+  - rebuilt as 50 low-complexity prompts grounded in real gameplay flow states (`scout_to_contact`, `march_to_engage`, `terrain_warning`, `morale_breakpoint`, `flank_exposure`, `siege_pressure`, `supply_strain`, `reinforcement_arrival`, `post_skirmish`, `night_visibility`),
+  - each task now enforces practical constraints for existing UI surfaces (in-match HUD/battle panel, no new routes/systems), with metadata `real_need: in_match_field_ui`.
+
+**Verification / runs:**
+
+- `python3 scripts/validate_multi_agent_orchestration.py --tasks benchmarks/hud_combat_field_flow_low_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_loading_combat_dual_low_20260518_v2.json`
+- Result: `rows=50`, `split_valid_rows=50`, `merge_valid_rows=50`, `multi_agent_rows=35` (split/merge valid rate `1.0`).
+
+## 2026-05-17 — Concision-focused specialist tuning run (`ai_planning_explanation`) + aggregate recheck
+
+**Goal:** Execute a concision-focused tuning loop and measure impact on overall specialist capability.
+
+**Plan executed:**
+
+1. Baseline `ai_planning_explanation` specialist benchmark on current `cycle1`.
+2. Refresh `ai_planning` dataset with benchmark-ingested rows emphasizing constrained prompts.
+3. Train `ai_planning_explanation/cycle2` from `cycle1`.
+4. Re-benchmark `ai_planning_explanation` and then re-run full six-specialist aggregate with:
+  - `save_load_api_guard=cycle2`
+  - `ai_planning_explanation=cycle2`
+
+**Commands run:**
+
+- `.venv/bin/python scripts/run_game_benchmark.py --model mlx-community/Qwen2.5-Coder-7B-Instruct-4bit --tasks benchmarks/specialist_benchmark_tasks.json --specialist ai_planning_explanation --adapter-path checkpoints/adapters/ai_planning_explanation/cycle1 --output-jsonl benchmarks/results/ai_planning_before_concision_rows_20260518.jsonl`
+- `python3 scripts/ml_workflow.py ai-planning-dataset --benchmark-tasks-json benchmarks/ai_planning_explanation_mass_tasks_v1.json --max-benchmark-rows 30 --min-train-core-rows 140`
+- `python3 scripts/ml_workflow.py train --adapter-path checkpoints/adapters/ai_planning_explanation/cycle2 -- --data data/lora/adapters/ai_planning_explanation_specialist --iters 80 --batch-size 1 --val-batches 1 --steps-per-eval 20 --steps-per-report 10 --save-every 20 --learning-rate 1e-5 --max-seq-length 1024 --resume-adapter-file checkpoints/adapters/ai_planning_explanation/cycle1/adapters.safetensors`
+- `.venv/bin/python scripts/run_game_benchmark.py --model mlx-community/Qwen2.5-Coder-7B-Instruct-4bit --tasks benchmarks/specialist_benchmark_tasks.json --specialist ai_planning_explanation --adapter-path checkpoints/adapters/ai_planning_explanation/cycle2 --output-jsonl benchmarks/results/ai_planning_after_concision_rows_20260518.jsonl`
+- Full aggregate sweep with overrides, outputting `benchmarks/results/agi_specialist_summary_20260518_after_concision_tuning.json`.
+
+**Run artifacts:**
+
+- Dataset run: `benchmarks/results/runs/20260518-000944_c11c26/` (exit `0`)
+- Train run: `benchmarks/results/runs/20260518-000944_7cd478/` (exit `0`)
+- New adapter: `checkpoints/adapters/ai_planning_explanation/cycle2/adapters.safetensors`
+- Aggregate summary after tuning: `benchmarks/results/agi_specialist_summary_20260518_after_concision_tuning.json`
+
+**Observed impact:**
+
+- `ai_planning_explanation` benchmark:
+  - before (`cycle1`): `1/2`, capability `63.1`
+  - after (`cycle2`): `2/2`, capability `78.6`
+- Full specialist aggregate (with save-load `cycle2` + ai-planning `cycle2`):
+  - pass rate: `75.0%` (`9/12`)
+  - capability index: `75.8`
+- Concision remained the main bottleneck (`18.27/100`) despite correctness gains.
+
+---
+
+## 2026-05-17 — Targeted save/load retrain (`cycle2`) + all-specialist aggregate recheck
+
+**Goal:** Test whether boosting `save_load_api_guard` lifts overall specialist aggregate capability.
+
+**Commands run:**
+
+- `python3 scripts/ml_workflow.py save-load-dataset --benchmark-tasks-json benchmarks/save_load_api_guard_mass_tasks_v1.json --max-benchmark-rows 12 --min-train-core-rows 120`
+- `python3 scripts/ml_workflow.py train --adapter-path checkpoints/adapters/save_load_api_guard/cycle2 -- --data data/lora/adapters/save_load_api_guard_specialist --iters 80 --batch-size 1 --val-batches 1 --steps-per-eval 20 --steps-per-report 10 --save-every 20 --learning-rate 1e-5 --max-seq-length 1024 --resume-adapter-file checkpoints/adapters/save_load_api_guard/cycle1/adapters.safetensors`
+- Full specialist aggregate sweep with `.venv/bin/python scripts/run_game_benchmark.py` over all six specialist families, overriding save/load adapter to `cycle2`.
+
+**Run artifacts:**
+
+- Dataset run: `benchmarks/results/runs/20260518-000021_7b4b01/` (exit `0`)
+- Train run: `benchmarks/results/runs/20260518-000021_4a7f02/` (exit `0`)
+- New adapter: `checkpoints/adapters/save_load_api_guard/cycle2/adapters.safetensors`
+- Aggregate summary (before): `benchmarks/results/agi_specialist_summary_20260517.json`
+- Aggregate summary (after save/load `cycle2`): `benchmarks/results/agi_specialist_summary_20260518_after_save_load_cycle2.json`
+
+**Observed impact:**
+
+- Save/load specialist moved from `0/2` (`cycle1`) to `1/2` (`cycle2`) with capability `64.9` → `70.4`.
+- Full specialist aggregate moved:
+  - pass rate: `58.33%` (`7/12`) → `66.67%` (`8/12`)
+  - capability index: `72.3` → `73.22`
+- Main remaining bottleneck is concision (aggregate `~18/100`) plus unresolved misses in combat summary-line and ai-planning intent-label tasks.
+
+---
+
 ## 2026-05-17 — Targeted documentation training pass (`cycle4`)
 
 **Goal:** Run a targeted documentation specialist refresh and new training cycle from the current `cycle3` adapter.
@@ -316,8 +2296,8 @@ Newest entries at the **top**.
   - split `train/valid/test=220/18/18`,
   - run: `benchmarks/results/runs/20260517-222532_9c9985/`.
 - Retrained adapter `checkpoints/adapters/ai_planning_explanation/mock_aug_v2_cycle1`:
-  - benchmark improved to **`2/2`** (`100%`),
-  - capability **`78.6/100`**,
+  - benchmark improved to `**2/2`** (`100%`),
+  - capability `**78.6/100`**,
   - run: `benchmarks/results/runs/20260517-222540_b1feba/`.
 
 ---
@@ -663,6 +2643,775 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-05-26 — Lambda 7B specialist smoke and 121-task run
+
+**Goal:** Run HUD/economy specialist LoRA smoke tests on Lambda, then start full 121-task single-specialist evaluations and prevent the instance from being left idle.
+
+**Changed files:**
+
+- Updated `scripts/model_router.py` so the default local model is `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit`, matching the repo's documented/current specialist adapter lineage.
+- Updated `docs/PROJECT_STATE.md` to note the 7B default for Linux `LOCAL_BACKEND=transformers` smoke/eval runs.
+
+**Remote run notes:**
+
+- Instance: `138.2.238.190`.
+- Smoke: initial transformers fallback load failed because the old default was 1.5B-shaped while `hud_status/cycle3` and `economy_tooltip/cycle2` are 7B adapters.
+- Smoke retry with explicit `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` succeeded for both `hud_status` and `economy_tooltip`; LoRA tensor pairs applied successfully and generated short outputs.
+- Started retry run `lambda_121_hud_economy_retry_20260527-041600` under `benchmarks/results/runs/` on the remote instance with `LOCAL_BACKEND=transformers`, `SOURCE_REPO=~/fallen-empire`, and forced `single_specialist_local` variants for `hud_status` then `economy_tooltip`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/model_router.py` (pass).
+- Lint check for `scripts/model_router.py` returned no errors.
+
+---
+
+## 2026-05-26 — Lambda council conversation eval data collection
+
+**Goal:** Start a 121-task Router V3 council data-collection run on Lambda to gather conversation flow, participant rounds, and adjudication traces for future interactions-system training.
+
+**Changed files:**
+
+- Added `scripts/run_council_conversation_eval.py`:
+  - expands `benchmarks/task_bank/compiled/final_mass_testing_system_v1.json`,
+  - forces `ROUTER_COUNCIL_ENABLED=1`,
+  - records per-task routing metadata, council plan, participant outputs, debate rounds, adjudication, final output, and training eligibility,
+  - supports `--mock-generation` for fast structural smoke tests.
+- Added `scripts/launch_lambda_council_eval.py`:
+  - launches or reuses one Lambda instance,
+  - syncs the ML repo and Linux transformers environment,
+  - runs a mocked remote smoke first,
+  - starts the real 121-task council conversation collector in `tmux`.
+
+**Verification / launch status:**
+
+- Local structural smoke passed:
+  - `python3 scripts/run_council_conversation_eval.py --max-tasks 1 --mock-generation --participant-max-tokens 64 --rows-jsonl /tmp/council_smoke_rows.jsonl --summary-json /tmp/council_smoke_summary.json`
+  - produced 1 row with 9 participants, 2 debate rounds, adjudication, and summary JSON.
+- Lambda launch started with label `council121-20260526` on one `gpu_1x_a10` instance:
+  - instance id `1dc361b8ee774e56a33ed6d146cfbf19`,
+  - host `129.80.20.32`,
+  - remote session `fe-council-eval-council121-20260526`,
+  - remote log `~/cloud-eval-logs/fe-council-eval-council121-20260526.log`.
+- Remote mocked smoke passed before the full run.
+- Real run confirmed healthy after model download/load:
+  - remote rows file `~/fallen-empire-lora/benchmarks/results/council_conversation_eval_rows_council121-20260526.jsonl`,
+  - observed progress: 3/121 real rows completed,
+  - summary file pending until completion.
+
+---
+
+## 2026-05-26 — Specialist personality variants per selected adapter
+
+**Goal:** Encode support for evaluating multiple personality variants of the same specialist adapter in one council run.
+
+**Changed files:**
+
+- Updated `scripts/router/council.py`:
+  - council participants now include `base_expert_id` and `variant`,
+  - council plan now records `selected_specialist_variants`,
+  - planner can expand each selected specialist into personality variants (`cautious`, `balanced`, `assertive`) via `specialist_personality_variants`.
+- Updated `scripts/model_router.py`:
+  - new env knob `ROUTER_COUNCIL_SPECIALIST_PERSONALITY_VARIANTS` (default 3),
+  - passes specialist variant fanout into council planning.
+- Updated `scripts/router_chat_gradio.py`:
+  - specialist participants resolve adapter weights using `base_expert_id` while preserving unique variant ids for adjudication,
+  - logs include `variant` + `base_expert_id`, enabling same-specialist multi-personality comparisons.
+- Updated docs:
+  - `docs/PROJECT_STATE.md`, `docs/ROUTER_ARCHITECTURE.md`, `docs/WORKFLOW.md` with specialist variant fanout behavior and knobs.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/council.py scripts/model_router.py scripts/router_chat_gradio.py` (pass).
+- Lint check on touched files returned no errors.
+
+---
+
+## 2026-05-25 — Bounded iterative council debate (EQ compute cap)
+
+**Goal:** Support back-and-forth council deliberation while capping rounds as a trainable/operational compute control.
+
+**Changed files:**
+
+- Updated `scripts/router/council.py`:
+  - `CouncilPlan` now includes `debate_max_rounds`,
+  - planner accepts `debate_max_rounds` input.
+- Updated `scripts/model_router.py`:
+  - new planner env knob `ROUTER_COUNCIL_DEBATE_MAX_ROUNDS`,
+  - passes debate-round cap into council plan metadata.
+- Updated `scripts/router_chat_gradio.py`:
+  - added runtime hard-cap flag `--council-debate-max-rounds` (`ROUTER_CHAT_COUNCIL_DEBATE_MAX_ROUNDS`),
+  - council lane now runs iterative rounds with peer-summary critique/revision,
+  - early-stop on high-confidence / low-disagreement convergence,
+  - logs round traces (`rounds`, `debate_rounds_run`, `debate_max_rounds`) for downstream training.
+- Updated `scripts/build_council_training_dataset.py`:
+  - includes round traces in council dataset rows.
+- Updated docs:
+  - `docs/PROJECT_STATE.md`, `docs/ROUTER_ARCHITECTURE.md`, `docs/WORKFLOW.md` with debate cap controls.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/council.py scripts/model_router.py scripts/router_chat_gradio.py scripts/build_council_training_dataset.py` (pass).
+- Lint check on touched files returned no errors.
+
+---
+
+## 2026-05-25 — Council training infrastructure wired into existing workflow
+
+**Goal:** Ensure existing relevant systems can train/evaluate the new council orchestration without ad-hoc scripts.
+
+**Changed files:**
+
+- Added `scripts/init_council_roster.py`:
+  - bootstrap or merge-refresh `data/routing/council_roster_v1.json` from adapter registry,
+  - writes per-expert default trait bundle.
+- Added `scripts/build_council_training_dataset.py`:
+  - builds deterministic `train/valid/test` council dataset from router chat and prompt-lab JSONL logs,
+  - writes `manifest.json` under dataset version root.
+- Updated `scripts/routing_prompt_lab.py`:
+  - emits council metadata fields (`council_plan`, disagreement, escalation candidate) for downstream council dataset construction.
+- Updated `scripts/ml_workflow.py`:
+  - routing benchmark now exposes council flags (`--mode council`, roster path, compare toggle),
+  - routing gate now exposes council/online/roster gate args,
+  - added `council-dataset` and `council-roster-init` subcommands,
+  - command docs updated to reflect council-ready workflow.
+- Updated docs:
+  - `docs/WORKFLOW.md` routing/council command matrix and examples,
+  - `docs/PROJECT_STATE.md` council dataset + roster init + traits and workflow coverage.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/roster.py scripts/router/council.py scripts/model_router.py scripts/router_chat_gradio.py scripts/routing_prompt_lab.py scripts/build_council_training_dataset.py scripts/init_council_roster.py scripts/ml_workflow.py` (pass).
+- `python3 scripts/init_council_roster.py --merge-existing` created `data/routing/council_roster_v1.json` with specialists + 3 generalist profiles and default trait knobs.
+
+---
+
+## 2026-05-25 — Initial per-expert trait knobs wired
+
+**Goal:** Add initial per-expert council knobs and wire them end-to-end so expert behavior can be tuned from roster data.
+
+**Changed files:**
+
+- Updated `scripts/router/roster.py`:
+  - added trait schema (`assertiveness`, `verbosity`, `risk_tolerance`, `creativity`, `skepticism`, `decisiveness`),
+  - introduced default trait presets by expert/profile,
+  - normalized/clamped trait loading + serialization,
+  - added `traits_map()` for planner/runtime wiring.
+- Updated `scripts/router/council.py`:
+  - council participants now carry full `traits`,
+  - planner consumes per-expert traits when building participants/weights,
+  - adjudicator scoring now includes bounded trait effects.
+- Updated `scripts/model_router.py`:
+  - passes roster `traits_map()` into council planning.
+- Updated `scripts/router_chat_gradio.py`:
+  - council lane prompt now includes all trait directives,
+  - runtime confidence/task-outcome simulation includes trait influences,
+  - participant payload includes trait values for adjudication telemetry.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md` and `docs/PROJECT_STATE.md` with trait knob list and behavior.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/roster.py scripts/router/council.py scripts/model_router.py scripts/router_chat_gradio.py` (pass).
+- Lint check on touched router/docs files returned no errors.
+
+---
+
+## 2026-05-25 — Per-expert council assertiveness
+
+**Goal:** Add per-expert assertiveness so each council participant can voice ideas more cautiously or strongly.
+
+**Changed files:**
+
+- Updated `scripts/router/roster.py`:
+  - added `assertiveness` field to roster entries (0..1),
+  - defaults for generalist profiles + specialist entries,
+  - added `assertiveness_map()` helper for planner/runtime.
+- Updated `scripts/router/council.py`:
+  - council participant schema now includes `assertiveness`,
+  - planner consumes per-expert assertiveness and adjusts participant weight,
+  - adjudication scoring now includes a bounded assertiveness term.
+- Updated `scripts/model_router.py`:
+  - passes roster assertiveness map into council plan construction.
+- Updated `scripts/router_chat_gradio.py`:
+  - council lane prompt now includes assertiveness instruction,
+  - participant confidence simulation and adjudication payload include assertiveness.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md` and `docs/PROJECT_STATE.md` with assertiveness behavior.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/roster.py scripts/router/council.py scripts/model_router.py scripts/router_chat_gradio.py` (pass).
+
+---
+
+## 2026-05-25 — Router V3 council scaffolding + combined gate
+
+**Goal:** Implement the Specialist Council + Cascade architecture scaffold: council contracts, profile shaping, top-3 specialist planning, combined offline/online gate, and benchmark extensions.
+
+**Changed files:**
+
+- Added `scripts/router/council.py`:
+  - council plan schema (`router_council_plan_v1`) with 3 fixed generalist profiles + specialist slots,
+  - profile context-shaping helpers (`wide_compressed`, `precise_short`, `sliding_window`),
+  - deterministic adjudication schema (`router_council_adjudication_v1`) and escalation recommendation logic.
+- Added `scripts/router/roster.py`:
+  - roster schema (`router_council_roster_v1`) with `candidate -> active -> probation -> demoted` state machine,
+  - combined gate transition logic using offline + online task-outcome thresholds.
+- Updated `scripts/model_router.py`:
+  - Router V3 metadata fields on `RouteDecision` (`council_plan`, disagreement, escalation candidate),
+  - council env knobs (`ROUTER_COUNCIL_*`) and roster bootstrap/load behavior.
+- Updated `scripts/router_chat_gradio.py`:
+  - council metadata in specialist lane logs and header,
+  - optional council execution lane (`--council-specialist-lane`) with per-participant drafts + adjudication.
+- Updated `scripts/run_routing_benchmark.py`:
+  - new `--mode council`,
+  - council metrics (selection recall/precision proxy, escalation accuracy, quality proxy),
+  - baseline-vs-council comparison block in summary schema `routing_benchmark_summary_v3_council`.
+- Updated `scripts/router_promotion_gate.py`:
+  - support for v2/v3 benchmark summaries,
+  - combined checks including council metrics + optional online gate input,
+  - optional roster transition application/writeback via `--roster-json --write-roster`.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md` (Router V3 council architecture and key files),
+  - `docs/PROJECT_STATE.md` (Router V3 defaults, council knobs, updated benchmark/gate notes),
+  - `docs/WORKFLOW.md` (routing benchmark/gate commands including council flows).
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/council.py scripts/router/roster.py scripts/model_router.py scripts/router_chat_gradio.py scripts/run_routing_benchmark.py scripts/router_promotion_gate.py` (pass).
+- `python3 scripts/run_routing_benchmark.py --mode council --tasks benchmarks/task_routing_tasks.json --output-jsonl /tmp/router_council_rows.jsonl --summary-json /tmp/router_council_summary.json` (runs; emits council metrics and summary schema v3).
+- `python3 scripts/router_promotion_gate.py --summary-json /tmp/router_council_summary.json --rows-jsonl /tmp/router_council_rows.jsonl --output /tmp/router_gate_report.json` (runs; expected fail under default strict thresholds on current baseline metrics).
+
+---
+
+## 2026-05-23 — Replay preview refusal diagnosis + UX hardening
+
+**Goal:** Diagnose why one-click replay opened a refused localhost URL and ensure the dashboard reports actionable failure reasons instead of opening dead previews.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - fixed replay trial creation to use the original trial base commit (`base_git_ref` / `base_ref`) when reconstructing worktrees,
+  - changed replay endpoint behavior to return `ok=false` unless preview reaches `preview_status=ready`,
+  - propagated `last_error` details (e.g., TypeScript preflight failures) in API response,
+  - updated trial-page replay button handler to display detailed failure text.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- Replay smoke checks:
+  - trial `20260523-164956-advanced_router_with_specialists-custom-hud-unit-overlay-repl-df7d46` now returns structured failure `preview_not_ready:preflight_failed` with TS parse diagnostics (instead of opening a dead URL blindly),
+  - trial `20260523-164956-advanced_router_with_specialists-patch-home-screen-multiplaye-12650b` likewise reports preflight failure details.
+
+---
+
+## 2026-05-23 — One-click trial rehydrate + preview automation
+
+**Goal:** Eliminate repeated manual replay steps by adding a trial-page action that reconstructs a disposable arena environment and boots a live preview automatically.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - added `_rehydrate_preview_from_trial(...)` helper to:
+    - create a single-task replay manifest from the original trial task spec,
+    - create a fresh replay trial,
+    - apply the saved `model_output.md`,
+    - run verify (optional),
+    - start preview and return preview URL/status,
+  - added `POST /api/arena/trials/rehydrate-preview`,
+  - updated `/view/trial` page with **Rehydrate + Start Preview** button that calls the new endpoint and opens the preview URL.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- Lint check for `scripts/private_dashboard_server.py` returned no errors.
+
+---
+
+## 2026-05-23 — Trial explorer specialist identifiers + row sorting
+
+**Goal:** Improve trial-table readability by exposing specialist identifiers per row and adding sorting controls for specialist-centric review.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` Trial Explorer UI:
+  - added row index column (`#`),
+  - added specialist identifier column (`adapter_id`),
+  - added sort option `Specialist A-Z`,
+  - expanded table/loading/error placeholder column spans to match new layout.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+
+---
+
+## 2026-05-23 — Trial explorer direct open/replay UX
+
+**Goal:** Make accepted trial inspection actionable from the docs site by adding direct hyperlinks to trial pages and explicit replay/mock-condition guidance.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - added `/view/trial?trial_id=...` page with trial status, artifact links, and replay guidance for preview/mock game conditions,
+  - added `/view/repo-file?path=...` to render artifact/code files directly in-browser,
+  - updated Trial Explorer `Inspect` column to include a direct `open trial` hyperlink,
+  - retained in-panel details workflow while adding direct navigation.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- `python3 - <<'PY' ... _trial_detail_payload(...) ... _render_trial_view(...) ... PY` confirmed valid trial payload rendering.
+
+---
+
+## 2026-05-23 — Trial Explorer default source + sorting usability fix
+
+**Goal:** Make accepted trials discoverable by default in the docs dashboard without requiring manual file guessing or ad-hoc filters.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - added rows-source metadata helpers (`_ablation_rows_file_stats`, `_ablation_rows_sources_payload`),
+  - changed automatic source selection to prefer the most recent rows file with accepted results (fallback to most recent non-empty),
+  - added `GET /api/arena/trials/sources`,
+  - expanded Trial Explorer UI with source selector and sort options,
+  - wired Trial Explorer JS to fetch sources, pass `source_path`, and sort row results client-side.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- `python3 - <<'PY' ... _ablation_rows_sources_payload ... _load_ablation_rows_payload ... PY`:
+  - confirmed source list includes row/accepted counts,
+  - confirmed auto source now resolves to `benchmarks/results/final_system_ablation_rows_20260523_run4.jsonl` (`accepted=26`, `total=121`) when no source is selected.
+
+---
+
+## 2026-05-23 — Forced HUD-status full benchmark lane
+
+**Goal:** Start a full-system benchmark pass with every task forced through the local `hud_status` specialist lane to measure cross-domain behavior without router frontier escalation.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added a new ablation variant `hud_status_only` in `_variant_plan`,
+  - forced this variant to `backend=local`, `route=local`, `adapter_id=hud_status`,
+  - included fallback note when the adapter path is missing,
+  - expanded allowed variant set to include `hud_status_only`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_final_mass_testing_system.py` (pass).
+- Started full run:
+  - `source .venv/bin/activate && python -u scripts/run_final_mass_testing_system.py --variants hud_status_only --verify-precheck --rows-jsonl benchmarks/results/final_system_ablation_rows_20260523_hud_status_full.jsonl --summary-json benchmarks/results/final_system_ablation_summary_20260523_hud_status_full.json --summary-md benchmarks/results/final_system_ablation_summary_20260523_hud_status_full.md --runtime-tasks-json benchmarks/results/final_system_runtime_tasks_20260523_hud_status_full.json`
+  - startup confirmed (`validation_status=PASS`, variant banner `hud_status_only` printed).
+
+---
+
+## 2026-05-23 — Documentation dashboard trial explorer
+
+**Goal:** Add an automated dashboard workflow to inspect ablation trial rows, filter outcomes, and open trial artifact previews (patch/output/verify snippets) from one UI.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py`:
+  - added backend helpers to load/filter `final_system_ablation_rows_*.jsonl`,
+  - added trial-detail payload loader for `benchmarks/results/game_task_trials/<trial_id>/attempts/local/*`,
+  - added two APIs:
+    - `GET /api/arena/trials/list`
+    - `GET /api/arena/trials/detail?trial_id=<id>`
+  - added new dashboard tab **Trial Explorer** with:
+    - filters (variant, accepted, verify status, domain, free-text),
+    - row table showing task outcome/routing/failure columns,
+    - click-to-open trial detail pane with file preview snippets (`model_output.md`, `diff.patch`, `verify_results.json`, `preview.json`).
+
+**Verification:**
+
+- `python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- `python3 - <<'PY' ...` helper smoke check:
+  - `_load_ablation_rows_payload(limit=5)` returned `ok=True`,
+  - `_trial_detail_payload(<trial_id>)` returned `ok=True` with task id.
+
+---
+
+## 2026-05-23 — Force advanced-router local-only execution
+
+**Goal:** Prevent `advanced_router_with_specialists` from escalating to frontier/hybrid backends so ablations can run fully local when quota or policy requires it.
+
+**Changed files:**
+
+- Updated `scripts/run_final_mass_testing_system.py`:
+  - added `--disable-frontier-routing` CLI flag,
+  - updated `_variant_plan(...)` to accept `disable_frontier_routing`,
+  - when enabled and router chooses `frontier`/`hybrid`, force `route=local` and append `frontier_routing_disabled=forced_local` to `router_reason`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_final_mass_testing_system.py` (pass).
+- `python -u scripts/run_final_mass_testing_system.py --max-tasks 1 --variants advanced_router_with_specialists --disable-frontier-routing ...` (pass).
+- Smoke row confirms forced-local behavior on formerly frontier-prone task:
+  - `task_id=patch-node-path-runtime-resolution-01`
+  - `backend=local`, `route=local`
+  - `router_reason` contains `frontier_routing_disabled=forced_local`
+  - `verify_status=passed`.
+
+---
+
+## 2026-05-23 — Controlled checkpoint stop at 121 rows
+
+**Goal:** Stop the `run_final_mass_testing_system.py` ablation cleanly at the end of variant 1 (`121` rows) so progress can be resumed later without losing generated signals.
+
+**Changed files:**
+
+- None (runtime-operation only).
+
+**Verification:**
+
+- Row watchdog output: `ROW_TARGET_REACHED n=121 signal=INT`.
+- `wc -l benchmarks/results/final_system_ablation_rows_20260523_run4.jsonl` -> `121`.
+- Active runner process was confirmed stopped after signal handling.
+- Summary artifacts for run4 were not written yet (expected for mid-run checkpoint).
+
+---
+
+## 2026-05-17 — Adapter data quality diagnosis (negative association risk)
+
+**Goal:** Run a concrete data-quality diagnosis pass to test whether adapter-side training data could be driving negative or off-target associations.
+
+**Changed files:**
+
+- Added `scripts/audit_adapter_data_quality.py`:
+  - audits every adapter dataset under `data/lora/adapters/*`,
+  - computes risk signals per dataset: contamination (cross-specialist keyword drift), duplicate prompt/assistant pairs, duplicate record ids, negative cue language, and basic constraint adherence failures,
+  - writes structured and human-readable outputs to:
+    - `benchmarks/results/adapter_data_audit_v1.json`
+    - `benchmarks/results/adapter_data_audit_v1.md`.
+
+**Verification:**
+
+- `python3 scripts/audit_adapter_data_quality.py` (pass).
+- Audit summary:
+  - datasets scanned: `21`
+  - rows scanned: `2744`
+  - high-risk datasets (score >= 25): `11`
+  - highest-risk dataset: `hud_status_specialist_mock_aug_v2` (score `38.87`).
+- Top recurring failure pattern in high-risk sets: large cross-specialist contamination + high duplicate pair counts.
+- `ReadLints` check for `scripts/audit_adapter_data_quality.py` returned no errors.
+
+---
+
+## 2026-05-18 — Enforce strict specialist-only dataset assembly (rollback of transfer mixing)
+
+**Goal:** Keep cross-domain/test corpora for evaluation only and prevent specialist LoRA training sets from ingesting transfer or mixed-domain rows by default.
+
+**Changed files:**
+
+- Updated `scripts/adapters/build_specialist_dataset.py`:
+  - added strict specialist-only assembly controls (default on),
+  - pairwise ingestion now keeps only rows that belong to the target specialist (`task.specialists` or canonical `task_id` match),
+  - transfer rows are disallowed by default (`transfer_ratio=0`, `max_transfer_rows=0`),
+  - cross-domain benchmark tasks (`transfer` / `multidomain` tagged) are skipped by default in strict mode,
+  - manifest now records `rejected_foreign_pairwise` and `skipped_cross_domain_benchmark` counts.
+- Updated specialist dataset wrappers:
+  - `scripts/adapters/build_hud_status_specialist_dataset.py`
+  - `scripts/adapters/build_combat_risk_specialist_dataset.py`
+  - `scripts/adapters/build_economy_tooltip_specialist_dataset.py`
+  - `scripts/adapters/build_save_load_api_guard_specialist_dataset.py`
+  - `scripts/adapters/build_ai_planning_explanation_specialist_dataset.py`
+  - each now defaults to no transfer (`transfer_ratio=0`, `max_transfer_rows=0`, empty `transfer_task_ids`) and calls strict builder mode.
+- Updated `scripts/adapters/build_loading_screen_specialist_dataset.py` with matching strict specialist-only behavior and manifest counters.
+- Updated `scripts/ml_workflow.py` dataset-subcommand defaults to remove transfer mixing by default for specialist dataset builds.
+- Updated `training/adapter_registry_v1.json` to move `hud_status` champion path from mock-aug back to `checkpoints/adapters/hud_status/cycle3`.
+- Updated `docs/PROJECT_STATE.md` registry status row to match the strict-policy rollback.
+
+**Verification:**
+
+- `python3 -m py_compile` for all updated adapter builders and `scripts/ml_workflow.py` (pass).
+- Strict build smoke check:
+  - `python3 scripts/adapters/build_hud_status_specialist_dataset.py --pairwise-jsonl benchmarks/results/mock_specialist_pairwise_training_data_v1.jsonl --out-dir benchmarks/results/tmp_hud_status_pure_check --max-core-rows 40 --max-benchmark-rows 40 --min-train-core-rows 60` (pass).
+  - Result manifest reports strict filtering behavior:
+    - `transfer_pairwise=0`
+    - `rejected_foreign_pairwise=352`
+    - `skipped_cross_domain_benchmark=15`
+- `ReadLints` check for all edited scripts returned no errors.
+
+---
+
+## 2026-05-18 — Adapter scorecard + per-adapter verdicts
+
+**Goal:** Create a concrete scorecard and explicit judgment for every adapter dataset in `data/lora/adapters`.
+
+**Changed files:**
+
+- Added `scripts/score_adapter_scorecard.py`:
+  - reads `benchmarks/results/adapter_data_audit_v1.json`,
+  - computes component metrics per adapter dataset (`purity`, `constraints`, `hygiene`, `tone`, `coverage`),
+  - computes weighted final score,
+  - assigns verdict (`insufficient_data`, `rebuild_dataset`, `quarantine`) with hard gates,
+  - writes artifacts:
+    - `benchmarks/results/adapter_scorecard_v1.json`
+    - `benchmarks/results/adapter_scorecard_v1.md`.
+
+**Verification:**
+
+- `python3 scripts/score_adapter_scorecard.py` (pass).
+- Summary from generated scorecard:
+  - datasets scored: `21`
+  - verdict counts:
+    - `insufficient_data`: `6`
+    - `rebuild_dataset`: `8`
+    - `quarantine`: `7`
+- Lowest-scoring datasets are all mock-aug specialist variants (`hud_status_specialist_mock_aug_v2`, `hud_status_specialist_mock_aug_v1`, `combat_risk_specialist_mock_aug_v1`, `ai_planning_explanation_specialist_mock_aug_v2`, `economy_tooltip_specialist_mock_aug_v1`).
+- `ReadLints` check for `scripts/score_adapter_scorecard.py` returned no errors.
+
+---
+
+## 2026-05-18 — HUD status dataset expansion runbook (strict-only)
+
+**Goal:** Draft a clear, executable expansion plan for `hud_status` that avoids transfer contamination and supports promotion-quality retraining.
+
+**Changed files:**
+
+- Added `docs/HUD_STATUS_DATASET_EXPANSION_PLAN.md`:
+  - explicit objective and acceptance criteria,
+  - prompt/data mix targets,
+  - hard authoring rules for HUD-only pairwise rows,
+  - command to create `benchmarks/hud_status_mass_tasks_v2_pure.json`,
+  - strict build command for `hud_status_specialist_cycle4_pure`,
+  - manifest validation checks (`transfer_pairwise=0`, strict flags, rejected-foreign counters),
+  - train + benchmark command block and promotion gate criteria,
+  - explicit `test_ablation` labeling policy.
+
+---
+
+## 2026-05-18 — Clean 7B benchmark execution + mismatch hardening
+
+**Goal:** Run a clean final HUD benchmark with fixed 7B env and prevent recurring model/python mismatch failures.
+
+**Changed files:**
+
+- Updated `scripts/run_game_benchmark.py`:
+  - switched default benchmark model from legacy 1.5B to canonical 7B via `fe_lineage.HF_MODEL_ID`,
+  - registered Qwen extra stop tokens (`register_qwen_coder_instruct_extra_stops`) after load to avoid hanging generations on `<|im_end|>` handling.
+- Updated `scripts/ml_workflow.py`:
+  - `_cmd_benchmark(...)` now launches benchmark with repo venv python via `_venv_exe("python")` instead of inheriting potentially non-venv `sys.executable`.
+
+**Commands run and outcomes:**
+
+- Clean benchmark command:
+  - `MODEL=mlx-community/Qwen2.5-Coder-7B-Instruct-4bit .venv/bin/python scripts/run_game_benchmark.py --tasks benchmarks/specialist_benchmark_tasks.json --specialist hud_status --adapter-path checkpoints/adapters/hud_status/cycle4_pure --max-tokens 256`
+- Final benchmark result for `checkpoints/adapters/hud_status/cycle4_pure`:
+  - summary: `10/30` (33%)
+  - capability index: `83.8/100`
+  - advanced ACI: `65.5/100`
+- This run confirms execution path is now clean (no `mlx_lm` import mismatch and no 1.5B/7B shape mismatch when `MODEL` is set to 7B).
+
+**Verification:**
+
+- `python3 -m py_compile scripts/run_game_benchmark.py scripts/ml_workflow.py` (pass).
+- `ReadLints` for both edited files returned no errors.
+
+---
+
+## 2026-05-18 — Router prompt-type gap fill, manifold v2, and classifier v2 training
+
+**Goal:** Load workflow/routing history, enumerate prompt families, identify structure gaps, and materialize new routing nodes/manifolds plus a new trained router classifier artifact.
+
+**Changed files:**
+
+- Added `data/routing/router_cases_v2.jsonl` with 32 curated prompt-label rows covering:
+  - constraint-heavy prompts,
+  - mixed-intent prompts,
+  - incident/security escalation prompts,
+  - docs/run-analysis prompts,
+  - specialist transfer prompts.
+- Added `data/routing/manifold_prototype_prompts_v2.json` with expanded per-adapter prototype prompts.
+- Updated `scripts/model_router.py` prototype builder:
+  - now includes `manifold_prototype_prompts_v2.json`,
+  - now supports loading `.jsonl` prompt prototype files in addition to JSON arrays.
+- Generated new extracted skill/manifold artifacts:
+  - `data/routing/skills_v2.json`
+  - `data/routing/specialist_skill_profiles_v2.json`
+  - `data/routing/skill_manifolds_v2.json`
+- Added synthesis doc `docs/ROUTER_PROMPT_TYPES_AND_GAPS.md` (prompt taxonomy, gap map, outcomes, and next directions).
+
+**Verification / runs:**
+
+- `python3 scripts/extract_skills_v1.py --min-support-tasks-per-skill 4 --min-effect-abs 0.05 --skills-out data/routing/skills_v2.json --profiles-out data/routing/specialist_skill_profiles_v2.json --manifolds-out data/routing/skill_manifolds_v2.json --report-out benchmarks/results/skills_extraction_report_v2.md` (pass; retained skills=4, regions=5).
+- `python3 scripts/ml_workflow.py routing-dataset --benchmark-tasks benchmarks/task_routing_tasks.json --curated-jsonl data/routing/router_cases_v1.jsonl --curated-jsonl data/routing/router_cases_v2.jsonl --dataset-version router-v3-gapfill-20260518 --out-root data/lora/routing_classifier` (pass; run `20260518-052420_dfb6e7`).
+- `python3 scripts/ml_workflow.py routing-train --data-dir data/lora/routing_classifier/router-v3-gapfill-20260518 --out-dir training/router_classifier_v2 --epochs 160 --lr 0.18` (pass; run `20260518-052423_ef205b`).
+- `ROUTER_ADAPTER_SELECTION_MODE=hybrid ROUTER_CLASSIFIER_DIR=training/router_classifier_v2 python3 scripts/ml_workflow.py routing-benchmark --tasks benchmarks/task_routing_tasks.json --mode both --output-jsonl benchmarks/results/routing_policy_rows_v3_classifier.jsonl --summary-json benchmarks/results/routing_policy_summary_v3_classifier.json` (pass; run `20260518-052428_2613fe`; overall `12/12`).
+
+---
+
+## 2026-05-17 — Capability map knob-selection correlation inspector
+
+**Goal:** When selecting a knob/node in the documentation site's capability map, show the strongest related knob correlations immediately in the diagnostics panel.
+
+**Changed files:**
+
+- Updated `scripts/private_dashboard_server.py` capability-map full-page renderer:
+  - added a new **Selected Knob Correlations** panel (`nodeCorrelations`) in the diagnostics column,
+  - made map nodes clickable/selectable with visible selected-node highlight,
+  - added correlation ranking logic for the selected node using existing graph edges (`weight`, `signed`, `sample_count`),
+  - rendered top related correlations with sign (+/-), magnitude, and sample counts.
+
+**Verification:**
+
+- `source .venv/bin/activate && python3 -m py_compile scripts/private_dashboard_server.py` (pass).
+- Restarted docs server and confirmed healthy startup on `http://0.0.0.0:8787`.
+
+---
+
+## 2026-05-17 — Multi-agent hierarchical execution + split/merge validation
+
+**Goal:** Execute hierarchical recommendations (not just metadata), add multi-agent subtask routing for a single prompt, and validate that split + merge produces one combined output reliably.
+
+**Changed files:**
+
+- Added `scripts/router/multi_agent.py`:
+  - `build_multi_agent_subtasks(...)` constructs primary + optional secondary adapter subtasks from hierarchy recommendations.
+  - `merge_multi_agent_outputs(...)` deterministically combines per-adapter drafts into one integrated seed payload.
+- Updated `scripts/router_chat_gradio.py` specialist lane:
+  - added runtime knobs:
+    - `--multi-agent-specialist-lane` / `ROUTER_CHAT_MULTI_AGENT_LANE`
+    - `--multi-agent-secondary-min-confidence` / `ROUTER_CHAT_MULTI_AGENT_SECONDARY_MIN_CONFIDENCE`
+    - `--multi-agent-merge-max-tokens` / `ROUTER_CHAT_MULTI_AGENT_MERGE_MAX_TOKENS`
+  - implemented execution path:
+    - build subtasks from routing decision (`adapter_id` + `secondary_adapter_id`),
+    - run each subtask with resolved adapter weights,
+    - run merge pass to synthesize one final response for the same prompt,
+    - log orchestration telemetry (`multi_agent.subtasks`, merge stats, subtask ids).
+- Added `scripts/validate_multi_agent_orchestration.py`:
+  - validates subtask split contract and merge coverage on mixed routing prompts,
+  - writes machine-readable validation summary JSON.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md` (multi-agent execution stage and key file),
+  - `docs/PROJECT_STATE.md` (router chat multi-agent controls),
+  - `docs/WORKFLOW.md` (validation command).
+
+**Verification:**
+
+- `python3 -m py_compile scripts/router/multi_agent.py scripts/router_chat_gradio.py scripts/validate_multi_agent_orchestration.py` (pass).
+- `python3 scripts/validate_multi_agent_orchestration.py --tasks benchmarks/task_routing_mixed_tasks_v1.json --output-json benchmarks/results/multi_agent_orchestration_validation_20260517.json`
+  - rows: `12`
+  - split valid: `12/12` (`1.0`)
+  - merge valid: `12/12` (`1.0`)
+  - prompts with true multi-agent subtasks: `8/12`
+  - artifact: `benchmarks/results/multi_agent_orchestration_validation_20260517.json`.
+
+---
+
+## 2026-05-17 — Hierarchical mixed-task routing (taxonomy -> manifold rerank) v1
+
+**Goal:** Implement stable two-stage mixed-task routing (taxonomy/rule coarse stage + manifold rerank), emit secondary adapter recommendation metadata, and validate A/B impact against the non-hierarchical manifold baseline.
+
+**Changed files:**
+
+- Updated `scripts/router/policy.py`:
+  - added coarse taxonomy rule families and `infer_coarse_adapter_candidates(...)`,
+  - returns `coarse_bucket`, candidate adapter set, coarse-hit count, and reason text.
+- Updated `scripts/model_router.py`:
+  - added hierarchical routing controls:
+    - `ROUTER_HIERARCHICAL_ROUTING_ENABLED` (default on),
+    - `ROUTER_HIERARCHY_CANDIDATE_WIDTH`,
+    - `ROUTER_HIERARCHY_MIN_COARSE_HITS`,
+  - added two-stage similarity path:
+    - Stage 1 taxonomy candidate narrowing,
+    - Stage 2 cosine rerank in candidate set,
+    - fallback to global similarity if coarse stage is weak,
+  - added `AdapterSelection` internal struct and decision metadata:
+    - `secondary_adapter_id`, `secondary_confidence`,
+    - `coarse_bucket`, `candidate_adapters`, `hierarchy_stage`,
+  - updated policy tag to `router_policy_v2_hierarchical_adapter_first`.
+- Updated `scripts/run_routing_benchmark.py`:
+  - benchmark rows now include optional hierarchy diagnostics (`secondary_adapter_id`, `coarse_bucket`, `candidate_adapters`, `hierarchy_stage`) without changing summary/gate schemas.
+- Updated `scripts/optimize_manifold_routing.py`:
+  - added hierarchy grid knobs:
+    - `--hierarchy-width-grid`,
+    - `--hierarchy-min-hits-grid`,
+  - propagates hierarchy env vars to each benchmark run and records them in optimization artifacts.
+- Updated `data/routing/manifold_prototype_prompts_v1.json`:
+  - added mixed-intent disambiguation prototypes for `ai_planning_explanation` vs `general_fallback` and `loading_screen` vs `hud_status`.
+- Updated docs:
+  - `docs/ROUTER_ARCHITECTURE.md`,
+  - `docs/PROJECT_STATE.md`,
+  - `docs/WORKFLOW.md`.
+
+**Verification:**
+
+- Syntax:
+  - `python3 -m py_compile scripts/model_router.py scripts/router/policy.py scripts/run_routing_benchmark.py scripts/optimize_manifold_routing.py` (pass).
+- Hierarchical optimizer sweep:
+  - `python3 scripts/optimize_manifold_routing.py --out-dir benchmarks/results/routing_manifold_hier_opt_20260517`,
+  - best case: `s0p08_m0p02_u0p58_w3_h2`,
+  - merged metrics: overall `0.8333`, route `0.9583`, adapter `0.8333`,
+  - gate: fail on overall/adapter thresholds (same gating bottleneck as prior manifold runs).
+- A/B (same thresholds, hierarchy off vs on):
+  - hierarchy **off** (`ROUTER_HIERARCHICAL_ROUTING_ENABLED=0`):
+    - merged: overall `0.8333`, route `1.0000`, adapter `0.8333`,
+    - gate output: `benchmarks/results/routing_hier_ab_off_20260517_gate.json` (failed overall/adapter thresholds).
+  - hierarchy **on** (`ROUTER_HIERARCHICAL_ROUTING_ENABLED=1`, width `3`, min_hits `2`):
+    - merged: overall `0.8333`, route `0.9583`, adapter `0.8333`,
+    - gate output: `benchmarks/results/routing_hier_ab_on_20260517_gate.json` (failed overall/adapter thresholds).
+
+**Observed deltas / residual failures:**
+
+- Hierarchy-on fixed one AGI ambiguity (`performance-review`) but introduced one mixed-route regression (`mixed-econ-planning-explain`) in this A/B setting.
+- Common remaining misses are still concentrated in:
+  - `ai_planning_explanation` vs `general_fallback` boundary (`architecture-plan`, `code-review`),
+  - loading/hud crossover (`mixed-loading-hud-status`).
+
+---
+
+## 2026-05-17 — Promote manifold-first routing and optimize threshold sweep
+
+**Goal:** Make manifold/similarity routing the default adapter selector, improve mixed-prompt routing behavior, and re-run benchmark + gate with tuned manifold thresholds.
+
+**Changed files:**
+
+- Updated `scripts/model_router.py`:
+  - defaulted `ROUTER_ADAPTER_SELECTION_MODE` to `similarity` (manifold-first),
+  - included `data/routing/manifold_prototype_prompts_v1.json` in similarity prototype corpus loading.
+- Updated `scripts/router/policy.py`:
+  - escalated `save_load_api_guard` to `frontier` route policy to match high-risk API-guard benchmark intent.
+- Added `data/routing/manifold_prototype_prompts_v1.json`:
+  - curated prototype prompts for adapter anchors, especially mixed/failure intents (`ai_planning_explanation`, `loading_screen`, `save_load_api_guard`).
+- Added `scripts/optimize_manifold_routing.py`:
+  - grid-searches `ROUTER_SIMILARITY_MIN_SCORE`, `ROUTER_SIMILARITY_MIN_MARGIN`, and `ROUTER_UNKNOWN_REVIEW_CONFIDENCE_THRESHOLD`,
+  - writes merged summary/rows per case and evaluates each config with `router_promotion_gate.py`.
+- Updated docs:
+  - `docs/PROJECT_STATE.md` router baseline section now states manifold/similarity is default and classifier mode is override-only,
+  - `docs/WORKFLOW.md` now includes a manifold optimization command example.
+
+**Commands + outcomes:**
+
+- `python3 scripts/optimize_manifold_routing.py --out-dir benchmarks/results/routing_manifold_optimization_20260517`
+  - best case: `s0p08_m0p02_u0p58`,
+  - merged weighted metrics: overall `0.7917`, route `0.9583`, adapter `0.7917`,
+  - artifact: `benchmarks/results/routing_manifold_optimization_20260517/optimization_report.json`.
+- `ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_SIMILARITY_MIN_SCORE=0.08 ROUTER_SIMILARITY_MIN_MARGIN=0.02 ROUTER_UNKNOWN_REVIEW_CONFIDENCE_THRESHOLD=0.58 python3 scripts/ml_workflow.py routing-benchmark --tasks benchmarks/task_routing_tasks.json --mode both --output-jsonl benchmarks/results/routing_manifold_promotion_20260517_agi_rows.jsonl --summary-json benchmarks/results/routing_manifold_promotion_20260517_agi_summary.json`
+  - AGI summary: overall `0.75`, route `1.00`, adapter `0.75`.
+- `ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_SIMILARITY_MIN_SCORE=0.08 ROUTER_SIMILARITY_MIN_MARGIN=0.02 ROUTER_UNKNOWN_REVIEW_CONFIDENCE_THRESHOLD=0.58 python3 scripts/ml_workflow.py routing-benchmark --tasks benchmarks/task_routing_mixed_tasks_v1.json --mode both --output-jsonl benchmarks/results/routing_manifold_promotion_20260517_mixed_rows.jsonl --summary-json benchmarks/results/routing_manifold_promotion_20260517_mixed_summary.json`
+  - mixed summary: overall `0.8333`, route `0.9167`, adapter `0.8333`.
+- merged the AGI+mixed outputs into:
+  - `benchmarks/results/routing_manifold_promotion_20260517_merged_summary.json`,
+  - `benchmarks/results/routing_manifold_promotion_20260517_merged_rows.jsonl`.
+- `python3 scripts/ml_workflow.py routing-gate --summary-json benchmarks/results/routing_manifold_promotion_20260517_merged_summary.json --rows-jsonl benchmarks/results/routing_manifold_promotion_20260517_merged_rows.jsonl --output benchmarks/results/routing_manifold_promotion_20260517_gate.json`
+  - gate failed on overall/adapter thresholds (current `0.7917` vs required `0.90`/`0.88`),
+  - route and high-risk checks passed (`route=0.9583`, high-risk misroutes `0`).
+
+**Net result / remaining misses:**
+
+- Compared with earlier manifold baseline (overall `0.7084`), tuned manifold run improved to `0.7917` (+`0.0833` absolute).
+- Biggest gain came from mixed prompts (`0.6667` -> `0.8333`, +`0.1666`).
+- Remaining failures are adapter-selection ambiguity concentrated in:
+  - `ai_planning_explanation` prompts (`performance-review`, `architecture-plan`, `code-review`, `mixed-econ-planning-explain`),
+  - one mixed UI crossover prompt (`mixed-loading-hud-status`).
+
+---
+
 ## 2026-05-16 — Local generated-file cleanup pass
 
 **Goal:** Remove local/generated artifacts that are not source-of-truth project files and keep them out of future commits.
@@ -917,7 +3666,6 @@ Ran a focused A/B on `economy-tooltip` with `checkpoints/adapters/economy_toolti
   - `verify_status`: `failed`
   - generation: `460.59s`, total tokens `3297`
   - bug-check metrics: `bug_check_changed_output=true`, `bug_check_rag_hits_total=0`
-
 - **RAG on** (`GAME_TASK_ARENA_BUG_CHECK_RAG=1`, corpus `data/rag/bug_fix_agent_corpus.json`): trial `20260511-060014_economy-tooltip`
   - `apply_status`: `no_applyable_changes`
   - `verify_status`: `failed`
@@ -1090,15 +3838,15 @@ Comparison includes a third anchor score for **Codex-authored** `docs/PRIVATE_DA
 
 Implemented `**scripts/private_dashboard_server.py`**: a no-extra-deps WSGI service with HTTP Basic auth for viewers (`/`, `/api/summary`, `/api/events`), bearer-token ingest (`POST /api/ingest`), SQLite persistence (`FE_DASHBOARD_DB_PATH`), and docs snapshots (`PROJECT_STATE`, `SESSION_LOG`, `SPECIALIZED_RUN_HISTORY`) for personal project observability.
 
-Added `**railway.json`** for one-command deploy (`python3 scripts/private_dashboard_server.py`) and wrote `**docs/PRIVATE_DASHBOARD_DEPLOY.md**` with env/volume/security setup plus local hook->remote ingest wiring.
+Added `**railway.json`** for one-command deploy (`python3 scripts/private_dashboard_server.py`) and wrote `**docs/PRIVATE_DASHBOARD_DEPLOY.md`** with env/volume/security setup plus local hook->remote ingest wiring.
 
-Hook updates: `**.cursor/hooks/lab_hook_after_shell_autodoc.py**` and `**.cursor/hooks/lab_hook_stop_append.py**` now optionally POST events when `**FE_LAB_REMOTE_INGEST_URL**` + `**FE_LAB_REMOTE_INGEST_TOKEN**` are set (fail-open on network errors). `afterShellExecution` autodoc remains local-first (`shell_command_events.jsonl` + `SPECIALIZED_RUN_HISTORY`).
+Hook updates: `**.cursor/hooks/lab_hook_after_shell_autodoc.py`** and `**.cursor/hooks/lab_hook_stop_append.py`** now optionally POST events when `**FE_LAB_REMOTE_INGEST_URL`** + `**FE_LAB_REMOTE_INGEST_TOKEN`** are set (fail-open on network errors). `afterShellExecution` autodoc remains local-first (`shell_command_events.jsonl` + `SPECIALIZED_RUN_HISTORY`).
 
 ---
 
 ## 2026-05-04 — Cursor test-run autodoc hook (shell + code-change snapshot)
 
-Added project hook `**.cursor/hooks/lab_hook_after_shell_autodoc.py**` and wired `**afterShellExecution**` in `**.cursor/hooks.json**`. Hook command now enables autodoc by default for this repo (`FE_LAB_AUTODOC_APPEND=1` inline), so Cursor shell test/benchmark commands are auto-recorded with exit code + git status snapshot (`m/u/d` counts + touched paths) to `**lab_dashboard/shell_command_events.jsonl**` and appended as compact rows in `**docs/SPECIALIZED_RUN_HISTORY.md**`.
+Added project hook `**.cursor/hooks/lab_hook_after_shell_autodoc.py`** and wired `**afterShellExecution`** in `**.cursor/hooks.json`**. Hook command now enables autodoc by default for this repo (`FE_LAB_AUTODOC_APPEND=1` inline), so Cursor shell test/benchmark commands are auto-recorded with exit code + git status snapshot (`m/u/d` counts + touched paths) to `**lab_dashboard/shell_command_events.jsonl`** and appended as compact rows in `**docs/SPECIALIZED_RUN_HISTORY.md**`.
 
 Filter is command-based (`pytest`, `unittest`, benchmark runners, `scripts/ml_workflow.py`) unless `**FE_LAB_AUTODOC_INCLUDE_ALL=1**` is set.
 
@@ -1110,7 +3858,7 @@ Filter is command-based (`pytest`, `unittest`, benchmark runners, `scripts/ml_wo
 
 **Added:** `docs/SPECIALIZED_RUN_HISTORY.md` — append-only table for cross-cutting benchmarks (retrospective rows for the manual **2026-05-04** `documentation_agent_*_7b.jsonl` runs + convention for linking `ml_workflow_run_id` in Notes).
 
-**Orchestration:** `python scripts/ml_workflow.py documentation-rag-benchmark` — `benchmarks/results/runs/<run_id>/` (manifest, per-task JSONL), `**docs/run_history.md`** row, `**docs/SPECIALIZED_RUN_HISTORY.md`** row, tail `**benchmarks/results/documentation_rag_timeseries.jsonl**`. **Exit code** follows the **with-RAG** pass; optional no-RAG baseline uses `run_documentation_agent_benchmark.py --no-fail`.
+**Orchestration:** `python scripts/ml_workflow.py documentation-rag-benchmark` — `benchmarks/results/runs/<run_id>/` (manifest, per-task JSONL), `**docs/run_history.md`** row, `**docs/SPECIALIZED_RUN_HISTORY.md`** row, tail `**benchmarks/results/documentation_rag_timeseries.jsonl`**. **Exit code** follows the **with-RAG** pass; optional no-RAG baseline uses `run_documentation_agent_benchmark.py --no-fail`.
 
 **Runner:** `scripts/fe_ml_lab_runner.py documentation-rag-benchmark` (optional passthrough flags) appends `lab_dashboard/agent_events.jsonl` with `kind: documentation_rag_benchmark`.
 
@@ -1122,7 +3870,7 @@ Filter is command-based (`pytest`, `unittest`, benchmark runners, `scripts/ml_wo
 
 ## 2026-05-04 — Cursor `stop` hook ledger (opt-in)
 
-Added `**.cursor/hooks.json`** plus `**.cursor/hooks/lab_hook_stop_append.py`**: Agents hitting `**stop**` append `**lab_dashboard/cursor_hook_events.jsonl**` when `**FE_LAB_CURSOR_HOOK_APPEND=1**` (optional `**FE_LAB_CURSOR_HOOK_REFRESH_DASHBOARD=1**` reruns `**build_lab_optimization_dashboard.py**`). `**--cursor-hooks**` override added on the dashboard script. `**lab_dashboard/README.md**` documents hooks versus scheduled MLX versus git syncing across clones/windows.
+Added `**.cursor/hooks.json`** plus `**.cursor/hooks/lab_hook_stop_append.py`**: Agents hitting `**stop`** append `**lab_dashboard/cursor_hook_events.jsonl**` when `**FE_LAB_CURSOR_HOOK_APPEND=1**` (optional `**FE_LAB_CURSOR_HOOK_REFRESH_DASHBOARD=1**` reruns `**build_lab_optimization_dashboard.py**`). `**--cursor-hooks**` override added on the dashboard script. `**lab_dashboard/README.md**` documents hooks versus scheduled MLX versus git syncing across clones/windows.
 
 ---
 
@@ -1134,9 +3882,9 @@ Shrunk `**.cursor/skills/fe-mlx-lab/SKILL.md**`, `**disable-model-invocation: tr
 
 ## 2026-05-04 — Router Gradio OSS backbone switch (`force_route=local`)
 
-`scripts/router_chat_gradio.py` now exposes accordion **OSS / routing controls**: **Backbone** (policy **Auto** vs **Codebase OSS** → `GenerationRequest(force_route='local')`), optional registry **LoRA adapter lock**, plus defaults via `**ROUTER_CHAT_DEFAULT_BACKBONE`**, `**ROUTER_CHAT_DEFAULT_ADAPTER_LOCK`**, or `**--default-backbone**` / `**--default-adapter-lock**`. Listener default `**--port` is `7864**` (avoids `**train_ui_gradio.py`'s** `**7862`** collision). `**tests/test_router_backbone_controls.py`** locks regressions vs security-keyword frontier escalation. Revised `**.cursor/skills/fe-mlx-lab/SKILL.md**` stating Composer cannot load repo LoRA; OSS path is MLX UIs described in `**docs/PROJECT_STATE.md**`.
+`scripts/router_chat_gradio.py` now exposes accordion **OSS / routing controls**: **Backbone** (policy **Auto** vs **Codebase OSS** → `GenerationRequest(force_route='local')`), optional registry **LoRA adapter lock**, plus defaults via `**ROUTER_CHAT_DEFAULT_BACKBONE`**, `**ROUTER_CHAT_DEFAULT_ADAPTER_LOCK`**, or `**--default-backbone**` / `**--default-adapter-lock**`. Listener default `**--port` is `7864**` (avoids `**train_ui_gradio.py`'s** `**7862`** collision). `**tests/test_router_backbone_controls.py`** locks regressions vs security-keyword frontier escalation. Revised `**.cursor/skills/fe-mlx-lab/SKILL.md`** stating Composer cannot load repo LoRA; OSS path is MLX UIs described in `**docs/PROJECT_STATE.md`**.
 
-Added `**tests/test_fe_ml_lab_tools.py**` (mocked subprocess coverage for `**fe_ml_lab_runner**`, deterministic fixtures for `**build_lab_optimization_dashboard**`) + CLI overrides `**--cursor-usage**` / `**--agent-events**` on `**scripts/build_lab_optimization_dashboard.py**`. Narrative SKILL note: Cursor integration is Markdown skill metadata consumption, **not** a runtime plugin.
+Added `**tests/test_fe_ml_lab_tools.py`** (mocked subprocess coverage for `**fe_ml_lab_runner`**, deterministic fixtures for `**build_lab_optimization_dashboard`**) + CLI overrides `**--cursor-usage**` / `**--agent-events**` on `**scripts/build_lab_optimization_dashboard.py**`. Narrative SKILL note: Cursor integration is Markdown skill metadata consumption, **not** a runtime plugin.
 
 Added `**scripts/fe_ml_lab_runner.py`** with default task `**learning` → `ml_workflow.py smoke`** (switch `--sequence full` for end-to-end; passthrough MLX flags **after `--`**). Each invocation appends JSON lines to `**lab_dashboard/agent_events.jsonl**` (`FE_ML_LAB_SPARED_USD` optional heuristic). `**scripts/build_lab_optimization_dashboard.py**` renders `**lab_dashboard/index.html**` from `**docs/run_history.md**` plus optional `**lab_dashboard/cursor_usage.jsonl**`. Supporting docs: `**lab_dashboard/README.md**`, Cursor skill `**.cursor/skills/fe-mlx-lab/SKILL.md**`. Verified `**python3 -m py_compile scripts/fe_ml_lab_runner.py scripts/build_lab_optimization_dashboard.py**`, `**python scripts/build_lab_optimization_dashboard.py**`, and `**python3 -m unittest discover -s tests**`.
 
@@ -1144,7 +3892,7 @@ Added `**scripts/fe_ml_lab_runner.py`** with default task `**learning` → `ml_w
 
 ## 2026-05-04 — Combat `cycle3` resume train + HUD / combat arena acceptance
 
-**Combat resume:** Finished `**python scripts/ml_workflow.py train`** with `**--resume-adapter-file checkpoints/adapters/combat_risk/cycle3/adapters.safetensors --iters 300`**. Run `**benchmarks/results/runs/20260504-175440_9e0edb**` — `**final_exit_code` 0** (~12644 s).
+**Combat resume:** Finished `**python scripts/ml_workflow.py train`** with `**--resume-adapter-file checkpoints/adapters/combat_risk/cycle3/adapters.safetensors --iters 300`**. Run `**benchmarks/results/runs/20260504-175440_9e0edb`** — `**final_exit_code` 0** (~12644 s).
 
 **Arena (single-task, `auto`, `benchmarks/game_task_arena_examples.json`):**
 
@@ -1152,22 +3900,22 @@ Added `**scripts/fe_ml_lab_runner.py`** with default task `**learning` → `ml_w
 | Adapter                                   | Run id                       | Task                  | Result                                                                                                         |
 | ----------------------------------------- | ---------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `checkpoints/adapters/hud_status/cycle2`  | `**20260504-212542_a576dd`** | `hud-status-summary`  | **Failed** — `**generate_failed`**, `**generate_exit` 124** (never reached apply)                              |
-| `checkpoints/adapters/combat_risk/cycle3` | `**20260504-214556_a37ce5`** | `combat-risk-preview` | **Failed** — round0 edited `**GameHUD.tsx`** (export `**GameHUD`** missing); round1 `**no_applyable_changes**` |
+| `checkpoints/adapters/combat_risk/cycle3` | `**20260504-214556_a37ce5`** | `combat-risk-preview` | **Failed** — round0 edited `**GameHUD.tsx`** (export `**GameHUD`** missing); round1 `**no_applyable_changes`** |
 
 
-**Registry:** Bumped `**combat_risk` `adapter_path`** to `**checkpoints/adapters/combat_risk/cycle3`** now that resume train completed (`**training/adapter_registry_v1.json**`).
+**Registry:** Bumped `**combat_risk` `adapter_path`** to `**checkpoints/adapters/combat_risk/cycle3`** now that resume train completed (`**training/adapter_registry_v1.json`**).
 
 ---
 
 ## 2026-05-04 — Registry: route `economy_tooltip`, `hud_status`, `combat_risk` to `cycle2`
 
-Updated `training/adapter_registry_v1.json` so `**adapter_path**` resolves to the adapters trained in the overnight lockdown run: `checkpoints/adapters/economy_tooltip/cycle2`, `checkpoints/adapters/hud_status/cycle2`, `checkpoints/adapters/combat_risk/cycle2`; lineages bumped accordingly. **Promotion remains `shadow`** (single-task arena gates for these three were **not** passing at last documented runs); this only aligns the router / local UIs with the newest on-disk weights.
+Updated `training/adapter_registry_v1.json` so `**adapter_path`** resolves to the adapters trained in the overnight lockdown run: `checkpoints/adapters/economy_tooltip/cycle2`, `checkpoints/adapters/hud_status/cycle2`, `checkpoints/adapters/combat_risk/cycle2`; lineages bumped accordingly. **Promotion remains `shadow`** (single-task arena gates for these three were **not** passing at last documented runs); this only aligns the router / local UIs with the newest on-disk weights.
 
 ---
 
 ## 2026-05-04 — Overnight specialist lockdown (economy / HUD / combat cycle2)
 
-Executed the agreed runbook: `**ml_workflow`** dataset → `**train`** → single-task `**arena-acceptance**` (`--progressive-context auto`, `**benchmarks/game_task_arena_examples.json**`, `**SOURCE_REPO**` `~/fallen-empire`, `**GAME_ARENA_ROOT**` `~/fallen-empire-arena`). **No registry promotion** (none of the three gates passed end-to-end).
+Executed the agreed runbook: `**ml_workflow`** dataset → `**train`** → single-task `**arena-acceptance`** (`--progressive-context auto`, `**benchmarks/game_task_arena_examples.json`**, `**SOURCE_REPO`** `~/fallen-empire`, `**GAME_ARENA_ROOT**` `~/fallen-empire-arena`). **No registry promotion** (none of the three gates passed end-to-end).
 
 
 | Stage                         | Run id / adapter                                                         | Outcome                                                                                                                                                                                                                                                                                 |
@@ -1179,18 +3927,18 @@ Executed the agreed runbook: `**ml_workflow`** dataset → `**train`** → singl
 | `**hud_status`** train        | `20260504-063044_ba7a5e` → `checkpoints/adapters/hud_status/cycle2`      | exit **0** (~9763 s)                                                                                                                                                                                                                                                                    |
 | `**hud_status`** arena        | `20260504-091330_8c7651`, `--task-id hud-status-summary`                 | exit **1**, **0/1** — mixed rounds (export gap + retry `**no_applyable_changes`**)                                                                                                                                                                                                      |
 | `**adapter-datasets`**        | `20260504-091830_32b592`                                                 | exit **0** (refreshed `data/lora/adapters/*`)                                                                                                                                                                                                                                           |
-| `**combat_risk`** train (1st) | `20260504-091837_00c86b`                                                 | exit **1** — MLX `**IndexError`** on empty `**valid.jsonl`** / `**test.jsonl**` for `**combat_risk**` when only two synthetic train lines existed                                                                                                                                       |
-| `**combat_risk**` train (2nd) | `20260504-091854_ee9a2d`                                                 | exit **0** after duplicating train rows into `**valid.jsonl`** / `**test.jsonl`** for the immediate run; `**scripts/adapters/dataset_builder.py**` `**_split_rows**` now guarantees non-empty valid+test for tiny families so future `**adapter-datasets**` builds load in `**mlx_lm**` |
-| `**combat_risk**` arena       | `20260504-110442_ee9296`, `--task-id combat-risk-preview`                | exit **1**, **0/1** — `**apply_final_ok`**, `**tsc_exit_2`** both rounds                                                                                                                                                                                                                |
+| `**combat_risk`** train (1st) | `20260504-091837_00c86b`                                                 | exit **1** — MLX `**IndexError`** on empty `**valid.jsonl`** / `**test.jsonl`** for `**combat_risk`** when only two synthetic train lines existed                                                                                                                                       |
+| `**combat_risk`** train (2nd) | `20260504-091854_ee9a2d`                                                 | exit **0** after duplicating train rows into `**valid.jsonl`** / `**test.jsonl`** for the immediate run; `**scripts/adapters/dataset_builder.py`** `**_split_rows`** now guarantees non-empty valid+test for tiny families so future `**adapter-datasets`** builds load in `**mlx_lm`** |
+| `**combat_risk`** arena       | `20260504-110442_ee9296`, `--task-id combat-risk-preview`                | exit **1**, **0/1** — `**apply_final_ok`**, `**tsc_exit_2`** both rounds                                                                                                                                                                                                                |
 
 
-**Next:** widen `**shared_general_anchor`** or add `**build_combat_*` / pairwise combat rows** before another combat cycle2 pass; chase `**tsc`** deltas on `**economy`** and `**combat**` with curator-aligned repair JSONL or lower LR / fewer iters smoke.
+**Next:** widen `**shared_general_anchor`** or add `**build_combat_*` / pairwise combat rows** before another combat cycle2 pass; chase `**tsc`** deltas on `**economy`** and `**combat`** with curator-aligned repair JSONL or lower LR / fewer iters smoke.
 
 ---
 
 ## 2026-05-04 — HUD cycle2 arena smoke (`hud-status-summary`)
 
-Ran `arena-acceptance` on `checkpoints/adapters/hud_status/cycle2`. Run `**benchmarks/results/runs/20260504-031825_0f7a64**`: `**exit_code` 1**, **0 / 1** passed. Applied `CompactEmpireStatus.tsx` + `TestEnvironmentShell.tsx` but `**tsc` failed** both rounds (`goldPile`, `goldHold`, `morale` on `Player`, missing imports like `countVillagesInPlayerTerritory` / supply helper, bogus `provinceHexKeys`) — schema hallucination vs curator baseline.
+Ran `arena-acceptance` on `checkpoints/adapters/hud_status/cycle2`. Run `**benchmarks/results/runs/20260504-031825_0f7a64`**: `**exit_code` 1**, **0 / 1** passed. Applied `CompactEmpireStatus.tsx` + `TestEnvironmentShell.tsx` but `**tsc` failed** both rounds (`goldPile`, `goldHold`, `morale` on `Player`, missing imports like `countVillagesInPlayerTerritory` / supply helper, bogus `provinceHexKeys`) — schema hallucination vs curator baseline.
 
 ---
 
@@ -2131,13 +4879,13 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 
 ## 2026-05-03 — Third specialist integrated: `economy_tooltip` (routing + dataset path)
 
-**Router:** `**economy_tooltip_specialist_fastpath`** in `scripts/router/policy.py`; matching specialist branch in `scripts/model_router.py` (suppresses generic `**frontier`** / `**hybrid`** substring overrides after `**save_load_api_guard**` and before blanket frontier keywords).
+**Router:** `**economy_tooltip_specialist_fastpath`** in `scripts/router/policy.py`; matching specialist branch in `scripts/model_router.py` (suppresses generic `**frontier`** / `**hybrid`** substring overrides after `**save_load_api_guard`** and before blanket frontier keywords).
 
 **Data:** Curated `**data/routing/economy_tooltip_eval_prompts_v1.jsonl`** (**30**) + `**benchmarks/economy_tooltip_eval_tasks_v1.json`**. Routing check: `**30/30`** route + adapter (`benchmarks/results/routing_policy_summary_economy_eval_v1.json`). Mixed `**76/76**` regression still passes; mixed `**economy_tooltip**` probe now reports `**economy_tooltip specialist route**`.
 
 **Train path:** `**scripts/adapters/build_economy_tooltip_specialist_dataset.py`** outputs `**data/lora/adapters/economy_tooltip_specialist/`**; orchestrated via `**python scripts/ml_workflow.py economy-tooltip-dataset`** (defaults: transfer `**loading-screen-polish**` + `**hud-status-summary**`, `--min-train-core-rows` **100**).
 
-**Registry:** `training/adapter_registry_v1.json` `**economy_tooltip`** `**adapter_path`** → `**checkpoints/adapters/economy_tooltip/cycle1`**, lineage `**economy_tooltip:v1:cycle1+routing_fastpath_v1**`, `**promotion_state**` remains `**shadow**` until arena `**economy-tooltip**` is proven independently of routing-only readiness.
+**Registry:** `training/adapter_registry_v1.json` `**economy_tooltip`** `**adapter_path`** → `**checkpoints/adapters/economy_tooltip/cycle1`**, lineage `**economy_tooltip:v1:cycle1+routing_fastpath_v1`**, `**promotion_state**` remains `**shadow**` until arena `**economy-tooltip**` is proven independently of routing-only readiness.
 
 **Docs:** `docs/WORKFLOW.md`, `docs/PROJECT_STATE.md`, `data/routing/README.md`.
 
@@ -2149,7 +4897,7 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 
 **Scripts:** Fixed bash newline escaping in `**scripts/adapters/build_documentation_specialist_dataset.py`**. `**scripts/ml_workflow.py`** new subcommand `**documentation-dataset**` → runs that builder with run manifest + `**docs/run_history.md**` row.
 
-**Taxonomy/registry:** `**documentation`** added to `**LOCKED_ADAPTER_FAMILIES`**; `**TASK_TO_ADAPTER**` maps `**mlx-lora-docs-normalize**` → `**documentation**`. `**training/adapter_registry_v1.json**` entry: `**checkpoints/adapters/documentation/cycle1**`, lineage `**documentation_specialist:v1:cycle1**`, `**shadow**`. `**checkpoints/adapters/documentation/cycle1/adapter_config.json**` seeded (data → `**documentation_specialist/train.jsonl**`).
+**Taxonomy/registry:** `**documentation`** added to `**LOCKED_ADAPTER_FAMILIES`**; `**TASK_TO_ADAPTER`** maps `**mlx-lora-docs-normalize**` → `**documentation**`. `**training/adapter_registry_v1.json**` entry: `**checkpoints/adapters/documentation/cycle1**`, lineage `**documentation_specialist:v1:cycle1**`, `**shadow**`. `**checkpoints/adapters/documentation/cycle1/adapter_config.json**` seeded (data → `**documentation_specialist/train.jsonl**`).
 
 **Verify:** `.venv/bin/python scripts/ml_workflow.py documentation-dataset` (run `**20260504-032701_489e1b`**) wrote `**data/lora/adapters/documentation_specialist/`** (**120**/3/1 train/valid/test rows).
 
@@ -2159,13 +4907,13 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 
 ## 2026-05-04 — Documentation routing keyword eval + trained cycle1 weights
 
-**Routing:** Expanded `**scripts/router/classifier.py`** phrase bank for `**documentation`**; `**build_plan**` + `**model_router**` specialist fastpaths mirror economy/loading semantics so frontier/hybrid substring hooks don’t steal mlx-doc prompts.
+**Routing:** Expanded `**scripts/router/classifier.py`** phrase bank for `**documentation`**; `**build_plan`** + `**model_router**` specialist fastpaths mirror economy/loading semantics so frontier/hybrid substring hooks don’t steal mlx-doc prompts.
 
-**Eval sources:** `**scripts/build_documentation_eval_tasks_v1.py`** → `**data/routing/documentation_eval_prompts_v1.jsonl`** + `**benchmarks/documentation_eval_tasks_v1.json**` (SHA256-prefix ids; regenerate with the script).
+**Eval sources:** `**scripts/build_documentation_eval_tasks_v1.py`** → `**data/routing/documentation_eval_prompts_v1.jsonl`** + `**benchmarks/documentation_eval_tasks_v1.json`** (SHA256-prefix ids; regenerate with the script).
 
-**Regression:** `**tests/test_documentation_routing_eval.py`** + `**tests/__init__.py`** exercise each task via `**RoutingPolicy**`, subprocess `**run_routing_benchmark.py**`, and (**after train**) `**adapters.safetensors`** presence.
+**Regression:** `**tests/test_documentation_routing_eval.py`** + `**tests/__init__.py`** exercise each task via `**RoutingPolicy`**, subprocess `**run_routing_benchmark.py`**, and (after train) `**adapters.safetensors**` presence.
 
-**Train:** `**python scripts/ml_workflow.py documentation-dataset`** then `**train --adapter-path checkpoints/adapters/documentation/cycle1 -- --data …/documentation_specialist --iters 80 …`** (`**20260504-032912_d8cd21**`, exit 0).
+**Train:** `**python scripts/ml_workflow.py documentation-dataset`** then `**train --adapter-path checkpoints/adapters/documentation/cycle1 -- --data …/documentation_specialist --iters 80 …`** (`**20260504-032912_d8cd21`**, exit 0).
 
 **Docs:** `**data/routing/README.md`** listed the docs eval JSONL beside other specialists.
 
@@ -2191,7 +4939,7 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 
 ## 2026-05-04 — Supervisor JSONL + decode budget tuned for reusable SFT rows
 
-`**router_chat_gradio.py`:** default assistant decode ceiling raised (**2048** new tokens vs **896**) so economy/HUD/UI turns stop mid-structure less often; override with `**MAX_TOKENS`** / `**--max-tokens`**. Completed responses log `**mlx_finish_reason**`, token counts, `**generation_budget_hit**`, Markdown fence imbalance, `**recommended_for_sft_assistant_turn**`, `**schema_version: router_chat_supervisor_v1**`. UI emits a truncation banner when MLX hits `**length**` limits.
+`**router_chat_gradio.py`:** default assistant decode ceiling raised (**2048** new tokens vs **896**) so economy/HUD/UI turns stop mid-structure less often; override with `**MAX_TOKENS`** / `**--max-tokens`**. Completed responses log `**mlx_finish_reason`**, token counts, `**generation_budget_hit**`, Markdown fence imbalance, `**recommended_for_sft_assistant_turn**`, `**schema_version: router_chat_supervisor_v1**`. UI emits a truncation banner when MLX hits `**length**` limits.
 
 **System prompt:** nudges complete structured Markdown/fenced replies for gameplay/UI workloads.
 
@@ -2315,7 +5063,7 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 **Changed files:**
 
 - Added `scripts/build_training_data_dashboard_cache.py`:
-  - scans `data/lora/adapters/*`,
+  - scans `data/lora/adapters/`*,
   - captures split metadata (`train/valid/test` row counts + size + mtime) and `manifest.json`,
   - writes `data/training_dashboard/training_data_catalog.json` for dashboard reads.
 - Updated `scripts/trigger_doc_training_on_changes.py`:
@@ -2484,8 +5232,6 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 - `python3 -m py_compile scripts/router_chat_gradio.py` (pass).
 - Lint check for `scripts/router_chat_gradio.py` returned no errors.
 
----
-
 ## 2026-05-15 — Combat preview prompt routing correction
 
 **Goal:** Fix router misclassification where combat-preview prompts were routed to fallback/hybrid due keyword collisions.
@@ -2512,7 +5258,7 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 **Changed files:**
 
 - Updated `scripts/router_chat_gradio.py` CSS:
-  - forced dark text + text-fill on all message descendants (`.message *`, user/bot variants),
+  - forced dark text + text-fill on all message descendants (`.message` *, user/bot variants),
   - preserved readable code-block contrast by re-overriding `pre/code` descendants,
   - added explicit input text fill + caret color for `input/textarea/select`.
 

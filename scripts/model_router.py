@@ -24,9 +24,11 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 from router.classifier import LinearRouterClassifier
-from router.policy import derive_route_from_adapter
+from router.council import build_council_plan, estimate_disagreement
+from router.policy import derive_route_from_adapter, infer_coarse_adapter_candidates
+from router.roster import ExpertRoster
 
-DEFAULT_LOCAL_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+DEFAULT_LOCAL_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 _TOKEN_RE = re.compile(r"[a-zA-Z0-9_./*-]+")
 
 
@@ -61,7 +63,28 @@ class RouteDecision:
     ambiguity: float = 0.5
     risk_class: str = "low"
     complexity: str = "low"
+    secondary_adapter_id: Optional[str] = None
+    secondary_confidence: float = 0.0
+    coarse_bucket: str = "unclassified"
+    candidate_adapters: List[str] = field(default_factory=list)
+    hierarchy_stage: str = "single_stage"
     policy_version: str = "router_policy_v2_adapter_first"
+    council_enabled: bool = False
+    council_plan: Dict[str, Any] = field(default_factory=dict)
+    council_disagreement: float = 0.0
+    council_escalation_candidate: bool = False
+
+
+@dataclass
+class AdapterSelection:
+    adapter_id: str
+    confidence: float
+    reason: str
+    secondary_adapter_id: Optional[str] = None
+    secondary_confidence: float = 0.0
+    coarse_bucket: str = "unclassified"
+    candidate_adapters: List[str] = field(default_factory=list)
+    hierarchy_stage: str = "single_stage"
 
 
 @dataclass
@@ -129,6 +152,12 @@ class RoutingPolicy:
     }
     specialist_keywords = {
         "loading_screen": (
+            "ui surface",
+            "visual surface",
+            "panel theme",
+            "sprite overlay",
+            "isometric display",
+            "render contract",
             "loading screen",
             "load screen",
             "splash screen",
@@ -146,17 +175,49 @@ class RoutingPolicy:
             "status overlay",
             "ui overlay",
             "status summary",
+            "status signal",
+            "resource signal",
+            "state exposure",
+            "indicator logic",
+            "input flow",
+            "ui contract",
         ),
         "economy_tooltip": (
-            "economy",
+            "resource projection",
+            "economy ui",
             "tooltip",
-            "income",
-            "upkeep",
+            "cost display",
+            "production signal",
+            "resource cache",
+            "signed delta",
             "resource",
             "net income",
             "gold per turn",
         ),
+        "economistRL": (
+            "economistrl",
+            "economist rl",
+            "economy simulation",
+            "market dynamics",
+            "market elasticity",
+            "population dynamics",
+            "food economy",
+            "food buffer",
+            "labor economy",
+            "worker wage",
+            "productivity feedback",
+            "spoilage",
+            "progressive upkeep",
+            "feedback control",
+            "resource balance",
+        ),
         "combat_risk": (
+            "army ui",
+            "formation flow",
+            "order dispatch",
+            "movement ui",
+            "tactical controls",
+            "selection flow",
             "combat risk",
             "combat preview",
             "combat previewing",
@@ -171,6 +232,9 @@ class RoutingPolicy:
             "threat",
         ),
         "save_load_api_guard": (
+            "state persistence",
+            "state contract",
+            "state contract guard",
             "save/load",
             "save load",
             "save",
@@ -180,15 +244,21 @@ class RoutingPolicy:
             "api guard",
             "auth guard",
             "serialization",
+            "snapshot schema",
+            "request validation",
+            "identity integrity",
+            "cross node state",
+            "deploy contract",
         ),
         "ai_planning_explanation": (
-            "ai planning",
-            "planning explanation",
-            "why ai",
-            "decision rationale",
-            "explain ai plan",
-            "plan",
-            "planning",
+            "crossdomain state",
+            "crossdomain patch",
+            "state logic",
+            "schema update",
+            "shared logic",
+            "repair candidate",
+            "fallback specialist",
+            "general patch",
             "review",
             "tradeoff",
             "optimize",
@@ -233,11 +303,19 @@ class RoutingPolicy:
             else:
                 classifier_confidence_threshold = 0.55
         self.classifier_confidence_threshold = classifier_confidence_threshold
+        # Manifold/similarity routing is now the default selector for adapter-first Router V2.
         self.adapter_selection_mode = (
-            os.environ.get("ROUTER_ADAPTER_SELECTION_MODE", "hybrid").strip().lower()
+            os.environ.get("ROUTER_ADAPTER_SELECTION_MODE", "similarity").strip().lower()
         )
         self.similarity_min_score = float(os.environ.get("ROUTER_SIMILARITY_MIN_SCORE", "0.10"))
         self.similarity_min_margin = float(os.environ.get("ROUTER_SIMILARITY_MIN_MARGIN", "0.03"))
+        self.hierarchy_enabled = os.environ.get("ROUTER_HIERARCHICAL_ROUTING_ENABLED", "1").strip() not in {
+            "0",
+            "false",
+            "False",
+        }
+        self.hierarchy_candidate_width = int(os.environ.get("ROUTER_HIERARCHY_CANDIDATE_WIDTH", "4"))
+        self.hierarchy_min_coarse_hits = int(os.environ.get("ROUTER_HIERARCHY_MIN_COARSE_HITS", "1"))
         self.unknown_review_enabled = os.environ.get("ROUTER_UNKNOWN_REVIEW_ENABLED", "1").strip() not in {
             "0",
             "false",
@@ -257,6 +335,40 @@ class RoutingPolicy:
         self.classifier_dir = classifier_dir or Path(env_classifier_dir).expanduser().resolve() if env_classifier_dir else default_classifier_dir
         self.classifier = self._load_classifier()
         self.similarity_prototypes = self._build_similarity_prototypes()
+        self.council_enabled = os.environ.get("ROUTER_COUNCIL_ENABLED", "0").strip() not in {
+            "0",
+            "false",
+            "False",
+        }
+        self.council_specialist_top_k = max(0, int(os.environ.get("ROUTER_COUNCIL_SPECIALIST_TOP_K", "3")))
+        self.council_specialist_personality_variants = max(
+            1, int(os.environ.get("ROUTER_COUNCIL_SPECIALIST_PERSONALITY_VARIANTS", "3"))
+        )
+        self.council_personality_selection_policy = os.environ.get(
+            "ROUTER_COUNCIL_PERSONALITY_SELECTION_POLICY",
+            "bandit",
+        ).strip()
+        self.council_personality_exploration_rate = float(
+            os.environ.get("ROUTER_COUNCIL_PERSONALITY_EXPLORATION_RATE", "0.15")
+        )
+        self.council_disagreement_threshold = float(
+            os.environ.get("ROUTER_COUNCIL_DISAGREEMENT_THRESHOLD", "0.45")
+        )
+        self.council_low_conf_threshold = float(
+            os.environ.get("ROUTER_COUNCIL_LOW_CONFIDENCE_THRESHOLD", "0.58")
+        )
+        self.council_debate_max_rounds = max(
+            1, int(os.environ.get("ROUTER_COUNCIL_DEBATE_MAX_ROUNDS", "2"))
+        )
+        self.council_escalation_rule = os.environ.get("ROUTER_COUNCIL_ESCALATION_RULE", "either_trigger").strip()
+        self.council_transparency = os.environ.get("ROUTER_COUNCIL_TRANSPARENCY", "detailed").strip()
+        self.council_roster_path = Path(
+            os.environ.get(
+                "ROUTER_COUNCIL_ROSTER_JSON",
+                str(Path(__file__).resolve().parent.parent / "data" / "routing" / "council_roster_v1.json"),
+            )
+        ).expanduser()
+        self.council_roster = self._load_or_bootstrap_council_roster()
 
     def _load_available_adapters(self) -> set[str]:
         try:
@@ -281,6 +393,16 @@ class RoutingPolicy:
         except Exception:
             return None
 
+    def _load_or_bootstrap_council_roster(self) -> ExpertRoster:
+        specialist_ids = {aid for aid in self.available_adapters if aid != "general_fallback"}
+        try:
+            roster = ExpertRoster.load_or_bootstrap(path=self.council_roster_path, specialist_ids=specialist_ids)
+            if self.council_enabled:
+                roster.save(self.council_roster_path)
+            return roster
+        except Exception:
+            return ExpertRoster.bootstrap(specialist_ids=specialist_ids)
+
     @staticmethod
     def _tokenize(text: str) -> List[str]:
         return [m.group(0).lower() for m in _TOKEN_RE.finditer(text or "")]
@@ -292,6 +414,8 @@ class RoutingPolicy:
             root / "benchmarks" / "specialist_benchmark_tasks.json",
             root / "benchmarks" / "task_routing_tasks.json",
             root / "benchmarks" / "task_routing_mixed_tasks_v1.json",
+            root / "data" / "routing" / "manifold_prototype_prompts_v1.json",
+            root / "data" / "routing" / "manifold_prototype_prompts_v2.json",
             root / "benchmarks" / "documentation_testing_agent_eval_tasks_v1.json",
             root / "benchmarks" / "loading_screen_mass_tasks_v1.json",
             root / "benchmarks" / "hud_status_mass_tasks_v1.json",
@@ -299,20 +423,31 @@ class RoutingPolicy:
             root / "benchmarks" / "combat_risk_mass_tasks_v1.json",
             root / "benchmarks" / "save_load_api_guard_mass_tasks_v1.json",
             root / "benchmarks" / "ai_planning_explanation_mass_tasks_v1.json",
+            root / "data" / "routing" / "router_cases_v2.jsonl",
         ]
         per_adapter_docs: Dict[str, List[Dict[str, float]]] = {}
         for path in candidates:
             if not path.is_file():
                 continue
+            rows: list[dict[str, Any]] = []
             try:
-                rows = json.loads(path.read_text(encoding="utf-8"))
+                if path.suffix == ".jsonl":
+                    for raw in path.read_text(encoding="utf-8").splitlines():
+                        raw = raw.strip()
+                        if not raw:
+                            continue
+                        payload = json.loads(raw)
+                        if isinstance(payload, dict):
+                            rows.append(payload)
+                else:
+                    payload = json.loads(path.read_text(encoding="utf-8"))
+                    if isinstance(payload, list):
+                        rows = [item for item in payload if isinstance(item, dict)]
             except Exception:
                 continue
-            if not isinstance(rows, list):
+            if not rows:
                 continue
             for row in rows:
-                if not isinstance(row, dict):
-                    continue
                 prompt = str(row.get("prompt") or "")
                 adapters_raw = row.get("specialists")
                 if isinstance(adapters_raw, list):
@@ -365,12 +500,8 @@ class RoutingPolicy:
             return 0.0
         return dot / (na * nb)
 
-    def _classify_adapter_similarity(self, prompt: str) -> tuple[str, float, str]:
-        if not self.similarity_prototypes:
-            return "general_fallback", 0.45, "no similarity prototypes available"
+    def _score_similarity(self, prompt: str) -> tuple[Dict[str, float], List[tuple[float, str]]]:
         toks = self._tokenize(prompt)
-        if not toks:
-            return "general_fallback", 0.45, "empty prompt tokens for similarity routing"
         query: Dict[str, float] = {}
         for tok in toks:
             query[tok] = query.get(tok, 0.0) + 1.0
@@ -381,33 +512,114 @@ class RoutingPolicy:
             score = self._cosine_sparse(query, proto)
             scores.append((score, aid))
         scores.sort(reverse=True)
-        best_score, best_adapter = scores[0]
-        second = scores[1][0] if len(scores) > 1 else 0.0
-        margin = best_score - second
-        conf = max(0.5, min(0.98, 0.55 + 0.6 * best_score - 0.25 * second))
+        return query, scores
+
+    def _selection_from_ranked_scores(
+        self,
+        *,
+        ranked_scores: List[tuple[float, str]],
+        reason_prefix: str,
+        coarse_bucket: str = "unclassified",
+        candidate_adapters: Optional[List[str]] = None,
+        hierarchy_stage: str = "single_stage",
+    ) -> AdapterSelection:
+        if not ranked_scores:
+            return AdapterSelection(
+                adapter_id="general_fallback",
+                confidence=0.45,
+                reason=f"{reason_prefix}; no cosine scores available",
+                coarse_bucket=coarse_bucket,
+                candidate_adapters=list(candidate_adapters or []),
+                hierarchy_stage=hierarchy_stage,
+            )
+        best_score, best_adapter = ranked_scores[0]
+        second_score, second_adapter = ranked_scores[1] if len(ranked_scores) > 1 else (0.0, None)
+        margin = best_score - second_score
+        conf = max(0.5, min(0.98, 0.55 + 0.6 * best_score - 0.25 * second_score))
         if best_score < self.similarity_min_score:
-            return (
-                "general_fallback",
-                0.5,
-                (
-                    "low cosine similarity across adapter prototypes "
+            return AdapterSelection(
+                adapter_id="general_fallback",
+                confidence=0.5,
+                reason=(
+                    f"{reason_prefix}; low cosine similarity across adapter prototypes "
                     f"(sim={best_score:.3f}, threshold={self.similarity_min_score:.3f})"
                 ),
+                secondary_adapter_id=best_adapter,
+                secondary_confidence=max(0.0, min(0.99, best_score)),
+                coarse_bucket=coarse_bucket,
+                candidate_adapters=list(candidate_adapters or []),
+                hierarchy_stage=hierarchy_stage,
             )
         if margin < self.similarity_min_margin:
-            return (
-                "general_fallback",
-                0.5,
-                (
-                    "ambiguous cosine match (near tie) "
-                    f"(sim={best_score:.3f}, second={second:.3f}, margin={margin:.3f}, "
+            return AdapterSelection(
+                adapter_id="general_fallback",
+                confidence=0.5,
+                reason=(
+                    f"{reason_prefix}; ambiguous cosine match (near tie) "
+                    f"(sim={best_score:.3f}, second={second_score:.3f}, margin={margin:.3f}, "
                     f"min_margin={self.similarity_min_margin:.3f})"
                 ),
+                secondary_adapter_id=best_adapter,
+                secondary_confidence=max(0.0, min(0.99, best_score)),
+                coarse_bucket=coarse_bucket,
+                candidate_adapters=list(candidate_adapters or []),
+                hierarchy_stage=hierarchy_stage,
             )
-        return (
-            best_adapter,
-            conf,
-            f"cosine prototype match (sim={best_score:.3f}, second={second:.3f}, margin={margin:.3f})",
+        return AdapterSelection(
+            adapter_id=best_adapter,
+            confidence=conf,
+            reason=(
+                f"{reason_prefix}; cosine prototype match "
+                f"(sim={best_score:.3f}, second={second_score:.3f}, margin={margin:.3f})"
+            ),
+            secondary_adapter_id=second_adapter,
+            secondary_confidence=max(0.0, min(0.99, second_score)),
+            coarse_bucket=coarse_bucket,
+            candidate_adapters=list(candidate_adapters or []),
+            hierarchy_stage=hierarchy_stage,
+        )
+
+    def _classify_adapter_similarity(self, prompt: str) -> AdapterSelection:
+        if not self.similarity_prototypes:
+            return AdapterSelection(
+                adapter_id="general_fallback",
+                confidence=0.45,
+                reason="no similarity prototypes available",
+                hierarchy_stage="global_similarity",
+            )
+        query, ranked_scores = self._score_similarity(prompt)
+        if not query:
+            return AdapterSelection(
+                adapter_id="general_fallback",
+                confidence=0.45,
+                reason="empty prompt tokens for similarity routing",
+                hierarchy_stage="global_similarity",
+            )
+
+        if self.hierarchy_enabled:
+            coarse_bucket, candidates, coarse_hits, coarse_reason = infer_coarse_adapter_candidates(
+                prompt=prompt,
+                available_adapters=self.available_adapters,
+                max_candidates=self.hierarchy_candidate_width,
+            )
+            if coarse_hits >= self.hierarchy_min_coarse_hits and candidates:
+                candidate_set = set(candidates)
+                candidate_ranked = [(score, aid) for score, aid in ranked_scores if aid in candidate_set]
+                if candidate_ranked:
+                    hierarchical = self._selection_from_ranked_scores(
+                        ranked_scores=candidate_ranked,
+                        reason_prefix=coarse_reason,
+                        coarse_bucket=coarse_bucket,
+                        candidate_adapters=candidates,
+                        hierarchy_stage="taxonomy_then_similarity",
+                    )
+                    if hierarchical.adapter_id != "general_fallback":
+                        return hierarchical
+
+        return self._selection_from_ranked_scores(
+            ranked_scores=ranked_scores,
+            reason_prefix="global similarity routing",
+            hierarchy_stage="global_similarity",
         )
 
     @staticmethod
@@ -424,14 +636,19 @@ class RoutingPolicy:
     def _matches_any(cls, prompt: str, keywords: Iterable[str]) -> bool:
         return any(cls._contains_keyword(prompt, kw) for kw in keywords)
 
-    def _classify_adapter_keywords(self, prompt: str) -> tuple[str, float, str]:
+    def _classify_adapter_keywords(self, prompt: str) -> AdapterSelection:
         if (
             self._contains_keyword(prompt, "loading screen")
             or self._contains_keyword(prompt, "load screen")
             or self._contains_keyword(prompt, "splash screen")
         ):
             if "loading_screen" in self.available_adapters:
-                return "loading_screen", 0.92, "explicit loading-screen phrase match"
+                return AdapterSelection(
+                    adapter_id="loading_screen",
+                    confidence=0.92,
+                    reason="explicit loading-screen phrase match",
+                    hierarchy_stage="lexical",
+                )
 
         ranked: list[tuple[int, str]] = []
         for adapter_id, keywords in self.specialist_keywords.items():
@@ -441,15 +658,39 @@ class RoutingPolicy:
             if hits > 0:
                 ranked.append((hits, adapter_id))
         if not ranked:
-            return "general_fallback", 0.45, "no specialist keyword match"
+            return AdapterSelection(
+                adapter_id="general_fallback",
+                confidence=0.45,
+                reason="no specialist keyword match",
+                hierarchy_stage="lexical",
+            )
         ranked.sort(reverse=True)
         top_hits, top_adapter = ranked[0]
-        second_hits = ranked[1][0] if len(ranked) > 1 else 0
+        second_hits, second_adapter = ranked[1] if len(ranked) > 1 else (0, None)
         confidence = min(0.98, 0.55 + 0.12 * top_hits - 0.06 * second_hits)
-        return top_adapter, max(0.5, confidence), f"specialist keyword match ({top_hits} hits)"
+        return AdapterSelection(
+            adapter_id=top_adapter,
+            confidence=max(0.5, confidence),
+            reason=f"specialist keyword match ({top_hits} hits)",
+            secondary_adapter_id=second_adapter,
+            secondary_confidence=float(second_hits) / float(max(1, top_hits + second_hits)),
+            hierarchy_stage="lexical",
+        )
 
-    def _classify_adapter(self, prompt: str) -> tuple[str, float, str]:
+    def _classify_adapter(self, prompt: str) -> AdapterSelection:
         if self.adapter_selection_mode == "similarity":
+            lexical = self._classify_adapter_keywords(prompt)
+            if lexical.adapter_id != "general_fallback" and lexical.confidence >= 0.75:
+                return AdapterSelection(
+                    adapter_id=lexical.adapter_id,
+                    confidence=lexical.confidence,
+                    reason=f"high-confidence lexical measured-role override before similarity: {lexical.reason}",
+                    secondary_adapter_id=lexical.secondary_adapter_id,
+                    secondary_confidence=lexical.secondary_confidence,
+                    coarse_bucket=lexical.coarse_bucket,
+                    candidate_adapters=lexical.candidate_adapters,
+                    hierarchy_stage="lexical_then_similarity_override",
+                )
             return self._classify_adapter_similarity(prompt)
         if self.adapter_selection_mode == "lexical":
             return self._classify_adapter_keywords(prompt)
@@ -457,19 +698,25 @@ class RoutingPolicy:
             pred = self.classifier.predict(prompt)
             classifier_adapter = pred.adapter_id if pred.adapter_id in self.available_adapters else "general_fallback"
             if pred.confidence >= self.classifier_confidence_threshold:
-                return (
-                    classifier_adapter,
-                    pred.confidence,
-                    f"oss linear classifier match (p={pred.confidence:.2f})",
+                return AdapterSelection(
+                    adapter_id=classifier_adapter,
+                    confidence=pred.confidence,
+                    reason=f"oss linear classifier match (p={pred.confidence:.2f})",
+                    hierarchy_stage="classifier",
                 )
-            lexical_adapter, lexical_conf, lexical_reason = self._classify_adapter_keywords(prompt)
-            return (
-                lexical_adapter,
-                max(lexical_conf, pred.confidence * 0.95),
-                (
+            lexical = self._classify_adapter_keywords(prompt)
+            return AdapterSelection(
+                adapter_id=lexical.adapter_id,
+                confidence=max(lexical.confidence, pred.confidence * 0.95),
+                reason=(
                     f"classifier low confidence (p={pred.confidence:.2f}) "
-                    f"-> lexical fallback: {lexical_reason}"
+                    f"-> lexical fallback: {lexical.reason}"
                 ),
+                secondary_adapter_id=classifier_adapter,
+                secondary_confidence=pred.confidence,
+                coarse_bucket=lexical.coarse_bucket,
+                candidate_adapters=lexical.candidate_adapters,
+                hierarchy_stage="classifier_then_lexical",
             )
         return self._classify_adapter_keywords(prompt)
 
@@ -510,7 +757,10 @@ class RoutingPolicy:
         prompt = request.prompt_text.lower()
         input_tokens = estimate_tokens(request.prompt_text)
         output_tokens = request.max_tokens
-        adapter_id, confidence, adapter_reason = self._classify_adapter(prompt)
+        selection = self._classify_adapter(prompt)
+        adapter_id = selection.adapter_id
+        confidence = selection.confidence
+        adapter_reason = selection.reason
 
         frontier_matched = self._matches_any(prompt, self.frontier_keywords)
         hybrid_matched = self._matches_any(prompt, self.hybrid_keywords)
@@ -544,7 +794,61 @@ class RoutingPolicy:
                 + output_tokens * self.frontier_output_cost_per_million
             ) / 1_000_000
         merged_reason = f"{reason}; {adapter_reason}; adapter={adapter_id}"
+        if selection.secondary_adapter_id:
+            merged_reason = (
+                f"{merged_reason}; secondary_adapter={selection.secondary_adapter_id}"
+                f"({selection.secondary_confidence:.2f})"
+            )
+        if selection.coarse_bucket and selection.coarse_bucket != "unclassified":
+            merged_reason = f"{merged_reason}; coarse_bucket={selection.coarse_bucket}"
         ambiguity = max(0.0, 1.0 - confidence)
+        council_plan: Dict[str, Any] = {}
+        council_disagreement = 0.0
+        council_escalation_candidate = False
+        if self.council_enabled:
+            active_specialists = self.council_roster.active_specialists()
+            # If no specialists are active yet, bootstrap from candidates for first-run council execution.
+            if not active_specialists:
+                active_specialists = {aid for aid in self.available_adapters if aid != "general_fallback"}
+            plan = build_council_plan(
+                primary_adapter_id=adapter_id,
+                secondary_adapter_id=selection.secondary_adapter_id,
+                candidate_adapters=selection.candidate_adapters,
+                active_experts=active_specialists,
+                expert_assertiveness=self.council_roster.assertiveness_map(),
+                expert_traits=self.council_roster.traits_map(),
+                expert_personalities=self.council_roster.personalities_map(),
+                specialist_limit=self.council_specialist_top_k,
+                specialist_personality_variants=self.council_specialist_personality_variants,
+                personality_selection_policy=self.council_personality_selection_policy,
+                personality_exploration_rate=self.council_personality_exploration_rate,
+                disagreement_threshold=self.council_disagreement_threshold,
+                low_confidence_threshold=self.council_low_conf_threshold,
+                debate_max_rounds=self.council_debate_max_rounds,
+                escalation_rule=self.council_escalation_rule,
+                transparency=self.council_transparency,
+            )
+            council_plan = plan.to_dict()
+            council_disagreement = estimate_disagreement(
+                confidence=confidence,
+                ambiguity=ambiguity,
+                participant_count=len(council_plan.get("participants") or []),
+            )
+            if self.council_escalation_rule == "on_disagreement":
+                council_escalation_candidate = council_disagreement >= self.council_disagreement_threshold
+            elif self.council_escalation_rule == "on_low_conf":
+                council_escalation_candidate = confidence <= self.council_low_conf_threshold
+            elif self.council_escalation_rule == "manual_only":
+                council_escalation_candidate = False
+            else:
+                council_escalation_candidate = (
+                    council_disagreement >= self.council_disagreement_threshold
+                    or confidence <= self.council_low_conf_threshold
+                )
+            merged_reason = (
+                f"{merged_reason}; council_plan=enabled; council_participants="
+                f"{len(council_plan.get('participants') or [])}; council_disagreement={council_disagreement:.2f}"
+            )
 
         should_queue_unknown = (
             self.unknown_review_enabled
@@ -581,7 +885,16 @@ class RoutingPolicy:
             ambiguity=ambiguity,
             risk_class=risk_class,
             complexity=complexity,
-            policy_version="router_policy_v2_adapter_first",
+            secondary_adapter_id=selection.secondary_adapter_id,
+            secondary_confidence=round(float(selection.secondary_confidence), 4),
+            coarse_bucket=selection.coarse_bucket,
+            candidate_adapters=list(selection.candidate_adapters),
+            hierarchy_stage=selection.hierarchy_stage,
+            policy_version="router_policy_v3_council_adapter_first",
+            council_enabled=self.council_enabled,
+            council_plan=council_plan,
+            council_disagreement=round(float(council_disagreement), 4),
+            council_escalation_candidate=bool(council_escalation_candidate),
         )
 
 
@@ -595,33 +908,164 @@ class LocalMlxBackend:
         self.adapter_path = adapter_path
         self._model = None
         self._tokenizer = None
+        self._backend_kind = ""
 
     def _ensure_loaded(self):
         if self._model is not None and self._tokenizer is not None:
             return self._model, self._tokenizer
-        from mlx_lm import generate, load
-        from mlx_lm.sample_utils import make_sampler
+        force_backend = (os.environ.get("LOCAL_BACKEND", "") or "").strip().lower()
+        use_transformers = force_backend == "transformers"
+        if force_backend not in {"", "mlx", "transformers"}:
+            raise RuntimeError(
+                f"Unsupported LOCAL_BACKEND={force_backend!r}. Expected one of: '', 'mlx', 'transformers'."
+            )
+        if not use_transformers:
+            try:
+                from mlx_lm import generate, load
+                from mlx_lm.sample_utils import make_sampler
 
-        self._generate = generate
-        self._make_sampler = make_sampler
-        load_kw: Dict[str, Any] = {}
-        if self.adapter_path:
-            load_kw["adapter_path"] = self.adapter_path
-        self._model, self._tokenizer = load(self.model_id, **load_kw)
+                self._generate = generate
+                self._make_sampler = make_sampler
+                load_kw: Dict[str, Any] = {}
+                if self.adapter_path:
+                    load_kw["adapter_path"] = self.adapter_path
+                self._model, self._tokenizer = load(self.model_id, **load_kw)
+                self._backend_kind = "mlx"
+                return self._model, self._tokenizer
+            except Exception:
+                if force_backend == "mlx":
+                    raise
+                use_transformers = True
+
+        if use_transformers:
+            # Linux/NVIDIA fallback path when MLX is unavailable.
+            import torch
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            from safetensors import safe_open
+
+            self._torch = torch
+            tf_model_id = self._transformers_model_id(self.model_id)
+            self._model = AutoModelForCausalLM.from_pretrained(
+                tf_model_id,
+                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+                device_map="auto",
+            )
+            self._tokenizer = AutoTokenizer.from_pretrained(tf_model_id)
+            if self.adapter_path:
+                self._apply_mlx_lora_adapter_to_transformers_model(
+                    model=self._model,
+                    safe_open=safe_open,
+                    torch_mod=torch,
+                )
+            self._backend_kind = "transformers"
         return self._model, self._tokenizer
+
+    @staticmethod
+    def _transformers_model_id(model_id: str) -> str:
+        model = (model_id or "").strip()
+        if model.startswith("mlx-community/") and "Qwen2.5-Coder-" in model:
+            suffix = model.split("/", 1)[1]
+            if suffix.endswith("-4bit"):
+                suffix = suffix[: -len("-4bit")]
+            return f"Qwen/{suffix}"
+        return model
+
+    def _apply_mlx_lora_adapter_to_transformers_model(self, *, model: Any, safe_open: Any, torch_mod: Any) -> None:
+        adapter_dir = Path(self.adapter_path or "").expanduser()
+        if not adapter_dir.is_absolute():
+            adapter_dir = (Path(__file__).resolve().parents[1] / adapter_dir).resolve()
+        adapter_file = adapter_dir / "adapters.safetensors"
+        if not adapter_file.is_file():
+            raise RuntimeError(f"Adapter weights not found: {adapter_file}")
+
+        scale, rank = self._read_mlx_adapter_scale_rank(adapter_dir)
+        named_params = dict(model.named_parameters())
+        pairs_applied = 0
+        with safe_open(str(adapter_file), framework="np") as st, torch_mod.no_grad():
+            keys = list(st.keys())
+            for key in keys:
+                if not key.endswith(".lora_a"):
+                    continue
+                base_key = key[: -len(".lora_a")]
+                key_b = f"{base_key}.lora_b"
+                if key_b not in keys:
+                    continue
+                target_weight_name = f"{base_key}.weight"
+                target = named_params.get(target_weight_name)
+                if target is None:
+                    continue
+
+                a_np = st.get_tensor(key)   # [in_features, rank]
+                b_np = st.get_tensor(key_b) # [rank, out_features]
+                a = torch_mod.from_numpy(a_np).to(device=target.device, dtype=target.dtype)
+                b = torch_mod.from_numpy(b_np).to(device=target.device, dtype=target.dtype)
+                local_rank = int(a.shape[1]) if a.ndim == 2 else rank
+                use_rank = max(1, int(rank or local_rank or 1))
+                factor = float(scale) / float(use_rank)
+                # MLX adapter tensors are shaped [in, r] and [r, out].
+                # Transformer linear weights are [out, in], so transpose product.
+                delta = torch_mod.matmul(a, b).transpose(0, 1)
+                if delta.shape != target.shape:
+                    raise RuntimeError(
+                        f"Adapter delta shape mismatch for {target_weight_name}: "
+                        f"delta={tuple(delta.shape)} target={tuple(target.shape)}"
+                    )
+                target.add_(delta * factor)
+                pairs_applied += 1
+
+        if pairs_applied == 0:
+            raise RuntimeError(f"No LoRA tensor pairs were applied from adapter: {adapter_file}")
+
+    @staticmethod
+    def _read_mlx_adapter_scale_rank(adapter_dir: Path) -> tuple[float, int]:
+        cfg_path = adapter_dir / "adapter_config.json"
+        if not cfg_path.is_file():
+            return 1.0, 1
+        try:
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+        except Exception:
+            return 1.0, 1
+        lora = cfg.get("lora_parameters") if isinstance(cfg, dict) else None
+        if not isinstance(lora, dict):
+            return 1.0, 1
+        scale = float(lora.get("scale") or 1.0)
+        rank = int(lora.get("rank") or 1)
+        return scale, max(1, rank)
 
     def generate(self, request: GenerationRequest) -> str:
         model, tokenizer = self._ensure_loaded()
         messages = [{"role": m.role, "content": m.content} for m in request.messages]
+        if self._backend_kind == "mlx":
+            prompt = tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            kwargs: Dict[str, Any] = {"max_tokens": request.max_tokens}
+            if request.temperature > 0:
+                kwargs["sampler"] = self._make_sampler(temp=request.temperature, top_p=1.0)
+            return self._generate(model, tokenizer, prompt=prompt, verbose=False, **kwargs)
+
+        # Transformers fallback generation path.
         prompt = tokenizer.apply_chat_template(
             messages,
             tokenize=False,
             add_generation_prompt=True,
         )
-        kwargs: Dict[str, Any] = {"max_tokens": request.max_tokens}
+        inputs = tokenizer(prompt, return_tensors="pt")
+        device = next(model.parameters()).device
+        inputs = {k: v.to(device) for k, v in inputs.items()}
+        generation_kwargs: Dict[str, Any] = {
+            "max_new_tokens": request.max_tokens,
+            "do_sample": request.temperature > 0,
+            "pad_token_id": tokenizer.eos_token_id,
+        }
         if request.temperature > 0:
-            kwargs["sampler"] = self._make_sampler(temp=request.temperature, top_p=1.0)
-        return self._generate(model, tokenizer, prompt=prompt, verbose=False, **kwargs)
+            generation_kwargs["temperature"] = request.temperature
+        output_ids = model.generate(**inputs, **generation_kwargs)
+        prompt_len = inputs["input_ids"].shape[1]
+        new_tokens = output_ids[0][prompt_len:]
+        return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
 
 
 class OpenAICompatibleBackend:
@@ -706,7 +1150,7 @@ class ModelRouter:
         t0 = time.perf_counter()
         if decision.route == "local":
             text = self.local_backend.generate(request)
-            backend = "local_mlx"
+            backend = "local_transformers" if getattr(self.local_backend, "_backend_kind", "") == "transformers" else "local_mlx"
             usage: Dict[str, Any] = {}
         elif decision.route == "frontier":
             text, usage = self.frontier_backend.generate(request)

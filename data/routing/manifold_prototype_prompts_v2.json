@@ -1,0 +1,255 @@
+[
+  {
+    "id": "manifold-v2-loading-01",
+    "prompt": "Polish the loading screen hierarchy so title, subtitle, and progress affordance are readable at 1366x768.",
+    "expected_adapter_id": "loading_screen",
+    "expected_display_name": "ui_surface_composer",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-loading-02",
+    "prompt": "Rewrite loading-screen copy with exactly one sentence and no bullet points while keeping medieval tone.",
+    "expected_adapter_id": "loading_screen",
+    "expected_display_name": "ui_surface_composer",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-loading-03",
+    "prompt": "Design a loading-state variant that communicates readiness plus one economy hint without clutter.",
+    "expected_adapter_id": "loading_screen",
+    "expected_display_name": "ui_surface_composer",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-loading-04",
+    "prompt": "For loading screen and HUD together, propose split subtasks and merged final output strategy.",
+    "expected_adapter_id": "loading_screen",
+    "expected_display_name": "ui_surface_composer",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-hud-01",
+    "prompt": "Adjust the HUD status panel to prioritize food, morale, and idle workers in a compact top-right block.",
+    "expected_adapter_id": "hud_status",
+    "expected_display_name": "ui_state_signals",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-hud-02",
+    "prompt": "Refactor HUD status labels to terse chips under 16 characters each and keep contrast accessible.",
+    "expected_adapter_id": "hud_status",
+    "expected_display_name": "ui_state_signals",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-hud-03",
+    "prompt": "On the loading route, show a reduced HUD status strip with only critical metrics and warning badge.",
+    "expected_adapter_id": "hud_status",
+    "expected_display_name": "ui_state_signals",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-econ-01",
+    "prompt": "Improve economy tooltip text so players understand gross income, upkeep, and net delta per turn.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_display_name": "resource_ui_projection",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-econ-02",
+    "prompt": "Rewrite the economy tooltip to be two short lines with one actionable recommendation.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_display_name": "resource_ui_projection",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-econ-03",
+    "prompt": "Add transfer copy from combat context: economy tooltip should mention campaign readiness tradeoffs.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_display_name": "resource_ui_projection",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-econ-04",
+    "prompt": "Given strict constraints (no bullets, two lines, no code), explain economy change and HUD effect.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_display_name": "resource_ui_projection",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-combat-01",
+    "prompt": "Add pre-attack combat risk preview with enemy-versus-player stat bands and confidence labels.",
+    "expected_adapter_id": "combat_risk",
+    "expected_display_name": "army_ui_flow",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-combat-02",
+    "prompt": "Explain why a battle is high risk using terrain, morale, and supply modifiers in concise language.",
+    "expected_adapter_id": "combat_risk",
+    "expected_display_name": "army_ui_flow",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-combat-03",
+    "prompt": "Design a compact combat-risk line that fits HUD constraints while preserving warning severity.",
+    "expected_adapter_id": "combat_risk",
+    "expected_display_name": "army_ui_flow",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-save-01",
+    "prompt": "Harden save/load endpoints with strict auth guards, payload schema checks, and replay-safe semantics.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_display_name": "state_contract_guard",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-save-02",
+    "prompt": "Define the save response contract for migration from v2 to v3 and include error-shape guarantees.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_display_name": "state_contract_guard",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-save-03",
+    "prompt": "Write a checklist for validating savegame serialization integrity before accepting load requests.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_display_name": "state_contract_guard",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-save-04",
+    "prompt": "Combine save/load guardrails with docs update requirements and produce implementation plus runbook note.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_display_name": "state_contract_guard",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-ai-01",
+    "prompt": "Explain AI planning rationale for next turn with intent, fallback branch, and risk tradeoffs.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_display_name": "crossdomain_state_patch",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-ai-02",
+    "prompt": "Review this AI planner output and propose one safer branch if food drops below threshold.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_display_name": "crossdomain_state_patch",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-ai-03",
+    "prompt": "Create a one-paragraph explanation of why AI chose economy-first over immediate military pressure.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_display_name": "crossdomain_state_patch",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-ai-04",
+    "prompt": "Blend combat risk preview with AI rationale so players see both odds and strategic intent.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_display_name": "crossdomain_state_patch",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "manifold-v2-docs-01",
+    "prompt": "Normalize PROJECT_STATE and WORKFLOW references so run-history commands stay consistent.",
+    "expected_adapter_id": "documentation"
+  },
+  {
+    "id": "manifold-v2-docs-02",
+    "prompt": "Summarize latest routing benchmark outcomes and list promotion blockers in docs language.",
+    "expected_adapter_id": "documentation"
+  },
+  {
+    "id": "manifold-v2-docs-03",
+    "prompt": "Draft concise session-log entry for a routing dataset + train + gate run.",
+    "expected_adapter_id": "documentation"
+  },
+  {
+    "id": "manifold-v2-docs-04",
+    "prompt": "Summarize this workflow run history chunk and infer likely failure themes without changing any code.",
+    "expected_adapter_id": "documentation"
+  },
+  {
+    "id": "manifold-v2-fallback-01",
+    "prompt": "Rename a utility function and update all call sites; avoid architecture changes.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-v2-fallback-02",
+    "prompt": "Generate a small boilerplate script that prints current run id and exits zero.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-v2-fallback-03",
+    "prompt": "Compare two candidate prompt phrasings and pick the clearer one with one-sentence justification.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-v2-fallback-04",
+    "prompt": "Audit authentication flow and cryptography choices for save signing before production rollout.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-v2-fallback-05",
+    "prompt": "Design payment migration safeguards with rollback and privacy controls for live player billing.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-v2-fallback-06",
+    "prompt": "Investigate distributed race condition causing production data loss and propose containment steps.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "measured-role-ui-surface-composer-01",
+    "prompt": "ui_surface_composer task: update UI surface, sprite overlay, panel theme, isometric display, and render contract details.",
+    "expected_adapter_id": "loading_screen",
+    "expected_display_name": "ui_surface_composer",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "measured-role-ui-state-signals-01",
+    "prompt": "ui_state_signals task: expose HUD status signal, resource signal, state exposure, indicator logic, input flow, and UI contract behavior.",
+    "expected_adapter_id": "hud_status",
+    "expected_display_name": "ui_state_signals",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "measured-role-resource-ui-projection-01",
+    "prompt": "resource_ui_projection task: improve economy UI tooltip, resource projection, cost display, production signal, resource cache, and signed delta display.",
+    "expected_adapter_id": "economy_tooltip",
+    "expected_display_name": "resource_ui_projection",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "measured-role-army-ui-flow-01",
+    "prompt": "army_ui_flow task: implement army UI formation flow, order dispatch, movement UI, tactical controls, selection flow, and combat preview presentation.",
+    "expected_adapter_id": "combat_risk",
+    "expected_display_name": "army_ui_flow",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "measured-role-state-contract-guard-01",
+    "prompt": "state_contract_guard task: harden state persistence, serialization, snapshot schema, request validation, identity integrity, API guard, cross node state, and deploy contract behavior.",
+    "expected_adapter_id": "save_load_api_guard",
+    "expected_display_name": "state_contract_guard",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "measured-role-crossdomain-state-patch-01",
+    "prompt": "crossdomain_state_patch task: repair crossdomain state logic, schema update, shared logic, general patch behavior, and fallback specialist repair candidate changes.",
+    "expected_adapter_id": "ai_planning_explanation",
+    "expected_display_name": "crossdomain_state_patch",
+    "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  },
+  {
+    "id": "economistRL-economy-simulation-01",
+    "prompt": "economistRL task: tune economy simulation with market elasticity, food buffer population dynamics, worker wage productivity feedback, spoilage, progressive upkeep, and bounded feedback control.",
+    "expected_adapter_id": "economistRL",
+    "expected_display_name": "economistRL",
+    "experiment_source": "economist_rl_task_bank_v1"
+  }
+]

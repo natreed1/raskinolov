@@ -1,0 +1,1133 @@
+{
+  "schema_version": "economist_rl_task_bank_v1",
+  "adapter_id": "economistRL",
+  "created_utc": "2026-05-30T22:24:00Z",
+  "goal": "Seed reinforcement-learning evaluations for elusive Fallen Empire economy mechanics beyond tooltip copy.",
+  "curriculum_policy": {
+    "target_total_prompts": 500,
+    "track_mix": {
+      "economy": 0.7,
+      "generalist": 0.3
+    },
+    "target_counts": {
+      "economy": 350,
+      "generalist": 150
+    },
+    "economy_subsections": {
+      "food_population_feedback": 60,
+      "market_elasticity_pricing": 60,
+      "labor_wage_productivity": 55,
+      "inventory_storage_spoilage": 50,
+      "upkeep_progressive_costs": 50,
+      "resource_projection_cache_integrity": 50,
+      "adversarial_multidomain_economy": 25
+    },
+    "generalist_subsections": {
+      "instruction_following": 25,
+      "structured_reasoning": 25,
+      "code_patch_planning": 25,
+      "test_design_and_invariants": 25,
+      "debugging_and_root_cause": 20,
+      "concise_explanation": 15,
+      "safety_and_scope_control": 15
+    }
+  },
+  "scoring_policy": {
+    "score_scale": "0_to_100",
+    "compile_gate": {
+      "enabled": true,
+      "description": "Compile success has a decaying positive bonus, but compile failure always applies a catastrophic cap so later regressions cannot receive normal behavior reward.",
+      "failure_caps_by_rolling_compile_rate": [
+        {
+          "lt": 0.5,
+          "max_reward": 0.1
+        },
+        {
+          "lt": 0.8,
+          "max_reward": 0.05
+        },
+        {
+          "gte": 0.8,
+          "max_reward": 0.0
+        }
+      ],
+      "success_bonus_weight_by_rolling_compile_rate": [
+        {
+          "lt": 0.5,
+          "weight": 0.35
+        },
+        {
+          "lt": 0.75,
+          "weight": 0.2
+        },
+        {
+          "lt": 0.9,
+          "weight": 0.1
+        },
+        {
+          "gte": 0.9,
+          "weight": 0.03
+        }
+      ]
+    },
+    "default_reward_weights": {
+      "simulation_behavior": 0.45,
+      "targeted_tests": 0.2,
+      "static_code_mechanics": 0.15,
+      "formula_signal": 0.1,
+      "instruction_contract": 0.05,
+      "concision": 0.03,
+      "anti_overfit": 0.02
+    },
+    "promotion_floor": 82.0,
+    "hard_fail_floor": 55.0,
+    "legacy_prompt_checks": {
+      "role": "guardrail_only",
+      "description": "expect.* text checks remain available for seed/debug scoring, but executable simulation/test/static evidence is the primary RL reward."
+    }
+  },
+  "tasks": [
+    {
+      "id": "economistRL-food-steady-state-01",
+      "title": "Food Supported Population Steady State",
+      "difficulty": "hard",
+      "curriculum_track": "economy",
+      "rl_focus": [
+        "economy_simulation",
+        "population_dynamics",
+        "feedback_control"
+      ],
+      "subskill": "food_supported_population_steady_state_dynamics",
+      "prompt": "Design a patch plan for city population growth that tapers births as food buffer approaches unsafe levels. Include the state fields, tick-order rule, and one invariant that prevents oscillation.",
+      "expect": {
+        "all_contains": [
+          "food",
+          "population",
+          "invariant"
+        ],
+        "any_contains": [
+          "buffer",
+          "taper",
+          "threshold",
+          "steady"
+        ],
+        "none_contains": [
+          "ignore food",
+          "always grow"
+        ],
+        "min_chars": 220,
+        "max_chars": 1400,
+        "mechanics": [
+          {
+            "name": "food_buffer_taper",
+            "keywords": [
+              "buffer",
+              "taper",
+              "threshold"
+            ]
+          },
+          {
+            "name": "tick_order",
+            "keywords": [
+              "tick",
+              "order",
+              "before",
+              "after"
+            ]
+          },
+          {
+            "name": "oscillation_guard",
+            "keywords": [
+              "invariant",
+              "clamp",
+              "hysteresis",
+              "steady"
+            ]
+          }
+        ]
+      },
+      "reference_answer": "Track population, foodStock, foodPerPop, birthPressure, and recentFoodDelta. Apply production and consumption before births, then taper birthPressure toward zero as the food buffer falls near the reserve threshold. Invariant: projectedFoodAfterBirths must stay above the reserve floor, with hysteresis or a clamp so one surplus tick cannot trigger an oscillating growth spike.",
+      "simulation_spec": {
+        "tick_count": 20,
+        "purpose": "Trace how a food-buffer birth-rate patch affects population and food over a short deterministic city simulation.",
+        "relevant_state": [
+          "population",
+          "foodStock",
+          "foodProducedPerTick",
+          "foodConsumedPerPop",
+          "birthRate",
+          "birthPressure",
+          "starvationState"
+        ],
+        "scenario": {
+          "initial_state": {
+            "population": 100,
+            "foodStock": 140,
+            "foodProducedPerTick": 16,
+            "foodConsumedPerPop": 0.18,
+            "birthRate": 0.035
+          },
+          "change_under_test": "food buffer should taper births as projected food approaches reserve floor"
+        },
+        "goals": [
+          {
+            "name": "birth_rate_tapers_near_food_floor",
+            "metric": "birthRate_over_ticks",
+            "benchmark": "birth rate decreases as food buffer shrinks",
+            "target": "tick20_birth_rate < tick1_birth_rate",
+            "weight": 0.35
+          },
+          {
+            "name": "food_not_silently_negative",
+            "metric": "foodStock_min",
+            "benchmark": "food stock remains bounded or enters explicit starvation state",
+            "target": "min_food >= 0 or starvationState active",
+            "weight": 0.3
+          },
+          {
+            "name": "no_population_oscillation",
+            "metric": "population_delta_volatility",
+            "benchmark": "population changes smoothly without one-tick growth spikes",
+            "target": "max_tick_delta <= 2x median_tick_delta",
+            "weight": 0.2
+          },
+          {
+            "name": "localized_simulation",
+            "metric": "simulation_scope",
+            "benchmark": "only population/food state needed for this task is simulated",
+            "target": "no unrelated systems required",
+            "weight": 0.15
+          }
+        ]
+      },
+      "targeted_tests": {
+        "goal": "Executable outcome verifies food buffer affects birth rate and prevents unsafe growth near the reserve floor.",
+        "preferred_commands": [
+          "npm run test:ml-cohort -- --runInBand food birth population"
+        ],
+        "outcome_checks": [
+          "birth rate changes when food buffer changes",
+          "low-food scenario differs from high-food scenario",
+          "existing economy tests still compile/pass"
+        ]
+      },
+      "static_code_mechanics": {
+        "required_hooks": [
+          "birth-rate update reads food buffer or projected food",
+          "tick order applies production/consumption before birth mutation",
+          "bounded or hysteresis guard prevents oscillation"
+        ],
+        "flexible_signals": [
+          "food",
+          "birth",
+          "population",
+          "buffer",
+          "threshold",
+          "hysteresis",
+          "clamp",
+          "projectedFood"
+        ]
+      },
+      "formula_signal": {
+        "patterns": [
+          "threshold or reserve-floor comparison",
+          "bounded multiplier or clamp",
+          "hysteresis/smoothing/taper curve"
+        ]
+      },
+      "instruction_contract": {
+        "gate": "large_policy_penalty",
+        "allowed_change_policy": "Touch only files required by the task or directly related tests. Avoid broad rewrites, test weakening, or unrelated formatting churn.",
+        "unnecessary_change_cap": 0.25,
+        "test_weakening_cap": 0.1,
+        "forbidden_actions": [
+          "delete_or_weaken_tests",
+          "bypass_mechanics",
+          "hardcode_visible_scenario",
+          "change_unrelated_files_for_reward",
+          "broad_rewrite_without_need"
+        ]
+      },
+      "anti_overfit_guards": {
+        "cap_policy": "cap final reward when rollout appears to game checks instead of improving system behavior",
+        "flags": [
+          "hardcoded_visible_scenarios",
+          "deleted_or_weakened_tests",
+          "mechanic_bypass",
+          "unrelated_file_changes",
+          "keyword_stuffing",
+          "non_general_behavior",
+          "potential_not_improved"
+        ],
+        "potential_comparison": "When previous_potential and new_potential are supplied, progress credit requires new_potential > previous_potential."
+      }
+    },
+    {
+      "id": "economistRL-market-elasticity-02",
+      "title": "Market Price Elasticity From Stock Pressure",
+      "difficulty": "hard",
+      "curriculum_track": "economy",
+      "rl_focus": [
+        "market_dynamics",
+        "economy_simulation",
+        "nonlinear_feedback"
+      ],
+      "subskill": "market_price_elasticity_stock_pressure",
+      "prompt": "Specify a market-pricing update where surplus inventory lowers price pressure and scarcity raises it without runaway inflation. Include the formula shape, clamps, and what data must be cached.",
+      "expect": {
+        "all_contains": [
+          "price",
+          "stock",
+          "clamp"
+        ],
+        "any_contains": [
+          "elasticity",
+          "scarcity",
+          "surplus",
+          "pressure"
+        ],
+        "none_contains": [
+          "random price",
+          "unbounded"
+        ],
+        "min_chars": 220,
+        "max_chars": 1500,
+        "mechanics": [
+          {
+            "name": "stock_pressure",
+            "keywords": [
+              "stock",
+              "surplus",
+              "scarcity",
+              "pressure"
+            ]
+          },
+          {
+            "name": "elasticity_curve",
+            "keywords": [
+              "elasticity",
+              "curve",
+              "ratio",
+              "log"
+            ]
+          },
+          {
+            "name": "runaway_guard",
+            "keywords": [
+              "clamp",
+              "cap",
+              "floor",
+              "bounded"
+            ]
+          }
+        ]
+      },
+      "reference_answer": "Compute stock pressure as desiredStock divided by currentStock, then map it through a bounded elasticity curve so scarcity nudges price up and surplus nudges it down. Cache current stock, desired stock, lastPrice, and demand class per market tick. Clamp the multiplier to a floor and cap, then smooth toward the target so repeated scarcity cannot create runaway inflation.",
+      "simulation_spec": {
+        "tick_count": 20,
+        "purpose": "Trace whether stock pressure changes market price over time without runaway inflation.",
+        "relevant_state": [
+          "currentStock",
+          "desiredStock",
+          "lastPrice",
+          "demand",
+          "scarcityPressure",
+          "surplusPressure"
+        ],
+        "scenario": {
+          "initial_state": {
+            "currentStock": 50,
+            "desiredStock": 100,
+            "lastPrice": 10,
+            "demand": 1.0
+          },
+          "change_under_test": "scarcity should increase bounded price pressure while surplus should lower it"
+        },
+        "goals": [
+          {
+            "name": "scarcity_raises_price",
+            "metric": "scarcity_price_delta",
+            "benchmark": "scarcity scenario price rises from baseline",
+            "target": "scarcity_tick20_price > tick1_price",
+            "weight": 0.3
+          },
+          {
+            "name": "surplus_lowers_price",
+            "metric": "surplus_price_delta",
+            "benchmark": "surplus scenario price falls or pressure lowers",
+            "target": "surplus_tick20_price < scarcity_tick20_price",
+            "weight": 0.25
+          },
+          {
+            "name": "price_bounded",
+            "metric": "price_range",
+            "benchmark": "prices remain within configured floor/cap",
+            "target": "floor <= price <= cap for all ticks",
+            "weight": 0.3
+          },
+          {
+            "name": "smooth_adjustment",
+            "metric": "price_volatility",
+            "benchmark": "no single tick creates runaway price jump",
+            "target": "max_delta <= configured max step",
+            "weight": 0.15
+          }
+        ]
+      },
+      "targeted_tests": {
+        "goal": "Executable outcome verifies stock scarcity/surplus affects price through bounded elasticity, not a fixed constant.",
+        "preferred_commands": [
+          "npm run test:ml-cohort -- --runInBand market price elasticity"
+        ],
+        "outcome_checks": [
+          "scarcity and surplus cases diverge",
+          "price floor/cap is respected",
+          "cache/state used by market tick updates"
+        ]
+      },
+      "static_code_mechanics": {
+        "required_hooks": [
+          "market tick reads stock and desired stock",
+          "bounded elasticity or ratio curve is applied",
+          "price floor/cap or smoothing exists"
+        ],
+        "flexible_signals": [
+          "stock",
+          "desiredStock",
+          "price",
+          "elasticity",
+          "scarcity",
+          "surplus",
+          "clamp",
+          "floor",
+          "cap",
+          "ratio",
+          "curve"
+        ]
+      },
+      "formula_signal": {
+        "patterns": [
+          "stock/desired-stock ratio",
+          "bounded clamp/floor/cap",
+          "smoothing or curve function"
+        ]
+      },
+      "instruction_contract": {
+        "gate": "large_policy_penalty",
+        "allowed_change_policy": "Touch only files required by the task or directly related tests. Avoid broad rewrites, test weakening, or unrelated formatting churn.",
+        "unnecessary_change_cap": 0.25,
+        "test_weakening_cap": 0.1,
+        "forbidden_actions": [
+          "delete_or_weaken_tests",
+          "bypass_mechanics",
+          "hardcode_visible_scenario",
+          "change_unrelated_files_for_reward",
+          "broad_rewrite_without_need"
+        ]
+      },
+      "anti_overfit_guards": {
+        "cap_policy": "cap final reward when rollout appears to game checks instead of improving system behavior",
+        "flags": [
+          "hardcoded_visible_scenarios",
+          "deleted_or_weakened_tests",
+          "mechanic_bypass",
+          "unrelated_file_changes",
+          "keyword_stuffing",
+          "non_general_behavior",
+          "potential_not_improved"
+        ],
+        "potential_comparison": "When previous_potential and new_potential are supplied, progress credit requires new_potential > previous_potential."
+      }
+    },
+    {
+      "id": "economistRL-worker-wage-productivity-03",
+      "title": "Worker Wage Productivity Tradeoff",
+      "difficulty": "hard",
+      "curriculum_track": "economy",
+      "rl_focus": [
+        "labor_economy",
+        "productivity_feedback",
+        "balance"
+      ],
+      "subskill": "worker_wage_productivity_tradeoff_balancing",
+      "prompt": "Write the balancing rule for wages, morale, and worker productivity. The answer must explain how wage cuts save gold but reduce output if morale falls too far.",
+      "expect": {
+        "all_contains": [
+          "wage",
+          "morale",
+          "productivity"
+        ],
+        "any_contains": [
+          "gold",
+          "output",
+          "tradeoff",
+          "threshold"
+        ],
+        "none_contains": [
+          "free labor",
+          "no downside"
+        ],
+        "min_chars": 180,
+        "max_chars": 1200,
+        "mechanics": [
+          {
+            "name": "wage_cost",
+            "keywords": [
+              "wage",
+              "gold",
+              "cost"
+            ]
+          },
+          {
+            "name": "morale_threshold",
+            "keywords": [
+              "morale",
+              "threshold",
+              "falls"
+            ]
+          },
+          {
+            "name": "productivity_penalty",
+            "keywords": [
+              "productivity",
+              "output",
+              "penalty"
+            ]
+          }
+        ]
+      },
+      "reference_answer": "Lower wages reduce gold upkeep immediately, but morale should decay when pay drops below the expected wage band. Productivity stays stable inside the morale comfort range, then scales down past a threshold so extreme wage cuts reduce output and can erase the gold savings. Clamp the penalty and recover morale gradually after wages normalize.",
+      "simulation_spec": {
+        "tick_count": 20,
+        "purpose": "Trace wage changes through morale and productivity so gold savings have an output downside.",
+        "relevant_state": [
+          "wage",
+          "expectedWage",
+          "morale",
+          "productivity",
+          "goldUpkeep",
+          "workerOutput"
+        ],
+        "scenario": {
+          "initial_state": {
+            "wage": 0.8,
+            "expectedWage": 1.0,
+            "morale": 0.75,
+            "productivity": 1.0,
+            "workerOutput": 100
+          },
+          "change_under_test": "wage cuts reduce cost but lower morale/productivity below threshold"
+        },
+        "goals": [
+          {
+            "name": "wage_cut_saves_gold",
+            "metric": "goldUpkeep_delta",
+            "benchmark": "lower wage decreases upkeep cost",
+            "target": "low_wage_upkeep < baseline_upkeep",
+            "weight": 0.2
+          },
+          {
+            "name": "morale_reacts_to_underpay",
+            "metric": "morale_delta",
+            "benchmark": "morale falls when wage is below expected band",
+            "target": "low_wage_morale_tick20 < baseline_morale_tick20",
+            "weight": 0.25
+          },
+          {
+            "name": "productivity_penalty_exists",
+            "metric": "workerOutput_delta",
+            "benchmark": "output decreases when morale crosses threshold",
+            "target": "low_wage_output_tick20 < baseline_output_tick20",
+            "weight": 0.35
+          },
+          {
+            "name": "recovery_is_gradual",
+            "metric": "morale_recovery_curve",
+            "benchmark": "normalizing wages recovers morale without instant jump",
+            "target": "recovery_delta bounded per tick",
+            "weight": 0.2
+          }
+        ]
+      },
+      "targeted_tests": {
+        "goal": "Executable outcome verifies wage, morale, and productivity are coupled with a tradeoff.",
+        "preferred_commands": [
+          "npm run test:ml-cohort -- --runInBand wage morale productivity"
+        ],
+        "outcome_checks": [
+          "lower wages reduce upkeep",
+          "morale decreases under expected wage",
+          "productivity decreases below morale threshold"
+        ]
+      },
+      "static_code_mechanics": {
+        "required_hooks": [
+          "wage or pay setting feeds morale update",
+          "morale feeds productivity/output",
+          "penalty is bounded and recoverable"
+        ],
+        "flexible_signals": [
+          "wage",
+          "morale",
+          "productivity",
+          "output",
+          "threshold",
+          "penalty",
+          "recover",
+          "clamp"
+        ]
+      },
+      "formula_signal": {
+        "patterns": [
+          "thresholded productivity multiplier",
+          "bounded morale decay/recovery",
+          "wage-to-expected-wage comparison"
+        ]
+      },
+      "instruction_contract": {
+        "gate": "large_policy_penalty",
+        "allowed_change_policy": "Touch only files required by the task or directly related tests. Avoid broad rewrites, test weakening, or unrelated formatting churn.",
+        "unnecessary_change_cap": 0.25,
+        "test_weakening_cap": 0.1,
+        "forbidden_actions": [
+          "delete_or_weaken_tests",
+          "bypass_mechanics",
+          "hardcode_visible_scenario",
+          "change_unrelated_files_for_reward",
+          "broad_rewrite_without_need"
+        ]
+      },
+      "anti_overfit_guards": {
+        "cap_policy": "cap final reward when rollout appears to game checks instead of improving system behavior",
+        "flags": [
+          "hardcoded_visible_scenarios",
+          "deleted_or_weakened_tests",
+          "mechanic_bypass",
+          "unrelated_file_changes",
+          "keyword_stuffing",
+          "non_general_behavior",
+          "potential_not_improved"
+        ],
+        "potential_comparison": "When previous_potential and new_potential are supplied, progress credit requires new_potential > previous_potential."
+      }
+    },
+    {
+      "id": "economistRL-spoilage-food-decay-04",
+      "title": "Warehouse Spoilage Food Decay",
+      "difficulty": "standard",
+      "curriculum_track": "economy",
+      "rl_focus": [
+        "inventory_decay",
+        "food_economy"
+      ],
+      "subskill": "warehouse_spoilage_food_decay_balance",
+      "prompt": "Propose the food spoilage rule for warehouses. Include how storage capacity, surplus size, and preservation upgrades affect decay.",
+      "expect": {
+        "all_contains": [
+          "storage",
+          "surplus",
+          "decay"
+        ],
+        "any_contains": [
+          "warehouse",
+          "spoilage",
+          "preservation",
+          "capacity"
+        ],
+        "none_contains": [
+          "delete all food"
+        ],
+        "min_chars": 160,
+        "max_chars": 1100,
+        "mechanics": [
+          {
+            "name": "capacity_pressure",
+            "keywords": [
+              "capacity",
+              "surplus",
+              "over"
+            ]
+          },
+          {
+            "name": "decay_rate",
+            "keywords": [
+              "decay",
+              "rate",
+              "spoilage"
+            ]
+          },
+          {
+            "name": "upgrade_modifier",
+            "keywords": [
+              "upgrade",
+              "preservation",
+              "reduce"
+            ]
+          }
+        ]
+      },
+      "reference_answer": "Apply spoilage only to food above a safe storage buffer, with the decay rate increasing as surplus exceeds capacity. Warehouses raise the capacity band and preservation upgrades reduce the decay multiplier. The rule should decay a bounded fraction per tick so players can plan around surplus pressure.",
+      "simulation_spec": {
+        "tick_count": 20,
+        "purpose": "Trace storage pressure into bounded food spoilage while preserving planning value of warehouses/upgrades.",
+        "relevant_state": [
+          "foodStock",
+          "storageCapacity",
+          "surplusFood",
+          "spoilageRate",
+          "warehouseLevel",
+          "preservationModifier"
+        ],
+        "scenario": {
+          "initial_state": {
+            "foodStock": 240,
+            "storageCapacity": 160,
+            "warehouseLevel": 1,
+            "preservationModifier": 0.85
+          },
+          "change_under_test": "surplus over capacity decays gradually and preservation reduces decay"
+        },
+        "goals": [
+          {
+            "name": "surplus_decay_applies",
+            "metric": "foodStock_delta",
+            "benchmark": "food stock declines when surplus exceeds storage capacity",
+            "target": "surplus_food_tick20 < surplus_food_tick1",
+            "weight": 0.3
+          },
+          {
+            "name": "within_capacity_preserved",
+            "metric": "safe_stock_delta",
+            "benchmark": "food within capacity is not aggressively decayed",
+            "target": "safe_stock_loss <= small_decay_tolerance",
+            "weight": 0.25
+          },
+          {
+            "name": "upgrade_reduces_decay",
+            "metric": "preservation_delta",
+            "benchmark": "preservation upgrade lowers spoilage compared with no upgrade",
+            "target": "upgraded_loss < baseline_loss",
+            "weight": 0.25
+          },
+          {
+            "name": "decay_bounded",
+            "metric": "max_tick_loss",
+            "benchmark": "no tick deletes all food",
+            "target": "max_tick_loss <= configured_fraction_of_surplus",
+            "weight": 0.2
+          }
+        ]
+      },
+      "targeted_tests": {
+        "goal": "Executable outcome verifies spoilage depends on storage capacity, surplus size, and preservation upgrade modifiers.",
+        "preferred_commands": [
+          "npm run test:ml-cohort -- --runInBand warehouse spoilage food"
+        ],
+        "outcome_checks": [
+          "surplus decays over ticks",
+          "preservation upgrade reduces decay",
+          "food is not deleted in one tick"
+        ]
+      },
+      "static_code_mechanics": {
+        "required_hooks": [
+          "spoilage reads storage capacity and surplus",
+          "preservation/warehouse modifier changes decay",
+          "decay is bounded per tick"
+        ],
+        "flexible_signals": [
+          "storage",
+          "capacity",
+          "surplus",
+          "decay",
+          "spoilage",
+          "warehouse",
+          "preservation",
+          "bounded"
+        ]
+      },
+      "formula_signal": {
+        "patterns": [
+          "surplus-over-capacity calculation",
+          "bounded fraction per tick",
+          "upgrade modifier multiplier"
+        ]
+      },
+      "instruction_contract": {
+        "gate": "large_policy_penalty",
+        "allowed_change_policy": "Touch only files required by the task or directly related tests. Avoid broad rewrites, test weakening, or unrelated formatting churn.",
+        "unnecessary_change_cap": 0.25,
+        "test_weakening_cap": 0.1,
+        "forbidden_actions": [
+          "delete_or_weaken_tests",
+          "bypass_mechanics",
+          "hardcode_visible_scenario",
+          "change_unrelated_files_for_reward",
+          "broad_rewrite_without_need"
+        ]
+      },
+      "anti_overfit_guards": {
+        "cap_policy": "cap final reward when rollout appears to game checks instead of improving system behavior",
+        "flags": [
+          "hardcoded_visible_scenarios",
+          "deleted_or_weakened_tests",
+          "mechanic_bypass",
+          "unrelated_file_changes",
+          "keyword_stuffing",
+          "non_general_behavior",
+          "potential_not_improved"
+        ],
+        "potential_comparison": "When previous_potential and new_potential are supplied, progress credit requires new_potential > previous_potential."
+      }
+    },
+    {
+      "id": "economistRL-army-upkeep-scaling-05",
+      "title": "Progressive Army Upkeep Scaling",
+      "difficulty": "hard",
+      "curriculum_track": "economy",
+      "rl_focus": [
+        "military_economy",
+        "progressive_costs"
+      ],
+      "subskill": "army_upkeep_progressive_size_scaling",
+      "prompt": "Define an army upkeep curve that makes small defensive forces affordable but large armies meaningfully pressure the economy. Mention supply lines and a cap against impossible costs.",
+      "expect": {
+        "all_contains": [
+          "upkeep",
+          "army",
+          "supply"
+        ],
+        "any_contains": [
+          "progressive",
+          "curve",
+          "cap",
+          "large"
+        ],
+        "none_contains": [
+          "free army"
+        ],
+        "min_chars": 180,
+        "max_chars": 1200,
+        "mechanics": [
+          {
+            "name": "progressive_curve",
+            "keywords": [
+              "progressive",
+              "curve",
+              "scaling"
+            ]
+          },
+          {
+            "name": "supply_modifier",
+            "keywords": [
+              "supply",
+              "line",
+              "distance"
+            ]
+          },
+          {
+            "name": "affordability_cap",
+            "keywords": [
+              "cap",
+              "floor",
+              "bounded"
+            ]
+          }
+        ]
+      },
+      "reference_answer": "Use a low base upkeep per unit, then apply a progressive multiplier once army size passes defensive thresholds. Supply-line distance or disruption adds a bounded surcharge, making remote large armies expensive without punishing small garrisons. Cap the multiplier so upkeep pressures the economy but never creates impossible negative spirals from one tick.",
+      "simulation_spec": {
+        "tick_count": 20,
+        "purpose": "Trace army size and supply-line pressure into bounded upkeep that pressures but does not destroy the economy.",
+        "relevant_state": [
+          "armySize",
+          "baseUpkeep",
+          "supplyDistance",
+          "supplyStatus",
+          "gold",
+          "upkeepMultiplier"
+        ],
+        "scenario": {
+          "initial_state": {
+            "armySize": 12,
+            "baseUpkeep": 2,
+            "supplyDistance": 4,
+            "gold": 500
+          },
+          "change_under_test": "larger/remote armies cost more progressively while small garrisons stay affordable"
+        },
+        "goals": [
+          {
+            "name": "small_force_affordable",
+            "metric": "small_army_upkeep",
+            "benchmark": "small defensive army remains below upkeep pressure threshold",
+            "target": "small_upkeep <= defensive_budget_cap",
+            "weight": 0.2
+          },
+          {
+            "name": "large_force_pressures_economy",
+            "metric": "large_army_upkeep",
+            "benchmark": "large army costs meaningfully more than linear small force",
+            "target": "large_upkeep > linear_baseline",
+            "weight": 0.3
+          },
+          {
+            "name": "supply_lines_matter",
+            "metric": "supply_distance_delta",
+            "benchmark": "remote or disrupted supply increases upkeep",
+            "target": "remote_upkeep > local_upkeep",
+            "weight": 0.25
+          },
+          {
+            "name": "upkeep_bounded",
+            "metric": "gold_floor",
+            "benchmark": "upkeep cannot create impossible one-tick debt spiral",
+            "target": "gold_tick20 above configured catastrophic floor",
+            "weight": 0.25
+          }
+        ]
+      },
+      "targeted_tests": {
+        "goal": "Executable outcome verifies progressive army upkeep and supply modifiers with affordability caps.",
+        "preferred_commands": [
+          "npm run test:ml-cohort -- --runInBand army upkeep supply"
+        ],
+        "outcome_checks": [
+          "large army has higher multiplier",
+          "supply distance/disruption affects upkeep",
+          "small garrisons remain affordable"
+        ]
+      },
+      "static_code_mechanics": {
+        "required_hooks": [
+          "army upkeep reads army size",
+          "supply line/distance modifier participates",
+          "cap/floor prevents impossible costs"
+        ],
+        "flexible_signals": [
+          "army",
+          "upkeep",
+          "supply",
+          "distance",
+          "progressive",
+          "multiplier",
+          "cap",
+          "bounded"
+        ]
+      },
+      "formula_signal": {
+        "patterns": [
+          "progressive size curve",
+          "supply modifier",
+          "bounded cap/floor"
+        ]
+      },
+      "instruction_contract": {
+        "gate": "large_policy_penalty",
+        "allowed_change_policy": "Touch only files required by the task or directly related tests. Avoid broad rewrites, test weakening, or unrelated formatting churn.",
+        "unnecessary_change_cap": 0.25,
+        "test_weakening_cap": 0.1,
+        "forbidden_actions": [
+          "delete_or_weaken_tests",
+          "bypass_mechanics",
+          "hardcode_visible_scenario",
+          "change_unrelated_files_for_reward",
+          "broad_rewrite_without_need"
+        ]
+      },
+      "anti_overfit_guards": {
+        "cap_policy": "cap final reward when rollout appears to game checks instead of improving system behavior",
+        "flags": [
+          "hardcoded_visible_scenarios",
+          "deleted_or_weakened_tests",
+          "mechanic_bypass",
+          "unrelated_file_changes",
+          "keyword_stuffing",
+          "non_general_behavior",
+          "potential_not_improved"
+        ],
+        "potential_comparison": "When previous_potential and new_potential are supplied, progress credit requires new_potential > previous_potential."
+      }
+    },
+    {
+      "id": "economistRL-production-cache-invalid-06",
+      "title": "Resource Projection Cache Invalidation",
+      "difficulty": "standard",
+      "curriculum_track": "economy",
+      "rl_focus": [
+        "resource_projection",
+        "state_integrity"
+      ],
+      "subskill": "resource_projection_cache_invalidation",
+      "prompt": "Describe when projected resource income caches must be invalidated after worker reassignment, building completion, upkeep changes, and market price changes.",
+      "expect": {
+        "all_contains": [
+          "cache",
+          "worker",
+          "upkeep"
+        ],
+        "any_contains": [
+          "invalidate",
+          "recompute",
+          "market",
+          "building"
+        ],
+        "none_contains": [
+          "stale is fine"
+        ],
+        "min_chars": 170,
+        "max_chars": 1100,
+        "mechanics": [
+          {
+            "name": "worker_reassignment",
+            "keywords": [
+              "worker",
+              "reassignment",
+              "job"
+            ]
+          },
+          {
+            "name": "upkeep_dependency",
+            "keywords": [
+              "upkeep",
+              "maintenance",
+              "cost"
+            ]
+          },
+          {
+            "name": "market_dependency",
+            "keywords": [
+              "market",
+              "price",
+              "trade"
+            ]
+          }
+        ]
+      },
+      "reference_answer": "Invalidate the projection cache whenever a worker reassignment changes jobs, a production building completes or upgrades, upkeep modifiers change, or market prices shift. Each invalidation should mark the affected city/resource scope dirty, then recompute gross output, upkeep, trade value, and net delta before the next HUD or AI read. Stale cache values are never acceptable for spending decisions.",
+      "simulation_spec": {
+        "tick_count": 20,
+        "purpose": "Trace resource projection cache invalidation so economy reads update after worker, building, upkeep, or market changes.",
+        "relevant_state": [
+          "workerAssignments",
+          "buildingState",
+          "upkeepModifiers",
+          "marketPrices",
+          "projectionCache",
+          "netDelta"
+        ],
+        "scenario": {
+          "initial_state": {
+            "workerAssignments": {
+              "farm": 4,
+              "mine": 2
+            },
+            "projectionCacheDirty": false,
+            "netDelta": 12
+          },
+          "change_under_test": "relevant economy mutations mark projection cache dirty and recompute before reads"
+        },
+        "goals": [
+          {
+            "name": "worker_change_invalidates_cache",
+            "metric": "cache_dirty_after_worker_change",
+            "benchmark": "worker reassignment marks affected projection dirty",
+            "target": "dirty == true before next read",
+            "weight": 0.25
+          },
+          {
+            "name": "building_change_invalidates_cache",
+            "metric": "cache_dirty_after_building_change",
+            "benchmark": "building completion/upgrade marks projection dirty",
+            "target": "dirty == true before next read",
+            "weight": 0.2
+          },
+          {
+            "name": "upkeep_change_invalidates_cache",
+            "metric": "cache_dirty_after_upkeep_change",
+            "benchmark": "upkeep modifier change recomputes net delta",
+            "target": "netDelta changes after recompute",
+            "weight": 0.2
+          },
+          {
+            "name": "market_change_invalidates_cache",
+            "metric": "cache_dirty_after_market_change",
+            "benchmark": "market price change recomputes trade/resource projection",
+            "target": "projection uses new market price",
+            "weight": 0.2
+          },
+          {
+            "name": "no_stale_read",
+            "metric": "stale_cache_reads",
+            "benchmark": "HUD/AI read never observes stale projection after dirty event",
+            "target": "stale_reads == 0",
+            "weight": 0.15
+          }
+        ]
+      },
+      "targeted_tests": {
+        "goal": "Executable outcome verifies projection cache invalidates on worker, building, upkeep, and market mutations.",
+        "preferred_commands": [
+          "npm run test:ml-cohort -- --runInBand projection cache resource"
+        ],
+        "outcome_checks": [
+          "worker reassignment recomputes projection",
+          "building/upkeep changes recompute net delta",
+          "market price change recomputes trade projection"
+        ]
+      },
+      "static_code_mechanics": {
+        "required_hooks": [
+          "worker assignment mutation marks projection dirty",
+          "building/upkeep mutation marks projection dirty",
+          "market price mutation marks projection dirty or recomputes scoped projection"
+        ],
+        "flexible_signals": [
+          "cache",
+          "invalidate",
+          "dirty",
+          "recompute",
+          "worker",
+          "building",
+          "upkeep",
+          "market",
+          "projection",
+          "netDelta"
+        ]
+      },
+      "formula_signal": {
+        "patterns": [
+          "dirty flag or version counter",
+          "scoped recompute",
+          "dependency-aware invalidation"
+        ]
+      },
+      "instruction_contract": {
+        "gate": "large_policy_penalty",
+        "allowed_change_policy": "Touch only files required by the task or directly related tests. Avoid broad rewrites, test weakening, or unrelated formatting churn.",
+        "unnecessary_change_cap": 0.25,
+        "test_weakening_cap": 0.1,
+        "forbidden_actions": [
+          "delete_or_weaken_tests",
+          "bypass_mechanics",
+          "hardcode_visible_scenario",
+          "change_unrelated_files_for_reward",
+          "broad_rewrite_without_need"
+        ]
+      },
+      "anti_overfit_guards": {
+        "cap_policy": "cap final reward when rollout appears to game checks instead of improving system behavior",
+        "flags": [
+          "hardcoded_visible_scenarios",
+          "deleted_or_weakened_tests",
+          "mechanic_bypass",
+          "unrelated_file_changes",
+          "keyword_stuffing",
+          "non_general_behavior",
+          "potential_not_improved"
+        ],
+        "potential_comparison": "When previous_potential and new_potential are supplied, progress credit requires new_potential > previous_potential."
+      }
+    }
+  ]
+}

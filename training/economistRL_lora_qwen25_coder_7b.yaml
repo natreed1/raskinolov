@@ -1,0 +1,41 @@
+# economistRL experimental LoRA seed config.
+# Build seed data first:
+#   python scripts/adapters/build_economist_rl_dataset.py
+# Train:
+#   mlx_lm.lora --train -c training/economistRL_lora_qwen25_coder_7b.yaml
+
+model: mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+train: true
+data: data/lora/adapters/economistRL_seed
+
+fine_tune_type: lora
+optimizer: adamw
+mask_prompt: false
+
+num_layers: -1
+batch_size: 1
+iters: 160
+val_batches: 8
+learning_rate: 8.0e-6
+steps_per_report: 10
+steps_per_eval: 40
+grad_accumulation_steps: 2
+
+adapter_path: checkpoints/adapters/economistRL/seed_sft
+save_every: 40
+
+max_seq_length: 4096
+grad_checkpoint: true
+seed: 42
+
+lora_parameters:
+  rank: 16
+  dropout: 0.05
+  scale: 20.0
+
+optimizer_config:
+  adam: {}
+  adamw: {}
+  muon: {}
+  sgd: {}
+  adafactor: {}

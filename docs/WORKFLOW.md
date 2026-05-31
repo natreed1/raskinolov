@@ -2,6 +2,8 @@
 
 Use `scripts/ml_workflow.py` as the single entry point for repeatable pipelines. Launch it from the repo venv (`.venv/bin/python scripts/ml_workflow.py ...` or an activated venv); the script re-execs into `.venv/bin/python` when that interpreter exists so child steps use the same MLX toolchain.
 
+Site policy note: only three web surfaces are supported for day-to-day usage: `scripts/private_dashboard_server.py` (docs/cost dashboard), `scripts/game_task_arena.py ui` (arena supervision), and `scripts/router_chat_gradio.py` (router prompt lab). Legacy UIs remain in-repo for migration but are blocked by default unless run with `--allow-legacy-ui`.
+
 **Except `arena-dashboard`**, every invocation writes:
 
 1. `benchmarks/results/runs/<run_id>/manifest.json` — machine-readable steps, per-step exit codes, final exit code, timing, argv, versions.
@@ -9,6 +11,8 @@ Use `scripts/ml_workflow.py` as the single entry point for repeatable pipelines.
 3. `benchmarks/results/runs/<run_id>/logs/*.log` — full stdout/stderr per step.
 4. `benchmarks/results/runs/<run_id>/training_trajectory.jsonl` — for training runs, parsed `mlx_lm.lora` points with iteration, train/validation loss, learning rate, throughput, trained tokens, memory, and checkpoint flags when those fields are present in logs. The same summary is embedded in the training step inside `manifest.json`.
 5. `docs/run_history.md` — one appended table row (committed) with exit/status, trained adapter, and benchmarked adapter/model so the repo always carries a durable index of runs; copy artifacts off-machine if you need long-term archives (the `runs/` tree is gitignored).
+
+Lambda Cloud launchers additionally include raw `cloud-eval-logs/gpu-smi*.csv` telemetry and auto-generated `cloud-eval-logs/gpu-telemetry-summary.json` / `.md` in every checkpoint/final artifact tarball.
 
 For "which run or adapter should I use now?", start with `docs/RUNS.md`. This workflow doc is the command reference, not the historical run narrative.
 
@@ -22,27 +26,35 @@ Activate the venv first (`source .venv/bin/activate`).
 | `python scripts/ml_workflow.py smoke`            | Synthetic JSONL → 4 train iters → benchmark **base** model. Fast CI / sanity check. The smoke adapter is written for wiring validation but is not what the benchmark loads.                                                                                                                                                                                                                              |
 | `python scripts/ml_workflow.py prepare`          | `export_repo_for_training.py` + `build_lora_dataset.py` (needs `SOURCE_REPO` + game checkout).                                                                                                                                                                                                                                                                                                           |
 | `python scripts/ml_workflow.py train`            | `mlx_lm.lora --train` only. Optional `--evaluate` to run the benchmark after a successful train.                                                                                                                                                                                                                                                                                                         |
-| `python scripts/ml_workflow.py benchmark`        | `run_game_benchmark.py` only; optional `--adapter-path`, `--profile` `game` or `general`.                                                                                                                                                                                                                                                                                                                |
+| `python scripts/ml_workflow.py benchmark`        | `run_game_benchmark.py` specialist suite only; optional `--adapter-path`, optional repeated `--specialist <id>` to scope to one or more specialist task sets.                                                                                                                                                                                                                                           |
 | `python scripts/ml_workflow.py evalplus`         | `run_evalplus_benchmark.py` execution-based HumanEval+/MBPP+ subset or full suite.                                                                                                                                                                                                                                                                                                                       |
 | `python scripts/ml_workflow.py arena-acceptance` | `run_arena_acceptance_tests.py` + deterministic **Arena Capability Index** from apply/typecheck/export/preview artifacts.                                                                                                                                                                                                                                                                                |
-| `python scripts/ml_workflow.py full`             | **prepare → train → benchmark** on the trained adapter; optional `--bench-profile general` for the generic coding suite on the last step.                                                                                                                                                                                                                                                                |
+| `python scripts/ml_workflow.py full`             | **prepare → train → benchmark** on the trained adapter; optional repeated `--bench-specialist <id>` to run only relevant specialist benchmark tasks.                                                                                                                                                                                                                                                     |
 | `python scripts/ml_workflow.py arena-dashboard` | Regenerates `benchmarks/results/arena_dashboard.html` from local `benchmarks/results/runs/*/arena_capability.json` (no run folder, **no `run_history` row** — see **`docs/ARENA_ROADMAP.md`**). |
 | `python scripts/ml_workflow.py arena-gate-train` | **Loop:** train on `data/lora/game_task_pairwise` (chat JSONL) then run **headless** `scripts/run_arena_gate_benchmark.py` (`round_final_ok` by default; `--gate preview` starts Next and requires `preview_ready`). Stops when the gate passes or `--max-cycles` is exhausted. Requires existing `train.jsonl` or `--rebuild-dataset` with `benchmarks/results/game_task_pairwise_training_data.jsonl`. |
-| `python scripts/ml_workflow.py train --evaluate` | Optional `--bench-profile general` with `--evaluate` to run the **general** suite on the new adapter.                                                                                                                                                                                                                                                                                                    |
+| `python scripts/ml_workflow.py train --evaluate` | Optional repeated `--bench-specialist <id>` with `--evaluate` to run only selected specialist benchmark tasks.                                                                                                                                                                                                                                                                                           |
 | `python scripts/ml_workflow.py adapter-registry` | Write or inspect `training/adapter_registry_v1.json` (taxonomy + promotion metadata + policy versions). |
 | `python scripts/ml_workflow.py adapter-datasets` | Build per-adapter datasets with shared anti-overfit corpus and per-adapter manifests. |
-| `python scripts/ml_workflow.py loading-screen-dataset` | Build a richer `loading_screen` specialist dataset from pairwise winners + UI transfer rows + shared anchors. |
+| `python scripts/ml_workflow.py loading-screen-dataset` | Build a richer `loading_screen` specialist dataset from pairwise winners + UI transfer rows + shared anchors + loading benchmark prompt synthesis. |
 | `python scripts/ml_workflow.py economy-tooltip-dataset` | Build a richer `economy_tooltip` specialist dataset (core `economy-tooltip` + transfer from loading/HUD samples + shared anchors). |
+| `python scripts/ml_workflow.py economist-rl-dataset` | Build `economistRL` seed SFT rows from `benchmarks/economistRL_tasks_v1.json` before RL rollout/reward optimization. |
+| `python scripts/ml_workflow.py save-load-dataset` | Build `save_load_api_guard` specialist dataset from pairwise winners + save/load mass benchmark prompts + shared anchors. |
+| `python scripts/ml_workflow.py ai-planning-dataset` | Build `ai_planning_explanation` specialist dataset from pairwise winners + AI-planning mass benchmark prompts + shared anchors. |
 | `python scripts/ml_workflow.py hud-status-dataset` | Build **HUD specialist** JSONL (`hud_status_specialist`): default **baseline shards** + store/API **guardrails**, **HUD pairwise capped at `--max-core-rows` (default 0)** + substring filter on winners; overrides via `--baseline-shards`, `--no-hud-guardrails`, `--no-filter-pairwise-hud`, `--max-transfer-rows`. |
 | `python scripts/ml_workflow.py documentation-dataset` | Build **documentation/run-analysis** JSONL (`documentation_specialist/`): curator draft→canonical-prose pairs for this MLX lab (`ml_workflow`, `PROJECT_STATE`, append-only logs, checkpoints, run manifests, token-routing scope guard); `--min-train-core-rows` upsamples deterministic repeats for small train sets. |
+| `python scripts/ml_workflow.py mock-specialist-pairwise` | Generate mock pairwise rows (`winner_output` vs weak loser) from specialist-tagged benchmark tasks for dataset bootstrapping and low-data specialists. |
 | `python scripts/ml_workflow.py documentation-rag-benchmark` | **Documentation-agent RAG** string tasks (`benchmarks/documentation_agent_rag_tasks_v1.json`, corpus `data/rag/documentation_agent_corpus.json`): loads Qwen2.5-Coder-7B (or `MODEL` / `--model`), optional `ADAPTER_PATH` / `--adapter-path`. Writes per-task JSONL under `benchmarks/results/runs/<run_id>/`, appends **`docs/SPECIALIZED_RUN_HISTORY.md`**, tails **`benchmarks/results/documentation_rag_timeseries.jsonl`**, and a normal **`docs/run_history.md`** row. **Exit code** follows the **with-RAG** pass only; the optional no-RAG baseline uses `--no-fail`. Fast path: `--skip-no-rag-baseline`. |
 | `python scripts/ml_workflow.py adapter-gate` | Evaluate adapter promotion gates with avg-gain objective and rollback guards. |
 | `python scripts/ml_workflow.py drift-check` | Run adapter/router drift checks and emit automated actions (`warn/freeze/reduce/rollback`). |
 | `python scripts/ml_workflow.py control-plane-schedule` | Schedule jobs from worker heartbeat/capability snapshots (multi-Mac scaffold). |
 | `python scripts/ml_workflow.py multi-adapter-report` | Publish routing + adapter quality + SLO dashboard artifacts under `benchmarks/results/`. |
-| `python scripts/ml_workflow.py routing-prompt-lab` | Capture live or batch prompts, predict adapter + legacy route, and write routing JSONL logs. |
-| `python scripts/ml_workflow.py routing-benchmark` | Evaluate route-only or dual-label (adapter + route) routing accuracy with confusion summaries. |
+| `python scripts/ml_workflow.py routing-prompt-lab` | Capture live or batch prompts, predict adapter/route, and write routing JSONL logs (includes council plan/disagreement metadata when enabled). |
+| `python scripts/ml_workflow.py routing-benchmark` | Evaluate route/adapter/both/council routing quality with council-selection and escalation summaries. |
 | `python scripts/ml_workflow.py routing-dataset` | Build deterministic train/valid/test routing classifier dataset artifacts + manifest. |
+| `python scripts/ml_workflow.py council-dataset` | Build deterministic train/valid/test council-orchestration dataset from router chat + prompt-lab logs. |
+| `python scripts/ml_workflow.py routing-train` | Train OSS linear adapter classifier artifacts (`training/router_classifier_v1`) from routing dataset splits. |
+| `python scripts/ml_workflow.py routing-gate` | Apply combined promotion thresholds to routing summary + rows (offline accuracy/council checks + optional online gate inputs). |
+| `python scripts/ml_workflow.py council-roster-init` | Bootstrap/refresh council roster JSON with default per-expert traits. |
 
 
 ### Examples
@@ -66,8 +78,10 @@ python scripts/ml_workflow.py train --adapter-path checkpoints/exp-001 -- --iter
 # Same + automatic benchmark on the new adapter
 python scripts/ml_workflow.py train --adapter-path checkpoints/exp-001 --evaluate -- --iters 200
 
-# Resume from an existing adapter and run the general benchmark
-python scripts/ml_workflow.py train --evaluate --bench-profile general \
+# Resume from an existing adapter and run specialist-focused benchmarks
+python scripts/ml_workflow.py train --evaluate \
+  --bench-specialist combat_risk \
+  --bench-specialist ai_planning_explanation \
   --adapter-path checkpoints/exp-800 \
   -- --iters 800 --batch-size 1 --val-batches 8 \
   --resume-adapter-file checkpoints/exp-001/adapters.safetensors
@@ -127,9 +141,13 @@ python scripts/ml_workflow.py arena-gate-train \
 # Benchmark only (base model)
 python scripts/ml_workflow.py benchmark
 
-# Benchmark LoRA
+# Benchmark LoRA against all specialist tasks
 python scripts/ml_workflow.py benchmark --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest
-python scripts/ml_workflow.py benchmark --adapter-path checkpoints/fe-lora-qwen25-coder-7b-latest --profile general
+
+# Benchmark LoRA for one specialist (supports repeated --specialist)
+python scripts/ml_workflow.py benchmark \
+  --adapter-path checkpoints/adapters/combat_risk/cycle4 \
+  --specialist combat_risk
 
 # Execution-based HumanEval+ subset via EvalPlus
 python scripts/ml_workflow.py evalplus --adapter-path checkpoints/fe-lora-30m --limit 5
@@ -140,16 +158,98 @@ python scripts/select_best_adapter.py
 # Dry-run cost router policy benchmark (no API calls)
 python scripts/run_routing_benchmark.py
 python scripts/run_routing_benchmark.py --mode both --summary-json benchmarks/results/routing_policy_summary.json
+python scripts/run_routing_benchmark.py --mode council --summary-json benchmarks/results/routing_policy_council_summary.json
 python scripts/ml_workflow.py routing-benchmark --mode both --output-jsonl benchmarks/results/routing_policy_rows.jsonl
+python scripts/ml_workflow.py routing-benchmark \
+  --mode both \
+  --output-jsonl benchmarks/results/routing_policy_rows.jsonl \
+  --summary-json benchmarks/results/routing_policy_summary.json
+
+# Optimize manifold routing thresholds on AGI + mixed task sets
+python scripts/optimize_manifold_routing.py \
+  --score-grid 0.08,0.10,0.12,0.14 \
+  --margin-grid 0.02,0.03,0.05 \
+  --unknown-conf-grid 0.58,0.62,0.66 \
+  --hierarchy-width-grid 3,4 \
+  --hierarchy-min-hits-grid 1,2 \
+  --out-dir benchmarks/results/routing_manifold_optimization
+
+# A/B hierarchy off vs on using the same similarity thresholds
+ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=0 \
+  python scripts/ml_workflow.py routing-benchmark --tasks benchmarks/task_routing_tasks.json --mode both
+ROUTER_ADAPTER_SELECTION_MODE=similarity ROUTER_HIERARCHICAL_ROUTING_ENABLED=1 \
+ROUTER_HIERARCHY_CANDIDATE_WIDTH=3 ROUTER_HIERARCHY_MIN_COARSE_HITS=2 \
+  python scripts/ml_workflow.py routing-benchmark --tasks benchmarks/task_routing_mixed_tasks_v1.json --mode both
+
+# Validate multi-agent split/merge orchestration contract
+python scripts/validate_multi_agent_orchestration.py \
+  --tasks benchmarks/task_routing_mixed_tasks_v1.json \
+  --output-json benchmarks/results/multi_agent_orchestration_validation.json
 
 # Live prompt routing capture (type your own prompts or pass a file)
 python scripts/ml_workflow.py routing-prompt-lab --prompt "Audit save/load auth guardrails" --accepted-for-training
 python scripts/ml_workflow.py routing-prompt-lab --prompts-file data/routing/live_batch.txt --source live
 
+# Bound iterative council debate to control EQ-training compute
+ROUTER_COUNCIL_DEBATE_MAX_ROUNDS=2 ROUTER_CHAT_COUNCIL_DEBATE_MAX_ROUNDS=2 \
+  python scripts/router_chat_gradio.py --council-debate-max-rounds 2
+
+# Expand each selected specialist into up to 3 roster-defined personalities (same adapter weights)
+ROUTER_COUNCIL_SPECIALIST_PERSONALITY_VARIANTS=3 \
+  python scripts/router_chat_gradio.py --council-debate-max-rounds 2
+
+# Ensure council roster exists with default per-expert traits and personalities
+python scripts/ml_workflow.py council-roster-init --merge-existing
+
 # Build supervised routing train/valid/test splits
 python scripts/ml_workflow.py routing-dataset \
   --live-jsonl benchmarks/results/routing_prompt_lab/smoke.jsonl \
   --dataset-version routing-v1
+
+# Build council-orchestration train/valid/test splits
+python scripts/ml_workflow.py council-dataset \
+  --router-chat-jsonl benchmarks/results/router_chat_interactions.jsonl \
+  --prompt-lab-jsonl benchmarks/results/routing_prompt_lab/smoke.jsonl \
+  --dataset-version council-v1
+
+# Train Router V2 OSS classifier from a routing dataset split
+python scripts/ml_workflow.py routing-train \
+  --data-dir data/lora/routing_classifier/routing-v1 \
+  --out-dir training/router_classifier_v1 \
+  --epochs 120 \
+  --lr 0.2
+
+# Apply Router council promotion gates (offline + optional online + roster updates)
+python scripts/ml_workflow.py routing-gate \
+  --summary-json benchmarks/results/routing_policy_council_summary.json \
+  --rows-jsonl benchmarks/results/routing_policy_rows.jsonl \
+  --roster-json data/routing/council_roster_v1.json \
+  --write-roster \
+  --output benchmarks/results/routing_gate_result.json
+
+python scripts/router_promotion_gate.py \
+  --summary-json benchmarks/results/routing_policy_council_summary.json \
+  --rows-jsonl benchmarks/results/routing_policy_rows.jsonl \
+  --online-json benchmarks/results/routing_online_metrics.json \
+  --roster-json data/routing/council_roster_v1.json \
+  --write-roster \
+  --output benchmarks/results/routing_gate_result.json
+
+# `routing_policy_rows.jsonl` can carry `council_selected_personalities`.
+# Rich council-conversation rows can also credit personality winners through
+# `rounds[].participants` plus `adjudication.winner_ids`. The gate updates
+# nested personality states (`candidate`, `active`, `cooldown`, `retired`)
+# independently from expert states.
+
+# Collect only high-value council conversations before scaling generation
+ROUTER_COUNCIL_PERSONALITY_SELECTION_POLICY=bandit \
+ROUTER_COUNCIL_PERSONALITY_EXPLORATION_RATE=0.15 \
+python scripts/run_council_conversation_eval.py \
+  --selective-generation \
+  --selective-min-ambiguity 0.35 \
+  --selective-max-confidence 0.72 \
+  --mock-generation \
+  --max-tasks 10
 
 # Initialize adapter registry and build per-adapter datasets
 python scripts/ml_workflow.py adapter-registry --write-default
@@ -159,15 +259,43 @@ python scripts/ml_workflow.py adapter-datasets \
 
 # Build loading-screen specialist dataset (core + transfer UI tasks)
 python scripts/ml_workflow.py loading-screen-dataset \
+  --benchmark-tasks-json benchmarks/loading_screen_mass_tasks_v1.json \
+  --max-benchmark-rows 120 \
   --transfer-task-id hud-status-summary \
   --transfer-task-id economy-tooltip \
   --min-train-core-rows 120
 
 # Build economy-tooltip specialist dataset (pairwise + curated baseline + shallow UI transfers)
 python scripts/ml_workflow.py economy-tooltip-dataset \
+  --benchmark-tasks-json benchmarks/economy_tooltip_mass_tasks_v1.json \
   --transfer-task-id loading-screen-polish \
   --transfer-task-id hud-status-summary \
   --min-train-core-rows 100
+
+# Build economistRL seed rows before RL rollout scoring
+python scripts/economist_rl_tasks.py validate
+python scripts/ml_workflow.py economist-rl-dataset
+
+# Build save/load and AI-planning specialist datasets from mass benchmark prompts
+python scripts/ml_workflow.py save-load-dataset \
+  --benchmark-tasks-json benchmarks/save_load_api_guard_mass_tasks_v1.json \
+  --min-train-core-rows 120
+python scripts/ml_workflow.py ai-planning-dataset \
+  --benchmark-tasks-json benchmarks/ai_planning_explanation_mass_tasks_v1.json \
+  --min-train-core-rows 120
+
+# Generate mock pairwise supervision for low-data specialist refreshes
+python scripts/ml_workflow.py mock-specialist-pairwise \
+  --task-file benchmarks/specialist_benchmark_tasks.json \
+  --task-file benchmarks/hud_status_mass_tasks_v1.json \
+  --task-file benchmarks/economy_tooltip_mass_tasks_v1.json \
+  --repeats-per-task 4 \
+  --output-jsonl benchmarks/results/mock_specialist_pairwise_training_data_v1.jsonl
+
+# Feed mock pairwise rows into a specialist dataset build (example: HUD)
+python scripts/ml_workflow.py hud-status-dataset \
+  --pairwise-jsonl benchmarks/results/mock_specialist_pairwise_training_data_v1.jsonl \
+  --min-train-core-rows 140
 
 # Evaluate candidate gate + drift and publish report
 python scripts/ml_workflow.py adapter-gate \
@@ -196,10 +324,11 @@ python scripts/game_task_arena.py ui
 
 ## Benchmark Scoring
 
-`scripts/run_game_benchmark.py` reports two layers:
+`scripts/run_game_benchmark.py` reports two layers for specialist benchmark prompts:
 
 - **Summary** (`15/15`, `8/8`): legacy substring pass/fail smoke score.
 - **Capability Index** (`0–100`): weighted score that combines correctness, instruction following, concision, and speed. This catches adapters that pass substring checks by emitting huge generic answers.
+- **Advanced ACI** (`0–100`): weighted capability + domain-balance + multi-domain mastery (from task `domains` metadata or category inference), so cross-domain transfer tasks materially affect the headline score.
 
 Treat this as a **lexical regression/capability proxy**, not a true game-edit capability score.
 
@@ -414,6 +543,12 @@ Run-analysis RAG (manifests/history/run summaries):
 ```bash
 python scripts/build_run_analysis_rag_corpus.py
 python scripts/run_run_analysis_agent_benchmark.py --use-rag
+```
+
+Router taxonomy/case RAG (adapter-first routing docs and prompt casebook):
+
+```bash
+python scripts/router_rag.py "Which adapter handles save/load authorization prompts?"
 ```
 
 Edit-triggered training prep hook:
