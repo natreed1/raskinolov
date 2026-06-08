@@ -138,6 +138,52 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
         self.assertEqual(windows[-1].target_pos, 6)
         self.assertEqual(windows[-1].target_token_id, 103)
 
+    def test_windowed_logprob_matches_full_when_context_fits(self) -> None:
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("torch not installed")
+
+        from economist_rl_ppo_trainer import (
+            _build_completion_logprob_windows,
+            _mean_completion_logprob_torch,
+        )
+
+        prompt_ids = list(range(20))
+        completion_ids = [100, 101, 102, 103]
+        prompt_len = len(prompt_ids)
+        logits = torch.randn(prompt_len + len(completion_ids), 128)
+
+        full_mean = float(
+            _mean_completion_logprob_torch(logits, completion_ids, prompt_len, torch)
+        )
+
+        window_means = []
+        for window in _build_completion_logprob_windows(
+            prompt_ids=prompt_ids,
+            completion_ids=completion_ids,
+            max_window_tokens=512,
+        ):
+            pos = prompt_len - 1 + completion_ids.index(window.target_token_id)
+            log_probs = torch.nn.functional.log_softmax(logits[pos], dim=-1)
+            window_means.append(float(log_probs[window.target_token_id]))
+        self.assertAlmostEqual(full_mean, sum(window_means) / len(window_means), places=6)
+
+    def test_long_sequence_windowed_path_activates_below_full_context(self) -> None:
+        from economist_rl_ppo_trainer import _build_completion_logprob_windows
+
+        prompt_ids = list(range(3000))
+        completion_ids = list(range(3000, 3010))
+        windows = _build_completion_logprob_windows(
+            prompt_ids=prompt_ids,
+            completion_ids=completion_ids,
+            max_window_tokens=2048,
+        )
+        self.assertEqual(len(windows), len(completion_ids))
+        self.assertTrue(all(len(window.input_ids) <= 2048 for window in windows))
+        self.assertEqual(windows[0].input_ids[0], 3000 - 2047)
+        self.assertEqual(windows[-1].target_token_id, completion_ids[-1])
+
     def test_build_ppo_samples_and_dry_run_train(self) -> None:
         from economist_rl_ppo_trainer import PPOConfig, build_ppo_samples, train_ppo_batch
 

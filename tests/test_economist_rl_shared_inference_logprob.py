@@ -54,3 +54,25 @@ def test_attach_old_logprob_passes_inference_backend(monkeypatch) -> None:
         inference_backend=backend,
     )
     assert row["old_logprob"] == -0.5
+
+
+def test_attach_old_logprob_forwards_logprob_window(monkeypatch) -> None:
+    backend = MagicMock(name="shared_backend")
+    seen: dict[str, object] = {}
+
+    def _fake_compute(**kwargs) -> float:
+        seen.update(kwargs)
+        return -0.75
+
+    monkeypatch.setattr(trainer, "compute_sequence_logprob", _fake_compute)
+
+    row = attach_old_logprob_to_rollout(
+        rollout_row={"prompt": "p", "output": "completion"},
+        system_prompt="system",
+        base_model="mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+        adapter_path=None,
+        inference_backend=backend,
+        max_window_tokens=1024,
+    )
+    assert row["old_logprob"] == -0.75
+    assert seen["max_window_tokens"] == 1024

@@ -4,6 +4,24 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-06-07 — PPO logprob window alignment (rollout attach + train)
+
+**Goal:** Keep PPO `old_logprob` / `new_logprob` on the same bounded-forward scale and avoid rollout attach OOM on long sequences.
+
+**Changes:**
+
+- `scripts/lambda/run_economist_rl_lambda_cycle.py` — pass `ppo_config.max_logprob_window_tokens` into rollout attach, eval attach, and PPO train in the same cycle.
+- `scripts/economist_rl_ppo_trainer.py` — clarify `refresh_old_logprobs=False` comment (rollout attach is windowed).
+- `tests/test_economist_rl_lambda_ppo_pipeline.py` — window/full equivalence + long-sequence tail tests.
+- `tests/test_economist_rl_shared_inference_logprob.py` — assert attach forwards `max_window_tokens`.
+- `docs/ECONOMIST_RL_ADAPTER.md` — PPO logprob windowing section.
+
+**Verification:** `python3 -m unittest tests.test_economist_rl_lambda_ppo_pipeline tests.test_economist_rl_shared_inference_logprob`
+
+**Docs:** `docs/ECONOMIST_RL_ADAPTER.md` — new **RL cycle pipeline** section (artifact map + Phase 5 PPO optimization detail + Lambda full-run command).
+
+---
+
 ## 2026-06-01 — Full v2 prep: seed retrain + cycle 012 (500 rollouts)
 
 **Prep:** `economistRL_tasks_v2_coding.json`; `build_economist_rl_dataset.py` (1500 train rows, fenced assistants); backed up `seed_bootstrap` → `seed_bootstrap_v1_plan_20260601`; `mlx_lm.lora` 160 iters (final val loss ~0.215).

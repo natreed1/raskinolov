@@ -433,6 +433,7 @@ def run_rollouts(
     dry_run: bool,
     source_repo: Path | None = None,
     context_log_root: Path | None = None,
+    max_logprob_window_tokens: int | None = None,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     adapter_path = adapter.resolved_path if adapter.exists else None
@@ -493,6 +494,7 @@ def run_rollouts(
                     adapter_path=adapter_path,
                     dry_run=False,
                     inference_backend=generator.inference_backend(),
+                    max_window_tokens=max_logprob_window_tokens,
                 )
             )
             print(f"[rollout] {idx}/{len(tasks)} {task.get('id')}", flush=True)
@@ -668,6 +670,7 @@ def eval_adapter(
     execution_pool: ExecutionWorktreePool | None = None,
     execution_log_root: Path | None = None,
     source_repo: Path | None = None,
+    max_logprob_window_tokens: int | None = None,
 ) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     if dry_run:
@@ -704,6 +707,7 @@ def eval_adapter(
             adapter_path=adapter_path,
             dry_run=False,
             inference_backend=generator.inference_backend(),
+            max_window_tokens=max_logprob_window_tokens,
         )
         rollout = attach_batch_evidence(
             tasks_by_id=task_by_id,
@@ -813,6 +817,7 @@ def run_eval_and_compare(
     execution_pool: ExecutionWorktreePool | None = None,
     execution_log_root: Path | None = None,
     source_repo: Path | None = None,
+    max_logprob_window_tokens: int | None = None,
 ) -> dict[str, Any]:
     eval_kwargs = {
         "tasks": eval_tasks,
@@ -826,6 +831,7 @@ def run_eval_and_compare(
         "execution_pool": execution_pool,
         "execution_log_root": execution_log_root,
         "source_repo": source_repo,
+        "max_logprob_window_tokens": max_logprob_window_tokens,
     }
     candidate_eval = eval_adapter(label="candidate", adapter_path=candidate_adapter, **eval_kwargs)
     registry_baseline_eval = eval_adapter(
@@ -942,6 +948,7 @@ def run_cycle(
     task_by_id = {str(t.get("id") or ""): t for t in tasks}
     for eval_task in eval_tasks:
         task_by_id[str(eval_task.get("id") or "")] = eval_task
+    ppo_config = _resolve_ppo_config(spec, args)
 
     print(f"[cycle {cycle_id:03d}] base_model={args.base_model}")
     print(f"[cycle {cycle_id:03d}] registry_adapter={registry_current.adapter_path} exists={registry_current.exists}")
@@ -1007,6 +1014,7 @@ def run_cycle(
         dry_run=bool(args.dry_run),
         source_repo=source_repo,
         context_log_root=context_log_root if source_repo else None,
+        max_logprob_window_tokens=ppo_config.max_logprob_window_tokens,
     )
     evidenced = run_evidence(
         spec=spec,
@@ -1054,7 +1062,7 @@ def run_cycle(
             candidate_adapter=paths.candidate_adapter,
             base_model=args.base_model,
             ppo_manifest_file=paths.ppo_manifest_file,
-            ppo_config=_resolve_ppo_config(spec, args),
+            ppo_config=ppo_config,
             train_backend="transformers" if bool(args.lambda_mode) else None,
             dry_run=bool(args.dry_run),
             ppo_in_process=bool(getattr(args, "ppo_in_process", False)),
@@ -1104,6 +1112,7 @@ def run_cycle(
                 execution_pool=eval_execution_pool,
                 execution_log_root=eval_execution_log,
                 source_repo=source_repo,
+                max_logprob_window_tokens=ppo_config.max_logprob_window_tokens,
             )
     finally:
         if eval_execution_pool is not None:
@@ -1140,7 +1149,7 @@ def parse_args() -> argparse.Namespace:
         "--ppo-logprob-window-tokens",
         type=int,
         default=None,
-        help="Maximum prompt+completion tokens per PPO logprob forward pass.",
+        help="Max tokens per PPO logprob forward (per completion token when sequence exceeds this).",
     )
     parser.add_argument("--adapter-name", default=None)
     parser.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)

@@ -42,8 +42,8 @@ class PPOConfig:
     min_samples: int = 4
     max_samples: int | None = 16
     max_logprob_window_tokens: int = 2048
-    # Rollouts from ``run_economist_rl_lambda_cycle`` already attach ``old_logprob`` at
-    # generation time; recomputing 50× long completions on MLX is redundant and OOM-prone.
+    # Rollouts attach windowed ``old_logprob`` via ``max_logprob_window_tokens`` so PPO
+    # old/new ratios share the same scale. Recomputing at train time is off by default.
     refresh_old_logprobs: bool = False
 
 
