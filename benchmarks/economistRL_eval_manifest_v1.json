@@ -1,0 +1,32 @@
+{
+  "schema_version": "economist_rl_eval_manifest_v1",
+  "description": "Stratified eval tiers: arena gold tasks, integration-standard, sandbox economy samples, generalist.",
+  "eval_limit_default": 32,
+  "tiers": {
+    "arena": [
+      "economy-tooltip",
+      "hud-status-summary",
+      "loading-screen-polish",
+      "combat-risk-preview",
+      "ai-planning-explanation",
+      "save-load-api-guard"
+    ],
+    "integration_standard": [],
+    "sandbox": [
+      "economistRL-food-steady-state-01",
+      "economistRL-market-elasticity-02",
+      "economistRL-labor-wage-productivity-002",
+      "economistRL-inventory-storage-spoilage-002",
+      "economistRL-upkeep-progressive-costs-002",
+      "economistRL-resource-projection-cache-integrity-002",
+      "economistRL-adversarial-multidomain-economy-001",
+      "economistRL-market-elasticity-pricing-002"
+    ],
+    "generalist": [
+      "economistRL-generalist-debugging-and-root-cause-001",
+      "economistRL-generalist-instruction-following-001",
+      "economistRL-generalist-test-design-and-invariants-001",
+      "economistRL-generalist-safety-and-scope-control-001"
+    ]
+  }
+}

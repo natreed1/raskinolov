@@ -4,6 +4,350 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-06-01 — Full v2 prep: seed retrain + cycle 012 (500 rollouts)
+
+**Prep:** `economistRL_tasks_v2_coding.json`; `build_economist_rl_dataset.py` (1500 train rows, fenced assistants); backed up `seed_bootstrap` → `seed_bootstrap_v1_plan_20260601`; `mlx_lm.lora` 160 iters (final val loss ~0.215).
+
+**Run:** cycle **012**, `ECONOMIST_RL_SOURCE_REPO=/Users/natreed/fallen-empire`, 500 rollouts, execution evidence on, `max_tokens=1024`, `temperature=0.2`. Logs: `benchmarks/results/economistRL/logs/cycle_012_full_500.log`, `cycle_012_nohup.out`.
+
+---
+
+## 2026-06-01 — economistRL coding task bank v2 (arena-aligned)
+
+**Goal:** Convert 500 economistRL tasks from plan stubs to applyable coding tasks using game-arena / LoRA eval prompt shape.
+
+**Changes:**
+- `scripts/economist_rl_coding_contract.py` — shared coding system prompt, arena user prompts, fenced TS `reference_answer` stubs.
+- `scripts/adapters/convert_economist_rl_tasks_to_coding.py` → `benchmarks/economistRL_tasks_v2_coding.json` (500/500 fenced references).
+- Defaults: `run_economist_rl_lambda_cycle.py`, `build_economist_rl_dataset.py`, `economist_rl_reward_engine.py` → v2 bank + `CODING_SYSTEM_PROMPT`.
+- `model_router.LocalMlxBackend` registers Qwen `im_end` stop tokens on MLX load.
+- `tests/test_economist_rl_coding_tasks.py`.
+
+**Next:** Re-run `build_economist_rl_dataset.py` + LoRA seed train so rollouts emit fences (current `seed_bootstrap` was trained on v1 plan text).
+
+---
+
+## 2026-06-01 — Design A execution evidence (apply + compile gate)
+
+**Goal:** Wire real apply/compile into economistRL cycles so `compiled` is set and the compile gate applies; cancel in-flight 500-rollout run (PID 32247).
+
+**Changes:**
+- `scripts/economist_rl_execution_evidence.py` — disposable worktree per cycle, arena apply (diff/fences), shell compile commands, `compiled` / `compile_evidence` on rollout rows.
+- `run_economist_rl_lambda_cycle.py` — step after toy evidence; CLI `--skip-execution`, `--execution-source-repo`, `--execution-compile-command`, `--no-require-execution-source`; eval path uses same pool; default requires `ECONOMIST_RL_SOURCE_REPO`.
+- `tests/test_economist_rl_execution_evidence.py`, `docs/ECONOMIST_RL_ADAPTER.md`, `.env.example`.
+
+**Verified:** `python3 -m unittest tests.test_economist_rl_execution_evidence -v` (apply+`true` → `compiled=True`; plan-only → `compiled=False`).
+
+---
+
+## 2026-06-01 — Dual eval comparisons (registry baseline + working source)
+
+**Goal:** Report candidate vs both `seed_bootstrap` and the cycle's rollout/PPO source (e.g. `rl_pass_010` vs `rl_pass_009`).
+
+**Changes:** `run_eval_and_compare` emits `comparisons.vs_registry_baseline` and `comparisons.vs_working_source`; skips duplicate baseline eval when working source equals registry.
+
+---
+
+## 2026-06-01 — Remove automatic registry promotion from economistRL cycle runner
+
+**Goal:** Research-phase cycles should not mutate `adapter_registry_v1.json`; eval remains telemetry-only.
+
+**Changes:** Removed `--promote-if-better`, `update_registry_adapter()`, and `promotion_decision` manifest field. Added `cycle_status` (`completed` / `dry_run` / failure states) and `registry_auto_update: false` on manifests and eval comparison payloads.
+
+---
+
+## 2026-06-01 — PEFT weight detection for multi-cycle chaining
+
+**Goal:** Cycle 2+ rollouts chain to prior `rl_pass_*` when only `adapter_model.safetensors` exists (PEFT save layout).
+
+**Changes:** `economist_rl_peft.adapter_dir_has_weights` / `adapter_weights_file`; `adapter_from_resolved_path` + `resolve_cycle_current_adapter` use them; tests in `test_economist_rl_peft.py` and `test_economist_rl_lambda_ppo_pipeline.py`.
+
+---
+
+## 2026-06-01 — PEFT LoRA for economistRL Transformers path (save_pretrained)
+
+**Goal:** Stop baking MLX LoRA into base `Linear.weight` on Lambda; use Hugging Face PEFT side adapters for rollouts, eval, and PPO.
+
+**Changes:**
+
+- `scripts/economist_rl_peft.py`: MLX→PEFT conversion (`adapter_model.safetensors`), `load_peft_causal_lm`, `save_peft_adapter` (`PeftModel.save_pretrained`).
+- `model_router.LocalMlxBackend` (transformers): `PeftModel.from_pretrained` instead of `_apply_mlx_lora_adapter_to_transformers_model`.
+- `train_ppo_batch_transformers`: train PEFT params only; save candidate via `save_pretrained`.
+- Lambda pip: `peft`; `requirements.txt` notes optional dep; `tests/test_economist_rl_peft.py`.
+
+**Note:** `seed_bootstrap` MLX checkpoints convert once on load; new PPO passes write native PEFT layout.
+
+---
+
+## 2026-06-01 — Reuse cached inference backend for rollout old_logprob attach
+
+**Goal:** Stop per-rollout full `from_pretrained` + LoRA merge during `attach_old_logprob_to_rollout`.
+
+**Changes:**
+
+- `economist_rl_ppo_trainer.py`: `attach_old_logprob_to_rollout` / `compute_sequence_logprob` accept optional `inference_backend` or `model`+`tokenizer`; helpers `_sequence_logprob_from_backend` / `_sequence_logprob_from_loaded`.
+- `run_economist_rl_lambda_cycle.py`: `CachedAdapterGenerator.inference_backend()`; rollouts + eval pass `generator.inference_backend()` into attach.
+- `tests/test_economist_rl_shared_inference_logprob.py`: mock backend `_ensure_loaded` called once.
+
+**Note:** Standalone callers without `inference_backend` still load a fresh backend (legacy path).
+
+---
+
+## 2026-06-01 — Lambda economistRL run extracted and terminated (inefficient Transformers path)
+
+**Goal:** Stop the slow `50×2` Lambda cycle, preserve telemetry, and free the GPU for a rebuild.
+
+**Actions:**
+
+- Rsynced `fe-economist-rl-cycle.log` and `gpu-smi-economist-rl.csv` from `64.181.239.58` to `benchmarks/results/economistRL/lambda_extract_20260601_terminated/`.
+- Saved redacted remote `/tmp/run_economist_rl_cycle.sh` + `MANIFEST.json` / `README.md` (progress: **2/50** rollouts; no rollout JSONL on disk — `run_rollouts()` buffers until phase end; `FE_ARTIFACT_EXPORT_COMMAND` was empty).
+- Terminated instance `8200031ec23e43b39544b8484995b9e9` (`fe-economist-rl-1780336744`, `gpu_1x_a10` us-west-1) via Lambda API (`manual_extract_and_rebuild`).
+
+**Telemetry:** ~1122 GPU samples; mean GPU util **0.98%**, max **98%**; **~22 GB** VRAM resident; log shows CPU offload + per-rollout full model reload.
+
+**Next:** Rebuild with shared backend for generate+logprob, per-rollout JSONL flush, and artifact export before long runs.
+
+---
+
+## 2026-05-31 — economistRL PPO/reward semantics cleanup (diagnostics vs training signal)
+
+**Goal:** Separate continuous PPO reward from diagnostic failures and strict scorecard labels; tighten compile evidence semantics.
+
+**Changes:**
+
+- `score_output()` now emits `training_usable`, `hard_cap_applied`, `cap_reason`, `diagnostics`, `strict_scorecard_pass` (+ `high_reward` alias).
+- Evidence runner: `compiled` only from real compile/test results; added `has_code_fence`, `has_export_function`, `looks_code_like`, `compile_checked`.
+- PPO `build_ppo_samples()` documents/uses continuous `score.reward` only; skips `training_usable=False` rows.
+- Lambda eval/promotion uses `hard_cap_applied` for regression flags; scorecard uses `strict_scorecard_pass`.
+- Added `scripts/audit_economist_rl_ppo_reward_semantics.py` and `tests/test_economist_rl_ppo_reward_semantics.py`.
+
+**Verified:** 23 economistRL tests pass; audit sample shows `compiled=none` for oracle rows without compile commands and 16/16 legacy-exclusion rows remain `training_usable`.
+
+---
+
+## 2026-05-31 — Align economistRL PPO old/new log-prob scale
+
+**Goal:** Fix PPO loss blow-up from mismatched `old_logprob` / `new_logprob` scales.
+
+**Changes:**
+
+- Added shared helpers in `scripts/economist_rl_ppo_trainer.py`: `_encode_prompt_and_completion`, `_mean_completion_logprob_*`, `refresh_ppo_old_logprobs_{mlx,torch}`, `ppo_clip_loss_mlx`.
+- Rollout attach, transformers path, and MLX PPO now use the same mean-per-token log-prob computation (`add_special_tokens=False` on rendered prompts).
+- PPO train refreshes `old_logprob` from the loaded source adapter before updates; MLX loss stays fully differentiable (removed `float()` detach).
+- Fixed `proxy_old_logprob` to mean-token scale (was incorrectly total-scale).
+
+**Verified:** `tests/test_economist_rl_lambda_ppo_pipeline.py` (8 tests) pass.
+
+---
+
+## 2026-05-31 — Rename economistRL `seed_sft` → `seed_bootstrap`
+
+**Goal:** Stop RL cycle logs/docs from implying ongoing SFT when the bootstrap checkpoint is only a one-time warm-start.
+
+**Changes:**
+
+- Renamed `checkpoints/adapters/economistRL/seed_sft/` → `seed_bootstrap/`.
+- Updated registry, YAML, PPO guard, tests, dataset lineage (`economistRL:v1:seed_bootstrap`), and economistRL docs/workflow strings.
+
+---
+
+## 2026-05-31 — economistRL seed SFT + two 10-task smoke RL cycles
+
+**Goal:** Bootstrap `economistRL/seed_sft`, then run two end-to-end smoke cycles (10 rollouts → evidence → reward → PPO → eval each).
+
+**Seed:**
+
+- Dataset: `.venv/bin/python scripts/ml_workflow.py economist-rl-dataset` → `data/lora/adapters/economistRL_seed/` (run `20260531-232653_76fd26`).
+- SFT: `.venv/bin/python -m mlx_lm.lora --train -c training/economistRL_lora_qwen25_coder_7b.yaml` — stopped at **iter 40** (~154MB) so smoke could proceed; checkpoint at `checkpoints/adapters/economistRL/seed_sft/`.
+
+**Smoke cycles** (`.venv/bin/python scripts/lambda/run_economist_rl_lambda_cycle.py --rollouts-per-cycle 10 --eval-limit 5 --ppo-min-samples 4 --cycles 1 --promote-if-better --temperature 0.0 --max-tokens 256`):
+
+| Cycle | Manifest | Rollout mean reward | PPO | Eval candidate vs seed | Promotion |
+|---|---|---:|---|---|---|
+| 003 | `benchmarks/results/economistRL/manifests/cycle_003_manifest.json` | 0.8078 | `rl_pass_003` trained (MLX) | 0.096 vs 0.7105 | kept_current |
+| 004 | `benchmarks/results/economistRL/manifests/cycle_004_manifest.json` | 0.8078 | `rl_pass_004` trained (MLX) | 0.096 vs 0.7105 | kept_current |
+
+**Fixes during smoke:** PPO MLX save → LoRA-only `adapters.safetensors` via `tree_flatten(trainable_parameters)`; import `eval_report_high_reward` in lambda cycle.
+
+**Open issues:** PPO loss magnitudes ~1e8; post-PPO eval collapses on generalist-safety slice (tasks 011–015) — likely PPO gradient/sign bug or eval/task mismatch, not rollout signal (rollouts strong at ~0.81).
+
+---
+
+## 2026-05-31 — Remove misleading per-task promotion scoring from economistRL
+
+**Goal:** Stop implying task-level `passed` / `promotion_floor` drive RL when only continuous `reward` matters.
+
+**Changes:**
+
+- Removed unused `promotion_floor` / `hard_fail_floor` from `benchmarks/economistRL_tasks_v1.json`.
+- Dropped `passed` from `score_output()`; added `eval_report_high_reward()` for optional scorecard summaries (`high_reward_rate`).
+- Lambda eval/registry compare uses `mean_reward` instead of mean score for `--promote-if-better`.
+- Updated scorecard markdown, smoke tests, and `docs/ECONOMIST_RL_ADAPTER.md`.
+
+---
+
+## 2026-05-31 — economistRL toy env seed normalization (spoilage/upkeep/adversarial)
+
+**Goal:** Mass economy tasks should pass simulation scoring reliably when oracle reference answers describe bounded mechanics.
+
+**Changes:**
+
+- Extended `normalize_scenario_state()` in `scripts/economist_rl_sim_harnesses.py` with subsection-specific seed shaping (surplus pressure for spoilage, garrison-sized armies for upkeep, multidomain seeds for adversarial).
+- Reworked spoilage sim: guaranteed over-capacity stock, preservation A/B comparison, no-total-wipe guard.
+- Improved goal-name inference for mass task goal ids (`surplus_decays_over_ticks`, `small_garrisons_remain_affordable`, `dependent_projections_update`, etc.).
+- Fixed upkeep/adversarial trace semantics so bounded oracle rollouts score all sim goals.
+- Added `test_economy_mass_oracle_sim_meets_floor` in `tests/test_economist_rl_sim_harness_coverage.py`.
+
+**Verified:** spoilage/upkeep/resource/adversarial oracle sim behavior now 100% (≥70 floor); all 13 economistRL tests pass.
+
+---
+
+## 2026-05-31 — economistRL toy sim environments (full 500-task harness coverage)
+
+**Goal:** Lab-side 20-tick environments that score economistRL tasks even when prompts describe mechanics not present in production game code.
+
+**Changes:**
+
+- Reworked `scripts/economist_rl_sim_harnesses.py` (`economist_rl_toy_v2`):
+  - Resolves `task_defined_seed_value` placeholders into deterministic numeric seeds (task-id jitter).
+  - Handles nested `initial_state` dicts via numeric coercion.
+  - Per-subsection toy envs: food/population, market elasticity, labor/wage, inventory spoilage, upkeep scaling, cache projection, adversarial multidomain.
+  - Goal scoring inferred from goal names + rollout mechanics signal (not exact game implementation).
+  - Simulator errors return structured `error` payloads instead of crashing the evidence runner.
+- Added `tests/test_economist_rl_sim_harness_coverage.py` (500/500 harness run, oracle sim > 0).
+
+**Verified:**
+
+```bash
+python3 -m unittest tests.test_economist_rl_sim_harness_coverage tests.test_economist_rl_lambda_ppo_pipeline tests.test_economist_rl_market_elasticity tests.test_economist_rl_food_steady_state -v
+python3 scripts/lambda/run_economist_rl_lambda_cycle.py --specialization economist_rl --dry-run --rollouts-per-cycle 5 --cycles 1
+```
+
+**Outcome:** 500/500 tasks run harness without error; oracle `reference_answer` rows score `simulation_behavior > 0` for all 500 (mean reward ~0.79; 202/500 strict `passed`).
+
+---
+
+## 2026-05-31 — economistRL evidence runner + PPO lambda cycle
+
+**Goal:** Replace SFT-only lambda training with a real RL loop: rollout → evidence → reward → PPO → eval.
+
+**Changes:**
+
+- Added `scripts/economist_rl_sim_harnesses.py` (subsection 20-tick simulators).
+- Added `scripts/economist_rl_evidence_runner.py` (simulation/test/compile evidence on rollout rows).
+- Added `scripts/economist_rl_ppo_trainer.py` (PPO batch builder + MLX LoRA update path).
+- Rewired `scripts/lambda/run_economist_rl_lambda_cycle.py`:
+  - `SpecializationConfig` now carries `train_mode`, evidence runner, and PPO config.
+  - Cycle manifest v2 artifacts: `evidence/`, `ppo/`, no reference-answer SFT replay.
+- Added `tests/test_economist_rl_lambda_ppo_pipeline.py`.
+
+**Verified:**
+
+```bash
+python3 -m py_compile scripts/economist_rl_sim_harnesses.py scripts/economist_rl_evidence_runner.py scripts/economist_rl_ppo_trainer.py scripts/lambda/run_economist_rl_lambda_cycle.py
+python3 -m unittest tests.test_economist_rl_lambda_ppo_pipeline tests.test_economist_rl_market_elasticity tests.test_economist_rl_food_steady_state -v
+```
+
+---
+
+## 2026-05-31 — economistRL market elasticity smoke test
+
+**Goal:** Wire and run a 20-tick reference price simulation for `economistRL-market-elasticity-02`, mirroring the food steady-state harness.
+
+**Changes:**
+
+- Added `tests/test_economist_rl_market_elasticity.py` with bounded elasticity price ticks, good/bad rollout scoring cases.
+
+**Verified:**
+
+```bash
+python3 -m unittest tests.test_economist_rl_market_elasticity -v
+```
+
+Both tests pass. Example good rollout: scarcity 10.0 → 20.92, surplus end 7.77, reward score 100.0.
+
+---
+
+## 2026-05-31 — economistRL reward engine rename
+
+**Goal:** Rename `scripts/economist_rl_tasks.py` to better reflect that it validates task-bank schema and scores rollout rewards, rather than being the task bank itself.
+
+**Changes:**
+
+- Renamed `scripts/economist_rl_tasks.py` -> `scripts/economist_rl_reward_engine.py`.
+- Updated live references in:
+  - `docs/ECONOMIST_RL_ADAPTER.md`
+  - `docs/PROJECT_STATE.md`
+  - `docs/WORKFLOW.md`
+  - `training/adapter_registry_v1.json`
+
+---
+
+## 2026-05-31 — economistRL 500-task curriculum expansion
+
+**Goal:** Expand `economistRL` from the 6 seed tasks to a 500-task RL curriculum with a 70/30 economy/generalist anti-overfit split.
+
+**Changes:**
+
+- Expanded `benchmarks/economistRL_tasks_v1.json` to exactly `500` tasks:
+  - `350` economy tasks,
+  - `150` generalist/common RL tasks.
+- Economy subsection counts:
+  - `food_population_feedback`: `60`
+  - `market_elasticity_pricing`: `60`
+  - `labor_wage_productivity`: `55`
+  - `inventory_storage_spoilage`: `50`
+  - `upkeep_progressive_costs`: `50`
+  - `resource_projection_cache_integrity`: `50`
+  - `adversarial_multidomain_economy`: `25`
+- Generalist subsection counts:
+  - `instruction_following`: `25`
+  - `structured_reasoning`: `25`
+  - `code_patch_planning`: `25`
+  - `test_design_and_invariants`: `25`
+  - `debugging_and_root_cause`: `20`
+  - `concise_explanation`: `15`
+  - `safety_and_scope_control`: `15`
+- Each generated task includes:
+  - `simulation_spec` with 20-tick goals,
+  - `targeted_tests`,
+  - `static_code_mechanics`,
+  - `formula_signal`,
+  - `instruction_contract`,
+  - `anti_overfit_guards`,
+  - `progress_guard`,
+  - codebase requirement hints.
+- Rebuilt `data/lora/adapters/economistRL_seed/`:
+  - `train`: `1500`
+  - `valid`: `12`
+  - `test`: `12`
+- Updated `training/adapter_registry_v1.json` task IDs and `docs/ECONOMIST_RL_ADAPTER.md` / `docs/PROJECT_STATE.md`.
+
+**Verification:**
+
+- `python3 scripts/economist_rl_tasks.py validate` passed with `500` tasks and exact `350/150` track counts.
+- Distribution check passed across difficulty and subsection buckets.
+- `python3 scripts/adapters/build_economist_rl_dataset.py` rebuilt the seed dataset successfully.
+
+---
+
+## 2026-05-31 — economistRL progress guard split from anti-overfit
+
+**Goal:** Avoid classifying no-change potential outcomes as malicious reward gaming.
+
+**Changes:**
+
+- Updated `scripts/economist_rl_tasks.py`:
+  - removed `potential_not_improved` from anti-overfit reward-gaming flags,
+  - added `_progress_guard_score()` for `previous_potential` vs `new_potential`,
+  - `no_change_exploratory_failure` caps final reward at `0.45` but is not reward gaming,
+  - `regression` caps final reward at `0.25` but is not reward gaming unless separate anti-overfit flags fire,
+  - improved potential receives progress credit and no cap.
+- Updated `benchmarks/economistRL_tasks_v1.json` task metadata with `progress_guard` and revised anti-overfit text.
+- Updated `docs/ECONOMIST_RL_ADAPTER.md`.
+
+---
+
 ## 2026-05-31 — economistRL execution-oriented reward schema
 
 **Goal:** Replace the old keyword-dominant `economistRL` reward with a schema that rewards executable behavior while preserving small prompt/guardrail checks.
@@ -2640,6 +2984,100 @@ Newest entries at the **top**.
 
 - `python3 -m py_compile scripts/router_chat_gradio.py` (pass).
 - Lint check for `scripts/router_chat_gradio.py` returned no errors.
+
+---
+
+## 2026-05-31 — economistRL simulation-goal cleanup
+
+**Goal:** Remove a meta-scoring goal from the first economistRL food steady-state task so simulation reward focuses on behavior rather than evaluator scope.
+
+**Changed files:**
+
+- Updated `benchmarks/economistRL_tasks_v1.json`:
+  - removed the `localized_simulation` / `simulation_scope` goal from `economistRL-food-steady-state-01`,
+  - renormalized remaining 20-tick behavior goal weights to `0.4118`, `0.3529`, and `0.2353`,
+  - confirmed no remaining exact `localized_simulation` or `simulation_scope` entries in the task bank.
+
+**Verification:**
+
+- `python3 scripts/economist_rl_reward_engine.py validate --tasks benchmarks/economistRL_tasks_v1.json` (pass; 500 tasks, 350 economy / 150 generalist, no duplicate ids, no issues).
+
+---
+
+## 2026-05-31 — economistRL food steady-state scoring smoke test
+
+**Goal:** Add a regression test proving `economistRL-food-steady-state-01` can move from an example patch response through 20-tick rollout evidence into the reward scorer.
+
+**Changed files:**
+
+- Added `tests/test_economist_rl_food_steady_state.py`:
+  - builds an example food-buffer birth-taper patch response and code-shaped diff,
+  - runs a deterministic 20-tick food/population simulation from the task's initial state,
+  - feeds `simulation_results`, targeted-test evidence, changed files, compile status, and progress evidence into `score_output`,
+  - asserts `localized_simulation` is absent and the resulting score passes from behavior evidence.
+
+**Verification:**
+
+- `python3 -m unittest tests.test_economist_rl_food_steady_state` (pass).
+- Example good-patch score summary: final score `100.0`, `passed: true`, `simulation_behavior: 100.0`, no failures; trace birth rate `0.0308 -> 0.0`, min food `19.2097`, final population `132.9248`.
+- Added a bad-patch rollout case that ignores food, always grows population, permits silent negative food, and reports failed targeted tests; final score `25.0`, `passed: false`, `simulation_behavior: 0.0`, with failures for all three behavior goals plus targeted tests and potential regression.
+
+---
+
+## 2026-05-31 — Lambda economistRL smoke extraction and termination
+
+**Goal:** Extract partial Lambda smoke data for the `economistRL` 10-task run and terminate the worker on request.
+
+**Changed files / artifacts:**
+
+- Added local extraction artifacts under `benchmarks/results/lambda_economistRL_smoke10_20260531/`:
+  - `cloud_ablation_rows_specialist_economistRL.jsonl`,
+  - `cloud_ablation_runtime_tasks_specialist_economistRL.json`,
+  - `gpu-smi-specialist_economistRL.csv`,
+  - `gpu-telemetry-summary.json` / `.md`,
+  - `fe-ablation-specialist_economistRL.log`,
+  - `checkpoint_2-fd5c5ea6028c45c5a8da1ffedee47467-20260531T213832Z.tar.gz`,
+  - `EXTRACTION_SUMMARY.json` / `.md`,
+  - `LOCAL_INVENTORY.json`.
+
+**Outcome:**
+
+- Lambda instance `fd5c5ea6028c45c5a8da1ffedee47467` (`gpu_1x_a10`, `us-west-1`) was terminated after extraction.
+- The run had completed `3/10` requested rows before manual termination; no final run summary existed yet.
+- Quality snapshot: accepted `0/3`, verify passed `1/3`, applyable wrote files `2/3`.
+- Adapter caveat: all `3/3` rows fell back to base local model (`adapter_path: ""`, `adapter_missing_fallback=base_local`) because `checkpoints/adapters/economistRL/seed_sft` was not present.
+- GPU telemetry: `107` samples, average GPU utilization `90.61%`, p95 `98.0%`, max `99.0%`, average memory `15482.79 MiB`, max memory `16573.0 MiB`, average power `141.43 W`, max power `150.32 W`.
+
+---
+
+## 2026-05-31 — RL Lambda Runner economistRL specialization
+
+**Goal:** Add a Lambda-compatible RL cycle runner pattern, currently specialized for economistRL rollout/score/train/eval/promotion, that avoids per-task model reloads and never promotes in place.
+
+**Changed files:**
+
+- Added `scripts/lambda/run_economist_rl_lambda_cycle.py`:
+  - tags manifests and training rows as `rl_lambda_runner` with specialization `economist_rl`,
+  - resolves the active `economistRL` adapter from `training/adapter_registry_v1.json`,
+  - uses `LocalMlxBackend` as a cached generator so the base model + adapter load once per rollout/eval batch,
+  - pulls tasks from `benchmarks/economistRL_tasks_v1.json`,
+  - writes versioned rollout JSONL, scored JSONL, training data, train config, eval summary, and cycle manifest files,
+  - builds candidate training data from high-scoring rollouts plus seed-reference replay while excluding frozen eval task ids from training,
+  - trains candidates into `checkpoints/adapters/economistRL/rl_pass_XXX` without overwriting `seed_sft` or the promoted adapter path,
+  - promotes by atomically updating the registry only when `--promote-if-better` is set, the candidate beats current eval score, and no major regression flags are present,
+  - includes `--dry-run` and `--lambda-mode`.
+
+**Verification:**
+
+- `python3 -m py_compile scripts/lambda/run_economist_rl_lambda_cycle.py` (pass).
+- Dry-run smoke with one rollout and one eval task completed and wrote a manifest, then temporary dry-run artifacts were removed.
+- Lint check for `scripts/lambda/run_economist_rl_lambda_cycle.py` returned no errors.
+
+**Notes:**
+
+- Live runs now fail fast if the registry adapter path is missing, preventing accidental base-model fallback from being treated as `economistRL`.
+- Rollout/eval can use `LOCAL_BACKEND=transformers` on Lambda; the training step still uses the repo's existing `mlx_lm.lora` path and therefore needs a host where that training command is available.
+- Follow-up abstraction: added `SpecializationConfig` and `--specialization` support so the orchestration is tagged as `rl_lambda_runner` while `economist_rl` supplies the current adapter id, task DB, eval set, train config, output roots, scorer identity, and system prompt. This leaves the runner ready for future reward-specialist plug-ins without changing the cycle control flow.
 
 ---
 
@@ -5303,3 +5741,296 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 
 - `python3 -m py_compile scripts/router_chat_gradio.py` (pass).
 - Lint check for `scripts/router_chat_gradio.py` returned no errors.
+
+---
+
+## 2026-05-31 — economistRL MLX PPO logprob + LoRA-only save fix
+
+**Goal:** Stop PPO from NaN-corrupting adapters (NaN grads on first step, `!!!!` generation on next cycle).
+
+**Root cause:** `_mean_completion_logprob_mlx` used `log(softmax(...))`, which yields non-finite MLX autograd; `train_ppo_batch_mlx` optimized/saved all 533 `trainable_parameters()` (LoRA + layernorms/biases). Passing zero-grad updates for non-LoRA keys via `optimizer.update(model, …)` also corrupted MLX state after the first step.
+
+**Changed files:**
+
+- `scripts/economist_rl_ppo_trainer.py` — stable log-softmax via `logsumexp`; LoRA-only `value_and_grad`, in-place `optimizer.update(lora_params, lora_grads)` + merge back into model; save 392 LoRA tensors only; manifest `saved_lora_tensors`.
+- `tests/test_economist_rl_lambda_ppo_pipeline.py` — unit tests for finite MLX logprob grads and LoRA key filter.
+
+**Verification:**
+
+- `PYTHONPATH=scripts:tests .venv/bin/python -m unittest discover -s tests -p 'test_economist_rl*.py' -q` — 27 tests OK.
+- Integration: 4-sample MLX PPO from `seed_bootstrap` → 392-key safetensors, 0 NaN tensors, finite batch loss.
+
+**Note:** Delete or ignore corrupted `rl_pass_003`–`006` checkpoints before re-smoking cycles.
+
+**Follow-up smoke (cycles 007–008):** Local 2×10-rollout run (~19 min). PPO losses finite; `saved_lora_tensors=392`, 0 NaN in `rl_pass_007`/`008`; cycle 008 chained from `rl_pass_007` with coherent rollouts (no `!!!!` collapse). Promotion `kept_current` (registry stays `seed_bootstrap`; eval on generalist tail hurt vs seed/007).
+
+---
+
+## 2026-06-03 — economistRL sandbox vitest environments (subsection envs + v3 retag)
+
+**Goal:** Per-subsection TypeScript env packages so vitest can execute fictional mechanics (`lastPrice`, wage curves, etc.) without touching production `empireEconomy.ts`; align stubs/tests/prompts.
+
+**Added:** `scripts/economist_rl_sandbox_envs.py` — `src/lib/economistRl/envs/<subsection>/{types,runTicks,index}.ts`, subsection-aware `mechanic.ts` + vitest starters, scarcity/surplus seeds.
+
+**Changed:** `economist_rl_coding_contract.py` (`sandbox_coding_user_prompt`, narrow allowed paths); `economist_rl_task_execution.py` (env paths in allowed/starter/context); `tag_economist_rl_task_execution.py` (`--refresh-all`); tests `test_economist_rl_sandbox_envs.py`, updated `test_economist_rl_task_execution.py`.
+
+**Regenerated:** `benchmarks/economistRL_tasks_v3_execution.json` (500 sandbox tasks, 5 starter files each) via `--refresh-all` from v2.
+
+**Verify:** `unittest` sandbox + task_execution + execution_evidence tests OK.
+
+---
+
+## 2026-06-02 — economistRL P0: stricter vitest deltas + v3 retag
+
+**Goal:** Close cycle-015 false compile pass (`economistRL-production-cache-invalid-06` no-op game loops on numeric sandbox state); make `compiled` reflect real mechanic motion.
+
+**Changed:**
+- `scripts/economist_rl_sandbox_envs.py` — `runTicks` clones input each tick; all subsection `test_stub_body` branches assert trace deltas + cross-seed checks; cache stub clears `projectionCacheDirty` after scopes drain; cache seeds/tick counts tuned for mid-trace vs end comparisons.
+- `benchmarks/economistRL_tasks_v3_execution.json` — `--refresh-all` retag (500 tasks, new frozen starters/tests).
+- `tests/test_economist_rl_sandbox_envs.py` — delta template asserts, reference stub vitest (market + cache), cycle-015 no-op patch must fail vitest.
+- `docs/ECONOMIST_RL_ADAPTER.md` — document delta grading + in-place v3 refresh command.
+
+**Verification:** `PYTHONPATH=scripts:. .venv/bin/python -m unittest discover -s tests -p test_economist_rl_sandbox_envs.py` — 11 OK (includes vitest against `/Users/natreed/fallen-empire`).
+
+**Next:** Re-run 20-rollout preflight (`cycle_016`) and compare `compiled` rate vs batch 015 (was 1/20).
+
+---
+
+## 2026-06-04 — economistRL cycle 016 Lambda launch (20-rollout P0 preflight)
+
+**Command:** `.venv/bin/python scripts/launch_economist_rl_lambda_cycle.py --launch-instances --game-repo /Users/natreed/fallen-empire -- --cycles 1 --rollouts-per-cycle 20 --eval-limit 18 --init-adapter-path checkpoints/fe-lora-arena-apply-sft --task-db benchmarks/economistRL_tasks_v3_execution.json --execution-source-repo /home/ubuntu/fallen-empire --temperature 0.2 --max-tokens 4000 --skip-ppo --skip-eval`
+
+**Worker:** `gpu_1x_a10` `us-west-1`; instance `c924eac12d44434eafa04af670e3c859` @ `146.235.197.204`; tmux `fe-economist-rl`; log `logs/cycle_016_lambda_launch.log` + remote `~/cloud-eval-logs/fe-economist-rl-cycle.log`. `auto_terminate=1`, watchdog 180 min idle.
+
+**Outcome:** Launcher exit 0 (`economist_rl_lambda_cycle_started`). Await remote `rollout_batch_016.jsonl` / `scored_batch_016.jsonl` rsync.
+
+**2026-06-04 follow-up:** Execution evidence hung ~10 min/task on `npx vitest` interactive install (worktrees lack `node_modules`). Killed remote cycle; rsynced partial 6-task logs to `benchmarks/results/economistRL/lambda_extract_20260604_partial/`. Patched `vitest_run_command()` → `node_modules/.bin/vitest`, worktree `node_modules` symlink, compile subprocess killpg on timeout.
+
+---
+
+## 2026-06-03 — economistRL: remove stub SFT, arena apply-sft init, cycle 014 smoke
+
+**Goal:** Drop stub seed SFT from the RL pipeline; initialize rollouts from `checkpoints/fe-lora-arena-apply-sft`; 10-task smoke without PPO/eval OOM.
+
+**Changed:**
+- Deprecated `data/lora/adapters/economistRL_seed` → `_deprecated_economistRL_stub_sft/`; moved `seed_bootstrap` checkpoints under `_deprecated_seed_bootstrap_stub/`.
+- Disabled `build_economist_rl_dataset.py` + `ml_workflow.py economist-rl-dataset`; `training/economistRL_lora_qwen25_coder_7b.yaml` marked `train: false`.
+- Registry `economistRL` → `adapter_path: checkpoints/fe-lora-arena-apply-sft`.
+- `run_economist_rl_lambda_cycle.py`: default arena init adapter, `--skip-ppo`/`--skip-eval`, no starter bodies in prompt.
+- Cycle **014** (`--skip-ppo --skip-eval`, 10 rollouts): `load_reason=init_adapter_path`, `cycle_status=rollouts_only`.
+
+**014 vs 013 rollouts:** 0/10 stub comments (was 6/10); longer outputs (~4.6k avg vs ~1.9k); real `empireEconomy`/`useGameStore` imports; fence format often wrong (```ts path= missing — ` ```ts src/...` only). Apply/compile not re-audited in this pass (mean_reward still 0.1).
+
+**Artifacts:** `benchmarks/results/economistRL/rollouts/rollout_batch_014.jsonl`, `manifests/cycle_014_manifest.json`, log `logs/cycle_014_arena_init_10.log`.
+
+---
+
+## 2026-06-02 — economistRL: gate simulation on compile
+
+**Change:** `simulation_behavior` scores 0 unless `compiled is True` when execution evidence ran; `runAppliedSimCli` skipped if Vitest did not run. Failure tag `simulation_gated_on_compile`.
+
+**Files:** `economist_rl_reward_engine.py`, `economist_rl_execution_evidence.py`, `tests/test_economist_rl_ppo_reward_semantics.py`, `docs/ECONOMIST_RL_ADAPTER.md`.
+
+---
+
+## 2026-06-02 — economistRL reward: applied sim (38%) + Vitest partial credit (27%)
+
+**Goal:** Lower text-sim weight; score `simulation_behavior` from applied `mechanic.ts` traces; grade Vitest by assertion pass rate.
+
+**Changed files:**
+
+- `scripts/economist_rl_reward_engine.py` — weights 38% / 27%; ignore `simulation_source=completion_text` when execution ran.
+- `scripts/economist_rl_applied_sim.py`, `scripts/economist_rl_vitest_scoring.py` — applied sim CLI + JSON vitest parse.
+- `scripts/economist_rl_execution_evidence.py` — vitest `--reporter=json`, applied sim, partial `targeted_tests`.
+- `scripts/economist_rl_game_sandbox.py` — `runAppliedSimCli.ts` in shared env package.
+- `tests/test_economist_rl_vitest_scoring.py`, `docs/ECONOMIST_RL_ADAPTER.md`.
+
+**Verification:** `unittest tests.test_economist_rl_vitest_scoring tests.test_economist_rl_sandbox_envs`.
+
+---
+
+## 2026-06-02 — economistRL sandboxes extend game codebase (City + processEconomyTurn)
+
+**Goal:** Match original intent — sandboxes extend Fallen Empire mechanics for vitest, with `taskExt` only where production has no field (market price, projection invalidation).
+
+**Changed files:**
+
+- `scripts/economist_rl_game_sandbox.py` — `game_turn` (food/inventory/labor → `processEconomyTurn`), `hybrid_city` (market/upkeep/cache/adversarial → `City` + `taskExt`), `envs/shared/fixture.ts`.
+- `scripts/economist_rl_sandbox_envs.py`, `scripts/economist_rl_coding_contract.py` — wire generators + prompts.
+- `docs/SANDBOX_GAME_FIELD_ALIGNMENT.md` — architecture (intent vs gaps).
+- `tests/test_economist_rl_sandbox_envs.py`.
+
+**Verification:** `unittest tests.test_economist_rl_sandbox_envs` (11 OK, vitest reference stubs). `--refresh-all` on v3 bank (500 tasks).
+
+**Gaps (documented):** empty territory in default fixtures; upkeep not wired to `upkeepTick`; no single-phase export from `gameLoop`.
+
+---
+
+## 2026-06-02 — economistRL sandbox field names ↔ Fallen Empire vocabulary
+
+**Goal:** Align sandbox env `types.ts`, mechanic/test stubs, and sim harness seeds with production naming (`City.storage.food`, `POP_BIRTH_RATE`, …) so rollouts that use game-shaped language can map to vitest state without a second fictional schema.
+
+**Changed files:**
+
+- `scripts/economist_rl_field_names.py` — `SCENARIO_FIELD_ALIASES`, `SUBSECTION_CANONICAL_DEFAULTS`, `canonicalize_state()`.
+- `scripts/economist_rl_sandbox_envs.py` — canonical defaults, seeds, stubs, tests (e.g. `storageFood`, `marketPriceGold`, `resourceProjectionValid`).
+- `scripts/economist_rl_sim_harnesses.py` — `FIELD_DEFAULTS` + `resolve_scenario_state` use canonical keys.
+- `docs/SANDBOX_GAME_FIELD_ALIGNMENT.md`, `docs/ECONOMIST_RL_ADAPTER.md` (pointer).
+- `tests/test_economist_rl_field_names.py`, `tests/test_economist_rl_sandbox_envs.py` (assertions).
+
+**Verification:** `python3 -m unittest tests.test_economist_rl_field_names tests.test_economist_rl_sandbox_envs` (13 OK). Retag: `tag_economist_rl_task_execution.py --refresh-all` → 500 sandbox starters refreshed.
+
+---
+
+## 2026-06-02 — economistRL execution tagging (v3 bank, BM25 context, sandbox verify)
+
+**Goal:** Tag tasks with arena vs integration execution, starter paths/worktree scaffolds, 4000-token rollouts with BM25 Fallen Empire context, and per-task `verify_commands` (sandbox vitest vs cohort).
+
+**Changed files:**
+
+- `scripts/economist_rl_task_execution.py` — execution modes, sandbox paths under `src/lib/economistRl/<slug>/`, starters, `build_rollout_user_prompt`, eval manifest resolver.
+- `scripts/adapters/tag_economist_rl_task_execution.py` — v2 → `benchmarks/economistRL_tasks_v3_execution.json`.
+- `benchmarks/economistRL_eval_manifest_v1.json` — stratified eval (6 arena + 8 sandbox + 4 generalist).
+- `scripts/game_task_arena.py` — `build_context_pack_for_task_spec()` for economist BM25 packs.
+- `scripts/lambda/run_economist_rl_lambda_cycle.py` — default `--max-tokens 4000`, context packs, eval manifest, `generation_prompt` on rollouts.
+- `scripts/economist_rl_execution_evidence.py` — seed starters before apply; per-task verify commands.
+- `scripts/economist_rl_coding_contract.py` — sandbox path stubs + `sandbox_starter_bodies`.
+- `tests/test_economist_rl_task_execution.py`, `tests/test_economist_rl_execution_evidence.py`.
+
+**Verification:** `python tests/test_economist_rl_task_execution.py` (5 OK); `python tests/test_economist_rl_execution_evidence.py` (2 OK). Tag summary: 500 tasks, all `integration` + `sandbox`, 500 with `starter_files` (`ECONOMIST_RL_SOURCE_REPO=/Users/natreed/fallen-empire`).
+
+---
+
+## 2026-06-02 — Vitest encodes task-bank goals; drop simulation_behavior reward
+
+**Goal:** Remove redundant `simulation_behavior` training slice; load every `simulation_spec.goals[]` entry into generated Vitest `it('goal_*')` blocks; redistribute weight to `targeted_tests` (55%).
+
+**Changed files:**
+
+- `scripts/economist_rl_vitest_goals.py` — goal → assert templates, fallback for generalist rubric goals, `render_vitest_stub`.
+- `scripts/economist_rl_sandbox_envs.py` — `test_stub_body` delegates to goal-driven Vitest.
+- `scripts/economist_rl_vitest_scoring.py` — per-`it()` parsing; `vitest_goal_weighted` merge using goal weights.
+- `scripts/economist_rl_reward_engine.py` — weights: `targeted_tests` 55%, no `simulation_behavior` in base sum or scorecard threshold.
+- `scripts/economist_rl_execution_evidence.py` — stop `runAppliedSimCli` / applied sim on rollouts.
+- `scripts/economist_rl_evidence_runner.py` — no text `simulation_results`; `simulation_source=vitest_goals`.
+- `docs/ECONOMIST_RL_ADAPTER.md` — reward docs updated.
+- Tests: `test_economist_rl_vitest_goals.py`, harness/sandbox/food/market/PPO semantics updates.
+
+**Verification:** `python3 -m unittest tests.test_economist_rl_vitest_goals tests.test_economist_rl_vitest_scoring tests.test_economist_rl_ppo_reward_semantics tests.test_economist_rl_sim_harness_coverage tests.test_economist_rl_sandbox_envs tests.test_economist_rl_food_steady_state tests.test_economist_rl_market_elasticity` — pass (sandbox vitest integration test skipped when FE repo absent).
+
+**Next:** Re-tag v3 `reference_answer` test fences via `tag_economist_rl_task_execution.py --refresh-all` so bank examples match multi-`goal_*` Vitest stubs.
+
+---
+
+## 2026-06-05 — Lambda overnight economistRL PPO (3×50 chained)
+
+**Launch:** `scripts/launch_economist_rl_lambda_cycle.py --launch-instances --region us-west-1 …`  
+**Instance:** `fe1acd40cee64b80876badbfa9f9b501` @ `159.54.181.215`  
+**Remote:** `tmux` `fe-economist-rl`, log `~/cloud-eval-logs/fe-economist-rl-cycle.log`  
+**Cycle cmd:** `--lambda-mode --cycles 3 --rollouts-per-cycle 50 --skip-eval --ppo-max-samples 12 --ppo-epochs 1` (Transformers rollouts + CUDA PPO; `ECONOMIST_RL_SOURCE_REPO=~/fallen-empire`, Vitest via `npm ci`).  
+**Local log:** `logs/launch_economist_rl_overnight.log`  
+**Verified:** tmux running; cycle 001 loading HF+PEFT from `fe-lora-arena-apply-sft`.
+
+---
+
+## 2026-06-05 — PPO cycles 019–020 (cancelled after cycle 020 rollouts)
+
+**Run:** 5×50 PPO attempt; cycle 019 rollouts+score; PPO completed manually (`ppo_train_019.json`, status `trained`, 12 samples, ~46m). Cycle 020 rollouts+score complete; PPO killed (exit 137) before manifest. Cycles 021+ cancelled.
+
+**Fixes during run:** `refresh_old_logprobs=False` by default; `PPOConfig.max_samples=16`; `--ppo-max-samples` CLI; skip redundant MLX logprob refresh on rollout-attached `old_logprob`.
+
+**Extract:** `benchmarks/results/economistRL/extracts/cycles_019_020_summary.json` via `scripts/extract_economist_rl_cycle_data.py`.
+
+**Note:** Separate `--cycles 4` invocation for 020+ did **not** chain `rl_pass_019` (used default init again) — multi-cycle must be one invocation or omit `--init-adapter-path` after cycle 1.
+
+---
+
+## 2026-06-02 — Step-2 cycle 018 mechanic-only 20-rollout smoke
+
+**Command:** `run_economist_rl_lambda_cycle.py --cycles 1 --rollouts-per-cycle 20 --skip-ppo --skip-eval --init-adapter-path checkpoints/fe-lora-arena-apply-sft --task-db benchmarks/economistRL_tasks_v3_execution.json --execution-source-repo /Users/natreed/fallen-empire --temperature 0.2 --max-tokens 4000` (~9.7 min MLX).
+
+**Artifacts:** `rollout_batch_018.jsonl`, `scored_batch_018.jsonl`, `manifests/cycle_018_manifest.json`, log `logs/cycle_018_smoke_20.log`.
+
+**Results:** mean_reward **0.433**; `compiled` **20/20**; `vitest_goal_weighted` **20/20**; `targeted_tests` **>0 on 5/20**, **≥50 on 4/20** (mean component **18.7%**); **0/20** rollouts wrote `tests/` (mechanic-only apply). Best: worker-03 **100%** tt / reward **0.80**; food-01 **58.8%** tt. Compare cycle 017 (3 rollouts, temp 0.0): **0/3** behavioral pass — variance is task/sample dependent, not infra.
+
+**Step-2 gate:** infra OK for PPO trial; behavioral signal sparse but non-zero.
+
+---
+
+## 2026-06-02 — Step-1 oracle sanity + game_turn Vitest imports
+
+**Command:** `PYTHONPATH=scripts ECONOMIST_RL_SOURCE_REPO=/Users/natreed/fallen-empire python scripts/oracle_reference_sanity.py --limit 3`
+
+**Finding:** `game_turn` reference mechanics used `@/lib/gameLoop`; Vitest in disposable worktrees failed before any `it()` ran (`per_it` 0/0) while `hybrid_city` (relative imports) passed 4/4.
+
+**Fix:** `mechanist_stub_body` game_turn branch uses relative `gameLoop` import; `ensure_worktree_vitest_config()` writes `vitest.config.mts` alias as belt-and-suspenders.
+
+**After fix:** Step-1 gate **PASS** — food 76% / market 100% / labor 65% targeted_tests on bank reference stubs (`scripts/oracle_reference_sanity.py`).
+
+---
+
+## 2026-06-02 — Mechanic-only apply + goal Vitest scoring alignment
+
+**Goal:** Task bank owns Vitest; model edits `mechanic.ts` only; `targeted_tests` grades goal-weighted Vitest on applied mechanic.
+
+**Changed:**
+
+- `scripts/economist_rl_task_execution.py` — `apply_allowed_paths_for_execution` (no `tests/**`); sandbox starters always from `sandbox_starter_bodies()`; `apply_allowed_paths_for_task` alias; `enrich_task_execution` sets `apply_allowed_paths`, syncs `targeted_tests` via `sync_targeted_tests_from_goals`.
+- `scripts/economist_rl_coding_contract.py` — sandbox prompt uses apply paths + formatted `SANDBOX_OUTPUT_FORMAT_RULES`; pre-seeded test path shown read-only.
+- `scripts/economist_rl_vitest_scoring.py` — truncated `it()` title fallback for goal merge.
+- `tests/test_economist_rl_mechanic_only_apply.py`, `test_economist_rl_vitest_goals.py` (truncated title case).
+- `docs/ECONOMIST_RL_ADAPTER.md` — mechanic-only + rescore note.
+
+**Verification:** `PYTHONPATH=scripts python3 -m unittest discover -s tests -p 'test_economist_rl_mechanic*.py' -p 'test_economist_rl_vitest*.py'` — pass. Rescore cycle 016: mean_reward **0.43**, `compiled` **20/20**, `vitest_goal_weighted` **20/20**, `targeted_tests` component **>0 on 5/20** (model quality, not infra).
+
+---
+
+## 2026-06-05 — Cycle 016 local rescore after Vitest install
+
+**Command:** `.venv/bin/python scripts/rescore_economist_rl_rollouts.py --rollout-file benchmarks/results/economistRL/rollouts/rollout_batch_016.jsonl --cycle-id 16 --execution-source-repo /Users/natreed/fallen-empire`
+
+**Before (no vitest binary):** mean_reward **0.10**, compiled **0/20**, no `vitest_report.json`.
+
+**After rescore:** mean_reward **~0.36**, `compiled` **20/20**, `vitest_ran` **20/20**, `vitest_goal_weighted` **18/20** (~9s). Vitest behavioral pass rate still **0/20** on goal asserts (model patches wrong shape / overwrote tests with Jest on market-02); rewards rose mainly because compile gate no longer hard-caps at 0.1.
+
+**Added:** `scripts/rescore_economist_rl_rollouts.py`; fixed `economist_rl_vitest_scoring.py` goal title lookup when Vitest JSON omits `goal_` prefix.
+
+---
+
+## 2026-06-01 — economistRL Lambda launcher (Transformers/CUDA)
+
+**Goal:** Wire `run_economist_rl_lambda_cycle.py` through Lambda Cloud using the Transformers/CUDA PPO path, not only local MLX.
+
+**Changed files:**
+
+- `scripts/launch_economist_rl_lambda_cycle.py` — new launcher: bootstrap/sync, `economistRL` adapter rsync, remote `tmux` with `LOCAL_BACKEND=transformers`, `PPO_TRAIN_BACKEND=transformers`, `--lambda-mode` cycle runner.
+- `scripts/lambda/run_economist_rl_lambda_cycle.py` — set `PPO_TRAIN_BACKEND=transformers` when `--lambda-mode`.
+- `scripts/launch_lambda_parallel_ablation.py` — artifact collector paths for economistRL results/adapters.
+- `docs/ECONOMIST_RL_ADAPTER.md` — Lambda launch examples.
+- `tests/test_launch_economist_rl_lambda_cycle.py` — argv/command wiring tests.
+
+**Verification:** `python3 -m py_compile scripts/launch_economist_rl_lambda_cycle.py`; `unittest` launcher tests pass.
+
+---
+
+## 2026-06-05 — PPO subprocess isolation after rollouts (VRAM fix)
+
+**Goal:** Avoid Lambda/Mac CUDA OOM when PPO starts after 50 rollout generations in the same process.
+
+**Changed files:**
+
+- `scripts/lambda/run_economist_rl_ppo_train.py` — child entry point; reads `scored_batch_*.jsonl` + JSON request, runs `train_ppo_batch`, writes `ppo_train_*.json`.
+- `scripts/lambda/run_economist_rl_lambda_cycle.py` — default live PPO spawns child via `run_ppo_train_subprocess()`; parent calls `_release_accelerator_memory()` before spawn; `--ppo-in-process` escape hatch for debug.
+- `tests/test_economist_rl_lambda_ppo_pipeline.py` — subprocess request wiring + child dry-run tests.
+
+**Verification:** `python3 -m unittest discover -s tests -p 'test_economist_rl_lambda_ppo_pipeline.py'` — new subprocess tests pass.
+
+---
+
+## 2026-06-05 — Lambda smoke: 4 cycles × 10 rollouts
+
+**Command:** `python scripts/launch_economist_rl_lambda_cycle.py --launch-instances --region us-west-1 --watchdog-idle-minutes 360 -- --cycles 4 --rollouts-per-cycle 10 --skip-eval --ppo-epochs 1 --ppo-max-samples 10 --ppo-min-samples 4`
+
+**Worker:** instance `5ffe20c52cd846aa996cd60390f90daf` @ `170.9.11.242` (gpu_1x_a10, us-west-1); tmux `fe-economist-rl`; log `~/cloud-eval-logs/fe-economist-rl-cycle.log`; local launch log `logs/launch_economist_rl_smoke_4x10.log`.
+
+**Intent:** Subprocess-isolated PPO smoke with adapter chaining across 4 cycles; eval skipped for speed.

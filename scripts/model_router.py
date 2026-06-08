@@ -930,6 +930,12 @@ class LocalMlxBackend:
                 if self.adapter_path:
                     load_kw["adapter_path"] = self.adapter_path
                 self._model, self._tokenizer = load(self.model_id, **load_kw)
+                try:
+                    from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
+
+                    register_qwen_coder_instruct_extra_stops(self._tokenizer)
+                except ImportError:
+                    pass
                 self._backend_kind = "mlx"
                 return self._model, self._tokenizer
             except Exception:
@@ -938,25 +944,25 @@ class LocalMlxBackend:
                 use_transformers = True
 
         if use_transformers:
-            # Linux/NVIDIA fallback path when MLX is unavailable.
+            # Linux/NVIDIA: PEFT LoRA side adapters (no merge into base weights).
             import torch
-            from transformers import AutoModelForCausalLM, AutoTokenizer
-            from safetensors import safe_open
+
+            from economist_rl_peft import load_peft_causal_lm
 
             self._torch = torch
             tf_model_id = self._transformers_model_id(self.model_id)
-            self._model = AutoModelForCausalLM.from_pretrained(
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            dtype = torch.float16 if device.type == "cuda" else torch.float32
+            adapter_dir = Path(self.adapter_path).expanduser() if self.adapter_path else None
+            if adapter_dir is not None and not adapter_dir.is_absolute():
+                adapter_dir = (Path(__file__).resolve().parents[1] / adapter_dir).resolve()
+            self._model, self._tokenizer = load_peft_causal_lm(
                 tf_model_id,
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-                device_map="auto",
+                adapter_dir,
+                device=device,
+                dtype=dtype,
+                trainable=False,
             )
-            self._tokenizer = AutoTokenizer.from_pretrained(tf_model_id)
-            if self.adapter_path:
-                self._apply_mlx_lora_adapter_to_transformers_model(
-                    model=self._model,
-                    safe_open=safe_open,
-                    torch_mod=torch,
-                )
             self._backend_kind = "transformers"
         return self._model, self._tokenizer
 

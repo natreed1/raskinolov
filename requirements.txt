@@ -3,6 +3,8 @@
 mlx-lm>=0.21.0
 huggingface_hub>=0.24.0
 safetensors>=0.7.0
+# Transformers/CUDA economistRL on Lambda (pulls transformers via pip)
+peft>=0.13.0
 gradio>=4.44,<5
 evalplus>=0.3.1
 rank-bm25>=0.2.2

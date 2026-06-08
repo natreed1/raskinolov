@@ -728,6 +728,12 @@ def _remote_lifecycle_prelude(
         "add_path fallen-empire-lora/scripts/model_router.py",
         "add_path fallen-empire-lora/scripts/router",
         "add_path fallen-empire-lora/benchmarks/task_bank/compiled/final_mass_testing_system_v1.json",
+        "add_path fallen-empire-lora/checkpoints/adapters/economistRL",
+        "add_path fallen-empire-lora/benchmarks/results/economistRL",
+        "add_path fallen-empire-lora/scripts/lambda/run_economist_rl_lambda_cycle.py",
+        "add_path fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py",
+        "add_path fallen-empire-lora/scripts/economist_rl_ppo_trainer.py",
+        "add_path fallen-empire-lora/benchmarks/economistRL_tasks_v1.json",
         "export FE_ARTIFACT_LABEL=\"${label}\"",
         "summarize_gpu_telemetry || true",
         "if [ \"${#paths[@]}\" -eq 0 ]; then",
@@ -932,7 +938,7 @@ def _sync_repos(ssh_key_path: Path, host: str, ml_repo: Path, game_repo: Path) -
         "source .venv-linux-port/bin/activate; "
         "pip install -U pip; "
         "pip install torch --index-url https://download.pytorch.org/whl/cu121; "
-        "pip install transformers accelerate sentencepiece numpy",
+        "pip install transformers accelerate sentencepiece numpy peft",
     )
 
 

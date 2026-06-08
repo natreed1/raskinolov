@@ -24,13 +24,12 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[1]
-DEFAULT_TASKS = REPO / "benchmarks" / "economistRL_tasks_v1.json"
+DEFAULT_TASKS = REPO / "benchmarks" / "economistRL_tasks_v2_coding.json"
 DEFAULT_OUT_JSON = REPO / "benchmarks" / "results" / "economistRL_scorecard_v1.json"
 DEFAULT_OUT_MD = REPO / "benchmarks" / "results" / "economistRL_scorecard_v1.md"
 
 DEFAULT_BASE_REWARD_WEIGHTS = {
-    "simulation_behavior": 0.45,
-    "targeted_tests": 0.20,
+    "targeted_tests": 0.55,
     "static_code_mechanics": 0.15,
     "formula_signal": 0.10,
     "instruction_contract": 0.05,
@@ -39,6 +38,98 @@ DEFAULT_BASE_REWARD_WEIGHTS = {
 }
 
 VALID_CURRICULUM_TRACKS = {"economy", "generalist"}
+# Optional reporting threshold for scorecard summaries only; PPO trains on continuous reward.
+EVAL_REPORT_REWARD_THRESHOLD = 0.82
+
+
+def eval_report_high_reward(score: dict[str, Any]) -> bool:
+    """Strict scorecard pass/fail for eval summaries — not a PPO training label.
+
+    Prefer ``strict_scorecard_pass`` on scored rows; this helper remains for
+    scorecard markdown and backward-compatible eval reporting.
+    """
+    if "strict_scorecard_pass" in score:
+        return bool(score.get("strict_scorecard_pass"))
+    components = score.get("components") if isinstance(score.get("components"), dict) else {}
+    targeted_tests = float(components.get("targeted_tests") or 0.0) / 100.0
+    diagnostics = score.get("diagnostics") if isinstance(score.get("diagnostics"), list) else list(score.get("failures") or [])
+    tests_evaluated = "targeted_tests_not_run" not in diagnostics and "targeted_tests_not_run" not in list(score.get("failures") or [])
+    compiled = (score.get("compile_gate") or {}).get("compiled")
+    return (
+        float(score.get("reward") or 0.0) >= EVAL_REPORT_REWARD_THRESHOLD
+        and compiled is not False
+        and (not tests_evaluated or targeted_tests >= 0.50)
+        and not score.get("policy_caps")
+    )
+
+
+def strict_scorecard_pass(score: dict[str, Any]) -> bool:
+    """Alias for eval scorecard threshold checks (not PPO row usability)."""
+    return eval_report_high_reward(score)
+
+
+DIAGNOSTIC_FAILURE_PREFIXES = (
+    "prompt_rubric:",
+    "legacy_missing_mechanic:",
+    "legacy_instruction:",
+)
+DIAGNOSTIC_FAILURE_EXACT = {
+    "static_code_mechanics_partial",
+    "formula_signal_partial",
+}
+
+
+def _is_diagnostic_failure(tag: str) -> bool:
+    token = str(tag or "").strip()
+    if not token:
+        return False
+    if token in DIAGNOSTIC_FAILURE_EXACT:
+        return True
+    return any(token.startswith(prefix) for prefix in DIAGNOSTIC_FAILURE_PREFIXES)
+
+
+def _ppo_training_metadata(
+    *,
+    failures: list[str],
+    reward: float,
+    base_reward: float,
+    gated_base_reward: float,
+    policy_caps: list[float],
+    compile_gate: dict[str, Any],
+    compiled: bool | None,
+    output_chars: int,
+) -> dict[str, Any]:
+    """Classify PPO training semantics separate from diagnostic failure tags."""
+    cap_reason: list[str] = []
+    hard_cap_applied = False
+
+    compile_failure_cap = compile_gate.get("failure_cap")
+    if compiled is False:
+        hard_cap_applied = True
+        cap_reason.append("compile_failed")
+        if compile_failure_cap is not None:
+            cap_reason.append(f"compile_gate_cap:{compile_failure_cap}")
+
+    if policy_caps and float(gated_base_reward) + 1e-9 < float(base_reward):
+        hard_cap_applied = True
+        for cap in policy_caps:
+            cap_reason.append(f"policy_cap:{cap}")
+
+    reward_gaming = [f for f in failures if str(f).startswith("reward_gaming:")]
+    if reward_gaming:
+        hard_cap_applied = True
+        cap_reason.extend(reward_gaming)
+
+    diagnostics = [f for f in failures if _is_diagnostic_failure(f)]
+    training_usable = output_chars > 0
+
+    meta = {
+        "training_usable": training_usable,
+        "hard_cap_applied": hard_cap_applied,
+        "cap_reason": cap_reason,
+        "diagnostics": diagnostics,
+    }
+    return meta
 
 
 def _utc_iso() -> str:
@@ -293,12 +384,30 @@ def _score_from_result_object(result: Any, *, default_missing: str) -> tuple[flo
     return 0.0, [], [default_missing]
 
 
-def _simulation_behavior_score(row: dict[str, Any]) -> tuple[float, list[str], list[str]]:
+def _simulation_compile_gate_active(row: dict[str, Any]) -> bool:
+    """True when execution evidence ran and simulation must follow compile/vitest."""
+    if row.get("compile_checked"):
+        return True
+    return str(row.get("execution_evidence") or "") in {"ran_compile", "apply_failed"}
+
+
+def _simulation_behavior_score(
+    row: dict[str, Any],
+    *,
+    compiled: bool | None = None,
+) -> tuple[float, list[str], list[str]]:
+    source = str(row.get("simulation_source") or "")
+    if _simulation_compile_gate_active(row) and compiled is not True:
+        return 0.0, [], ["simulation_gated_on_compile"]
+    if source == "completion_text" and str(row.get("execution_evidence") or "") == "ran_compile":
+        return 0.0, [], ["simulation_superseded_by_execution"]
     result = row.get("simulation_behavior")
     if result is None:
         result = row.get("simulation_results")
     if result is None:
         result = row.get("twenty_tick_simulation")
+    if isinstance(result, dict) and result.get("error"):
+        return 0.0, [], [f"simulation_error:{result.get('error')}"]
     return _score_from_result_object(result, default_missing="simulation_not_run")
 
 
@@ -423,13 +532,6 @@ def _anti_overfit_guard_score(row: dict[str, Any], text: str) -> tuple[float, li
         value = row.get(key)
         if _boolish(value) is True or (isinstance(value, list) and value):
             flags.append(flag)
-    previous = _numeric_score(row.get("previous_potential"))
-    new = _numeric_score(row.get("new_potential"))
-    if previous is not None and new is not None:
-        if new <= previous + 1e-9:
-            flags.append("potential_not_improved")
-        else:
-            passed.append("potential_improved")
     if flags:
         unique = sorted(set(flags))
         failures.extend(f"reward_gaming:{flag}" for flag in unique)
@@ -437,9 +539,44 @@ def _anti_overfit_guard_score(row: dict[str, Any], text: str) -> tuple[float, li
         cap = 0.30
         if any(flag in unique for flag in ("deleted_or_weakened_tests", "mechanic_bypass", "hardcoded_visible_scenarios")):
             cap = 0.15
-    elif previous is not None and new is not None:
-        passed.append("potential_comparison_clean")
     return _clamp01(score), passed, failures, cap
+
+
+def _progress_guard_score(row: dict[str, Any]) -> tuple[float, list[str], list[str], float | None, str]:
+    """Score potential-state movement separately from reward-gaming detection.
+
+    A patch that fails to improve potential can be an ordinary exploratory
+    failure. It should lose progress credit, but it is not classified as
+    reward gaming unless anti-overfit signals also fire.
+    """
+    previous = _numeric_score(row.get("previous_potential"))
+    new = _numeric_score(row.get("new_potential"))
+    if previous is None or new is None:
+        return 1.0, [], [], None, "not_provided"
+
+    delta = new - previous
+    if delta > 1e-9:
+        # Reward proportional improvement, while letting tiny positive changes
+        # remain partial rather than all-or-nothing.
+        progress = _clamp01(0.55 + min(0.45, delta))
+        return progress, ["potential_improved"], [], None, "improved"
+
+    if abs(delta) <= 1e-9:
+        return (
+            0.0,
+            [],
+            ["exploratory_no_progress"],
+            0.45,
+            "no_change_exploratory_failure",
+        )
+
+    return (
+        0.0,
+        [],
+        ["potential_regressed"],
+        0.25,
+        "regression",
+    )
 
 
 def _boolish(value: Any) -> bool | None:
@@ -598,7 +735,6 @@ def score_output(
     legacy_mechanics, legacy_covered_mechanics, legacy_missing_mechanics = _mechanics_score(text, expect)
     legacy_instruction, instruction_failures = _instruction_score(text, prompt, expect)
     concision = _concision_score(text, expect)
-    simulation_behavior, simulation_passed, simulation_failures = _simulation_behavior_score(row)
     targeted_tests, targeted_tests_passed, targeted_tests_failures = _targeted_tests_score(row)
     static_code_mechanics, static_passed, static_failures = _static_code_mechanics_score(task, row, text)
     formula_signal, formula_passed, formula_failures = _formula_signal_score(task, row, text)
@@ -606,17 +742,17 @@ def score_output(
         task, row, text
     )
     anti_overfit, anti_passed, anti_failures, anti_cap = _anti_overfit_guard_score(row, text)
+    progress_guard, progress_passed, progress_failures, progress_cap, progress_status = _progress_guard_score(row)
     weights = _weights(task, payload)
     base_reward = (
-        weights["simulation_behavior"] * simulation_behavior
-        + weights["targeted_tests"] * targeted_tests
+        weights["targeted_tests"] * targeted_tests
         + weights["static_code_mechanics"] * static_code_mechanics
         + weights["formula_signal"] * formula_signal
         + weights["instruction_contract"] * instruction_contract
         + weights["concision"] * concision
         + weights["anti_overfit"] * anti_overfit
     )
-    policy_caps = [cap for cap in (instruction_cap, anti_cap) if cap is not None]
+    policy_caps = [cap for cap in (instruction_cap, anti_cap, progress_cap) if cap is not None]
     gated_base_reward = min([base_reward, *policy_caps]) if policy_caps else base_reward
     compile_gate = compile_gate_reward(
         compiled=compiled,
@@ -625,11 +761,11 @@ def score_output(
     )
     reward = min([float(compile_gate["reward"]), *policy_caps]) if policy_caps else float(compile_gate["reward"])
     failures = (
-        simulation_failures
-        + targeted_tests_failures
+        targeted_tests_failures
         + static_failures
         + formula_failures
         + instruction_contract_failures
+        + progress_failures
         + anti_failures
         + [f"prompt_rubric:{f}" for f in rubric_failures]
         + [f"legacy_missing_mechanic:{m}" for m in legacy_missing_mechanics]
@@ -637,9 +773,18 @@ def score_output(
     )
     if compiled is False:
         failures.append("compile_failed")
-    simulation_evaluated = "simulation_not_run" not in simulation_failures
     tests_evaluated = "targeted_tests_not_run" not in targeted_tests_failures
-    return {
+    training_meta = _ppo_training_metadata(
+        failures=failures,
+        reward=reward,
+        base_reward=base_reward,
+        gated_base_reward=gated_base_reward,
+        policy_caps=policy_caps,
+        compile_gate=compile_gate,
+        compiled=compiled,
+        output_chars=len(text),
+    )
+    result = {
         "task_id": str(task.get("id") or ""),
         "title": str(task.get("title") or ""),
         "difficulty": str(task.get("difficulty") or "standard"),
@@ -650,41 +795,39 @@ def score_output(
         "reward": round(reward, 4),
         "base_reward": round(base_reward, 4),
         "gated_base_reward": round(gated_base_reward, 4),
-        "passed": (
-            reward >= 0.82
-            and compiled is not False
-            and simulation_behavior >= 0.70
-            and (not tests_evaluated or targeted_tests >= 0.50)
-            and not policy_caps
-        ),
         "components": {
-            "simulation_behavior": round(100.0 * simulation_behavior, 2),
             "targeted_tests": round(100.0 * targeted_tests, 2),
             "static_code_mechanics": round(100.0 * static_code_mechanics, 2),
             "formula_signal": round(100.0 * formula_signal, 2),
             "instruction_contract": round(100.0 * instruction_contract, 2),
             "concision": round(100.0 * concision, 2),
             "anti_overfit": round(100.0 * anti_overfit, 2),
+            "progress_guard": round(100.0 * progress_guard, 2),
             "prompt_rubric_guardrail": round(100.0 * prompt_rubric, 2),
             "legacy_mechanics_guardrail": round(100.0 * legacy_mechanics, 2),
             "legacy_instruction_guardrail": round(100.0 * legacy_instruction, 2),
         },
         "policy_caps": policy_caps,
         "compile_gate": compile_gate,
-        "simulation_passed_goals": simulation_passed,
         "targeted_tests_passed": targeted_tests_passed,
         "static_code_mechanics_passed": static_passed,
         "formula_signal_passed": formula_passed,
         "instruction_contract_passed": instruction_passed,
         "anti_overfit_passed": anti_passed,
+        "progress_guard_passed": progress_passed,
+        "progress_guard_status": progress_status,
         "covered_mechanics": legacy_covered_mechanics,
         "missing_mechanics": legacy_missing_mechanics,
-        "simulation_evaluated": simulation_evaluated,
         "targeted_tests_evaluated": tests_evaluated,
         "failures": failures,
         "output_chars": len(text),
         "output_preview": text[:500],
+        **training_meta,
     }
+    strict_pass = strict_scorecard_pass(result)
+    result["strict_scorecard_pass"] = strict_pass
+    result["high_reward"] = strict_pass
+    return result
 
 
 def validate_tasks(path: Path) -> dict[str, Any]:
@@ -893,7 +1036,17 @@ def score_outputs(args: argparse.Namespace) -> None:
         "compiled": sum(1 for row in scored if row.get("compile_gate", {}).get("compiled") is True),
         "compile_failed": sum(1 for row in scored if row.get("compile_gate", {}).get("compiled") is False),
         "mean_score": round(sum(row["score"] for row in scored) / max(1, len(scored)), 2),
-        "pass_rate": round(sum(1 for row in scored if row["passed"]) / max(1, len(scored)), 4),
+        "mean_reward": round(sum(float(row["reward"]) for row in scored) / max(1, len(scored)), 4),
+        "high_reward_rate": round(
+            sum(1 for row in scored if row.get("strict_scorecard_pass")) / max(1, len(scored)),
+            4,
+        ),
+        "strict_scorecard_pass_rate": round(
+            sum(1 for row in scored if row.get("strict_scorecard_pass")) / max(1, len(scored)),
+            4,
+        ),
+        "training_usable_count": sum(1 for row in scored if row.get("training_usable")),
+        "hard_cap_applied_count": sum(1 for row in scored if row.get("hard_cap_applied")),
         "by_focus": {
             focus: round(sum(vals) / len(vals), 2)
             for focus, vals in sorted(by_focus.items())
@@ -921,17 +1074,20 @@ def _write_markdown(path: Path, summary: dict[str, Any], rows: list[dict[str, An
         f"- compiled: {summary.get('compiled', 0)}",
         f"- compile_failed: {summary.get('compile_failed', 0)}",
         f"- mean_score: {summary['mean_score']}",
-        f"- pass_rate: {summary['pass_rate']}",
+        f"- mean_reward: {summary.get('mean_reward', 0.0)}",
+        f"- strict_scorecard_pass_rate: {summary.get('strict_scorecard_pass_rate', summary.get('high_reward_rate', 0.0))}",
+        f"- training_usable_count: {summary.get('training_usable_count', 0)}",
+        f"- hard_cap_applied_count: {summary.get('hard_cap_applied_count', 0)}",
         "",
-        "| task_id | score | base | compiled | passed | difficulty | subskill | missing_mechanics | failures |",
-        "|---|---:|---:|---|---|---|---|---|---|",
+        "| task_id | score | reward | base | compiled | strict_scorecard | difficulty | subskill | missing_mechanics | failures |",
+        "|---|---:|---:|---:|---|---|---|---|---|---|",
     ]
     for row in rows:
         failures = ", ".join(row["failures"][:5])
         missing = ", ".join(row["missing_mechanics"])
         lines.append(
-            f"| `{row['task_id']}` | {row['score']:.2f} | {float(row.get('base_reward', 0.0)) * 100.0:.2f} | "
-            f"{row.get('compile_gate', {}).get('compiled')} | {row['passed']} | "
+            f"| `{row['task_id']}` | {row['score']:.2f} | {float(row.get('reward', 0.0)):.4f} | {float(row.get('base_reward', 0.0)) * 100.0:.2f} | "
+            f"{row.get('compile_gate', {}).get('compiled')} | {row.get('strict_scorecard_pass')} | "
             f"{row['difficulty']} | `{row['subskill']}` | {missing} | {failures} |"
         )
     lines.append("")
