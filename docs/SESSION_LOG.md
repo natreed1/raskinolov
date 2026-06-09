@@ -4,6 +4,49 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-06-08 — Lambda artifact export Cursor rule
+
+**Goal:** Ensure agents always pull Lambda worker artifacts to local storage when a run completes.
+
+**Changed files:**
+
+- Added `.cursor/rules/lambda-artifact-export.mdc` (`alwaysApply: true`): launch-time artifact flags, mandatory post-run rsync/verification checklist, local recovery paths (`benchmarks/results/lambda_recovery/`, `benchmarks/results/economistRL/extracts/`), and SESSION_LOG discipline before declaring a run done.
+
+**Outcome:** No runtime changes; operational guardrail for future Lambda sessions.
+
+---
+
+## 2026-06-08 — economistRL Lambda PPO smoke (10 rollouts, 4 epochs) from home
+
+**Goal:** Re-run PPO smoke after work-network SSH blocks caused bootstrap failures.
+
+**Root cause (prior attempts):** Corporate WiFi blocked outbound TCP/22; home network passes `nc -zv github.com 22`.
+
+**Launch command:**
+
+```bash
+.venv/bin/python scripts/launch_economist_rl_lambda_cycle.py --launch-instances -- \
+  --cycles 1 --rollouts-per-cycle 10 --skip-eval \
+  --ppo-min-samples 4 --ppo-max-samples 10 --ppo-epochs 4 \
+  --ppo-logprob-window-tokens 1536 --temperature 0.2 --max-tokens 4000 \
+  --init-adapter-path checkpoints/fe-lora-arena-apply-sft \
+  --task-db benchmarks/economistRL_tasks_v3_execution.json
+```
+
+**Outcome:** Bootstrap/sync/deps/adapter_sync all OK. Remote cycle started in tmux.
+
+| Field | Value |
+|---|---|
+| instance_id | `5d6f6458673041ffb0ecff466a9717db` |
+| host | `159.54.168.84` |
+| region | us-west-1 |
+| local log | `logs/launch_economist_rl_smoke_10r_4ppo_home_20260608.log` |
+| remote log | `/home/ubuntu/cloud-eval-logs/fe-economist-rl-cycle.log` |
+
+**Next:** Poll remote tmux log for rollouts → PPO → cycle manifest; instance auto-terminates on exit.
+
+---
+
 ## 2026-06-07 — PPO logprob window alignment (rollout attach + train)
 
 **Goal:** Keep PPO `old_logprob` / `new_logprob` on the same bounded-forward scale and avoid rollout attach OOM on long sequences.
@@ -6045,6 +6088,57 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 
 ---
 
+## 2026-06-08 — PPO reliability: subprocess logs, staging, old_logprob tags
+
+**Goal:** Fix three high-impact economistRL PPO bugs: silent proxy old_logprobs, fake trained candidates after OOM copy, and opaque subprocess `-9` failures.
+
+**Changed files:**
+
+- `scripts/economist_rl_ppo_trainer.py` — `old_logprob_source` / `old_logprob_error` on attach; `collect_old_logprob_proxy_errors()`; train into `*.staging` then promote + `.economist_rl_ppo_trained` marker (no pre-train copy to `rl_pass_*`).
+- `scripts/lambda/run_economist_rl_lambda_cycle.py` — capture PPO subprocess stdout/stderr to `ppo/ppo_train_NNN.{stdout,stderr}.log`; discard failed candidates; chain only adapters with training marker; `--strict-old-logprob`.
+- `tests/test_economist_rl_lambda_ppo_pipeline.py`, `tests/test_economist_rl_shared_inference_logprob.py` — updated adapter-chain/subprocess/dry-run tests.
+
+**Verification:** `PYTHONPATH=scripts .venv/bin/python3 -m unittest discover -s tests -p 'test_economist_rl_lambda_ppo_pipeline.py'` — 21 tests OK (1 skipped).
+
+---
+
+## 2026-06-08 — Overnight Lambda watch (4×10 chained PPO)
+
+**Goal:** Launch economistRL 4×10 Lambda run with local overnight watcher (poll, artifact rsync, OOM-adaptive relaunch).
+
+**Added:** `scripts/lambda/watch_economist_rl_lambda_overnight.py`
+
+**Started (attempt 1):** instance `f1845906a06a4507bf383bf3f0401d84` @ `155.248.213.6` (gpu_1x_a10, us-west-1); watch pid background; 15m local `AGENT_LOOP_TICK_economist_rl` loop.
+
+**State/log:** `logs/economist_rl_overnight_watch.json`, `logs/economist_rl_overnight_watch.log`
+
+**Verification:** watcher relaunched with `--reset-state --launch-initial --run-id run_20260608_extracts_v1`.
+
+---
+
+## 2026-06-08 — economistRL extract archive + fresh 4×10 watch
+
+**Goal:** Never lose Lambda crash data; structured extracts + failure classification; fresh 4×10 PPO-chaining smoke.
+
+**Changed files:**
+
+- `scripts/lambda/watch_economist_rl_lambda_overnight.py` — `EXTRACTS_ROOT`, `index.jsonl`, per-attempt manifests/README, live snapshots each poll, failure classes, `--reset-state` / `--run-id`; initial launch failures retry instead of crashing watcher.
+- `benchmarks/results/economistRL/extracts/README.md` — extract layout and failure-class table.
+- `docs/PROJECT_STATE.md` — § economistRL Lambda overnight watch (commands, paths, known `instance_gone` pattern).
+
+**Launch (attempt 1 bootstrap SSH timeout on `146.235.219.29`; watcher now retries):**
+
+```bash
+nohup .venv/bin/python scripts/lambda/watch_economist_rl_lambda_overnight.py \
+  --reset-state --launch-initial --poll-minutes 10 --max-restarts 8 --max-hours 14 \
+  --run-id run_20260608_extracts_v1 \
+  >> logs/economist_rl_overnight_watch.log 2>&1 &
+```
+
+**Monitor:** `logs/economist_rl_overnight_watch.json`, `benchmarks/results/economistRL/extracts/index.jsonl`, `extracts/live_*/`.
+
+---
+
 ## 2026-06-05 — Lambda smoke: 4 cycles × 10 rollouts
 
 **Command:** `python scripts/launch_economist_rl_lambda_cycle.py --launch-instances --region us-west-1 --watchdog-idle-minutes 360 -- --cycles 4 --rollouts-per-cycle 10 --skip-eval --ppo-epochs 1 --ppo-max-samples 10 --ppo-min-samples 4`
@@ -6052,3 +6146,14 @@ Renamed the Gradio window title and default system persona to **Albert** in `scr
 **Worker:** instance `5ffe20c52cd846aa996cd60390f90daf` @ `170.9.11.242` (gpu_1x_a10, us-west-1); tmux `fe-economist-rl`; log `~/cloud-eval-logs/fe-economist-rl-cycle.log`; local launch log `logs/launch_economist_rl_smoke_4x10.log`.
 
 **Intent:** Subprocess-isolated PPO smoke with adapter chaining across 4 cycles; eval skipped for speed.
+
+## 2026-06-08 — stop economistRL overnight Lambda automation
+
+**Trigger:** User asked to shut down a cloud/agent loop repeatedly launching failing Lambda economistRL tests.
+
+**Finding:** No Cursor backend automations registered. Active local chain instead:
+- `scripts/lambda/watch_economist_rl_lambda_overnight.py` (poll + relaunch)
+- child `scripts/launch_economist_rl_lambda_cycle.py --launch-instances …`
+- 15-minute shell loop appending `AGENT_LOOP_TICK_economist_rl` to `logs/agent_loop_economist_rl.log` (instructs Cursor agents to restart watcher on failure)
+
+**Action:** Killed watcher, launcher, and `AGENT_LOOP_TICK_economist_rl` loop processes. Latest launch log (`logs/launch_economist_rl_overnight_attempt_01.log`) already auto-terminated instance `b336e841…` after SSH bootstrap timeout; Lambda list API returned 403 from this session (could not re-verify cloud inventory).

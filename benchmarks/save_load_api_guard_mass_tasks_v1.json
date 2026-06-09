@@ -1,0 +1,673 @@
+[
+  {
+    "id": "save-mass-checklist-01",
+    "category": "save_core",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Provide a 4-item TypeScript save/load guard checklist including schema validation and compatibility.",
+    "expect": {
+      "all_contains": [
+        "schema",
+        "compatibility"
+      ],
+      "any_contains": [
+        "validate",
+        "version",
+        "migration",
+        "serialize"
+      ],
+      "min_chars": 95
+    },
+    "domains": [
+      "save_load"
+    ]
+  },
+  {
+    "id": "save-mass-response-shape-02",
+    "category": "save_core",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write a minimal TypeScript type for save response with ok, version, and errors.",
+    "expect": {
+      "all_contains": [
+        "ok",
+        "version",
+        "errors"
+      ],
+      "any_contains": [
+        "type",
+        "interface"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "save_load"
+    ]
+  },
+  {
+    "id": "save-mass-migration-note-03",
+    "category": "save_core",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "In 2 sentences, explain a safe migration path for older save versions.",
+    "expect": {
+      "any_contains": [
+        "migration",
+        "version",
+        "backward",
+        "compatibility"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "save_load"
+    ]
+  },
+  {
+    "id": "save-mass-ui-warning-04",
+    "category": "save_ui_change",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Draft one compact warning line for failed save validation and one recovery hint.",
+    "expect": {
+      "any_contains": [
+        "validation",
+        "failed",
+        "retry",
+        "recover"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "save_load",
+      "ui"
+    ]
+  },
+  {
+    "id": "save-mass-error-contract-05",
+    "category": "save_ui_change",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Describe one improvement to error contract readability for save/load API responses.",
+    "expect": {
+      "any_contains": [
+        "error",
+        "contract",
+        "response",
+        "typed"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "save_load",
+      "ui"
+    ]
+  },
+  {
+    "id": "save-mass-field-guard-06",
+    "category": "save_ui_change",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Explain how to guard unknown fields without breaking existing saves.",
+    "expect": {
+      "any_contains": [
+        "unknown",
+        "field",
+        "guard",
+        "compatibility"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load",
+      "ui"
+    ]
+  },
+  {
+    "id": "save-mass-constraints-07",
+    "category": "save_constraints",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Plain text only: one sentence containing schema, version, and errors.",
+    "expect": {
+      "all_contains": [
+        "schema",
+        "version",
+        "errors"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "save_load",
+      "constraints"
+    ]
+  },
+  {
+    "id": "save-mass-constraints-08",
+    "category": "save_constraints",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Output one comma-separated line with four save/load safeguards.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "schema",
+        "version",
+        "migration",
+        "validation",
+        "serialize"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "save_load",
+      "constraints"
+    ]
+  },
+  {
+    "id": "save-mass-constraints-09",
+    "category": "save_constraints",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Exactly two lines: first indicates guard failure, second indicates fallback behavior.",
+    "expect": {
+      "any_contains": [
+        "failure",
+        "fallback",
+        "guard",
+        "load"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "save_load",
+      "constraints"
+    ]
+  },
+  {
+    "id": "save-mass-transfer-loading-10",
+    "category": "save_transfer",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write one loading reassurance line about save-state verification.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "state",
+        "verified",
+        "integrity",
+        "version"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "save_load",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "save-mass-transfer-hud-11",
+    "category": "save_transfer",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Provide one HUD/system message line for save compatibility check success.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "compatibility",
+        "check",
+        "success"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "save_load",
+      "hud"
+    ]
+  },
+  {
+    "id": "save-mass-transfer-ai-12",
+    "category": "save_transfer",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Draft one AI system note when persisted plan data fails schema validation.",
+    "expect": {
+      "all_contains": [
+        "schema"
+      ],
+      "any_contains": [
+        "validation",
+        "plan",
+        "fallback"
+      ],
+      "min_chars": 50
+    },
+    "domains": [
+      "save_load",
+      "planning"
+    ]
+  },
+  {
+    "id": "save-mass-version-gate-13",
+    "category": "save_core",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write a concise version-gating rule for loading legacy saves safely.",
+    "expect": {
+      "any_contains": [
+        "version",
+        "legacy",
+        "safe",
+        "load",
+        "guard"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "save_load"
+    ]
+  },
+  {
+    "id": "save-mass-migration-map-14",
+    "category": "save_core",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "In 2 sentences explain mapping old fields into new schema without data loss.",
+    "expect": {
+      "any_contains": [
+        "schema",
+        "migration",
+        "fields",
+        "data"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load"
+    ]
+  },
+  {
+    "id": "save-mass-integrity-check-15",
+    "category": "save_constraints",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "One comma-separated line with checksum, schema, version, fallback.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "checksum",
+        "schema",
+        "version",
+        "fallback"
+      ],
+      "min_chars": 50
+    },
+    "domains": [
+      "save_load",
+      "constraints"
+    ]
+  },
+  {
+    "id": "save-mass-api-shape-16",
+    "category": "save_core",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Provide a minimal typed error payload that includes code, message, and recoverable flag.",
+    "expect": {
+      "any_contains": [
+        "code",
+        "message",
+        "recoverable",
+        "type",
+        "interface"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "save_load"
+    ]
+  },
+  {
+    "id": "save-mass-ui-copy-17",
+    "category": "save_ui_change",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write one short user-facing line for retry-safe save failure and one for success.",
+    "expect": {
+      "any_contains": [
+        "retry",
+        "safe",
+        "save",
+        "success",
+        "failure"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "save_load",
+      "ui"
+    ]
+  },
+  {
+    "id": "save-mass-econ-protect-18",
+    "category": "save_transfer",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Explain one guard ensuring economy fields are validated before commit.",
+    "expect": {
+      "any_contains": [
+        "economy",
+        "validate",
+        "fields",
+        "commit",
+        "save"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "save_load",
+      "economy"
+    ]
+  },
+  {
+    "id": "save-mass-combat-protect-19",
+    "category": "save_transfer",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write one note ensuring combat preview state remains compatible across versions.",
+    "expect": {
+      "any_contains": [
+        "combat",
+        "preview",
+        "compatible",
+        "version",
+        "state"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "save_load",
+      "combat"
+    ]
+  },
+  {
+    "id": "save-mass-domain-plan-20",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Draft a policy line combining save safety, AI plan persistence, and fallback routing.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "safety",
+        "plan",
+        "persist",
+        "fallback"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "save_load",
+      "planning"
+    ]
+  },
+  {
+    "id": "save-mass-domain-hud-21",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write one HUD/system banner that reports save integrity and current match status confidence.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "integrity",
+        "status",
+        "confidence",
+        "hud"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "save_load",
+      "hud"
+    ]
+  },
+  {
+    "id": "save-mass-domain-loading-22",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Create two loading-phase lines indicating state verification and migration progress.",
+    "expect": {
+      "any_contains": [
+        "loading",
+        "state",
+        "verification",
+        "migration",
+        "progress"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "save_load",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "save-mass-domain-econ-23",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "In 2 sentences describe a rollback-safe plan when saved economy data fails validation.",
+    "expect": {
+      "any_contains": [
+        "rollback",
+        "economy",
+        "validation",
+        "save",
+        "fallback"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "save_load",
+      "economy",
+      "planning"
+    ]
+  },
+  {
+    "id": "save-mass-domain-combat-24",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Provide one typed response strategy for stale combat state in multiplayer restore.",
+    "expect": {
+      "any_contains": [
+        "typed",
+        "response",
+        "combat",
+        "state",
+        "restore",
+        "stale"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load",
+      "combat"
+    ]
+  },
+  {
+    "id": "save-mass-domain-compact-25",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "One comma-separated line with schema, version, combat snapshot, and economy checksum.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "schema",
+        "version",
+        "combat",
+        "economy",
+        "checksum"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "save_load",
+      "combat",
+      "economy"
+    ]
+  },
+  {
+    "id": "save-mass-domain-ai-26",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Write one AI-note fallback when persisted intent payload fails schema gate.",
+    "expect": {
+      "any_contains": [
+        "AI",
+        "intent",
+        "payload",
+        "schema",
+        "fallback"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "save_load",
+      "planning"
+    ]
+  },
+  {
+    "id": "save-mass-domain-constraints-27",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Plain text only: summarize persistence safety across save, HUD visibility, and loading flow.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "persistence",
+        "HUD",
+        "loading",
+        "safety"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load",
+      "hud",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "save-mass-domain-resume-28",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Explain how to resume safely when one subsystem payload is ahead of schema version.",
+    "expect": {
+      "any_contains": [
+        "resume",
+        "schema",
+        "version",
+        "subsystem",
+        "safe"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load",
+      "planning"
+    ]
+  },
+  {
+    "id": "save-mass-domain-guardrail-29",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "Give one guardrail that prevents corrupted state from propagating into combat and economy.",
+    "expect": {
+      "any_contains": [
+        "guardrail",
+        "corrupted",
+        "state",
+        "combat",
+        "economy"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load",
+      "combat",
+      "economy"
+    ]
+  },
+  {
+    "id": "save-mass-domain-aci-30",
+    "category": "save_multidomain",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "prompt": "One sentence on why persistence checks should be weighted higher on multi-domain tasks.",
+    "expect": {
+      "any_contains": [
+        "persistence",
+        "weighted",
+        "multi-domain",
+        "task",
+        "checks"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "save_load",
+      "combat",
+      "economy"
+    ]
+  }
+]

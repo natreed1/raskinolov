@@ -1,0 +1,3 @@
+rescored 20 rollouts -> /Users/natreed/fallen-empire-lora/benchmarks/results/economistRL/scores/scored_batch_016.jsonl
+mean_reward=0.3642 min=0.2275 max=0.5457
+compiled_true=20/20 vitest_ran=20 goal_weighted=18

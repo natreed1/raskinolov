@@ -1,0 +1,593 @@
+[
+  {
+    "id": "swe-game-v1-001",
+    "source_family": "boundary_condition_regression",
+    "domain_primary": "hud_status",
+    "domains_secondary": [
+      "ui"
+    ],
+    "subskill": "status chip threshold ordering",
+    "complexity": "low_medium",
+    "risk": "medium",
+    "task_type": "ui_behavior",
+    "prompt": "Fix a HUD status strip bug where morale values exactly at threshold 40 and 70 render the wrong color band. Patch the threshold comparisons so boundary values map to warning and stable bands correctly, and update the status legend text to match the fixed logic.",
+    "likely_files": [
+      "scripts/human_eval_ui.py",
+      "scripts/landing_page_arena.py"
+    ],
+    "acceptance_signals": [
+      "Threshold 40 renders warning instead of critical.",
+      "Threshold 70 renders stable instead of warning.",
+      "Legend labels match runtime threshold behavior."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-002",
+    "source_family": "stale_ui_state_sync",
+    "domain_primary": "hud_status",
+    "domains_secondary": [
+      "save_load_api_guard"
+    ],
+    "subskill": "post-load HUD refresh trigger",
+    "complexity": "medium",
+    "risk": "high",
+    "task_type": "state_logic",
+    "prompt": "Patch a stale-state bug where loading a saved turn updates backend state but leaves HUD chips showing pre-load values until the next user action. Ensure load completion emits the same refresh path used by live turn updates.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/human_eval_ui.py"
+    ],
+    "acceptance_signals": [
+      "HUD chips update immediately after successful load.",
+      "No manual click is required to see loaded values.",
+      "Live turn update behavior remains unchanged."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-003",
+    "source_family": "formatting_regression",
+    "domain_primary": "hud_status",
+    "domains_secondary": [
+      "combat_risk"
+    ],
+    "subskill": "deterministic risk badge formatting",
+    "complexity": "low",
+    "risk": "low",
+    "task_type": "single_file",
+    "prompt": "Fix a formatting regression where combat risk badges occasionally show mixed precision like 0.3, 0.25, and 0.250 in the same panel. Standardize risk percentage display to one fixed format and update any helper used by badge renderers.",
+    "likely_files": [
+      "scripts/human_eval_ui.py"
+    ],
+    "acceptance_signals": [
+      "All risk badges use one consistent numeric format.",
+      "No mixed precision appears in the same HUD render.",
+      "Existing badge color logic is unchanged."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-004",
+    "source_family": "event_listener_duplication",
+    "domain_primary": "hud_status",
+    "domains_secondary": [
+      "multiplayer_runtime_deploy"
+    ],
+    "subskill": "duplicate ticker subscription guard",
+    "complexity": "medium",
+    "risk": "medium",
+    "task_type": "performance",
+    "prompt": "Patch a duplicate-subscription bug where reconnecting to a multiplayer session registers multiple HUD tick listeners and causes status values to update 2x or 3x per tick. Add idempotent listener registration and cleanup on reconnect.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "Reconnect path registers exactly one active ticker listener.",
+      "HUD values no longer jump multiple times per tick.",
+      "No listener leak is observed across repeated reconnects."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-005",
+    "source_family": "null_handling_contract",
+    "domain_primary": "economy_tooltip",
+    "domains_secondary": [
+      "hud_status"
+    ],
+    "subskill": "missing economy field fallback",
+    "complexity": "low_medium",
+    "risk": "medium",
+    "task_type": "safety_guard",
+    "prompt": "Fix a null-handling issue where economy tooltip generation throws if upkeep delta is missing from partial snapshots. Add a safe fallback path that still renders actionable text without crashing.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/human_eval_ui.py"
+    ],
+    "acceptance_signals": [
+      "Tooltip renders when upkeep delta is absent.",
+      "Fallback copy remains actionable and non-empty.",
+      "No exception is raised on partial economy snapshots."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-006",
+    "source_family": "sign_error_regression",
+    "domain_primary": "economy_tooltip",
+    "domains_secondary": [
+      "ai_planning_explanation"
+    ],
+    "subskill": "income delta sign correctness",
+    "complexity": "low_medium",
+    "risk": "high",
+    "task_type": "state_logic",
+    "prompt": "Patch a sign regression where negative net-gold deltas are rendered as gains in economy guidance text. Ensure all user-facing messaging and AI rationale helpers interpret signed deltas consistently.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/model_router.py"
+    ],
+    "acceptance_signals": [
+      "Negative deltas are described as losses, never gains.",
+      "AI rationale and tooltip text agree on delta direction.",
+      "Positive delta behavior is unchanged."
+    ],
+    "split": "holdout"
+  },
+  {
+    "id": "swe-game-v1-007",
+    "source_family": "cache_invalidation_bug",
+    "domain_primary": "economy_tooltip",
+    "domains_secondary": [
+      "multiplayer_runtime_deploy"
+    ],
+    "subskill": "turn-scoped tooltip cache keying",
+    "complexity": "medium",
+    "risk": "high",
+    "task_type": "performance",
+    "prompt": "Fix stale economy explanations caused by a cache key that ignores turn index. Tooltip text should refresh on each new turn while preserving cache reuse within a turn.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "Tooltip content changes when turn index changes.",
+      "Within the same turn, repeated requests use cache.",
+      "No stale prior-turn explanation appears after turn advance."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-008",
+    "source_family": "ordering_nondeterminism",
+    "domain_primary": "economy_tooltip",
+    "domains_secondary": [
+      "documentation"
+    ],
+    "subskill": "stable factor ranking output",
+    "complexity": "low",
+    "risk": "low",
+    "task_type": "single_file",
+    "prompt": "Patch nondeterministic factor ordering in economy breakdown text by enforcing stable sort tie-breaking. Keep the current ranking criteria but make output order deterministic for equal scores.",
+    "likely_files": [
+      "scripts/game_task_arena.py"
+    ],
+    "acceptance_signals": [
+      "Equal-score factors render in stable deterministic order.",
+      "Ranking criteria remain unchanged.",
+      "Repeated runs produce identical breakdown order."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-009",
+    "source_family": "off_by_one_windowing",
+    "domain_primary": "combat_risk",
+    "domains_secondary": [
+      "hud_status"
+    ],
+    "subskill": "loss-band boundary checks",
+    "complexity": "medium",
+    "risk": "high",
+    "task_type": "state_logic",
+    "prompt": "Fix an off-by-one error where expected-loss percentages at exactly 25 and 50 map to the wrong risk band. Align the risk band window logic with documented inclusive boundaries.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "25 and 50 boundaries map to documented bands.",
+      "HUD risk chip labels match combat report labels.",
+      "Band mapping is consistent across preview views."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-010",
+    "source_family": "formula_drift_regression",
+    "domain_primary": "combat_risk",
+    "domains_secondary": [
+      "economy_tooltip"
+    ],
+    "subskill": "shared modifier function reuse",
+    "complexity": "medium_high",
+    "risk": "high",
+    "task_type": "multi_file",
+    "prompt": "Patch a drift bug where siege-wall modifiers are computed differently between combat preview and post-turn summary. Refactor to one shared modifier function and route both call sites through it.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py",
+      "scripts/run_arena_acceptance_tests.py"
+    ],
+    "acceptance_signals": [
+      "Siege-wall modifier value is identical in both views.",
+      "One shared helper is used by both code paths.",
+      "No regression in non-siege modifier outputs."
+    ],
+    "split": "holdout"
+  },
+  {
+    "id": "swe-game-v1-011",
+    "source_family": "defensive_default_misuse",
+    "domain_primary": "combat_risk",
+    "domains_secondary": [
+      "save_load_api_guard"
+    ],
+    "subskill": "unknown terrain fallback policy",
+    "complexity": "low_medium",
+    "risk": "medium",
+    "task_type": "safety_guard",
+    "prompt": "Fix incorrect default handling where unknown terrain type silently receives best-case modifier. Switch to a neutral fallback plus explicit warning marker in combat risk output.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/human_eval_ui.py"
+    ],
+    "acceptance_signals": [
+      "Unknown terrain no longer receives best-case bonus.",
+      "Output includes an explicit unknown-terrain warning.",
+      "Known terrain behavior remains unchanged."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-012",
+    "source_family": "state_reset_bug",
+    "domain_primary": "combat_risk",
+    "domains_secondary": [
+      "multiplayer_runtime_deploy"
+    ],
+    "subskill": "battle-preview state isolation",
+    "complexity": "medium",
+    "risk": "medium",
+    "task_type": "state_logic",
+    "prompt": "Patch a state-reset bug where opening preview for battle B reuses cached attacker morale from battle A in the same session. Ensure preview state is isolated per encounter id.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "Encounter id change resets per-battle preview state.",
+      "Morale values are sourced from current battle only.",
+      "No stale cross-battle carryover appears."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-013",
+    "source_family": "api_schema_mismatch",
+    "domain_primary": "save_load_api_guard",
+    "domains_secondary": [
+      "multiplayer_runtime_deploy"
+    ],
+    "subskill": "strict load response typing",
+    "complexity": "medium",
+    "risk": "high",
+    "task_type": "api_schema",
+    "prompt": "Fix a load API contract mismatch where server returns `error_code` but client expects `code`, causing retry logic to fail open. Normalize parsing and enforce one typed error shape.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/ml_workflow.py"
+    ],
+    "acceptance_signals": [
+      "Retry logic uses normalized typed error code.",
+      "Unknown error shape is surfaced as non-retryable.",
+      "Load success path remains unchanged."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-014",
+    "source_family": "backward_compatibility_regression",
+    "domain_primary": "save_load_api_guard",
+    "domains_secondary": [
+      "ai_planning_explanation"
+    ],
+    "subskill": "legacy field migration shim",
+    "complexity": "medium_high",
+    "risk": "high",
+    "task_type": "multi_file",
+    "prompt": "Patch backward-compat regression where v1 saves with `plan_intent` fail validation after v2 rename to `intent_tag`. Add migration shim and keep strict validation after migration step.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/model_router.py",
+      "scripts/validate_multi_agent_orchestration.py"
+    ],
+    "acceptance_signals": [
+      "v1 save with `plan_intent` loads through migration path.",
+      "Post-migration payload passes current schema checks.",
+      "Invalid payloads still fail with clear typed error."
+    ],
+    "split": "holdout"
+  },
+  {
+    "id": "swe-game-v1-015",
+    "source_family": "corruption_guard_gap",
+    "domain_primary": "save_load_api_guard",
+    "domains_secondary": [
+      "combat_risk",
+      "economy_tooltip"
+    ],
+    "subskill": "partial-payload quarantine",
+    "complexity": "high",
+    "risk": "high",
+    "task_type": "safety_guard",
+    "prompt": "Patch a guard gap where partially corrupted save payloads apply economy state before combat state validation fails, leaving mixed world state. Enforce atomic apply with quarantine on any failed segment.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "Any segment validation failure aborts full apply.",
+      "No partial world-state mutations are persisted.",
+      "Failure response includes quarantine reason."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-016",
+    "source_family": "error_path_unhandled_exception",
+    "domain_primary": "save_load_api_guard",
+    "domains_secondary": [
+      "hud_status"
+    ],
+    "subskill": "safe error banner fallback",
+    "complexity": "low_medium",
+    "risk": "medium",
+    "task_type": "ui_behavior",
+    "prompt": "Fix an unhandled exception path where save-load error banners assume a non-empty errors array and crash on malformed responses. Add resilient fallback banner text and preserve diagnostics logging.",
+    "likely_files": [
+      "scripts/human_eval_ui.py",
+      "scripts/game_task_arena.py"
+    ],
+    "acceptance_signals": [
+      "Malformed error responses still produce a banner.",
+      "UI does not crash when errors array is empty.",
+      "Diagnostic logging still captures raw payload."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-017",
+    "source_family": "planner_constraint_violation",
+    "domain_primary": "ai_planning_explanation",
+    "domains_secondary": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "subskill": "feasibility check before intent emission",
+    "complexity": "medium_high",
+    "risk": "high",
+    "task_type": "state_logic",
+    "prompt": "Patch AI rationale generation so it does not emit expansion intent when supply is below configured minimum and combat risk is high. Add feasibility gate before rationale template selection.",
+    "likely_files": [
+      "scripts/model_router.py",
+      "scripts/router/policy.py",
+      "scripts/game_task_arena.py"
+    ],
+    "acceptance_signals": [
+      "Low-supply high-risk state never emits expansion intent.",
+      "Rationale explains chosen fallback intent.",
+      "Feasible states keep prior intent behavior."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-018",
+    "source_family": "prompt_template_variable_mismatch",
+    "domain_primary": "ai_planning_explanation",
+    "domains_secondary": [
+      "routing"
+    ],
+    "subskill": "template key contract validation",
+    "complexity": "medium",
+    "risk": "medium",
+    "task_type": "api_schema",
+    "prompt": "Fix template rendering failures where rationale prompt expects `enemy_strength` but planner payload sends `enemy_power`. Add adapter-layer normalization and fail-fast checks for missing required keys.",
+    "likely_files": [
+      "scripts/model_router.py",
+      "scripts/router/multi_agent.py",
+      "scripts/router/policy.py"
+    ],
+    "acceptance_signals": [
+      "Prompt render succeeds with normalized planner payload keys.",
+      "Missing required keys raise clear validation errors.",
+      "No silent blank-field rationale output."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-019",
+    "source_family": "regression_test_gap",
+    "domain_primary": "ai_planning_explanation",
+    "domains_secondary": [
+      "documentation"
+    ],
+    "subskill": "counterexample-based planner test",
+    "complexity": "medium",
+    "risk": "medium",
+    "task_type": "multi_file",
+    "prompt": "Add a targeted regression test for an AI rationale bug where fallback intent text omits the actual triggering constraint. Include fixture input and assertion on explicit constraint mention in output text.",
+    "likely_files": [
+      "scripts/validate_multi_agent_orchestration.py",
+      "tests",
+      "docs/EVALUATION_SYSTEM_V2.md"
+    ],
+    "acceptance_signals": [
+      "New regression test fails before patch and passes after.",
+      "Assertion checks explicit constraint mention in rationale.",
+      "Test fixture is deterministic and isolated."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-020",
+    "source_family": "race_condition_reconnect",
+    "domain_primary": "multiplayer_runtime_deploy",
+    "domains_secondary": [
+      "save_load_api_guard"
+    ],
+    "subskill": "idempotent reconnect handshake",
+    "complexity": "high",
+    "risk": "high",
+    "task_type": "state_logic",
+    "prompt": "Patch a reconnect race where parallel restore and heartbeat handlers both transition match state to active, double-running startup hooks. Add one authoritative state transition guard with compare-and-set semantics.",
+    "likely_files": [
+      "scripts/run_game_benchmark.py",
+      "scripts/game_task_arena.py"
+    ],
+    "acceptance_signals": [
+      "Startup hooks run exactly once per reconnect sequence.",
+      "Concurrent restore/heartbeat cannot double-activate match state.",
+      "Reconnect still succeeds under normal latency."
+    ],
+    "split": "eval"
+  },
+  {
+    "id": "swe-game-v1-021",
+    "source_family": "timeout_configuration_regression",
+    "domain_primary": "multiplayer_runtime_deploy",
+    "domains_secondary": [
+      "routing"
+    ],
+    "subskill": "environment-aware timeout defaults",
+    "complexity": "medium",
+    "risk": "medium",
+    "task_type": "multi_file",
+    "prompt": "Fix deployment regression where benchmark runtime timeout defaults intended for local dev are used in cloud runs, causing premature disconnects. Implement environment-scoped timeout config with explicit override precedence.",
+    "likely_files": [
+      "scripts/ml_workflow.py",
+      "scripts/run_game_benchmark.py",
+      "docs/PROJECT_STATE.md"
+    ],
+    "acceptance_signals": [
+      "Cloud runs pick cloud timeout defaults by environment.",
+      "Explicit CLI/env overrides take precedence.",
+      "Local dev behavior remains unchanged."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-022",
+    "source_family": "resource_leak_background_worker",
+    "domain_primary": "multiplayer_runtime_deploy",
+    "domains_secondary": [
+      "performance"
+    ],
+    "subskill": "worker lifecycle cleanup",
+    "complexity": "medium_high",
+    "risk": "high",
+    "task_type": "performance",
+    "prompt": "Patch a background worker leak where match-analysis workers continue running after session teardown in arena benchmark loops. Ensure worker shutdown is awaited and teardown is idempotent.",
+    "likely_files": [
+      "scripts/run_game_benchmark.py",
+      "scripts/game_task_arena.py",
+      "scripts/run_arena_acceptance_tests.py"
+    ],
+    "acceptance_signals": [
+      "No orphan analysis workers remain after teardown.",
+      "Teardown can run twice safely without exceptions.",
+      "Long benchmark loops show stable worker count."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-023",
+    "source_family": "cross_domain_invariant_break",
+    "domain_primary": "multidomain",
+    "domains_secondary": [
+      "economy_tooltip",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "subskill": "economy-to-combat consistency invariant",
+    "complexity": "high",
+    "risk": "high",
+    "task_type": "multi_file",
+    "prompt": "Patch cross-domain inconsistency where economy shortage reduces combat readiness numerically but AI rationale still recommends high-commitment assault. Enforce invariant checks so rationale cannot contradict current readiness bands.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/model_router.py",
+      "scripts/router/policy.py"
+    ],
+    "acceptance_signals": [
+      "AI rationale never recommends assault below readiness floor.",
+      "Combat readiness bands and rationale intent are consistent.",
+      "Invariant violation raises explicit diagnostic event."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-024",
+    "source_family": "serialization_roundtrip_regression",
+    "domain_primary": "multidomain",
+    "domains_secondary": [
+      "hud_status",
+      "save_load_api_guard",
+      "combat_risk"
+    ],
+    "subskill": "round-trip fidelity for derived fields",
+    "complexity": "medium_high",
+    "risk": "high",
+    "task_type": "api_schema",
+    "prompt": "Fix round-trip regression where saving and reloading strips derived HUD combat indicators, causing mismatched UI after restore. Persist source fields needed to deterministically recompute derived indicators on load.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/human_eval_ui.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "HUD combat indicators after reload match pre-save state.",
+      "Derived indicators are recomputed from persisted source fields.",
+      "No direct persistence of volatile UI-only cache fields."
+    ],
+    "split": "train"
+  },
+  {
+    "id": "swe-game-v1-025",
+    "source_family": "partial_failure_handling",
+    "domain_primary": "multidomain",
+    "domains_secondary": [
+      "multiplayer_runtime_deploy",
+      "save_load_api_guard",
+      "hud_status"
+    ],
+    "subskill": "graceful degrade on subsystem failure",
+    "complexity": "high",
+    "risk": "high",
+    "task_type": "safety_guard",
+    "prompt": "Patch partial-failure handling so if live sync fails during load reconciliation, the session enters read-only safe mode with explicit HUD warning instead of proceeding with uncertain state. Add one recovery path to retry reconciliation before full exit.",
+    "likely_files": [
+      "scripts/game_task_arena.py",
+      "scripts/human_eval_ui.py",
+      "scripts/run_game_benchmark.py"
+    ],
+    "acceptance_signals": [
+      "Live-sync failure triggers read-only safe mode.",
+      "HUD shows explicit degraded-state warning.",
+      "One controlled retry path exists before session abort."
+    ],
+    "split": "train"
+  }
+]

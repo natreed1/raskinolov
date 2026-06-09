@@ -9,7 +9,7 @@ import shlex
 from pathlib import Path
 
 from launch_lambda_parallel_ablation import (
-    DEFAULT_LAMBDA_API_BASE,
+    _lambda_cloud_base_url_from_env,
     _bootstrap_worker,
     _launch_instances,
     _remote_lifecycle_prelude,
@@ -73,7 +73,13 @@ def _start_council_eval(
     local_model: str,
     remote_smoke: bool,
     auto_terminate: bool,
-    max_runtime_hours: float,
+    watchdog_enabled: bool,
+    watchdog_idle_minutes: float,
+    watchdog_check_minutes: float,
+    artifact_export_command: str,
+    artifact_upload_every_steps: int,
+    artifact_upload_every_minutes: float,
+    require_artifact_export_before_terminate: bool,
 ) -> None:
     smoke_cmd = ""
     if remote_smoke:
@@ -95,13 +101,25 @@ def _start_council_eval(
     )
     eval_cmd = smoke_cmd + full_cmd
     remote_script = f"/tmp/run_council_eval_{label}.sh"
+    log_path = f"/home/ubuntu/cloud-eval-logs/fe-council-eval-{label}.log"
+    gpu_monitor_log_path = f"/home/ubuntu/cloud-eval-logs/gpu-smi-council-{label}.csv"
     prelude = "\n".join(
         _remote_lifecycle_prelude(
             api_base=api_base,
             api_key=api_key,
             instance_id=instance_id,
             auto_terminate=auto_terminate,
-            max_runtime_hours=max_runtime_hours,
+            watchdog_enabled=watchdog_enabled,
+            watchdog_idle_minutes=watchdog_idle_minutes,
+            watchdog_check_minutes=watchdog_check_minutes,
+            watchdog_log_path=log_path,
+            gpu_monitor_log_path=gpu_monitor_log_path,
+            artifact_export_command=artifact_export_command,
+            artifact_upload_every_steps=artifact_upload_every_steps,
+            artifact_upload_every_minutes=artifact_upload_every_minutes,
+            require_artifact_export_before_terminate=require_artifact_export_before_terminate,
+            artifact_staging_dir="${HOME}/cloud-eval-artifacts",
+            artifact_staging_is_durable=False,
         )
     )
     _ssh(
@@ -121,11 +139,11 @@ def _start_council_eval(
         + "export ROUTER_COUNCIL_DEBATE_MAX_ROUNDS="
         + str(int(debate_max_rounds))
         + "\n"
-        + f"timeout --foreground \"${{FE_MAX_RUNTIME_SECONDS}}s\" bash -lc {shlex.quote(eval_cmd)}"
+        + f"bash -lc {shlex.quote(eval_cmd)}"
         + "\nEOF\n"
         + f"chmod 700 {remote_script}; "
         + f"tmux kill-session -t fe-council-eval-{label} >/dev/null 2>&1 || true; "
-        + f"tmux new-session -d -s fe-council-eval-{label} '{remote_script} > ~/cloud-eval-logs/fe-council-eval-{label}.log 2>&1'",
+        + f"tmux new-session -d -s fe-council-eval-{label} '{remote_script} > {log_path} 2>&1'",
     )
 
 
@@ -134,7 +152,11 @@ def main() -> int:
     parser.add_argument("--ml-repo", type=Path, default=ROOT)
     parser.add_argument("--ssh-key-path", type=Path, default=Path.home() / ".ssh" / "lambda_cloud_cursor")
     parser.add_argument("--ssh-key-name", default="lambda-cloud-cursor")
-    parser.add_argument("--api-base", default=os.environ.get("LAMBDA_API_BASE", DEFAULT_LAMBDA_API_BASE))
+    parser.add_argument(
+        "--api-base",
+        default=_lambda_cloud_base_url_from_env(),
+        help="Lambda Cloud API base URL. Defaults to LAMBDA_CLOUD_BASE_URL, then legacy LAMBDA_API_BASE.",
+    )
     parser.add_argument("--api-key", default=os.environ.get("LAMBDA_API_KEY", ""))
     parser.add_argument("--region", default="us-east-1")
     parser.add_argument("--instance-type", default="gpu_1x_a10")
@@ -143,7 +165,15 @@ def main() -> int:
     parser.add_argument("--launch-instance", action="store_true")
     parser.add_argument("--auto-terminate", dest="auto_terminate", action="store_true", default=None, help="Terminate the worker when the remote eval script exits.")
     parser.add_argument("--no-auto-terminate", dest="auto_terminate", action="store_false", help="Leave the worker running after remote eval script exit.")
-    parser.add_argument("--max-runtime-hours", type=float, default=12.0, help="Remote timeout before cleanup/termination runs.")
+    parser.add_argument("--watchdog", dest="watchdog_enabled", action="store_true", default=None, help="Terminate the worker when its run log is idle for --watchdog-idle-minutes.")
+    parser.add_argument("--no-watchdog", dest="watchdog_enabled", action="store_false", help="Disable idle-log watchdog termination.")
+    parser.add_argument("--watchdog-idle-minutes", type=float, default=60.0, help="Idle log minutes before watchdog termination.")
+    parser.add_argument("--watchdog-check-minutes", type=float, default=5.0, help="Minutes between watchdog log-idle checks.")
+    parser.add_argument("--artifact-export-command", default=os.environ.get("FE_ARTIFACT_EXPORT_COMMAND", ""), help="Shell command that durably exports FE_ARTIFACT_TARBALL.")
+    parser.add_argument("--artifact-upload-every-steps", type=int, default=5, help="Run artifact checkpoint command every N completed rows; 0 disables step checkpoints.")
+    parser.add_argument("--artifact-upload-every-minutes", type=float, default=10.0, help="Run artifact checkpoint command after N minutes since last checkpoint; 0 disables time checkpoints.")
+    parser.add_argument("--require-artifact-export-before-terminate", dest="require_artifact_export_before_terminate", action="store_true", default=True, help="Skip auto-termination if final artifact export fails.")
+    parser.add_argument("--allow-terminate-without-artifact-export", dest="require_artifact_export_before_terminate", action="store_false", help="Terminate even if final artifact export is missing or fails.")
     parser.add_argument("--skip-sync", action="store_true")
     parser.add_argument("--label", default="v1")
     parser.add_argument("--debate-max-rounds", type=int, default=2)
@@ -166,6 +196,7 @@ def main() -> int:
             ssh_key_name=args.ssh_key_name,
             quantity=1,
             name_prefix=args.name_prefix,
+            file_system_names=[],
         )
         launched_instance = True
     else:
@@ -173,6 +204,17 @@ def main() -> int:
     auto_terminate = args.auto_terminate
     if auto_terminate is None:
         auto_terminate = launched_instance
+    watchdog_enabled = args.watchdog_enabled
+    if watchdog_enabled is None:
+        watchdog_enabled = auto_terminate
+    if args.watchdog_idle_minutes <= 0:
+        raise SystemExit("--watchdog-idle-minutes must be > 0.")
+    if args.watchdog_check_minutes <= 0:
+        raise SystemExit("--watchdog-check-minutes must be > 0.")
+    if args.artifact_upload_every_steps < 0:
+        raise SystemExit("--artifact-upload-every-steps must be >= 0.")
+    if args.artifact_upload_every_minutes < 0:
+        raise SystemExit("--artifact-upload-every-minutes must be >= 0.")
 
     id_to_ip = _wait_for_instance_ips(args.api_base, args.api_key, instance_ids)
     host = id_to_ip[instance_ids[0]]
@@ -191,11 +233,23 @@ def main() -> int:
         local_model=args.local_model,
         remote_smoke=not bool(args.no_remote_smoke),
         auto_terminate=auto_terminate,
-        max_runtime_hours=args.max_runtime_hours,
+        watchdog_enabled=watchdog_enabled,
+        watchdog_idle_minutes=args.watchdog_idle_minutes,
+        watchdog_check_minutes=args.watchdog_check_minutes,
+        artifact_export_command=args.artifact_export_command,
+        artifact_upload_every_steps=args.artifact_upload_every_steps,
+        artifact_upload_every_minutes=args.artifact_upload_every_minutes,
+        require_artifact_export_before_terminate=args.require_artifact_export_before_terminate,
     )
     print("council_eval_started")
     print(f"auto_terminate={int(bool(auto_terminate))}")
-    print(f"max_runtime_hours={args.max_runtime_hours}")
+    print(f"watchdog_enabled={int(bool(watchdog_enabled))}")
+    print(f"watchdog_idle_minutes={args.watchdog_idle_minutes}")
+    print(f"watchdog_check_minutes={args.watchdog_check_minutes}")
+    print(f"artifact_export_configured={int(bool(args.artifact_export_command.strip()))}")
+    print(f"artifact_upload_every_steps={args.artifact_upload_every_steps}")
+    print(f"artifact_upload_every_minutes={args.artifact_upload_every_minutes}")
+    print(f"require_artifact_export_before_terminate={int(bool(args.require_artifact_export_before_terminate))}")
     print(f"instance_id={instance_ids[0]}")
     print(f"host={host}")
     print(f"session=fe-council-eval-{args.label}")

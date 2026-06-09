@@ -1,0 +1,33 @@
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[cycle 016] base_model=mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+[cycle 016] registry_adapter=checkpoints/fe-lora-arena-apply-sft exists=True
+[cycle 016] effective_adapter=checkpoints/fe-lora-arena-apply-sft load_reason=init_adapter_path exists=True
+[cycle 016] candidate_adapter=/Users/natreed/fallen-empire-lora/checkpoints/adapters/economistRL/rl_pass_016
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 214481.45it/s]
+[rollout] 1/20 economistRL-food-steady-state-01
+[rollout] 2/20 economistRL-market-elasticity-02
+[rollout] 3/20 economistRL-worker-wage-productivity-03
+[rollout] 4/20 economistRL-spoilage-food-decay-04
+[rollout] 5/20 economistRL-army-upkeep-scaling-05
+[rollout] 6/20 economistRL-production-cache-invalid-06
+[rollout] 7/20 economistRL-food-population-feedback-002
+[rollout] 8/20 economistRL-food-population-feedback-003
+[rollout] 9/20 economistRL-food-population-feedback-004
+[rollout] 10/20 economistRL-food-population-feedback-005
+[rollout] 11/20 economistRL-food-population-feedback-006
+[rollout] 12/20 economistRL-food-population-feedback-007
+[rollout] 13/20 economistRL-food-population-feedback-008
+[rollout] 14/20 economistRL-food-population-feedback-009
+[rollout] 15/20 economistRL-food-population-feedback-010
+[rollout] 16/20 economistRL-food-population-feedback-011
+[rollout] 17/20 economistRL-food-population-feedback-012
+[rollout] 18/20 economistRL-food-population-feedback-013
+[rollout] 19/20 economistRL-food-population-feedback-014
+[rollout] 20/20 economistRL-food-population-feedback-015
+{
+  "cycles": 1,
+  "manifests": [
+    "/Users/natreed/fallen-empire-lora/benchmarks/results/economistRL/manifests/cycle_016_manifest.json"
+  ]
+}

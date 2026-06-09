@@ -180,7 +180,7 @@ def _ensure_remote_python_deps(ssh_key_path: Path, host: str) -> None:
         "cd ~/fallen-empire-lora; "
         "source .venv-linux-port/bin/activate; "
         "pip install -U pip; "
-        "pip install 'transformers==4.57.6' 'peft>=0.13.0,<0.20' safetensors huggingface_hub accelerate sentencepiece",
+        "pip install 'transformers==4.57.6' 'peft>=0.13.0,<0.20' bitsandbytes safetensors huggingface_hub accelerate sentencepiece",
     )
 
 

@@ -1,0 +1,41 @@
+{
+  "schema_version": "generalist_eval_manifest_v1",
+  "name": "generalist_eval_swe_verified_v1",
+  "description": "Generalist benchmark assembled from SWE-bench Verified mapped tasks.",
+  "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+  "supplemental_source_files": [
+    "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+    "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+    "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json"
+  ],
+  "task_ids": [
+    "swev-gm-001",
+    "swev-gm-002",
+    "swev-gm-003",
+    "swev-gm-004",
+    "swev-gm-005",
+    "swev-gm-006",
+    "swev-gm-007",
+    "swev-gm-008",
+    "swev-gm-009",
+    "swev-gm-010",
+    "swev-gm-011",
+    "swev-gm-012",
+    "swev-gm-013",
+    "swev-gm-014",
+    "swev-gm-015",
+    "swev-gm-016",
+    "swev-gm-017",
+    "swev-gm-018",
+    "swev-gm-019",
+    "swev-gm-020",
+    "swev-gm-021",
+    "swev-gm-022",
+    "swev-gm-023",
+    "swev-gm-024",
+    "swev-gm-025"
+  ],
+  "status": "outdated",
+  "superseded_by": "benchmarks/task_bank/compiled/final_mass_testing_system_v1.json",
+  "lifecycle_note": "Use final_mass_testing_system_v1 for broad testing."
+}

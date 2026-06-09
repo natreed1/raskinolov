@@ -976,12 +976,12 @@ def main() -> None:
 
     p_economist_rl_ds = sub.add_parser(
         "economist-rl-dataset",
-        help="Build economistRL seed SFT dataset for economy RL experiments.",
+        help="Build economistRL seed bootstrap dataset for economy RL experiments.",
     )
     p_economist_rl_ds.add_argument(
         "--tasks",
         type=Path,
-        default=REPO / "benchmarks" / "economistRL_tasks_v1.json",
+        default=REPO / "benchmarks" / "economistRL_tasks_v2_coding.json",
     )
     p_economist_rl_ds.add_argument(
         "--out-dir",
@@ -1718,19 +1718,13 @@ def main() -> None:
         benchmark_adapter_note = "—"
 
     elif args.command == "economist-rl-dataset":
-        argv = [
-            sys.executable,
-            str(REPO / "scripts" / "adapters" / "build_economist_rl_dataset.py"),
-            "--tasks",
-            str(args.tasks.expanduser().resolve()),
-            "--out-dir",
-            str(args.out_dir.expanduser().resolve()),
-            "--seed",
-            str(args.seed),
-            "--repeats",
-            str(args.repeats),
-        ]
-        final_code = _cmd_tool(run_dir, steps, "economist_rl_dataset", argv)
+        print(
+            "economist-rl-dataset is deprecated: stub reference_answer SFT was removed.\n"
+            "Use checkpoints/fe-lora-arena-apply-sft as economistRL init "
+            "(see training/adapter_registry_v1.json).",
+            file=sys.stderr,
+        )
+        final_code = 2
         adapter_note = "—"
         benchmark_adapter_note = "—"
 

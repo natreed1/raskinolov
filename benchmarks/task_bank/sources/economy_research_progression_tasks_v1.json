@@ -1,0 +1,145 @@
+{
+  "schema_version": "task_source_registry_v1",
+  "source_id": "economy_research_progression_tasks_v1",
+  "source_type": "curated_economy_research_progression",
+  "origin": {
+    "derived_from": [
+      "benchmarks/patch_task_bank_v1.json",
+      "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json"
+    ],
+    "lineage_note": "Curated economy/research/progression product-behavior tasks; excludes eval/test-harness and training-pipeline infrastructure tasks."
+  },
+  "domain_focus": [
+    "economy",
+    "ai_strategy_and_planning"
+  ],
+  "task_count": 24,
+  "task_refs": [
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-research-system-schema-11"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-builder-automation-rebalance-15"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-research-hud-surface-18"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-university-population-loop-19"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-006"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-007"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-022"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-023"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-farm-production-workforce-leveling-29"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-starvation-diagnosis-population-stability-30"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-worker-elasticity-nonlinear-recovery-31"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-supply-network-chart-drawdown-35"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ship-production-cost-material-balance-41"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-population-food-steady-state-dynamics-45"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-fish-yield-double-vs-grain-46"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-worker-wage-productivity-balance-47"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-pop-birth-food-buffer-taper-73"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-market-price-elasticity-stock-pressure-74"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-warehouse-spoilage-food-decay-balance-75"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-army-upkeep-progressive-size-scaling-76"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-quarry-mine-output-energy-upkeep-77"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-fisher-farm-seasonal-yield-weighting-78"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-wage-inflation-productivity-feedback-79"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-city-food-buffer-policy-thresholds-80"
+    }
+  ],
+  "subskill_tags": {
+    "patch-research-system-schema-11": "research_schema_migration_compatibility",
+    "patch-builder-automation-rebalance-15": "resource_projection_cache_invalidation",
+    "patch-research-hud-surface-18": "resource_projection_cache_invalidation",
+    "patch-university-population-loop-19": "progression_tick_ordering",
+    "swev-gm-006": "signed_delta_semantics",
+    "swev-gm-007": "resource_projection_cache_invalidation",
+    "swev-gm-022": "signed_delta_semantics",
+    "swev-gm-023": "research_schema_migration_compatibility",
+    "patch-farm-production-workforce-leveling-29": "farm_level_scaling_and_workforce_accounting",
+    "patch-starvation-diagnosis-population-stability-30": "starvation_recovery_rate_tuning",
+    "patch-worker-elasticity-nonlinear-recovery-31": "tiered_worker_elasticity_nonlinear_recovery",
+    "patch-supply-network-chart-drawdown-35": "supply_network_production_drawdown_visualization",
+    "patch-ship-production-cost-material-balance-41": "ship_build_cost_material_balance_enforcement",
+    "patch-population-food-steady-state-dynamics-45": "food_supported_population_steady_state_dynamics",
+    "patch-fish-yield-double-vs-grain-46": "food_value_weighting_fish_vs_grain",
+    "patch-worker-wage-productivity-balance-47": "worker_wage_productivity_tradeoff_balancing",
+    "patch-pop-birth-food-buffer-taper-73": "population_birth_food_buffer_taper",
+    "patch-market-price-elasticity-stock-pressure-74": "market_price_elasticity_stock_pressure",
+    "patch-warehouse-spoilage-food-decay-balance-75": "warehouse_spoilage_food_decay_balance",
+    "patch-army-upkeep-progressive-size-scaling-76": "army_upkeep_progressive_size_scaling",
+    "patch-quarry-mine-output-energy-upkeep-77": "mine_quarry_output_upkeep_budget_coupling",
+    "patch-fisher-farm-seasonal-yield-weighting-78": "seasonal_fish_farm_yield_weighting",
+    "patch-wage-inflation-productivity-feedback-79": "wage_inflation_productivity_feedback_control",
+    "patch-city-food-buffer-policy-thresholds-80": "city_food_buffer_policy_thresholds"
+  },
+  "status": {
+    "curation_state": "active_seed",
+    "use_for_metrics": true
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "router_agent_corpus_v1",
+  "description": "Router V2 retrieval corpus for adapter taxonomy, prompt cases, and routing policy troubleshooting.",
+  "sources": [
+    {
+      "path": "docs/ROUTER_ARCHITECTURE.md",
+      "kind": "router_architecture",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/ROUTER_TASK_TAXONOMY.md",
+      "kind": "router_taxonomy",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/ROUTER_PROMPT_CASEBOOK.md",
+      "kind": "router_cases",
+      "weight": 2.6
+    },
+    {
+      "path": "docs/ROUTING_DATASET_CONTRACT.md",
+      "kind": "routing_dataset_contract",
+      "weight": 2.2
+    },
+    {
+      "path": "docs/ROUTER_CLASSIFIER_ARTIFACT_CONTRACT.md",
+      "kind": "routing_artifact_contract",
+      "weight": 2.1
+    },
+    {
+      "path": "data/routing/router_cases_v1.jsonl",
+      "kind": "router_curated_labels",
+      "weight": 2.0
+    },
+    {
+      "path": "benchmarks/task_routing_tasks.json",
+      "kind": "router_benchmark_cases",
+      "weight": 1.8
+    },
+    {
+      "path": "scripts/model_router.py",
+      "kind": "router_runtime_policy",
+      "weight": 1.7
+    }
+  ]
+}
+

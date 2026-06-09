@@ -1,0 +1,2715 @@
+{
+  "schema_version": "current_rag_dataset",
+  "generated_utc": "2026-05-26T01:51:38.391269+00:00",
+  "base_schema_version": "current_rag_base_dataset",
+  "entries": [
+    {
+      "id": "failure_profile_domain_ai_strategy_and_planning",
+      "tags": [
+        "ai_strategy_and_planning",
+        "failure_profile",
+        "domain_failure_profile"
+      ],
+      "text": "For domain 'ai_strategy_and_planning': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Domain ai_strategy_and_planning failure retrieval profile. Focus signatures: ai_battle_flank_reinforcement_policy, ai_city_defense_ring_coverage_policy, ai_commander_field_assignment_thresholds, ai_composition_tactics_mix_scoring. Primary symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract).",
+      "retrieval_aliases": [
+        "ai strategy",
+        "ai strategy and planning",
+        "ai-strategy-and-planning",
+        "ai_strategy_and_planning",
+        "and planning"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "ai_battle_flank_reinforcement_policy",
+        "ai_city_defense_ring_coverage_policy",
+        "ai_commander_field_assignment_thresholds",
+        "ai_composition_tactics_mix_scoring",
+        "ai_construction_site_build_planning",
+        "ai_food_surplus_recruit_gating",
+        "ai_incorporation_move_reservation_guard",
+        "ai_invasion_defense_repositioning"
+      ],
+      "retrieval_examples": [
+        "AI plan execution diverged between training and runtime paths. Introduce a shared plan-application module and wire callers to it without changing visible strategy behavior.",
+        "Introduce a research/technology + council subsystem with strong typed state contracts and HUD visibility, without destabilizing existing game loop behavior.",
+        "Patch AI move-target selection so unit-state eligibility (including starving/moving units) is handled according to strategy policy and food constraints. Keep decisiveness while preventing invalid target assignment under disallowed states."
+      ]
+    },
+    {
+      "id": "failure_profile_domain_army_operations",
+      "tags": [
+        "army_operations",
+        "failure_profile",
+        "domain_failure_profile"
+      ],
+      "text": "For domain 'army_operations': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Domain army_operations failure retrieval profile. Focus signatures: archer_line_priority_targeting_policy, archer_max_range_auto_positioning_logic, army_stack_split_adjacent_flow, combat_modifier_consistency. Primary symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract).",
+      "retrieval_aliases": [
+        "army operations",
+        "army-operations",
+        "army_operations"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "archer_line_priority_targeting_policy",
+        "archer_max_range_auto_positioning_logic",
+        "army_stack_split_adjacent_flow",
+        "combat_modifier_consistency",
+        "deterministic_preview_state_isolation",
+        "formation_fallback_placement_validity",
+        "formation_path_consistency",
+        "garrison_deploy_flag_order_parity"
+      ],
+      "retrieval_examples": [
+        "Patch movement gating so supply/status constraints, radius policy, and horizon alignment are applied consistently. Units that should be blocked must not move, allowed units should still move within intended radius, and status transitions must remain deterministic across ticks.",
+        "Patch combat behavior so archer units automatically maintain their maximum effective attack range against enemy units during engagements. Ensure positioning logic prefers legal max-range standoff positions, updates when fronts shift, and does not break melee pathing or engagement resolution determinism.",
+        "Patch movement processing so out-of-supply armies cannot continue advancing until supply status recovers."
+      ]
+    },
+    {
+      "id": "failure_profile_domain_economy",
+      "tags": [
+        "economy",
+        "failure_profile",
+        "domain_failure_profile"
+      ],
+      "text": "For domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Domain economy failure retrieval profile. Focus signatures: army_upkeep_progressive_size_scaling, city_food_buffer_policy_thresholds, farm_level_scaling_and_workforce_accounting, food_supported_population_steady_state_dynamics. Primary symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract).",
+      "retrieval_aliases": [
+        "economy"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "army_upkeep_progressive_size_scaling",
+        "city_food_buffer_policy_thresholds",
+        "farm_level_scaling_and_workforce_accounting",
+        "food_supported_population_steady_state_dynamics",
+        "food_value_weighting_fish_vs_grain",
+        "market_price_elasticity_stock_pressure",
+        "mine_quarry_output_upkeep_budget_coupling",
+        "population_birth_food_buffer_taper"
+      ],
+      "retrieval_examples": [
+        "Builder automation decisions are stale after recent building/progression updates. Patch automation policy to align with new priorities and avoid invalid early-game construction choices.",
+        "Integrate university-driven population/training effects into the simulation tick and HUD surfaces while preserving deterministic economy behavior.",
+        "Regression patch task: baseline build is missing farm progression behavior. Add farm leveling (L1-L3) where each level increases food output, updates required worker slots, and keeps economy tick accounting deterministic. Wire upgrade flow so the player can level farms through city actions, then surface per-level production/worker requirements in HUD and panel copy without breaking existing economy/research UI signals."
+      ]
+    },
+    {
+      "id": "failure_profile_domain_hud_status",
+      "tags": [
+        "hud_status",
+        "failure_profile",
+        "domain_failure_profile"
+      ],
+      "text": "For domain 'hud_status': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Domain hud_status failure retrieval profile. Focus signatures: cross_platform_stability, hud_economy_signal_integration, hud_theme_royal_restyling, input_controller_event_ordering. Primary symptoms: model returns non-applyable output shape (missing file path/diff contract), verification/typecheck failures from unsafe symbol or contract edits.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud-status",
+        "hud_status"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)",
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "cross_platform_stability",
+        "hud_economy_signal_integration",
+        "hud_theme_royal_restyling",
+        "input_controller_event_ordering",
+        "isometric_sprite_integration_contract",
+        "mine_production_timeseries_visualization",
+        "resource_projection_cache_invalidation",
+        "scout_tower_vision_signal_integration"
+      ],
+      "retrieval_examples": [
+        "Apply a minimal stability fix for macOS Next-dev/runtime issues while preserving concurrent gameplay-system enhancements and type integrity.",
+        "Patch HUD summary rendering so caller-specified number formats are honored in output chips instead of silently using defaults. Keep default rendering behavior when no explicit format is passed.",
+        "Fix inconsistent quote-escaping in status text normalization so repeated encode/decode cycles preserve exactly one escaped representation."
+      ]
+    },
+    {
+      "id": "failure_profile_domain_multidomain",
+      "tags": [
+        "multidomain",
+        "failure_profile",
+        "domain_failure_profile"
+      ],
+      "text": "For domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Domain multidomain failure retrieval profile. Focus signatures: academy_general_production_assignment_pipeline, ai_wall_ring_supply_expansion_policy, battalion_training_health_gate_progression, battalion_training_tick_ordering_integrity. Primary symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract).",
+      "retrieval_aliases": [
+        "multidomain"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "academy_general_production_assignment_pipeline",
+        "ai_wall_ring_supply_expansion_policy",
+        "battalion_training_health_gate_progression",
+        "battalion_training_tick_ordering_integrity",
+        "builder_university_task_queue_progression",
+        "commander_trait_economy_morale_coupling",
+        "contested_zone_capture_reward_integration",
+        "contested_zone_majority_payout_gating"
+      ],
+      "retrieval_examples": [
+        "Patch the game to introduce one new recruitable unit type. Define balanced combat stats (e.g., hp/attack/defense/speed behavior) and integrate the unit into recruit/build flows. Require explicit economic material costs for recruitment/production, and ensure those materials are validated and deducted correctly. Surface the unit stats and cost clearly in HUD/panel UI so players can evaluate trade-offs before recruiting.",
+        "Patch the game to add a new special-unit production building (e.g., Dragon Nest). The building should produce an intermediate resource/state (eggs) that later matures into recruitable dragon units with unique combat stats and role. Ensure egg production/maturation is integrated with economy cycles, and that matured dragons are consumed through valid recruit/deploy flows with clear HUD/panel visibility.",
+        "Patch ship tasking so ships can be assigned a fishing task that produces fish over simulation cycles. Integrate task assignment, per-cycle fish production, and task-state transitions with existing ship order/state flows. Ensure fishing output is consumed by economy systems and exposed in HUD/task status panels."
+      ]
+    },
+    {
+      "id": "failure_profile_domain_state_perstitence_integrity",
+      "tags": [
+        "state_perstitence_integrity",
+        "failure_profile",
+        "domain_failure_profile"
+      ],
+      "text": "For domain 'state_perstitence_integrity': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Domain state_perstitence_integrity failure retrieval profile. Focus signatures: container_runtime_resolution, cross_node_state_reconciliation, identity_integrity_guards, null_comparator_safety. Primary symptoms: model returns non-applyable output shape (missing file path/diff contract), verification/typecheck failures from unsafe symbol or contract edits.",
+      "retrieval_aliases": [
+        "perstitence integrity",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-perstitence-integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)",
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "container_runtime_resolution",
+        "cross_node_state_reconciliation",
+        "identity_integrity_guards",
+        "null_comparator_safety",
+        "railway_deployment_contract",
+        "request_validation_guardrails",
+        "resource_projection_cache_invalidation",
+        "snapshot_schema_compatibility"
+      ],
+      "retrieval_examples": [
+        "A production container boots `game-server/src/index.ts` but fails to resolve one dependency imported by shared files under `/app/src`. Patch Docker/runtime configuration so bare imports resolve reliably without moving source files.",
+        "Deployment logs show `MODULE_NOT_FOUND` from map generation path in the game server. Add the smallest dependency fix in server package metadata and lock data so clean installs work in CI/deploy.",
+        "Introduce pending land recruit transitions so AI and simulation paths can stage recruitment safely before final placement. Ensure state typing and update flow remain coherent."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_ui_rendering_contract_integrity",
+      "tags": [
+        "hud_status",
+        "ui_rendering_contract_integrity",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'ui_rendering_contract_integrity' in domain 'hud_status': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill ui_rendering_contract_integrity in domain hud_status. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract). Related aliases: contract integrity, hud status, hud-status, hud_status, ui rendering.",
+      "retrieval_aliases": [
+        "contract integrity",
+        "hud status",
+        "hud-status",
+        "hud_status",
+        "ui rendering",
+        "ui rendering contract integrity",
+        "ui-rendering-contract-integrity",
+        "ui_rendering_contract_integrity"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "contract",
+        "hud_status",
+        "integrity",
+        "rendering",
+        "ui",
+        "ui_rendering_contract_integrity"
+      ],
+      "retrieval_examples": [
+        "Patch HUD summary rendering so caller-specified number formats are honored in output chips instead of silently using defaults. Keep default rendering behavior when no explicit format is passed.",
+        "Fix inconsistent quote-escaping in status text normalization so repeated encode/decode cycles preserve exactly one escaped representation.",
+        "Patch render helper so explicit escape mode in context is honored when building HUD/briefing text; prevent accidental raw rendering."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_snapshot_schema_compatibility",
+      "tags": [
+        "state_perstitence_integrity",
+        "snapshot_schema_compatibility",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'snapshot_schema_compatibility' in domain 'state_perstitence_integrity': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill snapshot_schema_compatibility in domain state_perstitence_integrity. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract), verification/typecheck failures from unsafe symbol or contract edits. Related aliases: perstitence integrity, schema compatibility, snapshot schema, snapshot schema compatibility, snapshot-schema-compatibility.",
+      "retrieval_aliases": [
+        "perstitence integrity",
+        "schema compatibility",
+        "snapshot schema",
+        "snapshot schema compatibility",
+        "snapshot-schema-compatibility",
+        "snapshot_schema_compatibility",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-perstitence-integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)",
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "compatibility",
+        "schema",
+        "snapshot",
+        "snapshot_schema_compatibility",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_examples": [
+        "Multiplayer snapshots occasionally desync with store/UI expectations. Patch snapshot ingestion and type alignment so HUD and simulation state remain coherent after sync.",
+        "Patch multiplayer remap/bridge flow to protect against partial or stale payload shapes and preserve deterministic local state contracts.",
+        "Patch import parser so binary payload input from wire format is accepted and decoded safely where string input is currently assumed."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_railway_deployment_contract",
+      "tags": [
+        "state_perstitence_integrity",
+        "railway_deployment_contract",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'railway_deployment_contract' in domain 'state_perstitence_integrity': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill railway_deployment_contract in domain state_perstitence_integrity. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract). Related aliases: deployment contract, perstitence integrity, railway deployment, railway deployment contract, railway-deployment-contract.",
+      "retrieval_aliases": [
+        "deployment contract",
+        "perstitence integrity",
+        "railway deployment",
+        "railway deployment contract",
+        "railway-deployment-contract",
+        "railway_deployment_contract",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-perstitence-integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "contract",
+        "deployment",
+        "railway",
+        "railway_deployment_contract",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_examples": [
+        "Deployment logs show `MODULE_NOT_FOUND` from map generation path in the game server. Add the smallest dependency fix in server package metadata and lock data so clean installs work in CI/deploy.",
+        "Patch game-server deploy artifacts so production platform launches with correct build/runtime assumptions and expected exposed service behavior.",
+        "Add a deployable multiplayer game-server entrypoint and client bridge/remap path that safely serializes and remaps state between server and app contracts."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_schema_migration_compatibility",
+      "tags": [
+        "ai_strategy_and_planning",
+        "schema_migration_compatibility",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'schema_migration_compatibility' in domain 'ai_strategy_and_planning': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill schema_migration_compatibility in domain ai_strategy_and_planning. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: ai strategy, ai strategy and planning, ai-strategy-and-planning, ai_strategy_and_planning, and planning.",
+      "retrieval_aliases": [
+        "ai strategy",
+        "ai strategy and planning",
+        "ai-strategy-and-planning",
+        "ai_strategy_and_planning",
+        "and planning",
+        "migration compatibility",
+        "schema migration",
+        "schema migration compatibility",
+        "schema-migration-compatibility",
+        "schema_migration_compatibility"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "ai_strategy_and_planning",
+        "compatibility",
+        "migration",
+        "schema",
+        "schema_migration_compatibility"
+      ],
+      "retrieval_examples": [
+        "Introduce a research/technology + council subsystem with strong typed state contracts and HUD visibility, without destabilizing existing game loop behavior.",
+        "Patch nested lookup parsing used by planner diagnostics so keys with suffix operators are parsed correctly and do not collapse to wrong base fields."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_identity_integrity_guards",
+      "tags": [
+        "state_perstitence_integrity",
+        "identity_integrity_guards",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'identity_integrity_guards' in domain 'state_perstitence_integrity': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill identity_integrity_guards in domain state_perstitence_integrity. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: identity integrity, identity integrity guards, identity-integrity-guards, identity_integrity_guards, integrity guards.",
+      "retrieval_aliases": [
+        "identity integrity",
+        "identity integrity guards",
+        "identity-integrity-guards",
+        "identity_integrity_guards",
+        "integrity guards",
+        "perstitence integrity",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-perstitence-integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "guards",
+        "identity",
+        "identity_integrity_guards",
+        "integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_examples": [
+        "Patch entity-delete flow so identity fields are cleared after deletion in no-dependency paths, preventing stale references in follow-up operations.",
+        "Fix newline and trailing-whitespace bypass in player/display-name validation so invalid identities are rejected before state write."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_combat_modifier_consistency",
+      "tags": [
+        "army_operations",
+        "combat_modifier_consistency",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'combat_modifier_consistency' in domain 'army_operations': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill combat_modifier_consistency in domain army_operations. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: army operations, army-operations, army_operations, combat modifier, combat modifier consistency.",
+      "retrieval_aliases": [
+        "army operations",
+        "army-operations",
+        "army_operations",
+        "combat modifier",
+        "combat modifier consistency",
+        "combat-modifier-consistency",
+        "combat_modifier_consistency",
+        "modifier consistency"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "combat",
+        "combat_modifier_consistency",
+        "consistency",
+        "modifier"
+      ],
+      "retrieval_examples": [
+        "Fix precision drift where low-precision combat modifier inputs are implicitly upcast and produce unstable rounding behavior in risk labels.",
+        "Fix inconsistency between full-map and sliced-map combat targeting conversion so the same tile selection yields identical risk preview values in both views."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_input_controller_event_ordering",
+      "tags": [
+        "hud_status",
+        "input_controller_event_ordering",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'input_controller_event_ordering' in domain 'hud_status': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill input_controller_event_ordering in domain hud_status. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract). Related aliases: event ordering, hud status, hud-status, hud_status, input controller.",
+      "retrieval_aliases": [
+        "event ordering",
+        "hud status",
+        "hud-status",
+        "hud_status",
+        "input controller",
+        "input controller event ordering",
+        "input-controller-event-ordering",
+        "input_controller_event_ordering"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "controller",
+        "event",
+        "hud_status",
+        "input",
+        "input_controller_event_ordering",
+        "ordering"
+      ],
+      "retrieval_examples": [
+        "Fix ordering logic for derived HUD rows so sorting by computed fields does not break when selector composition introduces nested projections.",
+        "Add drag-box map selection so players can select clusters of units/tiles with clear start/end gesture handling and synchronized store updates."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_websocket_handshake_recovery",
+      "tags": [
+        "state_perstitence_integrity",
+        "websocket_handshake_recovery",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'websocket_handshake_recovery' in domain 'state_perstitence_integrity': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill websocket_handshake_recovery in domain state_perstitence_integrity. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: handshake recovery, perstitence integrity, state perstitence, state perstitence integrity, state-perstitence-integrity.",
+      "retrieval_aliases": [
+        "handshake recovery",
+        "perstitence integrity",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-perstitence-integrity",
+        "state_perstitence_integrity",
+        "websocket handshake",
+        "websocket handshake recovery",
+        "websocket-handshake-recovery",
+        "websocket_handshake_recovery"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "handshake",
+        "recovery",
+        "state_perstitence_integrity",
+        "websocket",
+        "websocket_handshake_recovery"
+      ],
+      "retrieval_examples": [
+        "Fix timestamp hydration so configured timezone settings are consistently applied across persistence backends during load and replay flows."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_state_machine_transition_integrity",
+      "tags": [
+        "state_perstitence_integrity",
+        "state_machine_transition_integrity",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'state_machine_transition_integrity' in domain 'state_perstitence_integrity': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill state_machine_transition_integrity in domain state_perstitence_integrity. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract), verification/typecheck failures from unsafe symbol or contract edits. Related aliases: perstitence integrity, state machine, state machine transition integrity, state perstitence, state perstitence integrity.",
+      "retrieval_aliases": [
+        "perstitence integrity",
+        "state machine",
+        "state machine transition integrity",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-machine-transition-integrity",
+        "state-perstitence-integrity",
+        "state_machine_transition_integrity",
+        "state_perstitence_integrity",
+        "transition integrity"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)",
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "integrity",
+        "machine",
+        "state",
+        "state_machine_transition_integrity",
+        "state_perstitence_integrity",
+        "transition"
+      ],
+      "retrieval_examples": [
+        "Introduce pending land recruit transitions so AI and simulation paths can stage recruitment safely before final placement. Ensure state typing and update flow remain coherent."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_container_runtime_resolution",
+      "tags": [
+        "state_perstitence_integrity",
+        "container_runtime_resolution",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'container_runtime_resolution' in domain 'state_perstitence_integrity': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill container_runtime_resolution in domain state_perstitence_integrity. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract). Related aliases: container runtime, container runtime resolution, container-runtime-resolution, container_runtime_resolution, perstitence integrity.",
+      "retrieval_aliases": [
+        "container runtime",
+        "container runtime resolution",
+        "container-runtime-resolution",
+        "container_runtime_resolution",
+        "perstitence integrity",
+        "runtime resolution",
+        "state perstitence",
+        "state perstitence integrity",
+        "state-perstitence-integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "container",
+        "container_runtime_resolution",
+        "resolution",
+        "runtime",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_examples": [
+        "A production container boots `game-server/src/index.ts` but fails to resolve one dependency imported by shared files under `/app/src`. Patch Docker/runtime configuration so bare imports resolve reliably without moving source files."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_weather_production_combat_routing_consistency",
+      "tags": [
+        "multidomain",
+        "weather_production_combat_routing_consistency",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'weather_production_combat_routing_consistency' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill weather_production_combat_routing_consistency in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: multidomain, routing consistency, weather production, weather production combat routing consistency, weather-production-combat-routing-consistency.",
+      "retrieval_aliases": [
+        "multidomain",
+        "routing consistency",
+        "weather production",
+        "weather production combat routing consistency",
+        "weather-production-combat-routing-consistency",
+        "weather_production_combat_routing_consistency"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "combat",
+        "consistency",
+        "multidomain",
+        "production",
+        "routing",
+        "weather",
+        "weather_production_combat_routing_consistency"
+      ],
+      "retrieval_examples": [
+        "Patch weather system routing so production penalties/bonuses and combat modifiers are sourced from a consistent shared weather state contract."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_unit_definition_combat_economy_integration",
+      "tags": [
+        "multidomain",
+        "unit_definition_combat_economy_integration",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'unit_definition_combat_economy_integration' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill unit_definition_combat_economy_integration in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy integration, multidomain, unit definition, unit definition combat economy integration, unit-definition-combat-economy-integration.",
+      "retrieval_aliases": [
+        "economy integration",
+        "multidomain",
+        "unit definition",
+        "unit definition combat economy integration",
+        "unit-definition-combat-economy-integration",
+        "unit_definition_combat_economy_integration"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "combat",
+        "definition",
+        "economy",
+        "integration",
+        "multidomain",
+        "unit",
+        "unit_definition_combat_economy_integration"
+      ],
+      "retrieval_examples": [
+        "Patch the game to introduce one new recruitable unit type. Define balanced combat stats (e.g., hp/attack/defense/speed behavior) and integrate the unit into recruit/build flows. Require explicit economic material costs for recruitment/production, and ensure those materials are validated and deducted correctly. Surface the unit stats and cost clearly in HUD/panel UI so players can evaluate trade-offs before recruiting."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_special_unit_building_progression_integration",
+      "tags": [
+        "multidomain",
+        "special_unit_building_progression_integration",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'special_unit_building_progression_integration' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill special_unit_building_progression_integration in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: multidomain, progression integration, special unit, special unit building progression integration, special-unit-building-progression-integration.",
+      "retrieval_aliases": [
+        "multidomain",
+        "progression integration",
+        "special unit",
+        "special unit building progression integration",
+        "special-unit-building-progression-integration",
+        "special_unit_building_progression_integration"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "building",
+        "integration",
+        "multidomain",
+        "progression",
+        "special",
+        "special_unit_building_progression_integration",
+        "unit"
+      ],
+      "retrieval_examples": [
+        "Patch the game to add a new special-unit production building (e.g., Dragon Nest). The building should produce an intermediate resource/state (eggs) that later matures into recruitable dragon units with unique combat stats and role. Ensure egg production/maturation is integrated with economy cycles, and that matured dragons are consumed through valid recruit/deploy flows with clear HUD/panel visibility."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_ship_task_fishing_production_integration",
+      "tags": [
+        "multidomain",
+        "ship_task_fishing_production_integration",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'ship_task_fishing_production_integration' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill ship_task_fishing_production_integration in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: multidomain, production integration, ship task, ship task fishing production integration, ship-task-fishing-production-integration.",
+      "retrieval_aliases": [
+        "multidomain",
+        "production integration",
+        "ship task",
+        "ship task fishing production integration",
+        "ship-task-fishing-production-integration",
+        "ship_task_fishing_production_integration"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "fishing",
+        "integration",
+        "multidomain",
+        "production",
+        "ship",
+        "ship_task_fishing_production_integration",
+        "task"
+      ],
+      "retrieval_examples": [
+        "Patch ship tasking so ships can be assigned a fishing task that produces fish over simulation cycles. Integrate task assignment, per-cycle fish production, and task-state transitions with existing ship order/state flows. Ensure fishing output is consumed by economy systems and exposed in HUD/task status panels."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_reconnect_idempotency_and_lifecycle_cleanup",
+      "tags": [
+        "multidomain",
+        "reconnect_idempotency_and_lifecycle_cleanup",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'reconnect_idempotency_and_lifecycle_cleanup' in domain 'multidomain': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill reconnect_idempotency_and_lifecycle_cleanup in domain multidomain. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract). Related aliases: lifecycle cleanup, multidomain, reconnect idempotency, reconnect idempotency and lifecycle cleanup, reconnect-idempotency-and-lifecycle-cleanup.",
+      "retrieval_aliases": [
+        "lifecycle cleanup",
+        "multidomain",
+        "reconnect idempotency",
+        "reconnect idempotency and lifecycle cleanup",
+        "reconnect-idempotency-and-lifecycle-cleanup",
+        "reconnect_idempotency_and_lifecycle_cleanup"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "and",
+        "cleanup",
+        "idempotency",
+        "lifecycle",
+        "multidomain",
+        "reconnect",
+        "reconnect_idempotency_and_lifecycle_cleanup"
+      ],
+      "retrieval_examples": [
+        "Patch grouped state updates so partial failures do not leave half-applied world state visible in HUD and multiplayer sync. Enforce atomic commit or explicit rollback."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_new_resource_chain_infantry_cost_integration",
+      "tags": [
+        "multidomain",
+        "new_resource_chain_infantry_cost_integration",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'new_resource_chain_infantry_cost_integration' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill new_resource_chain_infantry_cost_integration in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract). Related aliases: cost integration, multidomain, new resource, new resource chain infantry cost integration, new-resource-chain-infantry-cost-integration.",
+      "retrieval_aliases": [
+        "cost integration",
+        "multidomain",
+        "new resource",
+        "new resource chain infantry cost integration",
+        "new-resource-chain-infantry-cost-integration",
+        "new_resource_chain_infantry_cost_integration"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "chain",
+        "cost",
+        "infantry",
+        "integration",
+        "multidomain",
+        "new",
+        "new_resource_chain_infantry_cost_integration",
+        "resource"
+      ],
+      "retrieval_examples": [
+        "Patch the game to add a new resource, aluminum (alluminum), including extraction/production support via a new mining building. Integrate aluminum into resource accounting and route infantry recruitment/production costs to consume aluminum alongside existing materials. Ensure costs are enforced and deducted correctly, and surface aluminum production/usage in HUD/economy views."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_naval_convoy_supply_protection_routing",
+      "tags": [
+        "multidomain",
+        "naval_convoy_supply_protection_routing",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'naval_convoy_supply_protection_routing' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill naval_convoy_supply_protection_routing in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: multidomain, naval convoy, naval convoy supply protection routing, naval-convoy-supply-protection-routing, naval_convoy_supply_protection_routing.",
+      "retrieval_aliases": [
+        "multidomain",
+        "naval convoy",
+        "naval convoy supply protection routing",
+        "naval-convoy-supply-protection-routing",
+        "naval_convoy_supply_protection_routing",
+        "protection routing"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "convoy",
+        "multidomain",
+        "naval",
+        "naval_convoy_supply_protection_routing",
+        "protection",
+        "routing",
+        "supply"
+      ],
+      "retrieval_examples": [
+        "Patch naval planning so convoy-style supply lanes can be protected by assigned ships, with route threat checks influencing supply stability."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_incorporation_army_halt_stateflow",
+      "tags": [
+        "multidomain",
+        "incorporation_army_halt_stateflow",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'incorporation_army_halt_stateflow' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill incorporation_army_halt_stateflow in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: halt stateflow, incorporation army, incorporation army halt stateflow, incorporation-army-halt-stateflow, incorporation_army_halt_stateflow.",
+      "retrieval_aliases": [
+        "halt stateflow",
+        "incorporation army",
+        "incorporation army halt stateflow",
+        "incorporation-army-halt-stateflow",
+        "incorporation_army_halt_stateflow",
+        "multidomain"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "army",
+        "halt",
+        "incorporation",
+        "incorporation_army_halt_stateflow",
+        "multidomain",
+        "stateflow"
+      ],
+      "retrieval_examples": [
+        "Patch incorporation queue handling so armies on incorporation hexes enter a deterministic temporary hold state and HUD reflects hold reason/duration."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_fortress_upgrade_resource_routing_policy",
+      "tags": [
+        "multidomain",
+        "fortress_upgrade_resource_routing_policy",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'fortress_upgrade_resource_routing_policy' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill fortress_upgrade_resource_routing_policy in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: fortress upgrade, fortress upgrade resource routing policy, fortress-upgrade-resource-routing-policy, fortress_upgrade_resource_routing_policy, multidomain.",
+      "retrieval_aliases": [
+        "fortress upgrade",
+        "fortress upgrade resource routing policy",
+        "fortress-upgrade-resource-routing-policy",
+        "fortress_upgrade_resource_routing_policy",
+        "multidomain",
+        "routing policy"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "fortress",
+        "fortress_upgrade_resource_routing_policy",
+        "multidomain",
+        "policy",
+        "resource",
+        "routing",
+        "upgrade"
+      ],
+      "retrieval_examples": [
+        "Patch fortress/wall upgrade decisions so resource spending routes through supply-aware defensive priority policy instead of isolated static thresholds."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_contested_zone_majority_payout_gating",
+      "tags": [
+        "multidomain",
+        "contested_zone_majority_payout_gating",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'contested_zone_majority_payout_gating' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill contested_zone_majority_payout_gating in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: contested zone, contested zone majority payout gating, contested-zone-majority-payout-gating, contested_zone_majority_payout_gating, multidomain.",
+      "retrieval_aliases": [
+        "contested zone",
+        "contested zone majority payout gating",
+        "contested-zone-majority-payout-gating",
+        "contested_zone_majority_payout_gating",
+        "multidomain",
+        "payout gating"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "contested",
+        "contested_zone_majority_payout_gating",
+        "gating",
+        "majority",
+        "multidomain",
+        "payout",
+        "zone"
+      ],
+      "retrieval_examples": [
+        "Patch contested-zone payout logic to enforce deterministic majority/rival gating and prevent duplicate payouts during rapid ownership flips."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_contested_zone_capture_reward_integration",
+      "tags": [
+        "multidomain",
+        "contested_zone_capture_reward_integration",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'contested_zone_capture_reward_integration' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill contested_zone_capture_reward_integration in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: contested zone, contested zone capture reward integration, contested-zone-capture-reward-integration, contested_zone_capture_reward_integration, multidomain.",
+      "retrieval_aliases": [
+        "contested zone",
+        "contested zone capture reward integration",
+        "contested-zone-capture-reward-integration",
+        "contested_zone_capture_reward_integration",
+        "multidomain",
+        "reward integration"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "capture",
+        "contested",
+        "contested_zone_capture_reward_integration",
+        "integration",
+        "multidomain",
+        "reward",
+        "zone"
+      ],
+      "retrieval_examples": [
+        "Patch contested-zone logic so captured/held contested zones between rival capitals grant configured economy rewards (e.g., gold/iron) and emit clear HUD notifications. Keep reward timing deterministic, prevent duplicate payout exploits, and ensure zone ownership transitions remain consistent with military capture rules."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_commander_trait_economy_morale_coupling",
+      "tags": [
+        "multidomain",
+        "commander_trait_economy_morale_coupling",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'commander_trait_economy_morale_coupling' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill commander_trait_economy_morale_coupling in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: commander trait, commander trait economy morale coupling, commander-trait-economy-morale-coupling, commander_trait_economy_morale_coupling, morale coupling.",
+      "retrieval_aliases": [
+        "commander trait",
+        "commander trait economy morale coupling",
+        "commander-trait-economy-morale-coupling",
+        "commander_trait_economy_morale_coupling",
+        "morale coupling",
+        "multidomain"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "commander",
+        "commander_trait_economy_morale_coupling",
+        "coupling",
+        "economy",
+        "morale",
+        "multidomain",
+        "trait"
+      ],
+      "retrieval_examples": [
+        "Patch commander trait effects so selected traits influence both morale/combat modifiers and constrained economy-side impacts, with clear player-facing trait outcome signals."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_builder_university_task_queue_progression",
+      "tags": [
+        "multidomain",
+        "builder_university_task_queue_progression",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'builder_university_task_queue_progression' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill builder_university_task_queue_progression in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract). Related aliases: builder university, builder university task queue progression, builder-university-task-queue-progression, builder_university_task_queue_progression, multidomain.",
+      "retrieval_aliases": [
+        "builder university",
+        "builder university task queue progression",
+        "builder-university-task-queue-progression",
+        "builder_university_task_queue_progression",
+        "multidomain",
+        "queue progression"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "builder",
+        "builder_university_task_queue_progression",
+        "multidomain",
+        "progression",
+        "queue",
+        "task",
+        "university"
+      ],
+      "retrieval_examples": [
+        "Patch builder automation so university-driven builder tasks are queued, progressed, and resolved through a deterministic pipeline. Ensure task priority/assignment logic interacts correctly with economy constraints and expose queue/progress status in builder-facing HUD panels."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_battalion_training_tick_ordering_integrity",
+      "tags": [
+        "multidomain",
+        "battalion_training_tick_ordering_integrity",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'battalion_training_tick_ordering_integrity' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill battalion_training_tick_ordering_integrity in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: battalion training, battalion training tick ordering integrity, battalion-training-tick-ordering-integrity, battalion_training_tick_ordering_integrity, multidomain.",
+      "retrieval_aliases": [
+        "battalion training",
+        "battalion training tick ordering integrity",
+        "battalion-training-tick-ordering-integrity",
+        "battalion_training_tick_ordering_integrity",
+        "multidomain",
+        "ordering integrity"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "battalion",
+        "battalion_training_tick_ordering_integrity",
+        "integrity",
+        "multidomain",
+        "ordering",
+        "tick",
+        "training"
+      ],
+      "retrieval_examples": [
+        "Patch training progression so resource pulls and completion transitions occur in deterministic phase order relative to economy turn processing."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_battalion_training_health_gate_progression",
+      "tags": [
+        "multidomain",
+        "battalion_training_health_gate_progression",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'battalion_training_health_gate_progression' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill battalion_training_health_gate_progression in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract). Related aliases: battalion training, battalion training health gate progression, battalion-training-health-gate-progression, battalion_training_health_gate_progression, gate progression.",
+      "retrieval_aliases": [
+        "battalion training",
+        "battalion training health gate progression",
+        "battalion-training-health-gate-progression",
+        "battalion_training_health_gate_progression",
+        "gate progression",
+        "multidomain"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "battalion",
+        "battalion_training_health_gate_progression",
+        "gate",
+        "health",
+        "multidomain",
+        "progression",
+        "training"
+      ],
+      "retrieval_examples": [
+        "Patch battalion training so recruits progress through staged training cycles with costs/time gates and simulation health constraints. Ensure progression, cancellation/failure behavior, and completion handoff are deterministic, and surface training status in army/HUD views."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_ai_wall_ring_supply_expansion_policy",
+      "tags": [
+        "multidomain",
+        "ai_wall_ring_supply_expansion_policy",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'ai_wall_ring_supply_expansion_policy' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill ai_wall_ring_supply_expansion_policy in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: ai wall, ai wall ring supply expansion policy, ai-wall-ring-supply-expansion-policy, ai_wall_ring_supply_expansion_policy, expansion policy.",
+      "retrieval_aliases": [
+        "ai wall",
+        "ai wall ring supply expansion policy",
+        "ai-wall-ring-supply-expansion-policy",
+        "ai_wall_ring_supply_expansion_policy",
+        "expansion policy",
+        "multidomain"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_wall_ring_supply_expansion_policy",
+        "expansion",
+        "multidomain",
+        "policy",
+        "ring",
+        "supply",
+        "wall"
+      ],
+      "retrieval_examples": [
+        "Patch AI strategy to coordinate wall-ring planning with supply-aware expansion decisions. AI should prioritize defensible wall completion and adjust village/city expansion when supply posture is weak, while still exploiting favorable opportunities under stable supply conditions."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_academy_general_production_assignment_pipeline",
+      "tags": [
+        "multidomain",
+        "academy_general_production_assignment_pipeline",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'academy_general_production_assignment_pipeline' in domain 'multidomain': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill academy_general_production_assignment_pipeline in domain multidomain. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: academy general, academy general production assignment pipeline, academy-general-production-assignment-pipeline, academy_general_production_assignment_pipeline, assignment pipeline.",
+      "retrieval_aliases": [
+        "academy general",
+        "academy general production assignment pipeline",
+        "academy-general-production-assignment-pipeline",
+        "academy_general_production_assignment_pipeline",
+        "assignment pipeline",
+        "multidomain"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "academy",
+        "academy_general_production_assignment_pipeline",
+        "assignment",
+        "general",
+        "multidomain",
+        "pipeline",
+        "production"
+      ],
+      "retrieval_examples": [
+        "Patch the game so academies produce generals over time, and generals can be assigned to armies to provide stat modifiers/bonuses. Integrate production timing, assignment state, and combat stat application with clear UI for available generals and active assignments. Ensure assignment effects are deterministic and do not stack illegally."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_cross_platform_stability",
+      "tags": [
+        "hud_status",
+        "cross_platform_stability",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'cross_platform_stability' in domain 'hud_status': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill cross_platform_stability in domain hud_status. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: cross platform, cross platform stability, cross-platform-stability, cross_platform_stability, hud status.",
+      "retrieval_aliases": [
+        "cross platform",
+        "cross platform stability",
+        "cross-platform-stability",
+        "cross_platform_stability",
+        "hud status",
+        "hud-status",
+        "hud_status",
+        "platform stability"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "cross",
+        "cross_platform_stability",
+        "hud_status",
+        "platform",
+        "stability"
+      ],
+      "retrieval_examples": [
+        "Apply a minimal stability fix for macOS Next-dev/runtime issues while preserving concurrent gameplay-system enhancements and type integrity."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_worker_wage_productivity_tradeoff_balancing",
+      "tags": [
+        "economy",
+        "worker_wage_productivity_tradeoff_balancing",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'worker_wage_productivity_tradeoff_balancing' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill worker_wage_productivity_tradeoff_balancing in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy, tradeoff balancing, worker wage, worker wage productivity tradeoff balancing, worker-wage-productivity-tradeoff-balancing.",
+      "retrieval_aliases": [
+        "economy",
+        "tradeoff balancing",
+        "worker wage",
+        "worker wage productivity tradeoff balancing",
+        "worker-wage-productivity-tradeoff-balancing",
+        "worker_wage_productivity_tradeoff_balancing"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "balancing",
+        "economy",
+        "productivity",
+        "tradeoff",
+        "wage",
+        "worker",
+        "worker_wage_productivity_tradeoff_balancing"
+      ],
+      "retrieval_examples": [
+        "Patch economy dynamics to add worker wages: paying wages depletes gold each cycle but increases productivity according to a balanced function. Implement configurable wage-to-productivity behavior, prevent runaway exploit loops, and ensure low-gold states degrade wage effects safely. Surface wage costs and productivity impact in HUD/economy summaries."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_warehouse_spoilage_food_decay_balance",
+      "tags": [
+        "economy",
+        "warehouse_spoilage_food_decay_balance",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'warehouse_spoilage_food_decay_balance' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill warehouse_spoilage_food_decay_balance in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: decay balance, economy, warehouse spoilage, warehouse spoilage food decay balance, warehouse-spoilage-food-decay-balance.",
+      "retrieval_aliases": [
+        "decay balance",
+        "economy",
+        "warehouse spoilage",
+        "warehouse spoilage food decay balance",
+        "warehouse-spoilage-food-decay-balance",
+        "warehouse_spoilage_food_decay_balance"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "balance",
+        "decay",
+        "economy",
+        "food",
+        "spoilage",
+        "warehouse",
+        "warehouse_spoilage_food_decay_balance"
+      ],
+      "retrieval_examples": [
+        "Patch food storage logic to include bounded spoilage/decay behavior with balance controls that prevent trivial hoarding without causing unavoidable collapse."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_wage_inflation_productivity_feedback_control",
+      "tags": [
+        "economy",
+        "wage_inflation_productivity_feedback_control",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'wage_inflation_productivity_feedback_control' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill wage_inflation_productivity_feedback_control in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy, feedback control, wage inflation, wage inflation productivity feedback control, wage-inflation-productivity-feedback-control.",
+      "retrieval_aliases": [
+        "economy",
+        "feedback control",
+        "wage inflation",
+        "wage inflation productivity feedback control",
+        "wage-inflation-productivity-feedback-control",
+        "wage_inflation_productivity_feedback_control"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "control",
+        "economy",
+        "feedback",
+        "inflation",
+        "productivity",
+        "wage",
+        "wage_inflation_productivity_feedback_control"
+      ],
+      "retrieval_examples": [
+        "Patch wage system with inflation feedback so sustained high wages have diminishing productivity returns and macro gold pressure balancing."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_supply_network_production_drawdown_visualization",
+      "tags": [
+        "economy",
+        "supply_network_production_drawdown_visualization",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'supply_network_production_drawdown_visualization' in domain 'economy': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill supply_network_production_drawdown_visualization in domain economy. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract), verification/typecheck failures from unsafe symbol or contract edits. Related aliases: drawdown visualization, economy, supply network, supply network production drawdown visualization, supply-network-production-drawdown-visualization.",
+      "retrieval_aliases": [
+        "drawdown visualization",
+        "economy",
+        "supply network",
+        "supply network production drawdown visualization",
+        "supply-network-production-drawdown-visualization",
+        "supply_network_production_drawdown_visualization"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)",
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "drawdown",
+        "economy",
+        "network",
+        "production",
+        "supply",
+        "supply_network_production_drawdown_visualization",
+        "visualization"
+      ],
+      "retrieval_examples": [
+        "Patch supply network UI to show charted production versus drawdown over recent cycles. Integrate supply throughput and consumption signals so players can see trend direction, and ensure charted values remain aligned with movement/supply gating behavior."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_starvation_recovery_rate_tuning",
+      "tags": [
+        "economy",
+        "starvation_recovery_rate_tuning",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'starvation_recovery_rate_tuning' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill starvation_recovery_rate_tuning in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy, rate tuning, starvation recovery, starvation recovery rate tuning, starvation-recovery-rate-tuning.",
+      "retrieval_aliases": [
+        "economy",
+        "rate tuning",
+        "starvation recovery",
+        "starvation recovery rate tuning",
+        "starvation-recovery-rate-tuning",
+        "starvation_recovery_rate_tuning"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "economy",
+        "rate",
+        "recovery",
+        "starvation",
+        "starvation_recovery_rate_tuning",
+        "tuning"
+      ],
+      "retrieval_examples": [
+        "Regression patch task: current build can enter a starvation spiral where deaths outpace births and population does not recover. Diagnose the starvation path, then tune starvation loss rates and birth-growth rates so populations stabilize under sustainable food conditions while still punishing persistent shortages. Keep simulation deterministic and update HUD starvation/population cues to reflect the corrected behavior."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_ship_build_cost_material_balance_enforcement",
+      "tags": [
+        "economy",
+        "ship_build_cost_material_balance_enforcement",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'ship_build_cost_material_balance_enforcement' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill ship_build_cost_material_balance_enforcement in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: balance enforcement, economy, ship build, ship build cost material balance enforcement, ship-build-cost-material-balance-enforcement.",
+      "retrieval_aliases": [
+        "balance enforcement",
+        "economy",
+        "ship build",
+        "ship build cost material balance enforcement",
+        "ship-build-cost-material-balance-enforcement",
+        "ship_build_cost_material_balance_enforcement"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "balance",
+        "build",
+        "cost",
+        "economy",
+        "enforcement",
+        "material",
+        "ship",
+        "ship_build_cost_material_balance_enforcement"
+      ],
+      "retrieval_examples": [
+        "Patch ship production balance so building ships consumes wood, planked wood, and stone in the intended proportions. Rework ship build cost constants and build-flow checks so all three materials are required and actually deducted on successful ship construction. Ensure costs are balanced (not trivially cheap or prohibitive), and prevent ship creation when any required material is insufficient."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_seasonal_fish_farm_yield_weighting",
+      "tags": [
+        "economy",
+        "seasonal_fish_farm_yield_weighting",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'seasonal_fish_farm_yield_weighting' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill seasonal_fish_farm_yield_weighting in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy, seasonal fish, seasonal fish farm yield weighting, seasonal-fish-farm-yield-weighting, seasonal_fish_farm_yield_weighting.",
+      "retrieval_aliases": [
+        "economy",
+        "seasonal fish",
+        "seasonal fish farm yield weighting",
+        "seasonal-fish-farm-yield-weighting",
+        "seasonal_fish_farm_yield_weighting",
+        "yield weighting"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "economy",
+        "farm",
+        "fish",
+        "seasonal",
+        "seasonal_fish_farm_yield_weighting",
+        "weighting",
+        "yield"
+      ],
+      "retrieval_examples": [
+        "Patch food production so fisheries and farms receive seasonal yield weighting that changes effective output but remains balanced across year-cycle."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_resource_projection_cache_invalidation",
+      "tags": [
+        "economy",
+        "resource_projection_cache_invalidation",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'resource_projection_cache_invalidation' in domain 'economy': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill resource_projection_cache_invalidation in domain economy. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract). Related aliases: cache invalidation, economy, resource projection, resource projection cache invalidation, resource-projection-cache-invalidation.",
+      "retrieval_aliases": [
+        "cache invalidation",
+        "economy",
+        "resource projection",
+        "resource projection cache invalidation",
+        "resource-projection-cache-invalidation",
+        "resource_projection_cache_invalidation"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "cache",
+        "economy",
+        "invalidation",
+        "projection",
+        "resource",
+        "resource_projection_cache_invalidation"
+      ],
+      "retrieval_examples": [
+        "Builder automation decisions are stale after recent building/progression updates. Patch automation policy to align with new priorities and avoid invalid early-game construction choices."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_progression_tick_ordering",
+      "tags": [
+        "economy",
+        "progression_tick_ordering",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'progression_tick_ordering' in domain 'economy': Prioritize strict applyable output shape: start with unified diff or fenced files that include repo-relative file paths; avoid prose before the first patch line.",
+      "retrieval_description": "Subskill progression_tick_ordering in domain economy. Failure symptoms: model returns non-applyable output shape (missing file path/diff contract), verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy, progression tick, progression tick ordering, progression-tick-ordering, progression_tick_ordering.",
+      "retrieval_aliases": [
+        "economy",
+        "progression tick",
+        "progression tick ordering",
+        "progression-tick-ordering",
+        "progression_tick_ordering",
+        "tick ordering"
+      ],
+      "retrieval_symptoms": [
+        "model returns non-applyable output shape (missing file path/diff contract)",
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "economy",
+        "ordering",
+        "progression",
+        "progression_tick_ordering",
+        "tick"
+      ],
+      "retrieval_examples": [
+        "Integrate university-driven population/training effects into the simulation tick and HUD surfaces while preserving deterministic economy behavior."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_population_birth_food_buffer_taper",
+      "tags": [
+        "economy",
+        "population_birth_food_buffer_taper",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'population_birth_food_buffer_taper' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill population_birth_food_buffer_taper in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: buffer taper, economy, population birth, population birth food buffer taper, population-birth-food-buffer-taper.",
+      "retrieval_aliases": [
+        "buffer taper",
+        "economy",
+        "population birth",
+        "population birth food buffer taper",
+        "population-birth-food-buffer-taper",
+        "population_birth_food_buffer_taper"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "birth",
+        "buffer",
+        "economy",
+        "food",
+        "population",
+        "population_birth_food_buffer_taper",
+        "taper"
+      ],
+      "retrieval_examples": [
+        "Patch birth dynamics so low food buffers taper births smoothly while preserving recovery behavior under restored support."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_mine_quarry_output_upkeep_budget_coupling",
+      "tags": [
+        "economy",
+        "mine_quarry_output_upkeep_budget_coupling",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'mine_quarry_output_upkeep_budget_coupling' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill mine_quarry_output_upkeep_budget_coupling in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits, model returns non-applyable output shape (missing file path/diff contract). Related aliases: budget coupling, economy, mine quarry, mine quarry output upkeep budget coupling, mine-quarry-output-upkeep-budget-coupling.",
+      "retrieval_aliases": [
+        "budget coupling",
+        "economy",
+        "mine quarry",
+        "mine quarry output upkeep budget coupling",
+        "mine-quarry-output-upkeep-budget-coupling",
+        "mine_quarry_output_upkeep_budget_coupling"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits",
+        "model returns non-applyable output shape (missing file path/diff contract)"
+      ],
+      "retrieval_task_signatures": [
+        "budget",
+        "coupling",
+        "economy",
+        "mine",
+        "mine_quarry_output_upkeep_budget_coupling",
+        "output",
+        "quarry",
+        "upkeep"
+      ],
+      "retrieval_examples": [
+        "Patch mine/quarry output so production efficiency depends on upkeep budget support, reducing output under sustained underfunded operation."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_market_price_elasticity_stock_pressure",
+      "tags": [
+        "economy",
+        "market_price_elasticity_stock_pressure",
+        "failure_profile",
+        "subskill_failure_profile"
+      ],
+      "text": "For subskill 'market_price_elasticity_stock_pressure' in domain 'economy': Bias toward verify-safe edits: keep changes minimal, preserve exports/imports and existing type contracts, and avoid introducing new symbols unless fully wired.",
+      "retrieval_description": "Subskill market_price_elasticity_stock_pressure in domain economy. Failure symptoms: verification/typecheck failures from unsafe symbol or contract edits. Related aliases: economy, market price, market price elasticity stock pressure, market-price-elasticity-stock-pressure, market_price_elasticity_stock_pressure.",
+      "retrieval_aliases": [
+        "economy",
+        "market price",
+        "market price elasticity stock pressure",
+        "market-price-elasticity-stock-pressure",
+        "market_price_elasticity_stock_pressure",
+        "stock pressure"
+      ],
+      "retrieval_symptoms": [
+        "verification/typecheck failures from unsafe symbol or contract edits"
+      ],
+      "retrieval_task_signatures": [
+        "economy",
+        "elasticity",
+        "market",
+        "market_price_elasticity_stock_pressure",
+        "pressure",
+        "price",
+        "stock"
+      ],
+      "retrieval_examples": [
+        "Patch market pricing so resource price adjusts with stock pressure and recent supply/demand flow while remaining bounded and readable."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_test_env_dynamic_route_resolution_contract",
+      "tags": [
+        "hud_status",
+        "test_env_dynamic_route_resolution_contract",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'test_env_dynamic_route_resolution_contract' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for test_env_dynamic_route_resolution_contract in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "test env dynamic route resolution contract",
+        "test_env_dynamic_route_resolution_contract"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "contract",
+        "dynamic",
+        "env",
+        "hud_status",
+        "resolution",
+        "route",
+        "test",
+        "test_env_dynamic_route_resolution_contract"
+      ],
+      "retrieval_examples": [
+        "Create a deterministic `/test-env/[envId]` route that resolves an environment registry, returns not-found for unknown ids, and renders a shared shell for visual debugging."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_ui_state_signal_exposure",
+      "tags": [
+        "hud_status",
+        "ui_state_signal_exposure",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ui_state_signal_exposure' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for ui_state_signal_exposure in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "ui state signal exposure",
+        "ui_state_signal_exposure"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "exposure",
+        "hud_status",
+        "signal",
+        "state",
+        "ui",
+        "ui_state_signal_exposure"
+      ],
+      "retrieval_examples": [
+        "Expose multiplayer lobby/session state in HUD with clear status labels and minimal clutter. Wire it to authoritative store values."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_state_machine_transition_integrity",
+      "tags": [
+        "army_operations",
+        "state_machine_transition_integrity",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'state_machine_transition_integrity' in domain 'army_operations': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for state_machine_transition_integrity in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "state machine transition integrity",
+        "state_machine_transition_integrity"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "integrity",
+        "machine",
+        "state",
+        "state_machine_transition_integrity",
+        "transition"
+      ],
+      "retrieval_examples": [
+        "Add siege workshop support and adjust build menu eligibility so starter barracks/university are hidden in early-state paths without breaking progression.",
+        "After siege recruitment mechanics evolve, add or adjust simulation health gates so unstable parameter combinations are detected before promotion/deployment."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_request_validation_guardrails",
+      "tags": [
+        "state_perstitence_integrity",
+        "request_validation_guardrails",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'request_validation_guardrails' in domain 'state_perstitence_integrity': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for request_validation_guardrails in state_perstitence_integrity.",
+      "retrieval_aliases": [
+        "request validation guardrails",
+        "request_validation_guardrails",
+        "state perstitence integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "guardrails",
+        "request",
+        "request_validation_guardrails",
+        "state_perstitence_integrity",
+        "validation"
+      ],
+      "retrieval_examples": [
+        "Fix load validation so missing required fields return a precise typed error instead of a generic misleading exception message. Preserve existing success path and include missing-field names in the failure payload."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_deterministic_preview_state_isolation",
+      "tags": [
+        "army_operations",
+        "deterministic_preview_state_isolation",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'deterministic_preview_state_isolation' in domain 'army_operations': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for deterministic_preview_state_isolation in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "deterministic preview state isolation",
+        "deterministic_preview_state_isolation"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "deterministic",
+        "deterministic_preview_state_isolation",
+        "isolation",
+        "preview",
+        "state"
+      ],
+      "retrieval_examples": [
+        "HUD has become too dense after feature expansion. Refactor panel composition and styling for clarity while retaining high-value tactical, economy, and combat signals."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_field_command_ui_signal_clarity",
+      "tags": [
+        "hud_status",
+        "field_command_ui_signal_clarity",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'field_command_ui_signal_clarity' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for field_command_ui_signal_clarity in hud_status.",
+      "retrieval_aliases": [
+        "field command ui signal clarity",
+        "field_command_ui_signal_clarity",
+        "hud status",
+        "hud_status"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "clarity",
+        "command",
+        "field",
+        "field_command_ui_signal_clarity",
+        "hud_status",
+        "signal",
+        "ui"
+      ],
+      "retrieval_examples": [
+        "Patch field-command HUD integration so formation/engagement state is surfaced clearly and consistently while preserving existing command semantics. Ensure UI signals remain readable during active movement/engagement updates and do not desync from formation state."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_university_research_focus_ui_integration",
+      "tags": [
+        "hud_status",
+        "university_research_focus_ui_integration",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'university_research_focus_ui_integration' in domain 'hud_status': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for university_research_focus_ui_integration in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "university research focus ui integration",
+        "university_research_focus_ui_integration"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "focus",
+        "hud_status",
+        "integration",
+        "research",
+        "ui",
+        "university",
+        "university_research_focus_ui_integration"
+      ],
+      "retrieval_examples": [
+        "Patch university UI so it surfaces research production per cycle and allows selecting a research focus from the panel. Keep focus selection wired to typed state and ensure projected research output updates consistently in HUD/panel views."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_army_ui_direct_order_dispatch",
+      "tags": [
+        "army_operations",
+        "army_ui_direct_order_dispatch",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'army_ui_direct_order_dispatch' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for army_ui_direct_order_dispatch in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army ui direct order dispatch",
+        "army_operations",
+        "army_ui_direct_order_dispatch"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "army",
+        "army_operations",
+        "army_ui_direct_order_dispatch",
+        "direct",
+        "dispatch",
+        "order",
+        "ui"
+      ],
+      "retrieval_examples": [
+        "Patch army UI so players can issue movement orders directly from the army panel (without map-only interaction). Wire orders into existing movement/command flows, preserve order validation, and keep panel state synchronized with active unit movement state."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_mine_production_timeseries_visualization",
+      "tags": [
+        "hud_status",
+        "mine_production_timeseries_visualization",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'mine_production_timeseries_visualization' in domain 'hud_status': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for mine_production_timeseries_visualization in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "mine production timeseries visualization",
+        "mine_production_timeseries_visualization"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "hud_status",
+        "mine",
+        "mine_production_timeseries_visualization",
+        "production",
+        "timeseries",
+        "visualization"
+      ],
+      "retrieval_examples": [
+        "Patch mine HUD so it displays a compact production-over-cycles chart for mine output. Track recent cycle values in state, render a readable trend chart in the mine panel, and ensure values match simulation outputs used by economy ticks."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_home_screen_multiplayer_entry_flow",
+      "tags": [
+        "hud_status",
+        "home_screen_multiplayer_entry_flow",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'home_screen_multiplayer_entry_flow' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for home_screen_multiplayer_entry_flow in hud_status.",
+      "retrieval_aliases": [
+        "home screen multiplayer entry flow",
+        "home_screen_multiplayer_entry_flow",
+        "hud status",
+        "hud_status"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "entry",
+        "flow",
+        "home",
+        "home_screen_multiplayer_entry_flow",
+        "hud_status",
+        "multiplayer",
+        "screen"
+      ],
+      "retrieval_examples": [
+        "Patch the home/start surface to include a clear Multiplayer button and entry path into multiplayer session flow. Keep single-player entry intact, preserve session/bootstrap guards, and ensure button state reflects multiplayer readiness."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_ai_starvation_farm_priority_policy",
+      "tags": [
+        "ai_strategy_and_planning",
+        "ai_starvation_farm_priority_policy",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ai_starvation_farm_priority_policy' in domain 'ai_strategy_and_planning': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for ai_starvation_farm_priority_policy in ai_strategy_and_planning.",
+      "retrieval_aliases": [
+        "ai starvation farm priority policy",
+        "ai strategy and planning",
+        "ai_starvation_farm_priority_policy",
+        "ai_strategy_and_planning"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_starvation_farm_priority_policy",
+        "ai_strategy_and_planning",
+        "farm",
+        "policy",
+        "priority",
+        "starvation"
+      ],
+      "retrieval_examples": [
+        "Patch AI build logic so starvation or near-starvation states force farm-priority behavior before non-critical builds. Keep the policy tunable, avoid farm-spam when food stabilizes, and preserve deterministic build ordering."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_ai_invasion_defense_repositioning",
+      "tags": [
+        "ai_strategy_and_planning",
+        "ai_invasion_defense_repositioning",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ai_invasion_defense_repositioning' in domain 'ai_strategy_and_planning': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for ai_invasion_defense_repositioning in ai_strategy_and_planning.",
+      "retrieval_aliases": [
+        "ai invasion defense repositioning",
+        "ai strategy and planning",
+        "ai_invasion_defense_repositioning",
+        "ai_strategy_and_planning"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_invasion_defense_repositioning",
+        "ai_strategy_and_planning",
+        "defense",
+        "invasion",
+        "repositioning"
+      ],
+      "retrieval_examples": [
+        "Patch AI response logic so incoming enemy invasion pressure triggers defensive repositioning of nearby units toward threatened zones/cities. Preserve legal movement constraints and avoid oscillating defend/retreat loops."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_ai_open_city_target_selection",
+      "tags": [
+        "ai_strategy_and_planning",
+        "ai_open_city_target_selection",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ai_open_city_target_selection' in domain 'ai_strategy_and_planning': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for ai_open_city_target_selection in ai_strategy_and_planning.",
+      "retrieval_aliases": [
+        "ai open city target selection",
+        "ai strategy and planning",
+        "ai_open_city_target_selection",
+        "ai_strategy_and_planning"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_open_city_target_selection",
+        "ai_strategy_and_planning",
+        "city",
+        "open",
+        "selection",
+        "target"
+      ],
+      "retrieval_examples": [
+        "Patch AI target selection so exposed enemy cities (low defense/open approaches) are prioritized as attack objectives when odds and supply conditions allow. Avoid suicidal city targeting when constraints are not met."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_food_supported_population_steady_state_dynamics",
+      "tags": [
+        "economy",
+        "food_supported_population_steady_state_dynamics",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'food_supported_population_steady_state_dynamics' in domain 'economy': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for food_supported_population_steady_state_dynamics in economy.",
+      "retrieval_aliases": [
+        "economy",
+        "food supported population steady state dynamics",
+        "food_supported_population_steady_state_dynamics"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "dynamics",
+        "economy",
+        "food",
+        "food_supported_population_steady_state_dynamics",
+        "population",
+        "state",
+        "steady",
+        "supported"
+      ],
+      "retrieval_examples": [
+        "Patch population dynamics so each city converges toward a food-supported steady-state population instead of oscillating or collapsing unrealistically. Implement carrying-capacity behavior driven by food support, with starvation pressure when above support and tapering growth when near equilibrium. Keep dynamics deterministic across ticks and expose key population pressure/support signals in HUD so players can reason about recovery and limits."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_ai_construction_site_build_planning",
+      "tags": [
+        "ai_strategy_and_planning",
+        "ai_construction_site_build_planning",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ai_construction_site_build_planning' in domain 'ai_strategy_and_planning': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for ai_construction_site_build_planning in ai_strategy_and_planning.",
+      "retrieval_aliases": [
+        "ai construction site build planning",
+        "ai strategy and planning",
+        "ai_construction_site_build_planning",
+        "ai_strategy_and_planning"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_construction_site_build_planning",
+        "ai_strategy_and_planning",
+        "build",
+        "construction",
+        "planning",
+        "site"
+      ],
+      "retrieval_examples": [
+        "Patch AI build planning so headless/runtime paths queue construction sites that complete through builder BP progression instead of instant build placement."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_ai_pending_recruit_backlog_cap_policy",
+      "tags": [
+        "ai_strategy_and_planning",
+        "ai_pending_recruit_backlog_cap_policy",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ai_pending_recruit_backlog_cap_policy' in domain 'ai_strategy_and_planning': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for ai_pending_recruit_backlog_cap_policy in ai_strategy_and_planning.",
+      "retrieval_aliases": [
+        "ai pending recruit backlog cap policy",
+        "ai strategy and planning",
+        "ai_pending_recruit_backlog_cap_policy",
+        "ai_strategy_and_planning"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_pending_recruit_backlog_cap_policy",
+        "ai_strategy_and_planning",
+        "backlog",
+        "cap",
+        "pending",
+        "policy",
+        "recruit"
+      ],
+      "retrieval_examples": [
+        "Patch AI recruit logic to account for pending recruit backlog and material constraints before issuing additional recruit actions."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_ai_strategy_and_planning_ai_commander_field_assignment_thresholds",
+      "tags": [
+        "ai_strategy_and_planning",
+        "ai_commander_field_assignment_thresholds",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'ai_commander_field_assignment_thresholds' in domain 'ai_strategy_and_planning': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for ai_commander_field_assignment_thresholds in ai_strategy_and_planning.",
+      "retrieval_aliases": [
+        "ai commander field assignment thresholds",
+        "ai strategy and planning",
+        "ai_commander_field_assignment_thresholds",
+        "ai_strategy_and_planning"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "ai",
+        "ai_commander_field_assignment_thresholds",
+        "ai_strategy_and_planning",
+        "assignment",
+        "commander",
+        "field",
+        "thresholds"
+      ],
+      "retrieval_examples": [
+        "Patch AI commander assignment so idle commanders are promoted onto eligible field stacks when strategic thresholds are met."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_siege_composition_recruit_gate_consistency",
+      "tags": [
+        "army_operations",
+        "siege_composition_recruit_gate_consistency",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'siege_composition_recruit_gate_consistency' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for siege_composition_recruit_gate_consistency in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "siege composition recruit gate consistency",
+        "siege_composition_recruit_gate_consistency"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "composition",
+        "consistency",
+        "gate",
+        "recruit",
+        "siege",
+        "siege_composition_recruit_gate_consistency"
+      ],
+      "retrieval_examples": [
+        "Patch recruit logic so catapult/ram and siege composition gates are enforced consistently across player, AI, and replenishment paths."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_box_select_pan_zoom_lock_lifecycle",
+      "tags": [
+        "army_operations",
+        "box_select_pan_zoom_lock_lifecycle",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'box_select_pan_zoom_lock_lifecycle' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for box_select_pan_zoom_lock_lifecycle in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "box select pan zoom lock lifecycle",
+        "box_select_pan_zoom_lock_lifecycle"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "box",
+        "box_select_pan_zoom_lock_lifecycle",
+        "lifecycle",
+        "lock",
+        "pan",
+        "select",
+        "zoom"
+      ],
+      "retrieval_examples": [
+        "Patch map controller interaction so camera pan/zoom remains locked for the full box-select drag lifecycle, including cancel/interrupt paths."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_supply_cache_invalidation_on_capture",
+      "tags": [
+        "army_operations",
+        "supply_cache_invalidation_on_capture",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'supply_cache_invalidation_on_capture' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for supply_cache_invalidation_on_capture in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "supply cache invalidation on capture",
+        "supply_cache_invalidation_on_capture"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "cache",
+        "capture",
+        "invalidation",
+        "on",
+        "supply",
+        "supply_cache_invalidation_on_capture"
+      ],
+      "retrieval_examples": [
+        "Patch supply cache invalidation so captures and territory transitions cannot reuse stale in-supply calculations."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_garrison_deploy_flag_order_parity",
+      "tags": [
+        "army_operations",
+        "garrison_deploy_flag_order_parity",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'garrison_deploy_flag_order_parity' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for garrison_deploy_flag_order_parity in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "garrison deploy flag order parity",
+        "garrison_deploy_flag_order_parity"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "deploy",
+        "flag",
+        "garrison",
+        "garrison_deploy_flag_order_parity",
+        "order",
+        "parity"
+      ],
+      "retrieval_examples": [
+        "Patch order handling so explicit move/deploy commands and automatic patrol/garrison flows keep deployment flags consistent and non-destructive."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_tactical_batch_stack_order_dispatch",
+      "tags": [
+        "army_operations",
+        "tactical_batch_stack_order_dispatch",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'tactical_batch_stack_order_dispatch' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for tactical_batch_stack_order_dispatch in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "tactical batch stack order dispatch",
+        "tactical_batch_stack_order_dispatch"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "batch",
+        "dispatch",
+        "order",
+        "stack",
+        "tactical",
+        "tactical_batch_stack_order_dispatch"
+      ],
+      "retrieval_examples": [
+        "Patch tactical control flow so multiple selected stacks can receive coordinated move/attack/defend orders in a single dispatch path."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_army_stack_split_adjacent_flow",
+      "tags": [
+        "army_operations",
+        "army_stack_split_adjacent_flow",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'army_stack_split_adjacent_flow' in domain 'army_operations': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for army_stack_split_adjacent_flow in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army stack split adjacent flow",
+        "army_operations",
+        "army_stack_split_adjacent_flow"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "adjacent",
+        "army",
+        "army_operations",
+        "army_stack_split_adjacent_flow",
+        "flow",
+        "split",
+        "stack"
+      ],
+      "retrieval_examples": [
+        "Patch stack split flow so players can split a subset of units into adjacent hexes while preserving order integrity and unit accounting."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_scout_tower_vision_signal_integration",
+      "tags": [
+        "hud_status",
+        "scout_tower_vision_signal_integration",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'scout_tower_vision_signal_integration' in domain 'hud_status': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for scout_tower_vision_signal_integration in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "scout tower vision signal integration",
+        "scout_tower_vision_signal_integration"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "hud_status",
+        "integration",
+        "scout",
+        "scout_tower_vision_signal_integration",
+        "signal",
+        "tower",
+        "vision"
+      ],
+      "retrieval_examples": [
+        "Patch visibility system so scout towers contribute deterministic vision coverage and expose that state in map/HUD tactical signals."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_multidomain_multiplayer_formation_move_parity_contract",
+      "tags": [
+        "multidomain",
+        "multiplayer_formation_move_parity_contract",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'multiplayer_formation_move_parity_contract' in domain 'multidomain': Prioritize verify-safe edits: minimal diffs, preserve imports/exports/contracts, avoid introducing unwired symbols.",
+      "retrieval_description": "Targeted repair retrieval profile for multiplayer_formation_move_parity_contract in multidomain.",
+      "retrieval_aliases": [
+        "multidomain",
+        "multiplayer formation move parity contract",
+        "multiplayer_formation_move_parity_contract"
+      ],
+      "retrieval_symptoms": [
+        "verify/typecheck contract failures"
+      ],
+      "retrieval_task_signatures": [
+        "contract",
+        "formation",
+        "move",
+        "multidomain",
+        "multiplayer",
+        "multiplayer_formation_move_parity_contract",
+        "parity"
+      ],
+      "retrieval_examples": [
+        "Patch multiplayer order dispatch so move plans use the same formation/echelon targeting semantics as local singleplayer move flows."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_resource_projection_cache_invalidation",
+      "tags": [
+        "state_perstitence_integrity",
+        "resource_projection_cache_invalidation",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'resource_projection_cache_invalidation' in domain 'state_perstitence_integrity': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for resource_projection_cache_invalidation in state_perstitence_integrity.",
+      "retrieval_aliases": [
+        "resource projection cache invalidation",
+        "resource_projection_cache_invalidation",
+        "state perstitence integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "cache",
+        "invalidation",
+        "projection",
+        "resource",
+        "resource_projection_cache_invalidation",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_examples": [
+        "Patch save/load comparison logic that reports differences between semantically identical states due to ordering noise. Normalize comparison inputs so equivalent states compare equal."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_deterministic_preview_state_isolation",
+      "tags": [
+        "hud_status",
+        "deterministic_preview_state_isolation",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'deterministic_preview_state_isolation' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for deterministic_preview_state_isolation in hud_status.",
+      "retrieval_aliases": [
+        "deterministic preview state isolation",
+        "deterministic_preview_state_isolation",
+        "hud status",
+        "hud_status"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "deterministic",
+        "deterministic_preview_state_isolation",
+        "hud_status",
+        "isolation",
+        "preview",
+        "state"
+      ],
+      "retrieval_examples": [
+        "Patch mixed-data merge so when one operand has a visibility mask and the other does not, mask propagation stays consistent and does not drop status indicators unexpectedly."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_state_perstitence_integrity_deploy_env_timeout_policy",
+      "tags": [
+        "state_perstitence_integrity",
+        "deploy_env_timeout_policy",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'deploy_env_timeout_policy' in domain 'state_perstitence_integrity': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for deploy_env_timeout_policy in state_perstitence_integrity.",
+      "retrieval_aliases": [
+        "deploy env timeout policy",
+        "deploy_env_timeout_policy",
+        "state perstitence integrity",
+        "state_perstitence_integrity"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "deploy",
+        "deploy_env_timeout_policy",
+        "env",
+        "policy",
+        "state_perstitence_integrity",
+        "timeout"
+      ],
+      "retrieval_examples": [
+        "Fix duration parsing so negative timeout and cooldown values are interpreted correctly rather than treated as malformed positives."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_economy_signed_delta_semantics",
+      "tags": [
+        "economy",
+        "signed_delta_semantics",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'signed_delta_semantics' in domain 'economy': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for signed_delta_semantics in economy.",
+      "retrieval_aliases": [
+        "economy",
+        "signed delta semantics",
+        "signed_delta_semantics"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "delta",
+        "economy",
+        "semantics",
+        "signed",
+        "signed_delta_semantics"
+      ],
+      "retrieval_examples": [
+        "Fix number formatting so very small economy deltas are shown in fixed-point style for UI readability instead of unexpected exponential notation.",
+        "Fix an index out-of-range crash in economy factor identification when sparse snapshots omit optional arrays. Add safe bounds checks and deterministic fallback labels."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_hud_theme_royal_restyling",
+      "tags": [
+        "hud_status",
+        "hud_theme_royal_restyling",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'hud_theme_royal_restyling' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for hud_theme_royal_restyling in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud theme royal restyling",
+        "hud_status",
+        "hud_theme_royal_restyling"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "hud",
+        "hud_status",
+        "hud_theme_royal_restyling",
+        "restyling",
+        "royal",
+        "theme"
+      ],
+      "retrieval_examples": [
+        "The HUD visual language drifted into a modern/minimal style that no longer fits Fallen Empire. Restyle the HUD to a royal-medieval theme: deep navy or charcoal foundations, gold/bronze accents, parchment-readable text contrast, and restrained jewel-tone status highlights. Keep information hierarchy intact, improve chip/panel color clarity, and avoid changing gameplay logic or store contracts."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_isometric_sprite_integration_contract",
+      "tags": [
+        "hud_status",
+        "isometric_sprite_integration_contract",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'isometric_sprite_integration_contract' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for isometric_sprite_integration_contract in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "isometric sprite integration contract",
+        "isometric_sprite_integration_contract"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "contract",
+        "hud_status",
+        "integration",
+        "isometric",
+        "isometric_sprite_integration_contract",
+        "sprite"
+      ],
+      "retrieval_examples": [
+        "Replace a HUD-adjacent 2D isometric sprite with a new asset and integrate it correctly using existing game conventions. Follow current sprite-path and loading patterns used by the renderer/HUD, ensure the new image is visible with correct layering/clarity, and avoid the recurring bad integrations where assets are added but not mapped, mapped but not rendered, or rendered with placeholder/fallback behavior."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_unit_overlay_sprite_replacement_contract",
+      "tags": [
+        "hud_status",
+        "unit_overlay_sprite_replacement_contract",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'unit_overlay_sprite_replacement_contract' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for unit_overlay_sprite_replacement_contract in hud_status.",
+      "retrieval_aliases": [
+        "hud status",
+        "hud_status",
+        "unit overlay sprite replacement contract",
+        "unit_overlay_sprite_replacement_contract"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "contract",
+        "hud_status",
+        "overlay",
+        "replacement",
+        "sprite",
+        "unit",
+        "unit_overlay_sprite_replacement_contract"
+      ],
+      "retrieval_examples": [
+        "Replace one existing unit overlay sprite with a new 2D isometric version and integrate it correctly in the current render stack. Follow existing sprite-path, texture-loading, and layering conventions so the overlay appears on the intended unit context and does not regress visibility/legibility."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_hud_status_army_stack_sprite_aggregation_contract",
+      "tags": [
+        "hud_status",
+        "army_stack_sprite_aggregation_contract",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'army_stack_sprite_aggregation_contract' in domain 'hud_status': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for army_stack_sprite_aggregation_contract in hud_status.",
+      "retrieval_aliases": [
+        "army stack sprite aggregation contract",
+        "army_stack_sprite_aggregation_contract",
+        "hud status",
+        "hud_status"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "aggregation",
+        "army",
+        "army_stack_sprite_aggregation_contract",
+        "contract",
+        "hud_status",
+        "sprite",
+        "stack"
+      ],
+      "retrieval_examples": [
+        "Replace the single-unit stack visual treatment with an army-stack treatment representing 10 units as one coherent graphic/system. Update UI/render behavior so stacked armies are visually distinct from single units, preserve readability at gameplay zoom levels, and integrate via existing sprite/overlay conventions without altering combat logic."
+      ]
+    },
+    {
+      "id": "failure_profile_subskill_army_operations_formation_path_consistency",
+      "tags": [
+        "army_operations",
+        "formation_path_consistency",
+        "failure_profile",
+        "subskill_failure_profile",
+        "targeted_repair"
+      ],
+      "text": "For subskill 'formation_path_consistency' in domain 'army_operations': Return strict applyable output shape: unified diff or fenced files with repo-relative paths as first content.",
+      "retrieval_description": "Targeted repair retrieval profile for formation_path_consistency in army_operations.",
+      "retrieval_aliases": [
+        "army operations",
+        "army_operations",
+        "formation path consistency",
+        "formation_path_consistency"
+      ],
+      "retrieval_symptoms": [
+        "no_applyable_changes output-shape failures"
+      ],
+      "retrieval_task_signatures": [
+        "army_operations",
+        "consistency",
+        "formation",
+        "formation_path_consistency",
+        "path"
+      ],
+      "retrieval_examples": [
+        "Fix a formation/path inconsistency where grouped armies compute one path preview but execute a different march route after tick advance. Align previewed formation movement with executed pathing rules across terrain and supply constraints."
+      ]
+    }
+  ],
+  "notes": "includes targeted repair entries for prompt-only retrieval misses"
+}

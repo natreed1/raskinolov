@@ -1,0 +1,156 @@
+{
+  "schema_version": "run_analysis_agent_corpus_v1",
+  "description": "Run-analysis retrieval corpus for documenting and analyzing workflow runs.",
+  "sources": [
+    {
+      "path": "docs/PROJECT_STATE.md",
+      "kind": "current_state",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/SESSION_LOG.md",
+      "kind": "session_log",
+      "weight": 2.3
+    },
+    {
+      "path": "docs/run_history.md",
+      "kind": "workflow_history",
+      "weight": 2.2
+    },
+    {
+      "path": "docs/SPECIALIZED_RUN_HISTORY.md",
+      "kind": "specialized_history",
+      "weight": 2.4
+    },
+    {
+      "path": "docs/RUNS.md",
+      "kind": "run_interpretation",
+      "weight": 2.0
+    },
+    {
+      "path": "docs/WORKFLOW.md",
+      "kind": "runbook",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260609-002612_4a2993/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260609-002612_4a2993/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-222216_af07d5/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-222216_af07d5/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-215510_04f5be/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-215510_04f5be/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-205457_23f461/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-205457_23f461/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-051009_e40808/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-051009_e40808/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-044850_b0622e/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-044850_b0622e/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-022603_79ceb8/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-022603_79ceb8/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-005247_21dca8/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260608-005247_21dca8/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-221733_12ee25/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-221733_12ee25/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-215834_c9d045/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-215834_c9d045/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-075406_309203/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-075406_309203/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-071523_1635af/manifest.json",
+      "kind": "run_manifest",
+      "weight": 1.9
+    },
+    {
+      "path": "benchmarks/results/runs/20260605-071523_1635af/RUN.md",
+      "kind": "run_md",
+      "weight": 1.7
+    }
+  ]
+}

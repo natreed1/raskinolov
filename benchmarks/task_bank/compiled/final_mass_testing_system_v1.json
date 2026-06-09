@@ -1,0 +1,765 @@
+{
+  "schema_version": "final_mass_testing_system_v1",
+  "name": "final_mass_testing_system_v1",
+  "description": "Unified broad test system covering all active patch, SWE-mapped, and custom tasks with normalized domains and quality contracts.",
+  "source_files": [
+    "benchmarks/patch_task_bank_v1.json",
+    "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+    "benchmarks/task_bank/sources/custom_author_tasks_v1.json"
+  ],
+  "domain_normalization": {
+    "ai_planning_explanation": "ai_strategy_and_planning",
+    "combat_risk": "army_operations",
+    "economy_tooltip": "economy",
+    "save_load_api_guard": "state_perstitence_integrity",
+    "loading_screen": "hud_status",
+    "multiplayer_runtime_deploy": "state_perstitence_integrity"
+  },
+  "quality_contract": {
+    "required_task_fields": [
+      "id",
+      "domain_primary",
+      "subskill"
+    ],
+    "accepted_eval_contracts": [
+      "acceptance.required_outcomes + acceptance.verify_commands",
+      "acceptance_signals + compile_commands"
+    ],
+    "notes": [
+      "Every task must have specific snake_case subskill and one accepted eval contract."
+    ]
+  },
+  "task_count": 121,
+  "task_refs": [
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-node-path-runtime-resolution-01",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "container_runtime_resolution"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-railway-missing-dep-02",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "railway_deployment_contract"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-test-env-dynamic-route-03",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "test_env_dynamic_route_resolution_contract"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-test-env-registry-contract-04",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "test_env_registry_type_lookup_contract"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-plan-shared-application-05",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "shared_logic_deduplication"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-pending-recruit-state-06",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "state_machine_transition_integrity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-site-auth-middleware-07",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "request_validation_guardrails"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-map-box-select-input-08",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "input_controller_event_ordering"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-snapshot-types-09",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "snapshot_schema_compatibility"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-hud-lobby-session-panel-10",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "ui_state_signal_exposure"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-research-system-schema-11",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "schema_migration_compatibility"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-server-bootstrap-12",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "railway_deployment_contract"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-siege-workshop-build-menu-14",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "state_machine_transition_integrity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-builder-automation-rebalance-15",
+      "domain_primary_normalized": "economy",
+      "subskill": "resource_projection_cache_invalidation"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-macos-dev-stability-16",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "cross_platform_stability"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-auth-route-hardening-17",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "request_validation_guardrails"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-research-hud-surface-18",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "resource_projection_cache_invalidation"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-university-population-loop-19",
+      "domain_primary_normalized": "economy",
+      "subskill": "progression_tick_ordering"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-game-server-deploy-contract-21",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "railway_deployment_contract"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-remap-safety-22",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "snapshot_schema_compatibility"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-combat-hud-density-refactor-23",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "deterministic_preview_state_isolation"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-siege-recruitment-health-gates-24",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "state_machine_transition_integrity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-field-command-hud-25",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "field_command_ui_signal_clarity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-hud-economy-mixed-panel-26",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "hud_economy_signal_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-movement-supply-gating-27",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "movement_supply_gating_consistency"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-move-target-eligibility-28",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_move_target_eligibility_rules"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-farm-production-workforce-leveling-29",
+      "domain_primary_normalized": "economy",
+      "subskill": "farm_level_scaling_and_workforce_accounting"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-starvation-diagnosis-population-stability-30",
+      "domain_primary_normalized": "economy",
+      "subskill": "starvation_recovery_rate_tuning"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-worker-elasticity-nonlinear-recovery-31",
+      "domain_primary_normalized": "economy",
+      "subskill": "tiered_worker_elasticity_nonlinear_recovery"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-university-research-focus-hud-32",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "university_research_focus_ui_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-army-ui-direct-move-orders-33",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "army_ui_direct_order_dispatch"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-mine-hud-production-chart-34",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "mine_production_timeseries_visualization"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-supply-network-chart-drawdown-35",
+      "domain_primary_normalized": "economy",
+      "subskill": "supply_network_production_drawdown_visualization"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-home-screen-multiplayer-entry-36",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "home_screen_multiplayer_entry_flow"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-ocean-crossing-reachability-37",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_naval_reachability_pathing"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-starvation-farm-priority-38",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_starvation_farm_priority_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-defend-invasion-reposition-39",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_invasion_defense_repositioning"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-open-city-targeting-40",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_open_city_target_selection"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ship-production-cost-material-balance-41",
+      "domain_primary_normalized": "economy",
+      "subskill": "ship_build_cost_material_balance_enforcement"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-new-unit-combat-stats-economic-cost-42",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "unit_definition_combat_economy_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-special-unit-building-dragon-nest-43",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "special_unit_building_progression_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-catapult-siege-workshop-planning-44",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_siege_production_routing_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-population-food-steady-state-dynamics-45",
+      "domain_primary_normalized": "economy",
+      "subskill": "food_supported_population_steady_state_dynamics"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-fish-yield-double-vs-grain-46",
+      "domain_primary_normalized": "economy",
+      "subskill": "food_value_weighting_fish_vs_grain"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-worker-wage-productivity-balance-47",
+      "domain_primary_normalized": "economy",
+      "subskill": "worker_wage_productivity_tradeoff_balancing"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ship-fishing-task-production-48",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "ship_task_fishing_production_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-archer-max-range-auto-positioning-49",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "archer_max_range_auto_positioning_logic"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-aluminum-resource-chain-infantry-cost-50",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "new_resource_chain_infantry_cost_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-academy-general-production-assignment-51",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "academy_general_production_assignment_pipeline"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-contested-zone-capture-payout-52",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "contested_zone_capture_reward_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-builder-automation-university-task-queue-53",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "builder_university_task_queue_progression"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-battalion-training-health-gates-54",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "battalion_training_health_gate_progression"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-wall-ring-supply-expansion-55",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "ai_wall_ring_supply_expansion_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-construction-site-sim-builds-56",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_construction_site_build_planning"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-composition-tactics-scoring-57",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_composition_tactics_mix_scoring"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-food-aware-recruit-gating-58",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_food_surplus_recruit_gating"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-city-defense-ring-coverage-59",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_city_defense_ring_coverage_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-incorporation-move-reservation-60",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_incorporation_move_reservation_guard"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-battle-flank-reinforcement-61",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_battle_flank_reinforcement_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-pending-recruit-backlog-caps-62",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_pending_recruit_backlog_cap_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-commander-field-stack-assignment-63",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "ai_commander_field_assignment_thresholds"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-out-of-supply-movement-halt-64",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "out_of_supply_movement_halt_enforcement"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-siege-composition-recruit-gates-65",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "siege_composition_recruit_gate_consistency"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-formation-fallback-placement-validity-66",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "formation_fallback_placement_validity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-map-controller-box-select-pan-lock-67",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "box_select_pan_zoom_lock_lifecycle"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-supply-cache-invalidation-capture-68",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "supply_cache_invalidation_on_capture"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-garrison-deploy-flag-order-parity-69",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "garrison_deploy_flag_order_parity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-tactical-batch-stack-order-dispatch-70",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "tactical_batch_stack_order_dispatch"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-army-stack-split-adjacent-flow-71",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "army_stack_split_adjacent_flow"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-archer-line-priority-targeting-72",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "archer_line_priority_targeting_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-pop-birth-food-buffer-taper-73",
+      "domain_primary_normalized": "economy",
+      "subskill": "population_birth_food_buffer_taper"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-market-price-elasticity-stock-pressure-74",
+      "domain_primary_normalized": "economy",
+      "subskill": "market_price_elasticity_stock_pressure"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-warehouse-spoilage-food-decay-balance-75",
+      "domain_primary_normalized": "economy",
+      "subskill": "warehouse_spoilage_food_decay_balance"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-army-upkeep-progressive-size-scaling-76",
+      "domain_primary_normalized": "economy",
+      "subskill": "army_upkeep_progressive_size_scaling"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-quarry-mine-output-energy-upkeep-77",
+      "domain_primary_normalized": "economy",
+      "subskill": "mine_quarry_output_upkeep_budget_coupling"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-fisher-farm-seasonal-yield-weighting-78",
+      "domain_primary_normalized": "economy",
+      "subskill": "seasonal_fish_farm_yield_weighting"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-wage-inflation-productivity-feedback-79",
+      "domain_primary_normalized": "economy",
+      "subskill": "wage_inflation_productivity_feedback_control"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-city-food-buffer-policy-thresholds-80",
+      "domain_primary_normalized": "economy",
+      "subskill": "city_food_buffer_policy_thresholds"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-scout-tower-vision-hud-integration-81",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "scout_tower_vision_signal_integration"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-formation-move-parity-82",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "multiplayer_formation_move_parity_contract"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-contested-zone-majority-payout-gating-83",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "contested_zone_majority_payout_gating"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-battalion-training-tick-ordering-84",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "battalion_training_tick_ordering_integrity"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-map-box-select-multi-stack-orders-85",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "map_box_select_multi_stack_order_dispatch"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-battle-preview-nearby-engagement-clusters-86",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "nearby_engagement_cluster_preview_signal"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-incorporation-army-halt-stateflow-87",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "incorporation_army_halt_stateflow"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-naval-supply-convoy-protection-routing-88",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "naval_convoy_supply_protection_routing"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-fortress-upgrade-resource-routing-89",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "fortress_upgrade_resource_routing_policy"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-commander-trait-economy-morale-coupling-90",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "commander_trait_economy_morale_coupling"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-weather-production-combat-routing-91",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "weather_production_combat_routing_consistency"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-001",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "planner_strategy_separability"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-002",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "request_validation_guardrails"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-003",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "ui_rendering_contract_integrity"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-004",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "combat_modifier_consistency"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-005",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "cross_node_state_reconciliation"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-006",
+      "domain_primary_normalized": "economy",
+      "subskill": "signed_delta_semantics"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-007",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "resource_projection_cache_invalidation"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-008",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "ui_rendering_contract_integrity"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-009",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "deterministic_preview_state_isolation"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-010",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "null_comparator_safety"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-011",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "snapshot_schema_compatibility"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-012",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "combat_modifier_consistency"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-013",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "identity_integrity_guards"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-014",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "input_controller_event_ordering"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-015",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "planner_expression_safety"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-016",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "deploy_env_timeout_policy"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-017",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "cross_node_state_reconciliation"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-018",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "identity_integrity_guards"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-019",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "ui_rendering_contract_integrity"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-020",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "binary_response_handling"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-021",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "identity_integrity_guards"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-022",
+      "domain_primary_normalized": "economy",
+      "subskill": "signed_delta_semantics"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-023",
+      "domain_primary_normalized": "ai_strategy_and_planning",
+      "subskill": "schema_migration_compatibility"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-024",
+      "domain_primary_normalized": "state_perstitence_integrity",
+      "subskill": "websocket_handshake_recovery"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-025",
+      "domain_primary_normalized": "multidomain",
+      "subskill": "reconnect_idempotency_and_lifecycle_cleanup"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-hud-royal-theme-restyle-001",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "hud_theme_royal_restyling"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-hud-isometric-image-integration-002",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "isometric_sprite_integration_contract"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-hud-unit-overlay-replacement-003",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "unit_overlay_sprite_replacement_contract"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-hud-army-stack-graphic-004",
+      "domain_primary_normalized": "hud_status",
+      "subskill": "army_stack_sprite_aggregation_contract"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-army-movement-order-idempotency-005",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "movement_order_idempotency"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-army-formation-path-consistency-006",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "formation_path_consistency"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+      "task_id": "custom-army-stack-overlay-coherence-007",
+      "domain_primary_normalized": "army_operations",
+      "subskill": "stack_overlay_movement_coherence"
+    }
+  ],
+  "validation": {
+    "missing_contract_count": 0,
+    "missing_contract_examples": []
+  }
+}

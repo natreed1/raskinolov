@@ -1,0 +1,667 @@
+[
+  {
+    "id": "combat-mass-factors-01",
+    "category": "combat_core",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "List five combat risk factors. Must include morale, terrain, and walls or fortification.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "terrain"
+      ],
+      "any_contains": [
+        "wall",
+        "fortification",
+        "fortified"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "combat"
+    ]
+  },
+  {
+    "id": "combat-mass-summary-02",
+    "category": "combat_core",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write one combat summary with attacker strength, defender strength, and risk band.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "combat"
+    ]
+  },
+  {
+    "id": "combat-mass-modifiers-03",
+    "category": "combat_core",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Explain in 2-3 sentences how terrain and morale modifiers change engagement risk.",
+    "expect": {
+      "all_contains": [
+        "terrain",
+        "morale"
+      ],
+      "any_contains": [
+        "risk",
+        "modifier"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "combat"
+    ]
+  },
+  {
+    "id": "combat-mass-ui-clarity-04",
+    "category": "combat_ui_change",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Suggest one UI improvement that makes combat risk preview more legible.",
+    "expect": {
+      "any_contains": [
+        "preview",
+        "risk",
+        "legible",
+        "hierarchy"
+      ],
+      "min_chars": 85
+    },
+    "domains": [
+      "combat",
+      "ui"
+    ]
+  },
+  {
+    "id": "combat-mass-short-lines-05",
+    "category": "combat_ui_change",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write one warning combat line and one favorable combat line.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "favorable",
+        "risk",
+        "odds"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "combat",
+      "ui"
+    ]
+  },
+  {
+    "id": "combat-mass-bands-06",
+    "category": "combat_ui_change",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Define concise wording for low, medium, and high combat risk bands.",
+    "expect": {
+      "all_contains": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "min_chars": 60
+    },
+    "domains": [
+      "combat",
+      "ui"
+    ]
+  },
+  {
+    "id": "combat-mass-constraints-07",
+    "category": "combat_constraints",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Plain text only: one sentence with attacker, defender, and terrain.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender",
+        "terrain"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "combat",
+      "constraints"
+    ]
+  },
+  {
+    "id": "combat-mass-constraints-08",
+    "category": "combat_constraints",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Output one comma-separated line with four combat preview factors.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "morale",
+        "terrain",
+        "wall",
+        "risk",
+        "strength"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "combat",
+      "constraints"
+    ]
+  },
+  {
+    "id": "combat-mass-constraints-09",
+    "category": "combat_constraints",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Exactly two lines: line one strength snapshot, line two risk recommendation.",
+    "expect": {
+      "any_contains": [
+        "strength",
+        "risk",
+        "recommend"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "combat",
+      "constraints"
+    ]
+  },
+  {
+    "id": "combat-mass-transfer-loading-10",
+    "category": "combat_transfer",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write one loading hint line preparing the player for morale/terrain combat checks.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "terrain"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "combat",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "combat-mass-transfer-hud-11",
+    "category": "combat_transfer",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Provide one HUD chip label related to combat risk and defender posture.",
+    "expect": {
+      "any_contains": [
+        "risk",
+        "defender",
+        "posture",
+        "fortified"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "combat",
+      "hud"
+    ]
+  },
+  {
+    "id": "combat-mass-transfer-ai-12",
+    "category": "combat_transfer",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Give one AI planning line that delays attack due to high combat risk.",
+    "expect": {
+      "any_contains": [
+        "attack",
+        "delay",
+        "high",
+        "risk"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "combat",
+      "planning"
+    ]
+  },
+  {
+    "id": "combat-mass-terrain-read-13",
+    "category": "combat_core",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write a short combat brief that compares open terrain vs walled defense risk.",
+    "expect": {
+      "any_contains": [
+        "terrain",
+        "wall",
+        "defense",
+        "risk"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "combat"
+    ]
+  },
+  {
+    "id": "combat-mass-stance-impact-14",
+    "category": "combat_core",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "In 2 sentences explain how defender stance and morale influence expected losses.",
+    "expect": {
+      "any_contains": [
+        "defender",
+        "stance",
+        "morale",
+        "loss"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "combat"
+    ]
+  },
+  {
+    "id": "combat-mass-compact-triad-15",
+    "category": "combat_constraints",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Return three short lines: attacker snapshot, defender snapshot, risk call.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "risk"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "combat",
+      "constraints"
+    ]
+  },
+  {
+    "id": "combat-mass-odds-window-16",
+    "category": "combat_ui_change",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Suggest a compact UI wording pattern for odds, morale delta, and terrain modifier.",
+    "expect": {
+      "any_contains": [
+        "odds",
+        "morale",
+        "terrain",
+        "modifier"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "combat",
+      "ui"
+    ]
+  },
+  {
+    "id": "combat-mass-hud-badge-17",
+    "category": "combat_transfer",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Create two HUD badge labels for siege pressure and frontline risk.",
+    "expect": {
+      "any_contains": [
+        "siege",
+        "frontline",
+        "risk",
+        "pressure"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "combat",
+      "hud"
+    ]
+  },
+  {
+    "id": "combat-mass-econ-link-18",
+    "category": "combat_transfer",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write one note that ties low supply/economy to degraded combat readiness.",
+    "expect": {
+      "any_contains": [
+        "supply",
+        "economy",
+        "income",
+        "combat",
+        "readiness"
+      ],
+      "min_chars": 60
+    },
+    "domains": [
+      "combat",
+      "economy"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-plan-19",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Draft a council line linking combat risk, economy constraints, and AI intent.",
+    "expect": {
+      "any_contains": [
+        "combat",
+        "risk",
+        "economy",
+        "intent",
+        "defend",
+        "attack"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "combat",
+      "economy",
+      "planning"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-save-20",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Provide one API-safe summary line for combat preview persistence with version guard.",
+    "expect": {
+      "any_contains": [
+        "combat",
+        "preview",
+        "version",
+        "guard",
+        "save"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "combat",
+      "save_load"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-loading-21",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write two loading lines that foreshadow combat risk and AI strategic posture.",
+    "expect": {
+      "any_contains": [
+        "loading",
+        "combat",
+        "risk",
+        "intent",
+        "posture"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "combat",
+      "loading_screen",
+      "planning"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-econ-22",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Explain in 2 sentences how income pressure can change attack timing and risk tolerance.",
+    "expect": {
+      "any_contains": [
+        "income",
+        "attack",
+        "risk",
+        "tolerance"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "combat",
+      "economy",
+      "planning"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-hud-save-23",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write one HUD/system line showing combat readiness plus save integrity check.",
+    "expect": {
+      "any_contains": [
+        "combat",
+        "readiness",
+        "save",
+        "integrity",
+        "check"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "combat",
+      "hud",
+      "save_load"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-compact-24",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "One comma-separated line with morale, terrain, economy drag, and fallback plan.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "morale",
+        "terrain",
+        "economy",
+        "plan",
+        "risk"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "combat",
+      "economy",
+      "planning"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-ops-25",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Plain text only: two lines summarizing battle odds and strategic next move.",
+    "expect": {
+      "any_contains": [
+        "battle",
+        "odds",
+        "risk",
+        "next move",
+        "defend",
+        "attack"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "combat",
+      "planning"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-support-26",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Give one recommendation that balances wall repairs, economy, and morale stabilization.",
+    "expect": {
+      "any_contains": [
+        "wall",
+        "economy",
+        "morale",
+        "stabil"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "combat",
+      "economy"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-riskbar-27",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Design compact risk-bar labels that include combat, supply, and save confidence.",
+    "expect": {
+      "any_contains": [
+        "risk",
+        "combat",
+        "supply",
+        "save",
+        "confidence"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "combat",
+      "save_load",
+      "hud"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-ai-check-28",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Write one AI check rule that aborts attack when risk high and supply low.",
+    "expect": {
+      "any_contains": [
+        "attack",
+        "abort",
+        "risk",
+        "supply",
+        "high"
+      ],
+      "min_chars": 60
+    },
+    "domains": [
+      "combat",
+      "planning",
+      "economy"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-catalog-29",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "List four combat readiness factors spanning battlefield, logistics, and persistence safety.",
+    "expect": {
+      "any_contains": [
+        "battle",
+        "terrain",
+        "supply",
+        "save",
+        "guard",
+        "morale"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "combat",
+      "economy",
+      "save_load"
+    ]
+  },
+  {
+    "id": "combat-mass-domain-aci-30",
+    "category": "combat_multidomain",
+    "specialists": [
+      "combat_risk"
+    ],
+    "prompt": "Provide one sentence on why multi-domain combat evaluation beats single-metric risk scoring.",
+    "expect": {
+      "any_contains": [
+        "multi-domain",
+        "combat",
+        "risk",
+        "economy",
+        "planning"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "combat",
+      "economy",
+      "planning"
+    ]
+  }
+]

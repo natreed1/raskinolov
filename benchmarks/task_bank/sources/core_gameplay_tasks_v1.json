@@ -1,0 +1,41 @@
+{
+  "schema_version": "task_source_registry_v1",
+  "source_id": "core_gameplay_tasks_v1",
+  "source_type": "curated_core_gameplay",
+  "origin": {
+    "derived_from": [
+      "benchmarks/patch_task_bank_v1.json",
+      "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json"
+    ],
+    "lineage_note": "Curated core gameplay product-behavior tasks; excludes eval/test-harness and training-pipeline infrastructure tasks."
+  },
+  "domain_focus": [
+    "army_operations",
+    "hud_status"
+  ],
+  "task_count": 8,
+  "task_refs": [
+    { "source_file": "benchmarks/patch_task_bank_v1.json", "task_id": "patch-map-box-select-input-08" },
+    { "source_file": "benchmarks/patch_task_bank_v1.json", "task_id": "patch-siege-workshop-build-menu-14" },
+    { "source_file": "benchmarks/patch_task_bank_v1.json", "task_id": "patch-combat-hud-density-refactor-23" },
+    { "source_file": "benchmarks/patch_task_bank_v1.json", "task_id": "patch-siege-recruitment-health-gates-24" },
+    { "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json", "task_id": "swev-gm-004" },
+    { "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json", "task_id": "swev-gm-009" },
+    { "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json", "task_id": "swev-gm-012" },
+    { "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json", "task_id": "swev-gm-014" }
+  ],
+  "subskill_tags": {
+    "patch-map-box-select-input-08": "input_controller_event_ordering",
+    "patch-siege-workshop-build-menu-14": "state_machine_transition_integrity",
+    "patch-combat-hud-density-refactor-23": "deterministic_preview_state_isolation",
+    "patch-siege-recruitment-health-gates-24": "state_machine_transition_integrity",
+    "swev-gm-004": "combat_modifier_consistency",
+    "swev-gm-009": "deterministic_preview_state_isolation",
+    "swev-gm-012": "combat_modifier_consistency",
+    "swev-gm-014": "input_controller_event_ordering"
+  },
+  "status": {
+    "curation_state": "active_seed",
+    "use_for_metrics": true
+  }
+}

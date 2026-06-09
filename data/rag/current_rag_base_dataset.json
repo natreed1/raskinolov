@@ -1,0 +1,85 @@
+{
+  "schema_version": "current_rag_base_dataset",
+  "entries": [
+    {
+      "id": "apply_contract_core",
+      "tags": [
+        "global",
+        "apply_contract"
+      ],
+      "text": "Output must be immediately applyable. Prefer unified diff with exact file paths and minimal hunk scope. If using fenced files, include complete file content only for changed files and no commentary outside fences."
+    },
+    {
+      "id": "ts_export_safety",
+      "tags": [
+        "global",
+        "typescript"
+      ],
+      "text": "Do not invent imports or exports. Before introducing a symbol, ensure it exists in the target module. Favor extending existing exported types/functions over creating new exports that ripple through gameCore dependencies."
+    },
+    {
+      "id": "verify_first_mindset",
+      "tags": [
+        "global",
+        "verification"
+      ],
+      "text": "Optimize for verify pass: preserve module boundaries, maintain existing public contracts, and avoid broad refactors. Solve the requested task with the smallest coherent code edit set."
+    },
+    {
+      "id": "hud_precision",
+      "tags": [
+        "hud_status",
+        "ui"
+      ],
+      "text": "HUD tasks should avoid state model churn. Prefer selector/derived-data updates and rendering adjustments that preserve existing store shape and component prop contracts."
+    },
+    {
+      "id": "economy_type_rigour",
+      "tags": [
+        "economy",
+        "economy_tooltip"
+      ],
+      "text": "Economy edits must preserve numeric unit semantics and accumulator typing. Explicitly type reducers and avoid introducing implicit any in economy pipelines."
+    },
+    {
+      "id": "combat_symbol_discipline",
+      "tags": [
+        "combat_risk",
+        "army_operations"
+      ],
+      "text": "Combat edits should reuse existing combat/military helpers. Avoid creating new combat state enums or symbols unless wired through all import sites and tests."
+    },
+    {
+      "id": "save_load_schema_stability",
+      "tags": [
+        "save_load_api_guard",
+        "state_perstitence_integrity"
+      ],
+      "text": "Save/load and API guard tasks require strict schema compatibility. Add optional fields conservatively, maintain backward compatibility, and avoid breaking existing serialization contracts."
+    },
+    {
+      "id": "planning_minimalism",
+      "tags": [
+        "ai_planning_explanation",
+        "ai_strategy_and_planning"
+      ],
+      "text": "AI planning changes should prioritize deterministic interfaces and minimal side effects. Keep planner output contracts stable and avoid introducing new mandatory properties without call-site updates."
+    },
+    {
+      "id": "path_scope_guard",
+      "tags": [
+        "global",
+        "allowed_paths"
+      ],
+      "text": "Stay strictly within allowed path scope. Do not modify unrelated infra files unless explicitly required by the task acceptance contract."
+    },
+    {
+      "id": "no_markdown_explanations",
+      "tags": [
+        "global",
+        "format"
+      ],
+      "text": "Never return prose-first markdown answers for patch tasks. The first non-empty line should begin patch/file output, not explanation text."
+    }
+  ]
+}

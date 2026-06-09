@@ -1,0 +1,82 @@
+# mlx_lm.lora — Qwen2.5-Coder-7B-Instruct-4bit lineage (see scripts/fe_lineage.py, docs/DATA_LAYOUT.md)
+# Pass: mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml
+# CLI flags override YAML when both are set (mlx-lm merges CLI first, then fills from YAML).
+# 7B 4-bit: on ~24 GB unified memory, close other MLX/Gradio jobs; lower --max-seq-length if Metal OOM.
+
+model: mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+train: true
+data: data/lora/qwen25-coder-7b/game_text
+
+fine_tune_type: lora
+optimizer: adamw
+mask_prompt: false
+
+num_layers: -1
+# batch_size 1 is safer for small valid sets; bump to 2+ when you have hundreds of train lines.
+batch_size: 1
+iters: 400
+val_batches: 8
+learning_rate: 1.0e-5
+steps_per_report: 10
+steps_per_eval: 50
+grad_accumulation_steps: 2
+
+adapter_path: checkpoints/fe-lora-qwen25-coder-7b-latest
+save_every: 100
+
+max_seq_length: 4096
+grad_checkpoint: true
+seed: 42
+
+lora_parameters:
+  rank: 16
+  dropout: 0.05
+  scale: 20.0
+
+optimizer_config:
+  adam: {}
+  adamw: {}
+  muon: {}
+  sgd: {}
+  adafactor: {}
+# mlx_lm.lora — Qwen2.5-Coder-7B-Instruct-4bit lineage (see scripts/fe_lineage.py, docs/DATA_LAYOUT.md)
+# Pass: mlx_lm.lora --train -c training/lora_qwen25_coder_7b.yaml
+# CLI flags override YAML when both are set (mlx-lm merges CLI first, then fills from YAML).
+# 7B 4-bit: on ~24 GB unified memory, close other MLX/Gradio jobs; lower --max-seq-length if Metal OOM.
+
+model: mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+train: true
+data: data/lora/qwen25-coder-7b/game_text
+
+fine_tune_type: lora
+optimizer: adamw
+mask_prompt: false
+
+num_layers: -1
+# batch_size 1 is safer for small valid sets; bump to 2+ when you have hundreds of train lines.
+batch_size: 1
+iters: 400
+val_batches: 8
+learning_rate: 1.0e-5
+steps_per_report: 10
+steps_per_eval: 50
+grad_accumulation_steps: 2
+
+adapter_path: checkpoints/fe-lora-qwen25-coder-7b-latest
+save_every: 100
+
+max_seq_length: 4096
+grad_checkpoint: true
+seed: 42
+
+lora_parameters:
+  rank: 16
+  dropout: 0.05
+  scale: 20.0
+
+optimizer_config:
+  adam: {}
+  adamw: {}
+  muon: {}
+  sgd: {}
+  adafactor: {}

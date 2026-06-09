@@ -1,0 +1,41 @@
+{
+  "schema_version": "test_system_lifecycle_v1",
+  "active_test_system": {
+    "manifest": "benchmarks/task_bank/compiled/final_mass_testing_system_v1.json",
+    "runner": "scripts/run_final_mass_testing_system.py",
+    "task_sources": [
+      "benchmarks/patch_task_bank_v1.json",
+      "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "benchmarks/task_bank/sources/custom_author_tasks_v1.json"
+    ],
+    "status": "active"
+  },
+  "outdated_test_suites": {
+    "legacy_root_benchmark_files": [
+      "benchmarks/ai_planning_explanation_mass_tasks_v1.json",
+      "benchmarks/combat_risk_mass_tasks_v1.json",
+      "benchmarks/economy_tooltip_mass_tasks_v1.json",
+      "benchmarks/fallen_empire_tasks.json",
+      "benchmarks/game_task_arena_examples.json",
+      "benchmarks/general_coding_tasks.json",
+      "benchmarks/hud_combat_field_flow_low_tasks_v1.json",
+      "benchmarks/hud_status_mass_tasks_v1.json",
+      "benchmarks/hud_status_mass_tasks_v2_pure.json",
+      "benchmarks/loading_screen_mass_tasks_v1.json",
+      "benchmarks/multi_agent_orchestration_mass_tasks_v1.json",
+      "benchmarks/run_analysis_rag_tasks_v1.json",
+      "benchmarks/save_load_api_guard_mass_tasks_v1.json",
+      "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "benchmarks/task_routing_mixed_tasks_v1.json",
+      "benchmarks/task_routing_tasks.json",
+      "benchmarks/ui_merge_dual_tasks_v1.json"
+    ],
+    "legacy_compiled_manifests": [
+      "benchmarks/task_bank/compiled/generalist_eval_swe_verified_v1.json",
+      "benchmarks/task_bank/compiled/generalist_eval_v1.json"
+    ],
+    "status": "outdated",
+    "superseded_by": "benchmarks/task_bank/compiled/final_mass_testing_system_v1.json",
+    "note": "These suites are retained for traceability but should not be used for promotion or current mass testing."
+  }
+}

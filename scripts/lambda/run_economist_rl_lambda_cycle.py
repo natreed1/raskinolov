@@ -19,6 +19,7 @@ import argparse
 import gc
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -55,6 +56,10 @@ from economist_rl_execution_evidence import (  # noqa: E402
 from economist_rl_ppo_trainer import (  # noqa: E402
     PPOConfig,
     attach_old_logprob_to_rollout,
+    candidate_has_ppo_training_marker,
+    candidate_staging_dir,
+    collect_old_logprob_proxy_errors,
+    discard_candidate_staging,
     train_ppo_batch,
     write_ppo_manifest,
 )
@@ -180,6 +185,48 @@ def _release_accelerator_memory() -> None:
         pass
 
 
+def _discard_failed_candidate_adapter(candidate_adapter: Path) -> None:
+    """Remove aborted PPO outputs so failed cycles do not look trainable."""
+    discard_candidate_staging(candidate_staging_dir(candidate_adapter))
+    if candidate_adapter.exists():
+        shutil.rmtree(candidate_adapter, ignore_errors=True)
+
+
+def _ppo_subprocess_log_paths(ppo_manifest_file: Path) -> tuple[Path, Path]:
+    stem = ppo_manifest_file.with_suffix("")
+    return stem.with_name(f"{stem.name}.stdout.log"), stem.with_name(f"{stem.name}.stderr.log")
+
+
+def _ppo_subprocess_failure_manifest(
+    *,
+    scored_file: Path,
+    request_path: Path,
+    ppo_manifest_file: Path,
+    exit_code: int,
+    reason: str,
+) -> dict[str, Any]:
+    stdout_log, stderr_log = _ppo_subprocess_log_paths(ppo_manifest_file)
+    payload: dict[str, Any] = {
+        "status": "failed",
+        "reason": reason,
+        "exit_code": int(exit_code),
+        "scored_file": str(scored_file),
+        "ppo_request_file": str(request_path),
+        "subprocess_isolated": True,
+        "ppo_stdout_log": str(stdout_log),
+        "ppo_stderr_log": str(stderr_log),
+    }
+    if stderr_log.is_file():
+        tail = stderr_log.read_text(encoding="utf-8", errors="replace").splitlines()[-20:]
+        if tail:
+            payload["stderr_tail"] = tail
+    if stdout_log.is_file():
+        tail = stdout_log.read_text(encoding="utf-8", errors="replace").splitlines()[-20:]
+        if tail:
+            payload["stdout_tail"] = tail
+    return payload
+
+
 def _ppo_config_to_dict(cfg: PPOConfig) -> dict[str, Any]:
     return asdict(cfg)
 
@@ -215,33 +262,56 @@ def run_ppo_train_subprocess(
     _write_json(request_path, request)
     _release_accelerator_memory()
 
+    ppo_manifest_file = ppo_manifest_file.expanduser().resolve()
+    ppo_manifest_file.parent.mkdir(parents=True, exist_ok=True)
+    stdout_log, stderr_log = _ppo_subprocess_log_paths(ppo_manifest_file)
+
     cmd = [sys.executable, str(PPO_TRAIN_SCRIPT), "--request", str(request_path)]
-    completed = subprocess.run(
-        cmd,
-        cwd=str(REPO),
-        env=os.environ.copy(),
-        check=False,
-    )
+    with stdout_log.open("w", encoding="utf-8") as stdout_handle, stderr_log.open(
+        "w", encoding="utf-8"
+    ) as stderr_handle:
+        completed = subprocess.run(
+            cmd,
+            cwd=str(REPO),
+            env=os.environ.copy(),
+            check=False,
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+        )
     if completed.returncode != 0:
-        return {
-            "status": "failed",
-            "reason": "subprocess_exit",
-            "exit_code": int(completed.returncode),
-            "scored_file": str(scored_file),
-            "ppo_request_file": str(request_path),
-            "subprocess_isolated": True,
-        }
+        _discard_failed_candidate_adapter(candidate_adapter.expanduser().resolve())
+        return _ppo_subprocess_failure_manifest(
+            scored_file=scored_file,
+            request_path=request_path,
+            ppo_manifest_file=ppo_manifest_file,
+            exit_code=int(completed.returncode),
+            reason="subprocess_exit",
+        )
     if not ppo_manifest_file.is_file():
-        return {
-            "status": "failed",
-            "reason": "missing_ppo_manifest",
-            "scored_file": str(scored_file),
-            "ppo_request_file": str(request_path),
-            "subprocess_isolated": True,
-        }
+        _discard_failed_candidate_adapter(candidate_adapter.expanduser().resolve())
+        return _ppo_subprocess_failure_manifest(
+            scored_file=scored_file,
+            request_path=request_path,
+            ppo_manifest_file=ppo_manifest_file,
+            exit_code=int(completed.returncode),
+            reason="missing_ppo_manifest",
+        )
     manifest = _read_json(ppo_manifest_file)
+    if manifest.get("status") != "trained":
+        _discard_failed_candidate_adapter(candidate_adapter.expanduser().resolve())
+        failure = _ppo_subprocess_failure_manifest(
+            scored_file=scored_file,
+            request_path=request_path,
+            ppo_manifest_file=ppo_manifest_file,
+            exit_code=int(completed.returncode),
+            reason="ppo_manifest_not_trained",
+        )
+        failure["ppo_status"] = manifest.get("status")
+        return failure
     manifest["subprocess_isolated"] = True
     manifest["ppo_request_file"] = str(request_path)
+    manifest["ppo_stdout_log"] = str(stdout_log)
+    manifest["ppo_stderr_log"] = str(stderr_log)
     return manifest
 
 
@@ -315,21 +385,28 @@ def resolve_cycle_current_adapter(
     cycle's ``rl_pass_*`` candidate. The adapter registry is read-only in this runner.
     """
     registry_current = resolve_registry_adapter(registry_path, adapter_name)
+    if chain_from_previous is not None:
+        chain = chain_from_previous.expanduser().resolve()
+        if adapter_dir_has_weights(chain) and candidate_has_ppo_training_marker(chain):
+            chained = adapter_from_resolved_path(adapter_name, chain)
+            if registry_current.resolved_path.resolve() == chain:
+                return registry_current, registry_current, "registry"
+            return registry_current, chained, "previous_cycle_candidate"
+        if adapter_dir_has_weights(chain):
+            print(
+                f"[adapter-chain] ignoring untrained candidate copy at {chain} "
+                "(missing .economist_rl_ppo_trained marker)",
+                flush=True,
+            )
     if init_adapter_path is not None:
         init_path = init_adapter_path.expanduser().resolve()
         if not adapter_dir_has_weights(init_path):
             raise SystemExit(f"--init-adapter-path has no LoRA weights: {init_path}")
         init_adapter = adapter_from_resolved_path(adapter_name, init_path)
         return registry_current, init_adapter, "init_adapter_path"
-    if chain_from_previous is None:
-        return registry_current, registry_current, "registry"
-    chain = chain_from_previous.expanduser().resolve()
-    if not adapter_dir_has_weights(chain):
+    if chain_from_previous is not None:
         return registry_current, registry_current, "registry_missing_chain_weights"
-    chained = adapter_from_resolved_path(adapter_name, chain)
-    if registry_current.resolved_path.resolve() == chain:
-        return registry_current, registry_current, "registry"
-    return registry_current, chained, "previous_cycle_candidate"
+    return registry_current, registry_current, "registry"
 
 
 def next_cycle_id(results_root: Path, output_root: Path) -> int:
@@ -400,6 +477,12 @@ class CachedAdapterGenerator:
         )
         return self.backend.generate(request)
 
+    def release(self) -> None:
+        """Drop cached model weights so PPO subprocess can use the GPU."""
+        if self.loaded:
+            self.backend.release_gpu()
+            self.loaded = False
+
 
 def select_rollout_tasks(tasks: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
     return tasks[: max(0, min(int(limit), len(tasks)))]
@@ -434,6 +517,7 @@ def run_rollouts(
     source_repo: Path | None = None,
     context_log_root: Path | None = None,
     max_logprob_window_tokens: int | None = None,
+    strict_old_logprob: bool = False,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     adapter_path = adapter.resolved_path if adapter.exists else None
@@ -463,41 +547,46 @@ def run_rollouts(
             temperature=temperature,
             system_prompt=system_prompt,
         )
-        generator.load_once()
-        for idx, task in enumerate(tasks, start=1):
-            started = time.perf_counter()
-            task_id = str(task.get("id") or "")
-            log_dir = (context_log_root / task_id) if context_log_root else None
-            user_prompt = build_rollout_user_prompt(
-                task,
-                source_repo=source_repo,
-                log_dir=log_dir,
-                include_starter_bodies_in_prompt=False,
-            )
-            output = generator.generate(user_prompt)
-            row = {
-                "task_id": task_id,
-                "prompt": str(task.get("prompt") or ""),
-                "generation_prompt": user_prompt,
-                "output": output,
-                "model": base_model,
-                "adapter_id": adapter.adapter_id,
-                "adapter_path": str(adapter_path or ""),
-                "seconds": round(time.perf_counter() - started, 3),
-                "rollout_index": idx,
-            }
-            rows.append(
-                attach_old_logprob_to_rollout(
-                    rollout_row=row,
-                    system_prompt=system_prompt,
-                    base_model=base_model,
-                    adapter_path=adapter_path,
-                    dry_run=False,
-                    inference_backend=generator.inference_backend(),
-                    max_window_tokens=max_logprob_window_tokens,
+        try:
+            generator.load_once()
+            for idx, task in enumerate(tasks, start=1):
+                started = time.perf_counter()
+                task_id = str(task.get("id") or "")
+                log_dir = (context_log_root / task_id) if context_log_root else None
+                user_prompt = build_rollout_user_prompt(
+                    task,
+                    source_repo=source_repo,
+                    log_dir=log_dir,
+                    include_starter_bodies_in_prompt=False,
                 )
-            )
-            print(f"[rollout] {idx}/{len(tasks)} {task.get('id')}", flush=True)
+                output = generator.generate(user_prompt)
+                row = {
+                    "task_id": task_id,
+                    "prompt": str(task.get("prompt") or ""),
+                    "generation_prompt": user_prompt,
+                    "output": output,
+                    "model": base_model,
+                    "adapter_id": adapter.adapter_id,
+                    "adapter_path": str(adapter_path or ""),
+                    "seconds": round(time.perf_counter() - started, 3),
+                    "rollout_index": idx,
+                }
+                rows.append(
+                    attach_old_logprob_to_rollout(
+                        rollout_row=row,
+                        system_prompt=system_prompt,
+                        base_model=base_model,
+                        adapter_path=adapter_path,
+                        dry_run=False,
+                        inference_backend=generator.inference_backend(),
+                        max_window_tokens=max_logprob_window_tokens,
+                        strict=strict_old_logprob,
+                    )
+                )
+                print(f"[rollout] {idx}/{len(tasks)} {task.get('id')}", flush=True)
+        finally:
+            generator.release()
+            _release_accelerator_memory()
     _append_jsonl(rollout_file, rows)
     return rows
 
@@ -925,16 +1014,20 @@ def run_cycle(
     data_root = args.data_root.expanduser().resolve()
     paths = paths_for_cycle(cycle_id, output_root, results_root, data_root)
     registry = args.registry.expanduser().resolve()
-    init_path = getattr(args, "init_adapter_path", None)
-    if init_path is None and not chain_from_previous:
-        default_init = DEFAULT_ECONOMIST_RL_INIT_ADAPTER.expanduser().resolve()
-        if default_init.is_dir() and adapter_dir_has_weights(default_init):
-            init_path = default_init
+    init_for_resolve: Path | None = None
+    if chain_from_previous is None:
+        init_path = getattr(args, "init_adapter_path", None)
+        if init_path is None:
+            default_init = DEFAULT_ECONOMIST_RL_INIT_ADAPTER.expanduser().resolve()
+            if default_init.is_dir() and adapter_dir_has_weights(default_init):
+                init_path = default_init
+        if init_path is not None:
+            init_for_resolve = Path(init_path)
     registry_current, current, load_reason = resolve_cycle_current_adapter(
         registry_path=registry,
         adapter_name=args.adapter_name,
         chain_from_previous=chain_from_previous,
-        init_adapter_path=Path(init_path) if init_path else None,
+        init_adapter_path=init_for_resolve,
     )
     task_payload, tasks = _load_task_payload(args.task_db.expanduser().resolve(), spec)
     eval_payload, eval_tasks_all = _load_task_payload(args.eval_set.expanduser().resolve(), spec)
@@ -1015,7 +1108,20 @@ def run_cycle(
         source_repo=source_repo,
         context_log_root=context_log_root if source_repo else None,
         max_logprob_window_tokens=ppo_config.max_logprob_window_tokens,
+        strict_old_logprob=bool(getattr(args, "strict_old_logprob", False)),
     )
+    proxy_errors = collect_old_logprob_proxy_errors(rollouts)
+    if proxy_errors:
+        manifest["old_logprob_errors"] = proxy_errors
+        print(
+            f"[cycle {cycle_id:03d}] old_logprob attach used proxy fallback for "
+            f"{len(proxy_errors)} rollout(s)",
+            flush=True,
+        )
+        if getattr(args, "strict_old_logprob", False):
+            manifest["cycle_status"] = "old_logprob_attach_failed"
+            _write_json(paths.manifest_file, manifest)
+            return manifest
     evidenced = run_evidence(
         spec=spec,
         task_by_id=task_by_id,
@@ -1207,6 +1313,11 @@ def parse_args() -> argparse.Namespace:
         help="LoRA init for rollouts/PPO (default: checkpoints/fe-lora-arena-apply-sft).",
     )
     parser.add_argument(
+        "--strict-old-logprob",
+        action="store_true",
+        help="Fail the cycle when rollout old_logprob attach falls back to proxy values.",
+    )
+    parser.add_argument(
         "--skip-ppo",
         action="store_true",
         help="Rollouts + scoring only; do not run PPO weight update.",
@@ -1241,8 +1352,20 @@ def main() -> int:
         chain_from = previous_candidate if offset > 0 else None
         manifest = run_cycle(args, cycle_id, chain_from_previous=chain_from)
         manifests.append(manifest)
+        if manifest.get("cycle_status") == "training_failed":
+            print(
+                f"[cycle {cycle_id:03d}] stopping multi-cycle run after training_failed",
+                flush=True,
+            )
+            break
+        if manifest.get("cycle_status") == "old_logprob_attach_failed":
+            print(
+                f"[cycle {cycle_id:03d}] stopping multi-cycle run after old_logprob_attach_failed",
+                flush=True,
+            )
+            break
         candidate_text = str(manifest.get("candidate_adapter") or "")
-        if candidate_text:
+        if candidate_text and manifest.get("train_result", {}).get("status") == "trained":
             previous_candidate = Path(candidate_text).expanduser().resolve()
     print(json.dumps({"cycles": len(manifests), "manifests": [m.get("manifest_file", "") for m in manifests]}, indent=2))
     return 0

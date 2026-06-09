@@ -1,0 +1,1632 @@
+{
+  "schema_version": "council_behavior_baselines_v1",
+  "generated_utc": "2026-05-27T03:42:37Z",
+  "source_rows_jsonl": "benchmarks/results/lambda_recovery/council121-20260526/council_conversation_eval_rows_council121-20260526.jsonl",
+  "source_summary_json": "benchmarks/results/lambda_recovery/council121-20260526/council_conversation_eval_summary_council121-20260526.json",
+  "interpretation": "Behavior baseline from one-base-model council traces. Specialist lineage names identify routed personas/registry entries, not confirmed per-participant LoRA weight loading in this run.",
+  "run_summary": {
+    "schema_version": "council_conversation_eval_summary_v1",
+    "generated_utc": "2026-05-26T10:49:19Z",
+    "manifest": "/home/ubuntu/fallen-empire-lora/benchmarks/task_bank/compiled/final_mass_testing_system_v1.json",
+    "rows": 121,
+    "escalations": 95,
+    "escalation_rate": 0.7851,
+    "avg_participants": 6.3,
+    "avg_rounds": 2.0,
+    "route_counts": {
+      "frontier": 21,
+      "hybrid": 13,
+      "local": 87
+    },
+    "adapter_counts": {
+      "ai_planning_explanation": 9,
+      "combat_risk": 3,
+      "economy_tooltip": 2,
+      "general_fallback": 92,
+      "hud_status": 9,
+      "loading_screen": 6
+    },
+    "rows_jsonl": "/home/ubuntu/fallen-empire-lora/benchmarks/results/council_conversation_eval_rows_council121-20260526.jsonl",
+    "local_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+    "mock_generation": false
+  },
+  "baselines": [
+    {
+      "base_expert_id": "loading_screen",
+      "lineage": "loading_screen:v2:cycle2",
+      "adapter_path": "checkpoints/adapters/loading_screen/cycle2",
+      "is_specialized": true,
+      "tasks_seen": 52,
+      "round_outputs": 312,
+      "winner_tasks": 52,
+      "winner_mentions": 90,
+      "win_rate_when_seen": 1.0,
+      "avg_contribution_score": 0.7803,
+      "avg_output_confidence": 0.6732,
+      "selected_as_primary_route": 6,
+      "selected_as_specialist": 52,
+      "top_variants": [
+        {
+          "variant": "cautious",
+          "count": 104
+        },
+        {
+          "variant": "balanced",
+          "count": 104
+        },
+        {
+          "variant": "assertive",
+          "count": 104
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "hud_status",
+          "count": 72
+        },
+        {
+          "domain": "army_operations",
+          "count": 72
+        },
+        {
+          "domain": "economy",
+          "count": 60
+        },
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 48
+        },
+        {
+          "domain": "multidomain",
+          "count": 36
+        },
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 24
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "will",
+          "count": 104
+        },
+        {
+          "term": "implement",
+          "count": 95
+        },
+        {
+          "term": "system",
+          "count": 91
+        },
+        {
+          "term": "data",
+          "count": 77
+        },
+        {
+          "term": "function",
+          "count": 74
+        },
+        {
+          "term": "new",
+          "count": 70
+        },
+        {
+          "term": "module",
+          "count": 65
+        },
+        {
+          "term": "based",
+          "count": 63
+        },
+        {
+          "term": "adapter",
+          "count": 63
+        },
+        {
+          "term": "logic",
+          "count": 58
+        },
+        {
+          "term": "existing",
+          "count": 49
+        },
+        {
+          "term": "state",
+          "count": 48
+        },
+        {
+          "term": "current",
+          "count": 47
+        },
+        {
+          "term": "real-time",
+          "count": 47
+        },
+        {
+          "term": "modify",
+          "count": 45
+        },
+        {
+          "term": "performance",
+          "count": 45
+        },
+        {
+          "term": "testing",
+          "count": 44
+        },
+        {
+          "term": "complexity",
+          "count": 43
+        },
+        {
+          "term": "create",
+          "count": 43
+        },
+        {
+          "term": "use",
+          "count": 41
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-node-path-runtime-resolution-01",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "loading_screen::assertive",
+          "score": 0.7839,
+          "confidence": 0.7091,
+          "text_excerpt": "**Recommendation:**\n\nTo ensure that bare imports resolve reliably in your production container without moving source files, consider adding an alias resolution strategy in your TypeScript configuration (`tsconfig.json`). This can be done using the `paths` option to map import paths to their actual locations. For example:\n\n```json\n{\n  \"compilerOptions\": {\n    \"baseUrl\": \".\",\n    \"paths\": {\n      \"@shared/*\": [\"app/src/shared/*\"]\n    }\n  }\n}\n```\n\nThis approach allows you to use aliases like `@shared/utils` instead of relative paths like `../../app/src/shared/utils`, making your code cleaner and more maintainable. Additionally, ensure that your build process (e.g., Webpack, Rollup) is configured to recognize these aliases if they are used outside of TypeScript.\n\n**Risks:**\n1. **Configuration Complexity:** Adding aliases might complicate the configuration if not properly managed.\n2. **Build "
+        },
+        {
+          "task_id": "patch-test-env-registry-contract-04",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "loading_screen::assertive",
+          "score": 0.7879,
+          "confidence": 0.7487,
+          "text_excerpt": "**Recommendation:**\n\nTo define a typed registry for deterministic test environments, I propose creating a structured data format using JSON. This format will include the following fields:\n\n1. `id`: A unique identifier for each test environment.\n2. `title`: A brief name or title for the test environment.\n3. `description`: A detailed description of the test environment.\n4. `boot_mode`: The method used to start the test environment (e.g., cold boot, warm boot).\n5. `seed` (optional): A random seed value to ensure reproducibility.\n6. `opponent_controls` (optional): Controls for any opponents or adversaries in the test environment.\n\nHere is an example of what the JSON structure might look like:\n\n```json\n{\n  \"environments\": [\n    {\n      \"id\": \"env001\",\n      \"title\": \"Basic Test Environment\",\n      \"description\": \"A simple environment for basic testing.\",\n      \"boot_mode\": \"cold_boot\",\n      "
+        },
+        {
+          "task_id": "patch-test-env-registry-contract-04",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "loading_screen::cautious",
+          "score": 0.7863,
+          "confidence": 0.7329,
+          "text_excerpt": "**Recommendation:**\n\nTo define a typed registry for deterministic test environments, we can create a structured data format using JSON or YAML. This format will include fields for `id`, `title`, `description`, `boot_mode`, and optional `seed` and `opponent_controls`.\n\nHere is an example of how this could be structured:\n\n```json\n{\n  \"environments\": [\n    {\n      \"id\": \"env1\",\n      \"title\": \"Test Environment 1\",\n      \"description\": \"A test environment for evaluating system behavior under specific conditions.\",\n      \"boot_mode\": \"normal\",\n      \"seed\": 12345,\n      \"opponent_controls\": {\n        \"type\": \"AI\",\n        \"difficulty\": \"medium\"\n      }\n    },\n    {\n      \"id\": \"env2\",\n      \"title\": \"Test Environment 2\",\n      \"description\": \"Another test environment for different scenarios.\",\n      \"boot_mode\": \"safe\",\n      \"opponent_controls\": {\n        \"type\": \"human\",\n        \"strategy\":"
+        },
+        {
+          "task_id": "patch-site-auth-middleware-07",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "loading_screen::assertive",
+          "score": 0.787,
+          "confidence": 0.7403,
+          "text_excerpt": "**Recommendation:**\n\nTo implement a lightweight site password gate, follow these steps:\n\n1. **Create an Auth Endpoint:**\n   - Develop an `/auth` endpoint that accepts a POST request with a `password` field.\n   - Validate the password against a stored secret (e.g., using bcrypt).\n\n2. **Middleware to Protect App Routes:**\n   - Implement middleware that checks for a valid session marker before allowing access to protected routes.\n   - If the session marker is invalid or missing, redirect the user to the login page.\n\n3. **Login Flow:**\n   - When a user successfully logs in via the `/auth` endpoint, set a session marker (e.g., a cookie) on their browser.\n   - Verify this session marker on subsequent requests to ensure the user remains authenticated.\n\n**Risks and Considerations:**\n- **Security:** Ensure that passwords are hashed using a strong algorithm like bcrypt to protect against potential"
+        },
+        {
+          "task_id": "patch-site-auth-middleware-07",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "loading_screen::cautious",
+          "score": 0.7855,
+          "confidence": 0.7245,
+          "text_excerpt": "**Recommendation:**\n\nTo implement a lightweight site password gate, follow these steps:\n\n1. **Create an Auth Endpoint:**\n   - Develop an `/auth` endpoint that accepts a POST request with a `password` field.\n   - Validate the password against a stored secret (e.g., using bcrypt).\n\n2. **Middleware to Protect App Routes:**\n   - Implement middleware that checks for a valid session marker before allowing access to protected routes.\n   - If the session marker is invalid or missing, redirect the user to the login page.\n\n3. **Login Flow:**\n   - When a user successfully logs in via the `/auth` endpoint, set a session marker (e.g., a cookie) on their browser.\n   - Verify this session marker on subsequent requests to ensure the user remains authenticated.\n\n**Risks and Considerations:**\n- **Security:** Ensure that passwords are hashed using a strong algorithm like bcrypt to protect against potential"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "hud_status",
+      "lineage": "hud_status:v3:cycle3",
+      "adapter_path": "checkpoints/adapters/hud_status/cycle3",
+      "is_specialized": true,
+      "tasks_seen": 25,
+      "round_outputs": 150,
+      "winner_tasks": 25,
+      "winner_mentions": 37,
+      "win_rate_when_seen": 1.0,
+      "avg_contribution_score": 0.7785,
+      "avg_output_confidence": 0.655,
+      "selected_as_primary_route": 9,
+      "selected_as_specialist": 25,
+      "top_variants": [
+        {
+          "variant": "cautious",
+          "count": 50
+        },
+        {
+          "variant": "balanced",
+          "count": 50
+        },
+        {
+          "variant": "assertive",
+          "count": 50
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "hud_status",
+          "count": 60
+        },
+        {
+          "domain": "multidomain",
+          "count": 36
+        },
+        {
+          "domain": "economy",
+          "count": 30
+        },
+        {
+          "domain": "army_operations",
+          "count": 12
+        },
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 6
+        },
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 6
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "hud",
+          "count": 86
+        },
+        {
+          "term": "state",
+          "count": 53
+        },
+        {
+          "term": "data",
+          "count": 40
+        },
+        {
+          "term": "function",
+          "count": 39
+        },
+        {
+          "term": "new",
+          "count": 34
+        },
+        {
+          "term": "use",
+          "count": 33
+        },
+        {
+          "term": "implement",
+          "count": 32
+        },
+        {
+          "term": "logic",
+          "count": 31
+        },
+        {
+          "term": "updates",
+          "count": 25
+        },
+        {
+          "term": "supply",
+          "count": 25
+        },
+        {
+          "term": "existing",
+          "count": 23
+        },
+        {
+          "term": "following",
+          "count": 23
+        },
+        {
+          "term": "hold",
+          "count": 23
+        },
+        {
+          "term": "all",
+          "count": 22
+        },
+        {
+          "term": "based",
+          "count": 22
+        },
+        {
+          "term": "testing",
+          "count": 22
+        },
+        {
+          "term": "deterministic",
+          "count": 22
+        },
+        {
+          "term": "economy",
+          "count": 22
+        },
+        {
+          "term": "current",
+          "count": 21
+        },
+        {
+          "term": "states",
+          "count": 21
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-multiplayer-snapshot-types-09",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "hud_status::assertive",
+          "score": 0.7717,
+          "confidence": 0.5872,
+          "text_excerpt": "**Recommendation:**\n\nTo address the issue of multiplayer snapshots occasionally desyncing with store/UI expectations, we need to implement a comprehensive solution that focuses on patch snapshot ingestion and type alignment between the HUD and simulation state. Here’s a detailed plan:\n\n### Step 1: Define a Robust Synchronization Protocol\nDevelop a new synchronization protocol that ensures all data structures and types are consistently aligned across the HUD and simulation state. This protocol should include:\n- **Version Control:** Each snapshot should have a version number to track changes and ensure compatibility.\n- **Type Validation:** Implement strict type validation checks during snapshot ingestion to prevent mismatches.\n\n### Step 2: Refactor Snapshot Ingestion Process\nRefactor the existing snapshot ingestion process to include the following steps:\n1. **Pre-Sync Validation:** Before "
+        },
+        {
+          "task_id": "patch-multiplayer-snapshot-types-09",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "hud_status::cautious",
+          "score": 0.7701,
+          "confidence": 0.5714,
+          "text_excerpt": "**Recommendation:**\n\nTo address the issue of multiplayer snapshots occasionally desyncing with store/UI expectations, we need to ensure that the patch snapshot ingestion process aligns types correctly between the HUD and simulation state. Here is a revised and more detailed approach:\n\n1. **Type Alignment Verification:**\n   - **Files Needed:** `SnapshotIngestion.cpp`, `HUDState.h`, `SimulationState.h`\n   - **Action:** Implement a function `verifyTypeAlignment` in `SnapshotIngestion.cpp` that checks if the types of data in the snapshot match those expected by the HUD and simulation states. This function will help identify any discrepancies early in the process.\n\n2. **Synchronization Mechanism:**\n   - **Files Needed:** `SyncManager.cpp`, `SyncManager.h`\n   - **Action:** Develop a new class `SyncManager` in `SyncManager.cpp` that handles the synchronization of the HUD and simulation states. "
+        },
+        {
+          "task_id": "patch-hud-lobby-session-panel-10",
+          "domain": "hud_status",
+          "winner_id": "hud_status::assertive",
+          "score": 0.7921,
+          "confidence": 0.7911,
+          "text_excerpt": "**Recommendation:**\n\nTo expose multiplayer lobby/session state in the HUD with clear status labels and minimal clutter, I recommend implementing a centralized state management system that wires into an authoritative store. This approach ensures consistency across all clients and minimizes clutter by using concise, labeled information.\n\n### Steps to Implement:\n\n1. **Centralized State Management System:**\n   - Create a `GameStateManager` class that handles the storage and retrieval of session state data.\n   - Ensure this manager is synchronized with an authoritative server to maintain accuracy.\n\n2. **Authoritative Store Integration:**\n   - Develop an `AuthoritativeStore` class that holds the definitive state of the game session.\n   - The `GameStateManager` will periodically update its state from the `AuthoritativeStore`.\n\n3. **HUD Manager:**\n   - Create an `HUDManager` class responsible fo"
+        },
+        {
+          "task_id": "patch-research-system-schema-11",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "hud_status::assertive",
+          "score": 0.7717,
+          "confidence": 0.5872,
+          "text_excerpt": "**Recommendation:**\n\nTo introduce a research/technology + council subsystem with strong typed state contracts and HUD visibility while minimizing disruption to the existing game loop, consider the following approach:\n\n### Implementation Steps:\n1. **Define State Contracts:**\n   - Create an interface or abstract class `IStateContract` that defines methods for entering, exiting, and updating states.\n   - Ensure each state implements this interface.\n\n2. **Strong Typed State Contracts:**\n   - Use TypeScript or a similar strongly-typed language to enforce type safety.\n   - Define enums for different states (e.g., `ResearchState`, `TechnologyState`) and use them consistently throughout the system.\n\n3. **HUD Visibility:**\n   - Implement a HUD manager that updates based on the current state contract.\n   - Provide methods to display relevant information such as progress, resources required, etc.\n\n"
+        },
+        {
+          "task_id": "patch-research-system-schema-11",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "hud_status::cautious",
+          "score": 0.7701,
+          "confidence": 0.5714,
+          "text_excerpt": "**Recommendation:**\n\nTo introduce a research/technology + council subsystem with strong typed state contracts and HUD visibility while minimizing disruption to the existing game loop, consider the following approach:\n\n### Implementation Steps:\n1. **Define State Contracts:**\n   - Create an interface or abstract class `IStateContract` that defines methods for entering, exiting, and updating states.\n   - Ensure each state implements this interface.\n\n2. **State Contract Manager:**\n   - Implement a `StateContractManager` class that maintains a list of active state contracts.\n   - This manager will handle the lifecycle of state contracts, ensuring they are properly initialized, updated, and cleaned up.\n\n3. **HUD Integration:**\n   - Develop a `HUDVisibilityManager` class that updates the HUD based on the current state contracts.\n   - This class will subscribe to state contract events and update"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "ai_planning_explanation",
+      "lineage": "ai_planning_explanation:v1:champion",
+      "adapter_path": "checkpoints/adapters/ai_planning_explanation/champion",
+      "is_specialized": true,
+      "tasks_seen": 18,
+      "round_outputs": 108,
+      "winner_tasks": 18,
+      "winner_mentions": 28,
+      "win_rate_when_seen": 1.0,
+      "avg_contribution_score": 0.7795,
+      "avg_output_confidence": 0.665,
+      "selected_as_primary_route": 9,
+      "selected_as_specialist": 18,
+      "top_variants": [
+        {
+          "variant": "cautious",
+          "count": 36
+        },
+        {
+          "variant": "balanced",
+          "count": 36
+        },
+        {
+          "variant": "assertive",
+          "count": 36
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 84
+        },
+        {
+          "domain": "army_operations",
+          "count": 12
+        },
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 6
+        },
+        {
+          "domain": "multidomain",
+          "count": 6
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "module",
+          "count": 35
+        },
+        {
+          "term": "system",
+          "count": 30
+        },
+        {
+          "term": "will",
+          "count": 29
+        },
+        {
+          "term": "logic",
+          "count": 28
+        },
+        {
+          "term": "recruit",
+          "count": 28
+        },
+        {
+          "term": "new",
+          "count": 26
+        },
+        {
+          "term": "implement",
+          "count": 25
+        },
+        {
+          "term": "based",
+          "count": 25
+        },
+        {
+          "term": "data",
+          "count": 24
+        },
+        {
+          "term": "current",
+          "count": 23
+        },
+        {
+          "term": "algorithm",
+          "count": 20
+        },
+        {
+          "term": "modify",
+          "count": 19
+        },
+        {
+          "term": "food",
+          "count": 19
+        },
+        {
+          "term": "state",
+          "count": 18
+        },
+        {
+          "term": "function",
+          "count": 18
+        },
+        {
+          "term": "both",
+          "count": 17
+        },
+        {
+          "term": "unit",
+          "count": 17
+        },
+        {
+          "term": "units",
+          "count": 17
+        },
+        {
+          "term": "develop",
+          "count": 16
+        },
+        {
+          "term": "existing",
+          "count": 16
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-ai-plan-shared-application-05",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "ai_planning_explanation::assertive",
+          "score": 0.7717,
+          "confidence": 0.5872,
+          "text_excerpt": "**Recommendation:**\n\nTo address the divergence between AI plan execution during training and runtime, I recommend introducing a shared plan-application module named `UnifiedPlanExecutor`. This module will encapsulate the logic for executing plans consistently across both phases. Here’s how we can implement this:\n\n1. **Create the UnifiedPlanExecutor Module:**\n   - Develop a new Python file, e.g., `unified_plan_executor.py`, which contains the `UnifiedPlanExecutor` class.\n   - The class should have methods for initializing the executor, applying plans, and handling any necessary state management.\n\n2. **Refactor Existing Code:**\n   - Identify all current callers of the plan-execution logic in both training and runtime codebases.\n   - Replace these calls with calls to the `UnifiedPlanExecutor`.\n\n3. **Ensure Consistency:**\n   - Ensure that the `UnifiedPlanExecutor` handles all edge cases and "
+        },
+        {
+          "task_id": "patch-ai-plan-shared-application-05",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "ai_planning_explanation::cautious",
+          "score": 0.7701,
+          "confidence": 0.5714,
+          "text_excerpt": "**Recommendation:**\n\nTo address the divergence between AI plan execution during training and runtime, I recommend introducing a shared plan-application module named `UnifiedPlanExecutor`. This module will encapsulate the logic for executing plans consistently across both phases. Here’s how we can implement this:\n\n1. **Create the UnifiedPlanExecutor Module:**\n   - Develop a new Python file, e.g., `unified_plan_executor.py`, which contains the `UnifiedPlanExecutor` class.\n   - The class should have methods for initializing the executor, applying plans, and handling any necessary state management.\n\n2. **Refactor Existing Code:**\n   - Identify all current callers of the plan-execution logic in both training and runtime codebases.\n   - Replace these calls with calls to the `UnifiedPlanExecutor`.\n\n3. **Ensure Consistency:**\n   - Ensure that the `UnifiedPlanExecutor` handles all edge cases and "
+        },
+        {
+          "task_id": "patch-pending-recruit-state-06",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "ai_planning_explanation::assertive",
+          "score": 0.7876,
+          "confidence": 0.7461,
+          "text_excerpt": "**Recommendation:**\n\nTo introduce pending land recruit transitions safely into AI and simulation paths while ensuring state typing and update flow remain coherent, follow these detailed steps:\n\n1. **Define Pending Transitions:**\n   - Create a comprehensive list of all pending land recruit transitions based on current strategic objectives and mission requirements.\n\n2. **State Typing Verification:**\n   - Ensure that each transition adheres to the correct state typing rules. This includes verifying that the transition does not violate any existing constraints or conditions.\n\n3. **Simulation Path Integration:**\n   - Integrate the pending transitions into the simulation path by simulating their effects under various scenarios. This will help identify potential issues early in the process.\n\n4. **Update Flow Coherence Check:**\n   - Perform a thorough review of the update flow to ensure that the"
+        },
+        {
+          "task_id": "patch-pending-recruit-state-06",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "ai_planning_explanation::cautious",
+          "score": 0.786,
+          "confidence": 0.7303,
+          "text_excerpt": "**Recommendation:**\n\nTo introduce pending land recruit transitions safely into AI and simulation paths while ensuring state typing and update flow remain coherent, follow these steps:\n\n1. **Identify Pending Transitions:**\n   - Review the current list of pending recruit transitions to ensure they align with the latest strategic objectives and requirements.\n\n2. **Create a Transition Queue:**\n   - Implement a queue system to manage pending transitions. This will help in organizing and prioritizing the transitions based on their urgency and impact.\n\n3. **Update State Typing:**\n   - Modify the state typing to include new variables and states related to pending recruit transitions. Ensure that all relevant data structures are updated accordingly.\n\n4. **Develop Safe Staging Mechanisms:**\n   - Introduce staging areas within the simulation where pending recruits can be temporarily placed without "
+        },
+        {
+          "task_id": "patch-ai-move-target-eligibility-28",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "ai_planning_explanation::assertive",
+          "score": 0.7858,
+          "confidence": 0.7278,
+          "text_excerpt": "**Recommendation:**\n\nTo address the issue of patching AI move-target selection to handle unit-state eligibility based on strategy policy and food constraints, I propose the following detailed approach:\n\n### Steps to Implement:\n\n1. **Integrate Strategy Policies and Food Constraints:**\n   - Modify the `UnitEligibilityCheck` function to include checks against both strategy policies and food constraints.\n   - Ensure that the function considers factors such as unit health, hunger level, and strategic objectives when determining eligibility.\n\n2. **Implement Rolling Window Context:**\n   - Introduce a rolling window mechanism that evaluates the current state of each unit over a specified time frame.\n   - This will help in making more informed decisions by considering recent trends rather than just the current state.\n\n3. **Update Move-Target Selection Algorithm:**\n   - Modify the `MoveTargetSelec"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "combat_risk",
+      "lineage": "combat_risk:v2_tsc_resume:cycle4",
+      "adapter_path": "checkpoints/adapters/combat_risk/cycle4",
+      "is_specialized": true,
+      "tasks_seen": 12,
+      "round_outputs": 72,
+      "winner_tasks": 12,
+      "winner_mentions": 16,
+      "win_rate_when_seen": 1.0,
+      "avg_contribution_score": 0.7834,
+      "avg_output_confidence": 0.7038,
+      "selected_as_primary_route": 3,
+      "selected_as_specialist": 12,
+      "top_variants": [
+        {
+          "variant": "cautious",
+          "count": 24
+        },
+        {
+          "variant": "balanced",
+          "count": 24
+        },
+        {
+          "variant": "assertive",
+          "count": 24
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 30
+        },
+        {
+          "domain": "army_operations",
+          "count": 30
+        },
+        {
+          "domain": "multidomain",
+          "count": 12
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "combat",
+          "count": 23
+        },
+        {
+          "term": "system",
+          "count": 23
+        },
+        {
+          "term": "weather",
+          "count": 21
+        },
+        {
+          "term": "unit",
+          "count": 20
+        },
+        {
+          "term": "units",
+          "count": 20
+        },
+        {
+          "term": "implement",
+          "count": 19
+        },
+        {
+          "term": "data",
+          "count": 18
+        },
+        {
+          "term": "based",
+          "count": 17
+        },
+        {
+          "term": "module",
+          "count": 17
+        },
+        {
+          "term": "movement",
+          "count": 15
+        },
+        {
+          "term": "new",
+          "count": 13
+        },
+        {
+          "term": "logic",
+          "count": 13
+        },
+        {
+          "term": "modifiers",
+          "count": 13
+        },
+        {
+          "term": "interface",
+          "count": 13
+        },
+        {
+          "term": "will",
+          "count": 12
+        },
+        {
+          "term": "window",
+          "count": 12
+        },
+        {
+          "term": "range",
+          "count": 12
+        },
+        {
+          "term": "existing",
+          "count": 12
+        },
+        {
+          "term": "type",
+          "count": 12
+        },
+        {
+          "term": "fixed-point",
+          "count": 12
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-ai-move-target-eligibility-28",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "combat_risk::assertive",
+          "score": 0.7858,
+          "confidence": 0.7278,
+          "text_excerpt": "**Recommendation:**\n\nTo address the issue of patching AI move-target selection to handle unit-state eligibility based on strategy policy and food constraints, I propose the following approach:\n\n1. **Integrate Strategy Policies and Food Constraints:**\n   - Modify the `MoveTargetSelection` class by adding a method `evaluateUnitEligibility`.\n   - This method will take into account both the current state of the unit (e.g., starving, moving) and the strategy policy to determine if the unit can be assigned a new target.\n\n2. **Implement Rolling Window Context:**\n   - Introduce a `RollingWindowState` class that maintains a sliding window of recent game states.\n   - Use this window to assess the overall context when evaluating unit eligibility.\n\n3. **Revise Decision-Making Logic:**\n   - Update the main decision-making loop in the AI to call `evaluateUnitEligibility` before assigning a new target."
+        },
+        {
+          "task_id": "patch-archer-max-range-auto-positioning-49",
+          "domain": "army_operations",
+          "winner_id": "combat_risk::assertive",
+          "score": 0.7717,
+          "confidence": 0.5872,
+          "text_excerpt": "**Recommendation:**\n\nTo ensure archer units maintain their maximum effective attack range during engagements while adhering to legal max-range standoff positions, updating when fronts shift, and without breaking melee pathing or engagement resolution determinism, the following steps should be taken:\n\n1. **Create a New Positioning Module:**\n   - Develop a new module named `ArcherRangeMaintainer` that will manage the positioning logic for archer units.\n   - This module should be integrated into the existing combat system to handle dynamic adjustments to archer unit positions.\n\n2. **Implement Range Calculation Logic:**\n   - The `ArcherRangeMaintainer` module should include a function to calculate the maximum effective attack range for each archer unit based on its weapon type and any modifiers (e.g., terrain bonuses).\n   - This calculation should be performed at initialization and updated w"
+        },
+        {
+          "task_id": "patch-archer-max-range-auto-positioning-49",
+          "domain": "army_operations",
+          "winner_id": "combat_risk::cautious",
+          "score": 0.7701,
+          "confidence": 0.5714,
+          "text_excerpt": "**Recommendation:**\n\nTo ensure archer units maintain their maximum effective attack range against enemy units during engagements, we propose the following solution:\n\n1. **Create a Positioning Module**: Develop a new module named `ArcherRangeMaintainer` that will be integrated into the existing combat behavior scripts. This module will handle the dynamic adjustment of archer unit positions.\n\n2. **Implement Range Calculation Logic**: Within the `ArcherRangeMaintainer`, implement a function to calculate the maximum effective attack range for each archer unit based on its weapon type and any modifiers (e.g., terrain bonuses).\n\n3. **Dynamic Position Adjustment**: The module should continuously monitor the battlefield state and adjust the positions of archer units to maintain their maximum effective attack range. It should prefer legal max-range standoff positions and update these positions wh"
+        },
+        {
+          "task_id": "patch-ai-wall-ring-supply-expansion-55",
+          "domain": "multidomain",
+          "winner_id": "combat_risk::assertive",
+          "score": 0.79,
+          "confidence": 0.7695,
+          "text_excerpt": "**Recommendation:**\n\nTo effectively coordinate wall-ring planning with supply-aware expansion decisions, I recommend integrating a multi-tiered AI system that includes:\n\n1. **Real-Time Supply Monitoring Module:** This module continuously monitors resource availability and predicts future shortages or surpluses. It uses advanced algorithms like machine learning to analyze historical data and external factors (e.g., weather, trade routes).\n\n2. **Dynamic Wall-Ring Planning Engine:** Based on the supply data, this engine optimizes the placement and reinforcement of walls. It prioritizes critical areas where defenses are most vulnerable and adjusts the wall layout to maximize coverage and efficiency.\n\n3. **Adaptive Expansion Strategy:** The system dynamically decides when and where to expand villages or cities. During periods of weak supply, it focuses on consolidating existing resources and "
+        },
+        {
+          "task_id": "patch-ai-construction-site-sim-builds-56",
+          "domain": "ai_strategy_and_planning",
+          "winner_id": "combat_risk::assertive",
+          "score": 0.7835,
+          "confidence": 0.7052,
+          "text_excerpt": "**Recommendation:**\n\nTo patch the AI build planning to ensure that headless/runtime paths queue construction sites based on builder BP progression instead of instant build placement, follow these steps:\n\n1. **Modify AI Build Planning Logic:**\n   - Locate the file responsible for handling AI build planning (e.g., `AI_Build_Plan.cpp`).\n   - Identify the function or method that currently places construction sites instantly (`placeConstructionSite()`).\n\n2. **Implement Queue Mechanism:**\n   - Replace the instant placement logic with a queue system.\n   - Create a new data structure (e.g., `std::queue<ConstructionSite*>`) to store construction sites waiting for their turn based on builder BP progression.\n\n3. **Integrate Builder BP Progression:**\n   - Modify the builder AI to check its current BP level before placing a site.\n   - Ensure that only builders with sufficient BP can place sites by ch"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "save_load_api_guard",
+      "lineage": "save_load_api_guard:v1:champion",
+      "adapter_path": "checkpoints/adapters/save_load_api_guard/champion",
+      "is_specialized": true,
+      "tasks_seen": 7,
+      "round_outputs": 42,
+      "winner_tasks": 7,
+      "winner_mentions": 12,
+      "win_rate_when_seen": 1.0,
+      "avg_contribution_score": 0.7782,
+      "avg_output_confidence": 0.6521,
+      "selected_as_primary_route": 0,
+      "selected_as_specialist": 7,
+      "top_variants": [
+        {
+          "variant": "cautious",
+          "count": 14
+        },
+        {
+          "variant": "balanced",
+          "count": 14
+        },
+        {
+          "variant": "assertive",
+          "count": 14
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 24
+        },
+        {
+          "domain": "multidomain",
+          "count": 12
+        },
+        {
+          "domain": "economy",
+          "count": 6
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "generals",
+          "count": 20
+        },
+        {
+          "term": "policies",
+          "count": 17
+        },
+        {
+          "term": "new",
+          "count": 17
+        },
+        {
+          "term": "not",
+          "count": 15
+        },
+        {
+          "term": "characters",
+          "count": 15
+        },
+        {
+          "term": "implement",
+          "count": 13
+        },
+        {
+          "term": "validation",
+          "count": 13
+        },
+        {
+          "term": "data",
+          "count": 13
+        },
+        {
+          "term": "production",
+          "count": 12
+        },
+        {
+          "term": "automation",
+          "count": 12
+        },
+        {
+          "term": "stats",
+          "count": 12
+        },
+        {
+          "term": "adapter",
+          "count": 12
+        },
+        {
+          "term": "integrate",
+          "count": 11
+        },
+        {
+          "term": "performance",
+          "count": 11
+        },
+        {
+          "term": "process",
+          "count": 10
+        },
+        {
+          "term": "system",
+          "count": 10
+        },
+        {
+          "term": "combat",
+          "count": 10
+        },
+        {
+          "term": "function",
+          "count": 10
+        },
+        {
+          "term": "allowed",
+          "count": 10
+        },
+        {
+          "term": "json",
+          "count": 9
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-node-path-runtime-resolution-01",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "save_load_api_guard::assertive",
+          "score": 0.7839,
+          "confidence": 0.7091,
+          "text_excerpt": "**Recommendation:**\n\nTo ensure that bare imports resolve reliably in your production container without moving source files, consider adding an alias resolution strategy in your TypeScript configuration (`tsconfig.json`). This can be done using the `paths` option to map import paths to their actual locations. For example:\n\n```json\n{\n  \"compilerOptions\": {\n    \"baseUrl\": \".\",\n    \"paths\": {\n      \"@shared/*\": [\"app/src/shared/*\"]\n    }\n  }\n}\n```\n\nThis approach allows you to use aliases like `@shared/utils` instead of relative paths like `../../app/src/shared/utils`, making your code cleaner and more maintainable. Additionally, ensure that your build process (e.g., Webpack, Rollup) is configured to handle these aliases if they are used outside of TypeScript.\n\n**Risks:**\n1. **Configuration Complexity:** Adding aliases might complicate the configuration if not handled carefully.\n2. **Build To"
+        },
+        {
+          "task_id": "patch-builder-automation-rebalance-15",
+          "domain": "economy",
+          "winner_id": "save_load_api_guard::assertive",
+          "score": 0.7852,
+          "confidence": 0.7215,
+          "text_excerpt": "**Recommendation:**\n\nTo address the stale builder automation decisions following recent building/progression updates, I propose the following comprehensive approach:\n\n1. **Automated Policy Review and Update:**\n   - Develop an automated script that periodically reviews the current automation policies against the latest game updates.\n   - The script should identify discrepancies between the existing policies and the updated game mechanics.\n\n2. **Dynamic Contextual Patching:**\n   - Implement a dynamic contextual patching mechanism that adjusts automation policies based on the current state of the game (e.g., resources available, enemy presence).\n   - Use machine learning algorithms to learn from past successful builds and adjust future policies accordingly.\n\n3. **User Feedback Loop:**\n   - Establish a user feedback loop where players can report issues or suggest improvements to the automati"
+        },
+        {
+          "task_id": "patch-builder-automation-rebalance-15",
+          "domain": "economy",
+          "winner_id": "save_load_api_guard::cautious",
+          "score": 0.7836,
+          "confidence": 0.7057,
+          "text_excerpt": "**Recommendation:**\n\nTo address the issue of stale builder automation decisions following recent building/progression updates, I recommend the following steps:\n\n1. **Review Recent Changes**: Begin by thoroughly reviewing the recent updates to the game's progression system. Identify any new rules, resource requirements, or changes in building order that may have affected the current automation policies.\n\n2. **Update Automation Policies**: Based on the identified changes, update the automation policies to reflect the new priorities. Ensure that the policies now prioritize valid and efficient early-game constructions while preventing invalid choices.\n\n3. **Implement Rolling Window Context Patching Strategy**: Introduce a rolling window context patching strategy to dynamically adjust the automation policies as new updates are released. This will help maintain alignment between the automation"
+        },
+        {
+          "task_id": "patch-new-unit-combat-stats-economic-cost-42",
+          "domain": "multidomain",
+          "winner_id": "save_load_api_guard::assertive",
+          "score": 0.7717,
+          "confidence": 0.5872,
+          "text_excerpt": "**Recommendation:**\n\nTo introduce a new recruitable unit type called \"Archer\" with balanced combat stats and integrate it into recruit/build flows, follow these steps:\n\n1. **Define Combat Stats:**\n   - **HP:** 100\n   - **Attack:** 70\n   - **Defense:** 40\n   - **Speed:** 100\n\n2. **Economic Material Costs:**\n   - Wood: 120\n   - Food: 80\n   - Gold: 30\n\n3. **Integration into Recruit/Build Flows:**\n   - Add the Archer to the recruit menu.\n   - Integrate Archer production into existing build menus, ensuring it requires specific resources and time.\n\n4. **HUD/Panel UI Updates:**\n   - Display the Archer's stats and cost clearly on the HUD or panel UI.\n   - Include an option to view detailed information about the Archer’s abilities and benefits.\n\n**Risks and Considerations:**\n- **Balancing:** Ensure the Archer is not overpowered or underpowered compared to other units.\n- **Resource Management:** V"
+        },
+        {
+          "task_id": "patch-new-unit-combat-stats-economic-cost-42",
+          "domain": "multidomain",
+          "winner_id": "save_load_api_guard::cautious",
+          "score": 0.7701,
+          "confidence": 0.5714,
+          "text_excerpt": "**Recommendation:**\n\nTo introduce a new recruitable unit type with balanced combat stats and integrate it into the recruit/build flows, follow these steps:\n\n1. **Define Combat Stats:**\n   - Create a new JSON file under `data/units` named `ranger.json`.\n   - Define the following stats:\n     ```json\n     {\n       \"name\": \"Ranger\",\n       \"hp\": 120,\n       \"attack\": 80,\n       \"defense\": 70,\n       \"speed\": 90\n     }\n     ```\n\n2. **Economic Material Costs:**\n   - Update the `data/economy/material_costs.json` file to include the cost of recruiting a Ranger:\n     ```json\n     {\n       \"Ranger\": {\n         \"Wood\": 150,\n         \"Food\": 100,\n         \"Gold\": 50\n       }\n     }\n     ```\n\n3. **Integration into Recruit/Build Flows:**\n   - Modify the `src/gameplay/recruitment_system.js` file to include the Ranger in the recruitment menu:\n     ```javascript\n     function getAvailableUnits() {\n      "
+        }
+      ]
+    },
+    {
+      "base_expert_id": "economy_tooltip",
+      "lineage": "economy_tooltip:v1:cycle2+routing_fastpath_v1",
+      "adapter_path": "checkpoints/adapters/economy_tooltip/cycle2",
+      "is_specialized": true,
+      "tasks_seen": 19,
+      "round_outputs": 114,
+      "winner_tasks": 4,
+      "winner_mentions": 5,
+      "win_rate_when_seen": 0.2105,
+      "avg_contribution_score": 0.7849,
+      "avg_output_confidence": 0.7191,
+      "selected_as_primary_route": 2,
+      "selected_as_specialist": 19,
+      "top_variants": [
+        {
+          "variant": "cautious",
+          "count": 38
+        },
+        {
+          "variant": "balanced",
+          "count": 38
+        },
+        {
+          "variant": "assertive",
+          "count": 38
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "hud_status",
+          "count": 36
+        },
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 30
+        },
+        {
+          "domain": "multidomain",
+          "count": 24
+        },
+        {
+          "domain": "economy",
+          "count": 18
+        },
+        {
+          "domain": "army_operations",
+          "count": 6
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "economy",
+          "count": 13
+        },
+        {
+          "term": "wage",
+          "count": 12
+        },
+        {
+          "term": "productivity",
+          "count": 11
+        },
+        {
+          "term": "worker",
+          "count": 9
+        },
+        {
+          "term": "function",
+          "count": 9
+        },
+        {
+          "term": "define",
+          "count": 7
+        },
+        {
+          "term": "gold",
+          "count": 7
+        },
+        {
+          "term": "calculate_productivity",
+          "count": 6
+        },
+        {
+          "term": "code",
+          "count": 6
+        },
+        {
+          "term": "following",
+          "count": 5
+        },
+        {
+          "term": "system",
+          "count": 5
+        },
+        {
+          "term": "implement",
+          "count": 5
+        },
+        {
+          "term": "new",
+          "count": 5
+        },
+        {
+          "term": "modify",
+          "count": 5
+        },
+        {
+          "term": "cycle",
+          "count": 5
+        },
+        {
+          "term": "total_wages",
+          "count": 5
+        },
+        {
+          "term": "economy_state",
+          "count": 5
+        },
+        {
+          "term": "order",
+          "count": 5
+        },
+        {
+          "term": "testing",
+          "count": 5
+        },
+        {
+          "term": "hud",
+          "count": 4
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-hud-economy-mixed-panel-26",
+          "domain": "hud_status",
+          "winner_id": "economy_tooltip::assertive",
+          "score": 0.7885,
+          "confidence": 0.7547,
+          "text_excerpt": "**Recommendation:**\n\nTo integrate economy-relevant cues into the HUD while maintaining tactical readability and avoiding visual drift, I propose the following steps:\n\n1. **Define Requirements:**\n   - Identify key economy-related metrics to be displayed (e.g., upkeep costs, pressure levels, readiness context).\n   - Ensure these metrics do not interfere with the current army stack UX.\n\n2. **Design Modular Overlay:**\n   - Create a modular overlay system that can dynamically display economy-related cues based on user preferences or game state.\n   - Use a transparent background to ensure the overlay does not obstruct critical tactical information.\n\n3. **Implement Tooltip System:**\n   - Introduce a tooltip system that appears when players hover over economy-related icons or areas in the HUD.\n   - The tooltip should provide detailed information about the economic impact of player actions or str"
+        },
+        {
+          "task_id": "patch-worker-wage-productivity-balance-47",
+          "domain": "economy",
+          "winner_id": "economy_tooltip::assertive",
+          "score": 0.7717,
+          "confidence": 0.5872,
+          "text_excerpt": "**Recommendation:**\n\nTo implement worker wages in the patch economy dynamics, consider the following detailed plan:\n\n1. **Define Wage-Productivity Function:**\n   - Create a new file named `wage_productivity.py`.\n   - Define a function `calculate_productivity(wage)` that returns an increase in productivity based on the wage. The function should have a balanced curve to prevent excessive exploitation. For example:\n     ```python\n     def calculate_productivity(wage):\n         return min(1.0, wage / 100) * wage\n     ```\n\n2. **Modify Economy Cycle Logic:**\n   - In the main economy cycle script (e.g., `economy_cycle.py`), modify the `process_cycle()` function to include wage deductions and productivity calculations.\n   - Example modification:\n     ```python\n     def process_cycle():\n         global gold, productivity\n         # Deduct gold for wages\n         if gold >= total_wages:\n          "
+        },
+        {
+          "task_id": "patch-worker-wage-productivity-balance-47",
+          "domain": "economy",
+          "winner_id": "economy_tooltip::cautious",
+          "score": 0.7701,
+          "confidence": 0.5714,
+          "text_excerpt": "**Recommendation:**\n\nTo implement worker wages in the patch economy dynamics, consider the following steps:\n\n1. **Define Wage-Productivity Function:**\n   - Create a new file named `wage_productivity.py`.\n   - Define a function `calculate_productivity(wage)` that returns an increase in productivity based on the wage. The function should have a balanced curve to prevent excessive exploitation. For example:\n     ```python\n     def calculate_productivity(wage):\n         return min(1.0, wage / 100)  # Example formula: productivity increases linearly up to a maximum of 1.0\n     ```\n\n2. **Modify Economy Cycle Logic:**\n   - In the economy cycle logic (e.g., `economy_cycle.py`), modify the `process_wages()` function to deduct gold from the economy and apply the productivity increase.\n     ```python\n     def process_wages(economy_state):\n         total_wages = sum(worker['wage'] for worker in econ"
+        },
+        {
+          "task_id": "patch-battalion-training-tick-ordering-84",
+          "domain": "multidomain",
+          "winner_id": "economy_tooltip::assertive",
+          "score": 0.7871,
+          "confidence": 0.7407,
+          "text_excerpt": "**Recommendation:**\n\nTo ensure that resource pulls and completion transitions occur in a deterministic phase order relative to economy turn processing, we propose the following adjustments to the patch training progression:\n\n1. **Define Clear Phase Order:**\n   - Identify the critical phases in the game cycle where resource pulls and completion transitions happen.\n   - Create a strict order of these phases relative to the economy turn processing.\n\n2. **Modify Sequence in Code:**\n   - Locate the relevant sections of the game codebase where resource pulls and completion transitions are handled.\n   - Adjust the sequence of function calls or method invocations to enforce the desired deterministic order.\n\n3. **Implement Guards and Assertions:**\n   - Add guards and assertions at key points in the code to verify that the phases are executed in the correct order.\n   - This will help catch any dev"
+        },
+        {
+          "task_id": "swev-gm-006",
+          "domain": "economy",
+          "winner_id": "economy_tooltip::assertive",
+          "score": 0.7852,
+          "confidence": 0.7221,
+          "text_excerpt": "**Recommendation:**\n\nTo fix the index out-of-range crash in economy factor identification due to missing optional arrays in sparse snapshots, implement the following steps:\n\n1. **Safe Bounds Checks:**\n   - Introduce boundary checks before accessing elements in any array that may be omitted in sparse snapshots.\n   - Ensure that all functions handling economy factors validate indices against the actual size of the arrays.\n\n2. **Deterministic Fallback Labels:**\n   - Define default values or fallback labels for economy factors when the corresponding arrays are absent.\n   - Update the relevant sections of the code to use these fallback values instead of attempting to access non-existent data.\n\n3. **Code Review and Testing:**\n   - Conduct a thorough code review to ensure that all instances of economy factor identification have been updated with the new safety measures.\n   - Perform extensive t"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "precise_short",
+      "lineage": "",
+      "adapter_path": "",
+      "is_specialized": false,
+      "tasks_seen": 121,
+      "round_outputs": 242,
+      "winner_tasks": 27,
+      "winner_mentions": 27,
+      "win_rate_when_seen": 0.2231,
+      "avg_contribution_score": 0.7037,
+      "avg_output_confidence": 0.5305,
+      "selected_as_primary_route": 0,
+      "selected_as_specialist": 0,
+      "top_variants": [
+        {
+          "variant": "baseline",
+          "count": 242
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 42
+        },
+        {
+          "domain": "hud_status",
+          "count": 40
+        },
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 40
+        },
+        {
+          "domain": "army_operations",
+          "count": 40
+        },
+        {
+          "domain": "economy",
+          "count": 40
+        },
+        {
+          "domain": "multidomain",
+          "count": 40
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "logic",
+          "count": 28
+        },
+        {
+          "term": "new",
+          "count": 26
+        },
+        {
+          "term": "implement",
+          "count": 26
+        },
+        {
+          "term": "function",
+          "count": 25
+        },
+        {
+          "term": "any",
+          "count": 24
+        },
+        {
+          "term": "system",
+          "count": 23
+        },
+        {
+          "term": "these",
+          "count": 21
+        },
+        {
+          "term": "state",
+          "count": 20
+        },
+        {
+          "term": "testing",
+          "count": 19
+        },
+        {
+          "term": "validation",
+          "count": 19
+        },
+        {
+          "term": "existing",
+          "count": 19
+        },
+        {
+          "term": "code",
+          "count": 18
+        },
+        {
+          "term": "food",
+          "count": 18
+        },
+        {
+          "term": "units",
+          "count": 18
+        },
+        {
+          "term": "issues",
+          "count": 17
+        },
+        {
+          "term": "performance",
+          "count": 17
+        },
+        {
+          "term": "current",
+          "count": 16
+        },
+        {
+          "term": "identify",
+          "count": 15
+        },
+        {
+          "term": "data",
+          "count": 15
+        },
+        {
+          "term": "unit",
+          "count": 14
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-railway-missing-dep-02",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "precise_short",
+          "score": 0.6974,
+          "confidence": 0.4674,
+          "text_excerpt": "**Recommendation:**\n\nTo resolve the `MODULE_NOT_FOUND` error during map generation in the game server, add the missing module to the server's package metadata and update the lock file. Ensure that the module is correctly specified under the dependencies section of both files.\n\n**Risks:**\n- Overriding another expert's recommendation could lead to additional issues if their solution addresses a different root cause.\n- Incorrectly specifying the module version in the lock file might cause compatibility problems in future deployments.\n\n**Needed Files:**\n- `package.json` (for Node.js projects)\n- `requirements.txt` or `Pipfile` (for Python projects)\n- `yarn.lock`, `package-lock.json`, or `pipenv.lock` (lock files)\n\n**Action Plan:**\n1. Identify the missing module from the deployment logs.\n2. Update the appropriate package metadata file (`package.json`, `requirements.txt`, etc.) to include the m"
+        },
+        {
+          "task_id": "patch-test-env-dynamic-route-03",
+          "domain": "hud_status",
+          "winner_id": "precise_short",
+          "score": 0.6974,
+          "confidence": 0.4674,
+          "text_excerpt": "To create a deterministic `/test-env/[envId]` route that resolves an environment registry, returns not-found for unknown IDs, and renders a shared shell for visual debugging, follow these steps:\n\n1. **Define the Route**:\n   - Create a new route in your web framework that matches the pattern `/test-env/:envId`.\n   - Ensure the route is deterministic by using a parameterized URL.\n\n2. **Resolve Environment Registry**:\n   - In the route handler, retrieve the `envId` from the request parameters.\n   - Check if the `envId` exists in your environment registry.\n   - If it does not exist, return a 404 Not Found response.\n\n3. **Render Shared Shell**:\n   - If the `envId` is valid, render a shared shell template or component.\n   - The shared shell should provide a consistent interface for visual debugging.\n\n4. **Error Handling**:\n   - Implement proper error handling to manage any unexpected issues du"
+        },
+        {
+          "task_id": "patch-multiplayer-auth-route-hardening-17",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "precise_short",
+          "score": 0.6974,
+          "confidence": 0.4674,
+          "text_excerpt": "**Recommendation:**\n\nTo patch the auth routes and middleware contracts without introducing regressions in gated access and session validation semantics, follow these steps:\n\n1. **Code Review:**\n   - Conduct a thorough review of the modified code in the auth-adjacent area.\n   - Focus on ensuring that the changes do not alter the existing semantics of gated access and session validation.\n\n2. **Unit Tests:**\n   - Write or update unit tests to cover the patched routes and middleware.\n   - Ensure that these tests validate both the functionality and the integrity of the session validation logic.\n\n3. **Integration Tests:**\n   - Run integration tests to simulate real-world scenarios involving the patched routes and middleware.\n   - Verify that the system behaves as expected under various conditions, including edge cases.\n\n4. **Rollback Plan:**\n   - Develop a rollback plan in case the changes cau"
+        },
+        {
+          "task_id": "patch-multiplayer-remap-safety-22",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "precise_short",
+          "score": 0.6974,
+          "confidence": 0.4674,
+          "text_excerpt": "**Recommendation:**\n\nTo patch the multiplayer remap/bridge flow and protect against partial or stale payload shapes while preserving deterministic local state contracts, consider implementing the following steps:\n\n1. **Validate Payload Shapes**: Before processing any payloads, validate their shape against expected structures using a schema validation library like JSON Schema or Avro. This ensures that only correctly formatted payloads proceed.\n\n2. **Implement Stale State Detection**: Introduce a timestamp or versioning mechanism within each payload. When a payload is received, compare its timestamp or version with the last known valid state. If it's older or stale, reject it.\n\n3. **Preserve Deterministic Local State Contracts**: Ensure that all agents operate under a consistent set of rules and data formats. Use immutable data structures where possible to prevent accidental modifications"
+        },
+        {
+          "task_id": "patch-starvation-diagnosis-population-stability-30",
+          "domain": "economy",
+          "winner_id": "precise_short",
+          "score": 0.6974,
+          "confidence": 0.4674,
+          "text_excerpt": "### Recommendation\n\nTo address the starvation spiral issue in your regression patch task, follow these steps:\n\n1. **Diagnose the Starvation Path**:\n   - **Code Review**: Carefully review the code responsible for managing population growth and death rates.\n   - **Identify Key Variables**: Determine which variables (e.g., food supply, birth rate, death rate) are involved in the starvation process.\n   - **Debugging**: Use debugging tools to trace the values of these variables over time and identify any anomalies or bottlenecks.\n\n2. **Tune Parameters**:\n   - **Adjust Birth-Growth Rates**: Increase the birth rate during periods of sufficient food availability and decrease it when food is scarce.\n   - **Adjust Starvation Loss Rates**: Increase the death rate due to starvation more rapidly as food becomes increasingly scarce.\n   - **Sustainable Conditions**: Ensure that the system reaches a sta"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "sliding_window",
+      "lineage": "",
+      "adapter_path": "",
+      "is_specialized": false,
+      "tasks_seen": 121,
+      "round_outputs": 242,
+      "winner_tasks": 27,
+      "winner_mentions": 27,
+      "win_rate_when_seen": 0.2231,
+      "avg_contribution_score": 0.699,
+      "avg_output_confidence": 0.5201,
+      "selected_as_primary_route": 0,
+      "selected_as_specialist": 0,
+      "top_variants": [
+        {
+          "variant": "baseline",
+          "count": 242
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 42
+        },
+        {
+          "domain": "hud_status",
+          "count": 40
+        },
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 40
+        },
+        {
+          "domain": "army_operations",
+          "count": 40
+        },
+        {
+          "domain": "economy",
+          "count": 40
+        },
+        {
+          "domain": "multidomain",
+          "count": 40
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "window",
+          "count": 67
+        },
+        {
+          "term": "rolling",
+          "count": 40
+        },
+        {
+          "term": "data",
+          "count": 37
+        },
+        {
+          "term": "new",
+          "count": 35
+        },
+        {
+          "term": "implement",
+          "count": 28
+        },
+        {
+          "term": "each",
+          "count": 27
+        },
+        {
+          "term": "windows",
+          "count": 27
+        },
+        {
+          "term": "reasoning",
+          "count": 27
+        },
+        {
+          "term": "final",
+          "count": 26
+        },
+        {
+          "term": "system",
+          "count": 24
+        },
+        {
+          "term": "logic",
+          "count": 22
+        },
+        {
+          "term": "define",
+          "count": 20
+        },
+        {
+          "term": "function",
+          "count": 20
+        },
+        {
+          "term": "sprite",
+          "count": 20
+        },
+        {
+          "term": "identify",
+          "count": 19
+        },
+        {
+          "term": "based",
+          "count": 19
+        },
+        {
+          "term": "any",
+          "count": 18
+        },
+        {
+          "term": "consistent",
+          "count": 18
+        },
+        {
+          "term": "size",
+          "count": 18
+        },
+        {
+          "term": "performance",
+          "count": 16
+        }
+      ],
+      "baseline_examples": [
+        {
+          "task_id": "patch-railway-missing-dep-02",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "sliding_window",
+          "score": 0.6927,
+          "confidence": 0.457,
+          "text_excerpt": "**Recommendation:**\n\nTo resolve the `MODULE_NOT_FOUND` error during map generation in the game server, follow these steps:\n\n1. **Identify Missing Modules**: Review the deployment logs to identify which specific modules are causing the `MODULE_NOT_FOUND` error.\n   \n2. **Update Package Metadata**: Ensure that all identified modules are listed under the `dependencies` section in the server's `package.json` or equivalent metadata file.\n\n3. **Update Lock File**: Run the appropriate command (e.g., `npm install` or `pip install`) to update the lock file (`package-lock.json` or `requirements.txt`). This ensures that the correct versions of the modules are installed.\n\n4. **Test Clean Install**: Perform a clean installation in your CI/Deploy environment to verify that the issue is resolved.\n\n**Risks:**\n- **Dependency Conflicts**: Updating dependencies might introduce conflicts with other packages "
+        },
+        {
+          "task_id": "patch-test-env-dynamic-route-03",
+          "domain": "hud_status",
+          "winner_id": "sliding_window",
+          "score": 0.6927,
+          "confidence": 0.457,
+          "text_excerpt": "To create a deterministic `/test-env/[envId]` route that resolves an environment registry, returns not-found for unknown IDs, and renders a shared shell for visual debugging, follow these steps:\n\n1. **Define the Route**:\n   - Create a new route in your web framework (e.g., Express.js for Node.js) using a method like `app.get('/test-env/:envId', ...)`.\n   - Ensure the route is defined in a way that it can handle dynamic parameters (`:envId`).\n\n2. **Resolve Environment Registry**:\n   - Inside the route handler, retrieve the environment ID from the request parameters (`req.params.envId`).\n   - Use this ID to look up the corresponding environment in your registry.\n   - If the environment is found, proceed; otherwise, return a 404 Not Found response.\n\n3. **Render Shared Shell**:\n   - If the environment is valid, render a shared shell template or view.\n   - This could be done by calling a temp"
+        },
+        {
+          "task_id": "patch-multiplayer-auth-route-hardening-17",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "sliding_window",
+          "score": 0.6927,
+          "confidence": 0.457,
+          "text_excerpt": "**Recommendation:**\n\nTo address the patching of auth routes and middleware contracts while ensuring no regressions in gated access and session validation semantics, I propose a rolling window approach as follows:\n\n1. **Initial Testing**:\n   - Run comprehensive unit tests and integration tests to identify any potential issues introduced by the patch.\n   - Identify critical test cases that cover the affected areas (auth routes and middleware contracts).\n\n2. **Rolling Window Implementation**:\n   - Divide the feature into smaller, manageable chunks or modules.\n   - Deploy each chunk sequentially and monitor the system's behavior after each deployment.\n   - After deploying a chunk, run targeted tests to ensure that the new functionality does not affect the existing semantics of gated access and session validation.\n\n3. **Monitoring and Validation**:\n   - Continuously monitor the system logs an"
+        },
+        {
+          "task_id": "patch-multiplayer-remap-safety-22",
+          "domain": "state_perstitence_integrity",
+          "winner_id": "sliding_window",
+          "score": 0.6927,
+          "confidence": 0.457,
+          "text_excerpt": "**Recommendation:**\n\nTo evaluate rolling windows and stitch consistent final reasoning, follow these steps:\n\n1. **Define Rolling Window Parameters:**\n   - Determine the size of the window (e.g., number of patches).\n   - Decide on the overlap between windows if necessary.\n\n2. **Process Each Window Independently:**\n   - Apply the same processing logic to each window independently to ensure consistency.\n\n3. **Stitch Consistent Final Reasoning:**\n   - Combine the results from each window to form a coherent final output.\n   - Ensure that the stitching process preserves the integrity and determinism of the local state contracts.\n\n**Risks:**\n- Potential inconsistencies if different windows are processed differently.\n- Complexity in stitching results without losing determinism.\n\n**Needed Files:**\n- A script or function to define the rolling window parameters.\n- A processing function that applies"
+        },
+        {
+          "task_id": "patch-starvation-diagnosis-population-stability-30",
+          "domain": "economy",
+          "winner_id": "sliding_window",
+          "score": 0.6927,
+          "confidence": 0.457,
+          "text_excerpt": "### Recommendation\n\nTo address the starvation spiral issue in the regression patch task, I recommend implementing a rolling window analysis to monitor population dynamics over time. This approach will help us identify patterns and trends that contribute to the starvation path. Specifically, we can use a sliding window of fixed size (e.g., 100 time steps) to analyze the population data and detect anomalies or unsustainable trends.\n\n#### Steps to Implement Rolling Window Analysis:\n\n1. **Define the Sliding Window Size**: Choose an appropriate window size based on the expected duration of the starvation spiral and the granularity of the data.\n\n2. **Monitor Population Dynamics**: For each window, calculate key metrics such as average population size, standard deviation, and trend indicators (e.g., moving averages).\n\n3. **Detect Anomalies**: Use statistical methods or machine learning algorith"
+        }
+      ]
+    },
+    {
+      "base_expert_id": "wide_compressed",
+      "lineage": "",
+      "adapter_path": "",
+      "is_specialized": false,
+      "tasks_seen": 121,
+      "round_outputs": 242,
+      "winner_tasks": 0,
+      "winner_mentions": 0,
+      "win_rate_when_seen": 0.0,
+      "avg_contribution_score": 0.6961,
+      "avg_output_confidence": 0.5238,
+      "selected_as_primary_route": 0,
+      "selected_as_specialist": 0,
+      "top_variants": [
+        {
+          "variant": "baseline",
+          "count": 242
+        }
+      ],
+      "top_domains": [
+        {
+          "domain": "state_perstitence_integrity",
+          "count": 42
+        },
+        {
+          "domain": "hud_status",
+          "count": 40
+        },
+        {
+          "domain": "ai_strategy_and_planning",
+          "count": 40
+        },
+        {
+          "domain": "army_operations",
+          "count": 40
+        },
+        {
+          "domain": "economy",
+          "count": 40
+        },
+        {
+          "domain": "multidomain",
+          "count": 40
+        }
+      ],
+      "behavior_markers": [
+        "explicit recommendation framing",
+        "risk callouts",
+        "needed-file inventory",
+        "stepwise action plan",
+        "override/escalation note",
+        "implementation snippets",
+        "verification/testing reminder",
+        "domain-specific concise UI copy"
+      ],
+      "top_terms": [
+        {
+          "term": "new",
+          "count": 276
+        },
+        {
+          "term": "system",
+          "count": 255
+        },
+        {
+          "term": "logic",
+          "count": 235
+        },
+        {
+          "term": "data",
+          "count": 214
+        },
+        {
+          "term": "implement",
+          "count": 199
+        },
+        {
+          "term": "testing",
+          "count": 190
+        },
+        {
+          "term": "state",
+          "count": 178
+        },
+        {
+          "term": "existing",
+          "count": 162
+        },
+        {
+          "term": "performance",
+          "count": 162
+        },
+        {
+          "term": "function",
+          "count": 161
+        },
+        {
+          "term": "complexity",
+          "count": 156
+        },
+        {
+          "term": "will",
+          "count": 147
+        },
+        {
+          "term": "not",
+          "count": 142
+        },
+        {
+          "term": "any",
+          "count": 135
+        },
+        {
+          "term": "current",
+          "count": 133
+        },
+        {
+          "term": "module",
+          "count": 130
+        },
+        {
+          "term": "modify",
+          "count": 129
+        },
+        {
+          "term": "potential",
+          "count": 128
+        },
+        {
+          "term": "hud",
+          "count": 128
+        },
+        {
+          "term": "based",
+          "count": 127
+        }
+      ],
+      "baseline_examples": []
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "schema_version": "domain_file_hints_v1",
+  "target_repo": "/Users/natreed/fallen-empire",
+  "domains": {
+    "hud_status": [
+      "src/components/ui/GameHUD.tsx",
+      "src/store/useGameStore.ts",
+      "src/types/game.ts",
+      "src/components/ui/panelThemes/MapRoomPanel.tsx"
+    ],
+    "economy": [
+      "src/components/ui/GameHUD.tsx",
+      "src/lib/empireEconomy.ts",
+      "src/lib/gameLoop.ts",
+      "src/store/useGameStore.ts",
+      "src/types/game.ts"
+    ],
+    "army_operations": [
+      "src/lib/battlePreview.ts",
+      "src/lib/combat.ts",
+      "src/lib/military.ts",
+      "src/components/ui/GameHUD.tsx",
+      "src/types/game.ts"
+    ],
+    "state_perstitence_integrity": [
+      "src/lib/simStateSerialization.ts",
+      "src/core/gameCore.ts",
+      "src/lib/multiplayerBridge.ts",
+      "src/lib/multiplayerRemap.ts",
+      "src/app/api/**/*.ts",
+      "src/types/game.ts",
+      "game-server/src/index.ts",
+      "game-server/package.json",
+      "game-server/Dockerfile",
+      "src/hooks/useMultiplayerSession.ts",
+      "src/context/MultiplayerSessionContext.tsx"
+    ],
+    "ai_strategy_and_planning": [
+      "src/lib/ai.ts",
+      "src/lib/aiTactics.ts",
+      "src/lib/applyAiPlan.ts",
+      "src/lib/aiParamsSchema.ts",
+      "src/components/ui/GameHUD.tsx",
+      "src/store/useGameStore.ts",
+      "src/types/game.ts"
+    ],
+    "multidomain": [
+      "src/store/useGameStore.ts",
+      "src/types/game.ts",
+      "src/core/gameCore.ts",
+      "src/components/ui/GameHUD.tsx",
+      "src/lib/simStateSerialization.ts",
+      "src/lib/ai.ts",
+      "src/lib/combat.ts",
+      "src/lib/empireEconomy.ts"
+    ]
+  },
+  "usage_note": "Apply these hints when normalizing task metadata for eval scoring and retrieval context."
+}

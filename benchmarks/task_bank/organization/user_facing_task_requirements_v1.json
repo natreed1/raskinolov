@@ -1,0 +1,32 @@
+{
+  "schema_version": "user_facing_task_requirements_v1",
+  "description": "Required metadata contract for user-facing tasks so visual/readability expectations are always evaluated.",
+  "user_facing_detection": {
+    "task_types": [
+      "ui_behavior"
+    ],
+    "prompt_keywords": [
+      "hud",
+      "tooltip",
+      "badge",
+      "chip",
+      "theme",
+      "color",
+      "contrast",
+      "render",
+      "readable",
+      "alignment"
+    ]
+  },
+  "required_fields": [
+    "acceptance_signals",
+    "hard_constraints",
+    "compile_commands"
+  ],
+  "notes": [
+    "acceptance_signals captures user-facing correctness assertions.",
+    "hard_constraints enforces path safety between UI changes and gameplay logic boundaries.",
+    "compile_commands ensures hard compile/test checks are always run."
+  ]
+}
+

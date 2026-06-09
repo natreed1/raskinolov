@@ -1,0 +1,297 @@
+{
+  "schema_version": "skills_v1",
+  "created_utc": "2026-05-17T23:00:58Z",
+  "rows_count": 90,
+  "thresholds": {
+    "min_support_tasks_per_skill": 8,
+    "min_support_specialists_per_skill": 2,
+    "bootstrap_resamples": 200,
+    "min_effect_abs": 0.1,
+    "stability_min_sign_agreement": 0.8,
+    "region_stability_min": 0.0,
+    "seed": 42
+  },
+  "retained_skills": [
+    {
+      "skill_id": "bucket::constraints",
+      "kind": "bucket",
+      "support_tasks": 21,
+      "support_specialists": 6,
+      "pass_rate": 0.2857142857142857,
+      "effect": -0.23650793650793656,
+      "ci_low": -0.426984126984127,
+      "ci_high": -0.04603174603174609,
+      "sign_agreement": 0.99
+    }
+  ],
+  "exploratory_skills": [
+    {
+      "skill_id": "concept_bucket::Planning Intent::constraints",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 2,
+      "pass_rate": 0.0,
+      "effect": -0.5222222222222223,
+      "ci_low": -0.5222222222222223,
+      "ci_high": -0.5222222222222223,
+      "sign_agreement": 1.0
+    },
+    {
+      "skill_id": "concept_bucket::UI Hierarchy::constraints",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 2,
+      "pass_rate": 0.0,
+      "effect": -0.5222222222222223,
+      "ci_low": -0.5222222222222223,
+      "ci_high": -0.5222222222222223,
+      "sign_agreement": 1.0
+    },
+    {
+      "skill_id": "concept_bucket::UI Hierarchy::ui_change",
+      "kind": "concept_bucket",
+      "support_tasks": 7,
+      "support_specialists": 2,
+      "pass_rate": 0.8571428571428571,
+      "effect": 0.33492063492063484,
+      "ci_low": 0.04920634920634914,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 1.0
+    },
+    {
+      "skill_id": "concept_bucket::Loading/Start::transfer",
+      "kind": "concept_bucket",
+      "support_tasks": 10,
+      "support_specialists": 6,
+      "pass_rate": 0.8,
+      "effect": 0.2777777777777778,
+      "ci_low": -0.022222222222222254,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.95
+    },
+    {
+      "skill_id": "concept_bucket::Supply::constraints",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 2,
+      "pass_rate": 0.25,
+      "effect": -0.27222222222222225,
+      "ci_low": -0.5222222222222223,
+      "ci_high": 0.22777777777777775,
+      "sign_agreement": 0.955
+    },
+    {
+      "skill_id": "concept_bucket::Risk::core",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 2,
+      "pass_rate": 0.25,
+      "effect": -0.27222222222222225,
+      "ci_low": -0.5222222222222223,
+      "ci_high": 0.22777777777777775,
+      "sign_agreement": 0.95
+    },
+    {
+      "skill_id": "bucket::constraints",
+      "kind": "bucket",
+      "support_tasks": 21,
+      "support_specialists": 6,
+      "pass_rate": 0.2857142857142857,
+      "effect": -0.23650793650793656,
+      "ci_low": -0.426984126984127,
+      "ci_high": -0.04603174603174609,
+      "sign_agreement": 0.99
+    },
+    {
+      "skill_id": "concept::Schema/API",
+      "kind": "concept",
+      "support_tasks": 7,
+      "support_specialists": 2,
+      "pass_rate": 0.2857142857142857,
+      "effect": -0.23650793650793656,
+      "ci_low": -0.5222222222222223,
+      "ci_high": 0.04920634920634914,
+      "sign_agreement": 0.94
+    },
+    {
+      "skill_id": "concept_bucket::Planning Intent::core",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 3,
+      "pass_rate": 0.75,
+      "effect": 0.22777777777777775,
+      "ci_low": -0.27222222222222225,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.69
+    },
+    {
+      "skill_id": "concept_bucket::Planning Intent::transfer",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 4,
+      "pass_rate": 0.75,
+      "effect": 0.22777777777777775,
+      "ci_low": -0.27222222222222225,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.705
+    },
+    {
+      "skill_id": "concept_bucket::Terrain/Fort::core",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 2,
+      "pass_rate": 0.75,
+      "effect": 0.22777777777777775,
+      "ci_low": -0.27222222222222225,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.71
+    },
+    {
+      "skill_id": "concept_bucket::Supply::transfer",
+      "kind": "concept_bucket",
+      "support_tasks": 4,
+      "support_specialists": 3,
+      "pass_rate": 0.75,
+      "effect": 0.22777777777777775,
+      "ci_low": -0.27222222222222225,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.76
+    },
+    {
+      "skill_id": "concept::Economy",
+      "kind": "concept",
+      "support_tasks": 9,
+      "support_specialists": 3,
+      "pass_rate": 0.6666666666666666,
+      "effect": 0.14444444444444438,
+      "ci_low": -0.18888888888888894,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.84
+    },
+    {
+      "skill_id": "concept::Loading/Start",
+      "kind": "concept",
+      "support_tasks": 32,
+      "support_specialists": 6,
+      "pass_rate": 0.65625,
+      "effect": 0.13402777777777775,
+      "ci_low": -0.022222222222222254,
+      "ci_high": 0.29027777777777775,
+      "sign_agreement": 0.965
+    },
+    {
+      "skill_id": "concept::Generic",
+      "kind": "concept",
+      "support_tasks": 21,
+      "support_specialists": 6,
+      "pass_rate": 0.42857142857142855,
+      "effect": -0.0936507936507937,
+      "ci_low": -0.3793650793650794,
+      "ci_high": 0.09682539682539681,
+      "sign_agreement": 0.685
+    },
+    {
+      "skill_id": "bucket::core",
+      "kind": "bucket",
+      "support_tasks": 23,
+      "support_specialists": 6,
+      "pass_rate": 0.6086956521739131,
+      "effect": 0.08647342995169083,
+      "ci_low": -0.13091787439613528,
+      "ci_high": 0.2603864734299517,
+      "sign_agreement": 0.65
+    },
+    {
+      "skill_id": "bucket::transfer",
+      "kind": "bucket",
+      "support_tasks": 20,
+      "support_specialists": 6,
+      "pass_rate": 0.6,
+      "effect": 0.07777777777777772,
+      "ci_low": -0.12222222222222223,
+      "ci_high": 0.2777777777777778,
+      "sign_agreement": 0.795
+    },
+    {
+      "skill_id": "concept_bucket::Risk::transfer",
+      "kind": "concept_bucket",
+      "support_tasks": 5,
+      "support_specialists": 3,
+      "pass_rate": 0.6,
+      "effect": 0.07777777777777772,
+      "ci_low": -0.32222222222222224,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.72
+    },
+    {
+      "skill_id": "concept_bucket::Morale::transfer",
+      "kind": "concept_bucket",
+      "support_tasks": 5,
+      "support_specialists": 3,
+      "pass_rate": 0.6,
+      "effect": 0.07777777777777772,
+      "ci_low": -0.32222222222222224,
+      "ci_high": 0.47777777777777775,
+      "sign_agreement": 0.655
+    },
+    {
+      "skill_id": "concept::Supply",
+      "kind": "concept",
+      "support_tasks": 12,
+      "support_specialists": 3,
+      "pass_rate": 0.5833333333333334,
+      "effect": 0.061111111111111116,
+      "ci_low": -0.18888888888888894,
+      "ci_high": 0.3111111111111111,
+      "sign_agreement": 0.635
+    },
+    {
+      "skill_id": "concept::Planning Intent",
+      "kind": "concept",
+      "support_tasks": 13,
+      "support_specialists": 4,
+      "pass_rate": 0.46153846153846156,
+      "effect": -0.06068376068376069,
+      "ci_low": -0.2914529914529915,
+      "ci_high": 0.17008547008547004,
+      "sign_agreement": 0.635
+    },
+    {
+      "skill_id": "bucket::ui_change",
+      "kind": "bucket",
+      "support_tasks": 26,
+      "support_specialists": 6,
+      "pass_rate": 0.5769230769230769,
+      "effect": 0.05470085470085462,
+      "ci_low": -0.13760683760683762,
+      "ci_high": 0.24700854700854702,
+      "sign_agreement": 0.745
+    }
+  ],
+  "top_positive_skills": [
+    {
+      "skill_id": "bucket::constraints",
+      "kind": "bucket",
+      "support_tasks": 21,
+      "support_specialists": 6,
+      "pass_rate": 0.2857142857142857,
+      "effect": -0.23650793650793656,
+      "ci_low": -0.426984126984127,
+      "ci_high": -0.04603174603174609,
+      "sign_agreement": 0.99
+    }
+  ],
+  "top_negative_skills": [
+    {
+      "skill_id": "bucket::constraints",
+      "kind": "bucket",
+      "support_tasks": 21,
+      "support_specialists": 6,
+      "pass_rate": 0.2857142857142857,
+      "effect": -0.23650793650793656,
+      "ci_low": -0.426984126984127,
+      "ci_high": -0.04603174603174609,
+      "sign_agreement": 0.99
+    }
+  ]
+}

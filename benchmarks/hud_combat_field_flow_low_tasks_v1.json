@@ -1,0 +1,1907 @@
+[
+  {
+    "id": "field-ui-dual-01",
+    "category": "field_flow_scout_contact",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "The player opens the field HUD after scout contact. Propose a small UI update that surfaces enemy strength and immediate risk without adding new systems. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "hud"
+      ],
+      "any_contains": [
+        "enemy",
+        "risk",
+        "strength",
+        "contact",
+        "threat"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "scout_to_contact",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-02",
+    "category": "field_flow_scout_contact",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "The player opens the field HUD after scout contact. Propose a small UI update that surfaces enemy strength and immediate risk without adding new systems. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "hud"
+      ],
+      "any_contains": [
+        "enemy",
+        "risk",
+        "strength",
+        "contact",
+        "threat"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "scout_to_contact",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-03",
+    "category": "field_flow_scout_contact",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "The player opens the field HUD after scout contact. Propose a small UI update that surfaces enemy strength and immediate risk without adding new systems. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "hud"
+      ],
+      "any_contains": [
+        "enemy",
+        "risk",
+        "strength",
+        "contact",
+        "threat"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "scout_to_contact",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-04",
+    "category": "field_flow_scout_contact",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "The player opens the field HUD after scout contact. Propose a small UI update that surfaces enemy strength and immediate risk without adding new systems. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "hud"
+      ],
+      "any_contains": [
+        "enemy",
+        "risk",
+        "strength",
+        "contact",
+        "threat"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "scout_to_contact",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-05",
+    "category": "field_flow_scout_contact",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "The player opens the field HUD after scout contact. Propose a small UI update that surfaces enemy strength and immediate risk without adding new systems. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "hud"
+      ],
+      "any_contains": [
+        "enemy",
+        "risk",
+        "strength",
+        "contact",
+        "threat"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "scout_to_contact",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-06",
+    "category": "field_flow_march_engage",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "During march, an engagement becomes likely. Write compact HUD copy and one combat-risk cue so the player can decide whether to commit or reposition. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "march",
+        "engage",
+        "reposition",
+        "commit",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "march_to_engage",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-07",
+    "category": "field_flow_march_engage",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "During march, an engagement becomes likely. Write compact HUD copy and one combat-risk cue so the player can decide whether to commit or reposition. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "march",
+        "engage",
+        "reposition",
+        "commit",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "march_to_engage",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-08",
+    "category": "field_flow_march_engage",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "During march, an engagement becomes likely. Write compact HUD copy and one combat-risk cue so the player can decide whether to commit or reposition. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "march",
+        "engage",
+        "reposition",
+        "commit",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "march_to_engage",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-09",
+    "category": "field_flow_march_engage",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "During march, an engagement becomes likely. Write compact HUD copy and one combat-risk cue so the player can decide whether to commit or reposition. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "march",
+        "engage",
+        "reposition",
+        "commit",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "march_to_engage",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-10",
+    "category": "field_flow_march_engage",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "During march, an engagement becomes likely. Write compact HUD copy and one combat-risk cue so the player can decide whether to commit or reposition. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "march",
+        "engage",
+        "reposition",
+        "commit",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "march_to_engage",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-11",
+    "category": "field_flow_terrain_warning",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For a live battlefield panel, add one terrain-aware risk warning and one status summary line. Keep it readable at a glance. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "status",
+        "battlefield",
+        "warning",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 110
+    },
+    "metadata": {
+      "flow": "terrain_warning",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-12",
+    "category": "field_flow_terrain_warning",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For a live battlefield panel, add one terrain-aware risk warning and one status summary line. Keep it readable at a glance. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "status",
+        "battlefield",
+        "warning",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 110
+    },
+    "metadata": {
+      "flow": "terrain_warning",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-13",
+    "category": "field_flow_terrain_warning",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For a live battlefield panel, add one terrain-aware risk warning and one status summary line. Keep it readable at a glance. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "status",
+        "battlefield",
+        "warning",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 110
+    },
+    "metadata": {
+      "flow": "terrain_warning",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-14",
+    "category": "field_flow_terrain_warning",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For a live battlefield panel, add one terrain-aware risk warning and one status summary line. Keep it readable at a glance. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "status",
+        "battlefield",
+        "warning",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 110
+    },
+    "metadata": {
+      "flow": "terrain_warning",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-15",
+    "category": "field_flow_terrain_warning",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For a live battlefield panel, add one terrain-aware risk warning and one status summary line. Keep it readable at a glance. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "status",
+        "battlefield",
+        "warning",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 110
+    },
+    "metadata": {
+      "flow": "terrain_warning",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-16",
+    "category": "field_flow_morale_breakpoint",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Design a minor HUD refinement that warns when morale is near a combat breakpoint. Include exact wording for the warning state and normal state. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "morale"
+      ],
+      "any_contains": [
+        "warning",
+        "normal",
+        "breakpoint",
+        "risk",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "morale_breakpoint",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-17",
+    "category": "field_flow_morale_breakpoint",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Design a minor HUD refinement that warns when morale is near a combat breakpoint. Include exact wording for the warning state and normal state. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "morale"
+      ],
+      "any_contains": [
+        "warning",
+        "normal",
+        "breakpoint",
+        "risk",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "morale_breakpoint",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-18",
+    "category": "field_flow_morale_breakpoint",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Design a minor HUD refinement that warns when morale is near a combat breakpoint. Include exact wording for the warning state and normal state. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "morale"
+      ],
+      "any_contains": [
+        "warning",
+        "normal",
+        "breakpoint",
+        "risk",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "morale_breakpoint",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-19",
+    "category": "field_flow_morale_breakpoint",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Design a minor HUD refinement that warns when morale is near a combat breakpoint. Include exact wording for the warning state and normal state. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "morale"
+      ],
+      "any_contains": [
+        "warning",
+        "normal",
+        "breakpoint",
+        "risk",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "morale_breakpoint",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-20",
+    "category": "field_flow_morale_breakpoint",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Design a minor HUD refinement that warns when morale is near a combat breakpoint. Include exact wording for the warning state and normal state. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "morale"
+      ],
+      "any_contains": [
+        "warning",
+        "normal",
+        "breakpoint",
+        "risk",
+        "hud"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "morale_breakpoint",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-21",
+    "category": "field_flow_flank_exposure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "A flank opens on the map. Suggest one graphical-field indicator and one combat-risk explanation line tied to attacker/defender posture. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "flank",
+        "indicator",
+        "risk",
+        "posture",
+        "field"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 125
+    },
+    "metadata": {
+      "flow": "flank_exposure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-22",
+    "category": "field_flow_flank_exposure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "A flank opens on the map. Suggest one graphical-field indicator and one combat-risk explanation line tied to attacker/defender posture. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "flank",
+        "indicator",
+        "risk",
+        "posture",
+        "field"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 125
+    },
+    "metadata": {
+      "flow": "flank_exposure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-23",
+    "category": "field_flow_flank_exposure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "A flank opens on the map. Suggest one graphical-field indicator and one combat-risk explanation line tied to attacker/defender posture. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "flank",
+        "indicator",
+        "risk",
+        "posture",
+        "field"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 125
+    },
+    "metadata": {
+      "flow": "flank_exposure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-24",
+    "category": "field_flow_flank_exposure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "A flank opens on the map. Suggest one graphical-field indicator and one combat-risk explanation line tied to attacker/defender posture. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "flank",
+        "indicator",
+        "risk",
+        "posture",
+        "field"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 125
+    },
+    "metadata": {
+      "flow": "flank_exposure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-25",
+    "category": "field_flow_flank_exposure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "A flank opens on the map. Suggest one graphical-field indicator and one combat-risk explanation line tied to attacker/defender posture. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "attacker",
+        "defender"
+      ],
+      "any_contains": [
+        "flank",
+        "indicator",
+        "risk",
+        "posture",
+        "field"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 125
+    },
+    "metadata": {
+      "flow": "flank_exposure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-26",
+    "category": "field_flow_siege_pressure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "In siege conditions, propose one HUD status treatment for wall pressure plus one combat-risk statement that avoids overdramatizing outcomes. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "wall"
+      ],
+      "any_contains": [
+        "siege",
+        "pressure",
+        "risk",
+        "hud",
+        "outcome"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "siege_pressure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-27",
+    "category": "field_flow_siege_pressure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "In siege conditions, propose one HUD status treatment for wall pressure plus one combat-risk statement that avoids overdramatizing outcomes. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "wall"
+      ],
+      "any_contains": [
+        "siege",
+        "pressure",
+        "risk",
+        "hud",
+        "outcome"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "siege_pressure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-28",
+    "category": "field_flow_siege_pressure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "In siege conditions, propose one HUD status treatment for wall pressure plus one combat-risk statement that avoids overdramatizing outcomes. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "wall"
+      ],
+      "any_contains": [
+        "siege",
+        "pressure",
+        "risk",
+        "hud",
+        "outcome"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "siege_pressure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-29",
+    "category": "field_flow_siege_pressure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "In siege conditions, propose one HUD status treatment for wall pressure plus one combat-risk statement that avoids overdramatizing outcomes. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "wall"
+      ],
+      "any_contains": [
+        "siege",
+        "pressure",
+        "risk",
+        "hud",
+        "outcome"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "siege_pressure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-30",
+    "category": "field_flow_siege_pressure",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "In siege conditions, propose one HUD status treatment for wall pressure plus one combat-risk statement that avoids overdramatizing outcomes. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "wall"
+      ],
+      "any_contains": [
+        "siege",
+        "pressure",
+        "risk",
+        "hud",
+        "outcome"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "siege_pressure",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-31",
+    "category": "field_flow_supply_strain",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "When supply strain increases during movement, suggest a compact field HUD summary and a linked combat-risk hint that helps the next command decision. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "movement",
+        "command",
+        "hud",
+        "decision"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "supply_strain",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-32",
+    "category": "field_flow_supply_strain",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "When supply strain increases during movement, suggest a compact field HUD summary and a linked combat-risk hint that helps the next command decision. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "movement",
+        "command",
+        "hud",
+        "decision"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "supply_strain",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-33",
+    "category": "field_flow_supply_strain",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "When supply strain increases during movement, suggest a compact field HUD summary and a linked combat-risk hint that helps the next command decision. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "movement",
+        "command",
+        "hud",
+        "decision"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "supply_strain",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-34",
+    "category": "field_flow_supply_strain",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "When supply strain increases during movement, suggest a compact field HUD summary and a linked combat-risk hint that helps the next command decision. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "movement",
+        "command",
+        "hud",
+        "decision"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "supply_strain",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-35",
+    "category": "field_flow_supply_strain",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "When supply strain increases during movement, suggest a compact field HUD summary and a linked combat-risk hint that helps the next command decision. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "movement",
+        "command",
+        "hud",
+        "decision"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "supply_strain",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-36",
+    "category": "field_flow_reinforcement_arrival",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Reinforcements arrive mid-engagement. Provide one HUD update pattern and one risk recalculation note for the player-facing battle strip. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "reinforcement"
+      ],
+      "any_contains": [
+        "engagement",
+        "risk",
+        "battle",
+        "hud",
+        "recalculation"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "reinforcement_arrival",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-37",
+    "category": "field_flow_reinforcement_arrival",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Reinforcements arrive mid-engagement. Provide one HUD update pattern and one risk recalculation note for the player-facing battle strip. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "reinforcement"
+      ],
+      "any_contains": [
+        "engagement",
+        "risk",
+        "battle",
+        "hud",
+        "recalculation"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "reinforcement_arrival",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-38",
+    "category": "field_flow_reinforcement_arrival",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Reinforcements arrive mid-engagement. Provide one HUD update pattern and one risk recalculation note for the player-facing battle strip. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "reinforcement"
+      ],
+      "any_contains": [
+        "engagement",
+        "risk",
+        "battle",
+        "hud",
+        "recalculation"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "reinforcement_arrival",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-39",
+    "category": "field_flow_reinforcement_arrival",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Reinforcements arrive mid-engagement. Provide one HUD update pattern and one risk recalculation note for the player-facing battle strip. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "reinforcement"
+      ],
+      "any_contains": [
+        "engagement",
+        "risk",
+        "battle",
+        "hud",
+        "recalculation"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "reinforcement_arrival",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-40",
+    "category": "field_flow_reinforcement_arrival",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Reinforcements arrive mid-engagement. Provide one HUD update pattern and one risk recalculation note for the player-facing battle strip. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "reinforcement"
+      ],
+      "any_contains": [
+        "engagement",
+        "risk",
+        "battle",
+        "hud",
+        "recalculation"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 120
+    },
+    "metadata": {
+      "flow": "reinforcement_arrival",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-41",
+    "category": "field_flow_post_skirmish",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Immediately after a skirmish resolves, propose one concise field status summary and one follow-up combat-risk cue for nearby threats. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "skirmish"
+      ],
+      "any_contains": [
+        "status",
+        "risk",
+        "threat",
+        "field",
+        "summary"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "post_skirmish",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-42",
+    "category": "field_flow_post_skirmish",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Immediately after a skirmish resolves, propose one concise field status summary and one follow-up combat-risk cue for nearby threats. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "skirmish"
+      ],
+      "any_contains": [
+        "status",
+        "risk",
+        "threat",
+        "field",
+        "summary"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "post_skirmish",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-43",
+    "category": "field_flow_post_skirmish",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Immediately after a skirmish resolves, propose one concise field status summary and one follow-up combat-risk cue for nearby threats. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "skirmish"
+      ],
+      "any_contains": [
+        "status",
+        "risk",
+        "threat",
+        "field",
+        "summary"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "post_skirmish",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-44",
+    "category": "field_flow_post_skirmish",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Immediately after a skirmish resolves, propose one concise field status summary and one follow-up combat-risk cue for nearby threats. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "skirmish"
+      ],
+      "any_contains": [
+        "status",
+        "risk",
+        "threat",
+        "field",
+        "summary"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "post_skirmish",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-45",
+    "category": "field_flow_post_skirmish",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "Immediately after a skirmish resolves, propose one concise field status summary and one follow-up combat-risk cue for nearby threats. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "skirmish"
+      ],
+      "any_contains": [
+        "status",
+        "risk",
+        "threat",
+        "field",
+        "summary"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "post_skirmish",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-46",
+    "category": "field_flow_night_visibility",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For low-visibility/night conditions, suggest one HUD visual cue and one risk wording adjustment that remains clear under dark UI palettes. Target the existing in-match HUD; do not invent new routes.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "visibility",
+        "night",
+        "hud",
+        "dark",
+        "cue"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "night_visibility",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-47",
+    "category": "field_flow_night_visibility",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For low-visibility/night conditions, suggest one HUD visual cue and one risk wording adjustment that remains clear under dark UI palettes. Assume this appears in the current battle panel and must be glanceable.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "visibility",
+        "night",
+        "hud",
+        "dark",
+        "cue"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "night_visibility",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-48",
+    "category": "field_flow_night_visibility",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For low-visibility/night conditions, suggest one HUD visual cue and one risk wording adjustment that remains clear under dark UI palettes. Keep the change small enough for a single component edit.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "visibility",
+        "night",
+        "hud",
+        "dark",
+        "cue"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "night_visibility",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-49",
+    "category": "field_flow_night_visibility",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For low-visibility/night conditions, suggest one HUD visual cue and one risk wording adjustment that remains clear under dark UI palettes. Use Fallen Empire tactical language, not generic dashboard phrasing.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "visibility",
+        "night",
+        "hud",
+        "dark",
+        "cue"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "night_visibility",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  },
+  {
+    "id": "field-ui-dual-50",
+    "category": "field_flow_night_visibility",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "combat",
+      "field_visual"
+    ],
+    "prompt": "For low-visibility/night conditions, suggest one HUD visual cue and one risk wording adjustment that remains clear under dark UI palettes. Prioritize readability for rapid command decisions.",
+    "expect": {
+      "all_contains": [
+        "risk"
+      ],
+      "any_contains": [
+        "visibility",
+        "night",
+        "hud",
+        "dark",
+        "cue"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "class "
+      ],
+      "min_chars": 115
+    },
+    "metadata": {
+      "flow": "night_visibility",
+      "complexity": "low",
+      "real_need": "in_match_field_ui"
+    }
+  }
+]

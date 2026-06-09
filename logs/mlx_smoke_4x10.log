@@ -1,0 +1,220 @@
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+[cycle 021] base_model=mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+[cycle 021] registry_adapter=checkpoints/fe-lora-arena-apply-sft exists=True
+[cycle 021] effective_adapter=checkpoints/fe-lora-arena-apply-sft load_reason=init_adapter_path exists=True
+[cycle 021] candidate_adapter=/Users/natreed/fallen-empire-lora/checkpoints/adapters/economistRL/rl_pass_021
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 11018.31it/s]
+[rollout] 1/10 economistRL-food-steady-state-01
+[rollout] 2/10 economistRL-market-elasticity-02
+[rollout] 3/10 economistRL-worker-wage-productivity-03
+[rollout] 4/10 economistRL-spoilage-food-decay-04
+[rollout] 5/10 economistRL-army-upkeep-scaling-05
+[rollout] 6/10 economistRL-production-cache-invalid-06
+[rollout] 7/10 economistRL-food-population-feedback-002
+[rollout] 8/10 economistRL-food-population-feedback-003
+[rollout] 9/10 economistRL-food-population-feedback-004
+[rollout] 10/10 economistRL-food-population-feedback-005
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 224694.86it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+[cycle 022] base_model=mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+[cycle 022] registry_adapter=checkpoints/fe-lora-arena-apply-sft exists=True
+[cycle 022] effective_adapter=checkpoints/adapters/economistRL/rl_pass_021 load_reason=previous_cycle_candidate exists=True
+[cycle 022] candidate_adapter=/Users/natreed/fallen-empire-lora/checkpoints/adapters/economistRL/rl_pass_022
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 84072.91it/s]
+Python(59125) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 1/10 economistRL-food-steady-state-01
+Python(59176) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 2/10 economistRL-market-elasticity-02
+Python(59200) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 3/10 economistRL-worker-wage-productivity-03
+Python(59223) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 4/10 economistRL-spoilage-food-decay-04
+Python(59262) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 5/10 economistRL-army-upkeep-scaling-05
+Python(59300) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 6/10 economistRL-production-cache-invalid-06
+Python(59321) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 7/10 economistRL-food-population-feedback-002
+Python(59342) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 8/10 economistRL-food-population-feedback-003
+Python(59363) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 9/10 economistRL-food-population-feedback-004
+Python(59387) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 10/10 economistRL-food-population-feedback-005
+Python(59407) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59411) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59412) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59413) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59433) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59434) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59435) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59440) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59441) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59442) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59461) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59462) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59463) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59467) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59468) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59469) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59488) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59489) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59490) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59494) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59495) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59496) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59515) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59516) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59517) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59521) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59522) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59523) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59542) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59543) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59544) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59548) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(59549) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 299593.14it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+[cycle 023] base_model=mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+[cycle 023] registry_adapter=checkpoints/fe-lora-arena-apply-sft exists=True
+[cycle 023] effective_adapter=checkpoints/adapters/economistRL/rl_pass_022 load_reason=previous_cycle_candidate exists=True
+[cycle 023] candidate_adapter=/Users/natreed/fallen-empire-lora/checkpoints/adapters/economistRL/rl_pass_023
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 2322.57it/s]
+Python(60377) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 1/10 economistRL-food-steady-state-01
+Python(60433) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 2/10 economistRL-market-elasticity-02
+Python(60469) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 3/10 economistRL-worker-wage-productivity-03
+Python(60486) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 4/10 economistRL-spoilage-food-decay-04
+Python(60502) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 5/10 economistRL-army-upkeep-scaling-05
+Python(60518) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 6/10 economistRL-production-cache-invalid-06
+Python(60534) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 7/10 economistRL-food-population-feedback-002
+Python(60552) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 8/10 economistRL-food-population-feedback-003
+Python(60575) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 9/10 economistRL-food-population-feedback-004
+Python(60591) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 10/10 economistRL-food-population-feedback-005
+Python(60622) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60626) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60627) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60628) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60647) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60648) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60649) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60654) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60655) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60656) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60675) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60676) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60677) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60681) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60682) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60683) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60702) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60703) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60704) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60708) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60709) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60710) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60729) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60730) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60731) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60735) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60736) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60737) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60756) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60757) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60758) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60762) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(60763) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 273541.57it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+[cycle 024] base_model=mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+[cycle 024] registry_adapter=checkpoints/fe-lora-arena-apply-sft exists=True
+[cycle 024] effective_adapter=checkpoints/adapters/economistRL/rl_pass_023 load_reason=previous_cycle_candidate exists=True
+[cycle 024] candidate_adapter=/Users/natreed/fallen-empire-lora/checkpoints/adapters/economistRL/rl_pass_024
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 21732.15it/s]
+Python(61567) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 1/10 economistRL-food-steady-state-01
+Python(61618) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 2/10 economistRL-market-elasticity-02
+Python(61651) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 3/10 economistRL-worker-wage-productivity-03
+Python(61667) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 4/10 economistRL-spoilage-food-decay-04
+Python(61698) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 5/10 economistRL-army-upkeep-scaling-05
+Python(61719) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 6/10 economistRL-production-cache-invalid-06
+Python(61739) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 7/10 economistRL-food-population-feedback-002
+Python(61755) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 8/10 economistRL-food-population-feedback-003
+Python(61783) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 9/10 economistRL-food-population-feedback-004
+Python(61801) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+[rollout] 10/10 economistRL-food-population-feedback-005
+Python(61821) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61825) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61826) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61827) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61847) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61849) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61850) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61854) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61855) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61856) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61875) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61876) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61877) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61885) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61889) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61893) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61902) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61903) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61904) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61910) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61913) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61920) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61929) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61930) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61931) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61950) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61951) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61952) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61956) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61957) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61958) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61977) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+Python(61978) MallocStackLogging: can't turn off malloc stack logging because it was not enabled.
+/Users/natreed/fallen-empire-lora/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Fetching 9 files:   0%|          | 0/9 [00:00<?, ?it/s]Fetching 9 files: 100%|██████████| 9/9 [00:00<00:00, 334059.61it/s]
+/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/multiprocessing/resource_tracker.py:216: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
+{
+  "cycles": 4,
+  "manifests": [
+    "/Users/natreed/fallen-empire-lora/benchmarks/results/economistRL/manifests/cycle_021_manifest.json",
+    "/Users/natreed/fallen-empire-lora/benchmarks/results/economistRL/manifests/cycle_022_manifest.json",
+    "/Users/natreed/fallen-empire-lora/benchmarks/results/economistRL/manifests/cycle_023_manifest.json",
+    "/Users/natreed/fallen-empire-lora/benchmarks/results/economistRL/manifests/cycle_024_manifest.json"
+  ]
+}

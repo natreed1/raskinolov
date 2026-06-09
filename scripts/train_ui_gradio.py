@@ -20,10 +20,23 @@ import sys
 from pathlib import Path
 from typing import Generator, List, Optional, Tuple
 
-import gradio as gr
-
 REPO = Path(__file__).resolve().parent.parent
 VENV_MLX = REPO / ".venv" / "bin" / "mlx_lm.lora"
+LEGACY_UI_DEPRECATION = (
+    "scripts/train_ui_gradio.py is a legacy UI and is no longer a supported site.\n"
+    "Supported sites are:\n"
+    "  1) Documentation site: python scripts/private_dashboard_server.py\n"
+    "  2) Arena training supervision site: python scripts/game_task_arena.py ui\n"
+    "  3) Router prompt site: python scripts/router_chat_gradio.py\n"
+    "To run this legacy UI anyway, pass --allow-legacy-ui."
+)
+
+if __name__ == "__main__" and "--allow-legacy-ui" not in sys.argv and not any(
+    flag in sys.argv for flag in ("-h", "--help")
+):
+    raise SystemExit(LEGACY_UI_DEPRECATION)
+
+import gradio as gr
 
 # Shared with Stop button
 _PROC: Optional[subprocess.Popen] = None
@@ -226,7 +239,15 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=7862)
     parser.add_argument("--share", action="store_true")
+    parser.add_argument(
+        "--allow-legacy-ui",
+        action="store_true",
+        help="Run this deprecated UI anyway (not a supported site).",
+    )
     args = parser.parse_args()
+    if not args.allow_legacy_ui:
+        raise SystemExit(LEGACY_UI_DEPRECATION)
+    print("[deprecated] Running legacy UI: scripts/train_ui_gradio.py", file=sys.stderr)
     demo = build_app()
     demo.queue()
     print(f"Training UI: http://{args.host}:{args.port}", file=sys.stderr)

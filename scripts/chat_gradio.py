@@ -17,19 +17,33 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 import time
 from pathlib import Path
 from typing import Generator, List, Optional, Tuple
-
-import gradio as gr
-from mlx_lm import load, stream_generate
-from mlx_lm.sample_utils import make_sampler
 
 DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
 DEFAULT_SYSTEM = (
     "You are Albert, a concise coding assistant for Fallen Empire, a strategy game written in TypeScript. "
     "Prefer short answers with correct code when asked for implementation."
 )
+LEGACY_UI_DEPRECATION = (
+    "scripts/chat_gradio.py is a legacy UI and is no longer a supported site.\n"
+    "Supported sites are:\n"
+    "  1) Documentation site: python scripts/private_dashboard_server.py\n"
+    "  2) Arena training supervision site: python scripts/game_task_arena.py ui\n"
+    "  3) Router prompt site: python scripts/router_chat_gradio.py\n"
+    "To run this legacy UI anyway, pass --allow-legacy-ui."
+)
+
+if __name__ == "__main__" and "--allow-legacy-ui" not in sys.argv and not any(
+    flag in sys.argv for flag in ("-h", "--help")
+):
+    raise SystemExit(LEGACY_UI_DEPRECATION)
+
+import gradio as gr
+from mlx_lm import load, stream_generate
+from mlx_lm.sample_utils import make_sampler
 
 
 def _history_to_messages(
@@ -89,7 +103,15 @@ def main() -> None:
         action="store_true",
         help="Pass trust_remote_code to tokenizer load if needed",
     )
+    parser.add_argument(
+        "--allow-legacy-ui",
+        action="store_true",
+        help="Run this deprecated UI anyway (not a supported site).",
+    )
     args = parser.parse_args()
+    if not args.allow_legacy_ui:
+        raise SystemExit(LEGACY_UI_DEPRECATION)
+    print("[deprecated] Running legacy UI: scripts/chat_gradio.py", file=sys.stderr)
 
     repo_root = Path(__file__).resolve().parent.parent
     adapter_resolved: Optional[str] = None

@@ -1,0 +1,3189 @@
+{
+  "schema_version": "patch_task_bank_v1",
+  "version": 1,
+  "source_repo": "/Users/natreed/fallen-empire",
+  "notes": "Patch-derived task bank seeded from real fallen-empire commits. Splits are authoring recommendations only and can be reshuffled with deterministic seeds.",
+  "tasks": [
+    {
+      "id": "patch-node-path-runtime-resolution-01",
+      "split": "eval_public",
+      "source_commit": "0257e13",
+      "source_subject": "fix(game-server): set NODE_PATH so /app/src resolves game-server deps",
+      "task_title": "Fix game-server module resolution in container runtime",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "routing"
+      ],
+      "subskill": "container_runtime_resolution",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "expected_multi_domain": false,
+      "changed_files": [
+        "game-server/Dockerfile"
+      ],
+      "prompt": "A production container boots `game-server/src/index.ts` but fails to resolve one dependency imported by shared files under `/app/src`. Patch Docker/runtime configuration so bare imports resolve reliably without moving source files.",
+      "acceptance": {
+        "required_outcomes": [
+          "Runtime dependency resolution succeeds for shared imports from /app/src.",
+          "Fix is minimal and deploy-safe (no broad refactor)."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Failure mode is environmental; task should not be solvable by changing app logic only."
+    },
+    {
+      "id": "patch-railway-missing-dep-02",
+      "split": "eval_public",
+      "source_commit": "bf45dfa",
+      "source_subject": "fix(game-server): add simplex-noise for mapGenerator on Railway",
+      "task_title": "Repair missing dependency for deployed map generation",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [],
+      "subskill": "railway_deployment_contract",
+      "complexity": "low_medium",
+      "risk": "medium",
+      "task_type": "single_file",
+      "expected_multi_domain": false,
+      "changed_files": [
+        "game-server/package.json",
+        "game-server/package-lock.json"
+      ],
+      "prompt": "Deployment logs show `MODULE_NOT_FOUND` from map generation path in the game server. Add the smallest dependency fix in server package metadata and lock data so clean installs work in CI/deploy.",
+      "acceptance": {
+        "required_outcomes": [
+          "Missing package appears in game-server dependencies.",
+          "Lockfile remains consistent with package manifest."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Patch must target server package scope; root package edits alone do not count."
+    },
+    {
+      "id": "patch-test-env-dynamic-route-03",
+      "split": "train_candidate",
+      "source_commit": "7e60a76",
+      "source_subject": "feat: test-env routes, ML cohort guard, asset and debug scripts",
+      "task_title": "Add dynamic test-environment route resolver",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "combat_risk",
+        "hud_status",
+        "economy",
+        "state_perstitence_integrity",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "test_env_dynamic_route_resolution_contract",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/app/test-env/[envId]/page.tsx",
+        "src/lib/testEnvironments.ts",
+        "src/components/test/TestEnvironmentShell.tsx"
+      ],
+      "prompt": "Create a deterministic `/test-env/[envId]` route that resolves an environment registry, returns not-found for unknown ids, and renders a shared shell for visual debugging.",
+      "acceptance": {
+        "required_outcomes": [
+          "Known env ids resolve from registry metadata.",
+          "Unknown env ids fail safely without crashing.",
+          "Route output goes through a shared test shell component."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/loading-screen"
+      },
+      "anti_overfit_notes": "Task requires coherent route + registry contract, not just static page output."
+    },
+    {
+      "id": "patch-test-env-registry-contract-04",
+      "split": "eval_public",
+      "source_commit": "7e60a76",
+      "source_subject": "feat: test-env routes, ML cohort guard, asset and debug scripts",
+      "task_title": "Introduce typed test-environment registry contract",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "hud_status",
+        "combat_risk"
+      ],
+      "subskill": "test_env_registry_type_lookup_contract",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/testEnvironments.ts"
+      ],
+      "prompt": "Define a typed registry for deterministic test environments including id, title, description, boot mode, and optional seed/opponent controls. Include helper lookup by id.",
+      "acceptance": {
+        "required_outcomes": [
+          "Registry uses explicit union/string literal ids.",
+          "Boot mode is constrained by type.",
+          "Lookup helper returns undefined for unknown ids."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Scoring should inspect type narrowness and helper semantics."
+    },
+    {
+      "id": "patch-ai-plan-shared-application-05",
+      "split": "train_candidate",
+      "source_commit": "e841085",
+      "source_subject": "feat(ai): train-ai parity \u2014 shared applyAiPlan, pending recruits, mutation excludes",
+      "task_title": "Extract shared AI plan application path",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "combat_risk",
+        "economy"
+      ],
+      "subskill": "shared_logic_deduplication",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/applyAiPlan.ts",
+        "src/lib/ai.ts",
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "AI plan execution diverged between training and runtime paths. Introduce a shared plan-application module and wire callers to it without changing visible strategy behavior.",
+      "acceptance": {
+        "required_outcomes": [
+          "Plan application is centralized in a reusable module.",
+          "Callers no longer duplicate plan mutation logic.",
+          "No schema regressions in AI plan payload types."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must preserve behavior while reducing duplication; broad rewrites should score poorly."
+    },
+    {
+      "id": "patch-pending-recruit-state-06",
+      "split": "eval_public",
+      "source_commit": "e841085",
+      "source_subject": "feat(ai): train-ai parity \u2014 shared applyAiPlan, pending recruits, mutation excludes",
+      "task_title": "Add pending recruit support to AI/game state transitions",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "state_machine_transition_integrity",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/pendingLandRecruit.ts",
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Introduce pending land recruit transitions so AI and simulation paths can stage recruitment safely before final placement. Ensure state typing and update flow remain coherent.",
+      "acceptance": {
+        "required_outcomes": [
+          "Pending recruit entities are represented in typed state.",
+          "Simulation flow can enqueue and consume pending recruits.",
+          "No obvious save/load incompatibility is introduced."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Patch should modify transition flow, not only add dead types."
+    },
+    {
+      "id": "patch-site-auth-middleware-07",
+      "split": "eval_public",
+      "source_commit": "cc43acf",
+      "source_subject": "feat: site password gate, map box select, siege workshop updates",
+      "task_title": "Implement site password gate with middleware enforcement",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [],
+      "subskill": "request_validation_guardrails",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "api_schema",
+      "expected_multi_domain": false,
+      "changed_files": [
+        "src/app/api/auth/route.ts",
+        "src/lib/siteAuth.ts",
+        "src/middleware.ts",
+        "src/app/login/page.tsx"
+      ],
+      "prompt": "Add a lightweight site password gate: auth endpoint validates secret, middleware protects app routes, and login flow sets/verifies session markers.",
+      "acceptance": {
+        "required_outcomes": [
+          "Protected routes redirect or deny unauthenticated access.",
+          "Auth route validates configured secret source.",
+          "Middleware and login page behavior are consistent."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task should fail if only client-side checks are added."
+    },
+    {
+      "id": "patch-map-box-select-input-08",
+      "split": "train_candidate",
+      "source_commit": "cc43acf",
+      "source_subject": "feat: site password gate, map box select, siege workshop updates",
+      "task_title": "Add box-select interaction for tactical map control",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "combat_risk"
+      ],
+      "subskill": "input_controller_event_ordering",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/mapBoxSelect.ts",
+        "src/components/game/GameScene.tsx",
+        "src/components/game/HexGrid.tsx",
+        "src/components/game/MapController.tsx",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Add drag-box map selection so players can select clusters of units/tiles with clear start/end gesture handling and synchronized store updates.",
+      "acceptance": {
+        "required_outcomes": [
+          "Drag gesture creates deterministic selection bounds.",
+          "Selection result updates shared game store.",
+          "No conflict with existing click selection behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/hud-status-summary"
+      },
+      "anti_overfit_notes": "Requires event handling + store integration, not only visual overlay."
+    },
+    {
+      "id": "patch-multiplayer-snapshot-types-09",
+      "split": "eval_public",
+      "source_commit": "2e91187",
+      "source_subject": "feat: multiplayer client \u2014 HUD lobby, WS session, store snapshots, gameCore plans",
+      "task_title": "Stabilize multiplayer snapshot/store typing flow",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "snapshot_schema_compatibility",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/store/useGameStore.ts",
+        "src/core/gameCore.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Multiplayer snapshots occasionally desync with store/UI expectations. Patch snapshot ingestion and type alignment so HUD and simulation state remain coherent after sync.",
+      "acceptance": {
+        "required_outcomes": [
+          "Snapshot data is validated/mapped before store commit.",
+          "Type definitions cover new multiplayer fields.",
+          "HUD does not assume missing fields after snapshot updates."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires schema-level reasoning; cosmetic HUD edits alone are insufficient."
+    },
+    {
+      "id": "patch-hud-lobby-session-panel-10",
+      "split": "train_candidate",
+      "source_commit": "2e91187",
+      "source_subject": "feat: multiplayer client \u2014 HUD lobby, WS session, store snapshots, gameCore plans",
+      "task_title": "Add HUD multiplayer lobby/session visibility",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "state_perstitence_integrity"
+      ],
+      "subskill": "ui_state_signal_exposure",
+      "complexity": "medium_high",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Expose multiplayer lobby/session state in HUD with clear status labels and minimal clutter. Wire it to authoritative store values.",
+      "acceptance": {
+        "required_outcomes": [
+          "HUD reflects connected/waiting/session states from store.",
+          "No invented schema outside typed multiplayer fields."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/hud-status-summary"
+      },
+      "anti_overfit_notes": "UI text must be backed by real store fields."
+    },
+    {
+      "id": "patch-research-system-schema-11",
+      "split": "holdout_eval",
+      "source_commit": "c6b1726",
+      "source_subject": "feat: research & technology system, national council, education, universities",
+      "task_title": "Add typed research and council state schema",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "schema_migration_compatibility",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/lib/nationalCouncil.ts",
+        "src/lib/researchTick.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Introduce a research/technology + council subsystem with strong typed state contracts and HUD visibility, without destabilizing existing game loop behavior.",
+      "acceptance": {
+        "required_outcomes": [
+          "Type definitions cover research and council progression structures.",
+          "Tick/update logic mutates new state through predictable paths.",
+          "HUD exposes progress without fabricated fields."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/ai-planning-explanation"
+      },
+      "anti_overfit_notes": "Hidden holdout candidate due broad cross-system coupling."
+    },
+    {
+      "id": "patch-multiplayer-server-bootstrap-12",
+      "split": "eval_public",
+      "source_commit": "3d4b882",
+      "source_subject": "feat: add multiplayer game server for Railway/Vercel and deploy docs",
+      "task_title": "Bootstrap multiplayer game-server and bridge contracts",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "routing"
+      ],
+      "subskill": "railway_deployment_contract",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "game-server/src/index.ts",
+        "game-server/package.json",
+        "game-server/tsconfig.json",
+        "src/lib/multiplayerBridge.ts",
+        "src/lib/multiplayerRemap.ts",
+        "src/lib/simStateSerialization.ts"
+      ],
+      "prompt": "Add a deployable multiplayer game-server entrypoint and client bridge/remap path that safely serializes and remaps state between server and app contracts.",
+      "acceptance": {
+        "required_outcomes": [
+          "Game server boots with declared scripts/deps.",
+          "Bridge/remap code preserves typed state mapping.",
+          "Serialization path handles multiplayer payload safely."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Requires coordinated server + client contract updates."
+    },
+    {
+      "id": "patch-siege-workshop-build-menu-14",
+      "split": "eval_public",
+      "source_commit": "467f58e",
+      "source_subject": "Add siege workshop; hide starter barracks/university from build menu",
+      "task_title": "Wire siege workshop while constraining starter build menu",
+      "domain_primary": "combat_risk",
+      "domains_secondary": [
+        "hud_status",
+        "economy"
+      ],
+      "subskill": "state_machine_transition_integrity",
+      "complexity": "medium_high",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/core/gameCore.ts",
+        "src/lib/builders.ts",
+        "src/lib/wallBuilding.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Add siege workshop support and adjust build menu eligibility so starter barracks/university are hidden in early-state paths without breaking progression.",
+      "acceptance": {
+        "required_outcomes": [
+          "Siege workshop appears in valid contexts.",
+          "Starter-only exclusions are enforced by game state conditions.",
+          "Type/store/building logic remain consistent."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Requires logic gating, not only UI hiding."
+    },
+    {
+      "id": "patch-builder-automation-rebalance-15",
+      "split": "holdout_eval",
+      "source_commit": "467f58e",
+      "source_subject": "Add siege workshop; hide starter barracks/university from build menu",
+      "task_title": "Rework builder automation after progression changes",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "combat_risk"
+      ],
+      "subskill": "resource_projection_cache_invalidation",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/builderAutomation.ts",
+        "src/lib/builders.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Builder automation decisions are stale after recent building/progression updates. Patch automation policy to align with new priorities and avoid invalid early-game construction choices.",
+      "acceptance": {
+        "required_outcomes": [
+          "Automation references current building/progression constraints.",
+          "No invalid build targets are selected in starter states.",
+          "Loop integration remains deterministic."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Holdout task emphasizes policy quality, not only compile pass."
+    },
+    {
+      "id": "patch-macos-dev-stability-16",
+      "split": "train_candidate",
+      "source_commit": "d8aea8f",
+      "source_subject": "Extend gameplay systems and stabilize Next dev on macOS",
+      "task_title": "Stabilize dev/runtime behavior on macOS while keeping gameplay updates",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy",
+        "combat_risk"
+      ],
+      "subskill": "cross_platform_stability",
+      "complexity": "medium_high",
+      "risk": "medium",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "package.json",
+        "src/components/ui/GameHUD.tsx",
+        "src/lib/gameLoop.ts",
+        "src/lib/military.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Apply a minimal stability fix for macOS Next-dev/runtime issues while preserving concurrent gameplay-system enhancements and type integrity.",
+      "acceptance": {
+        "required_outcomes": [
+          "Dev/runtime stability issue is resolved without broad rollback.",
+          "Gameplay updates still compile with coherent types."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Patch should not disable core features to pass."
+    },
+    {
+      "id": "patch-multiplayer-auth-route-hardening-17",
+      "split": "holdout_eval",
+      "source_commit": "c6b1726",
+      "source_subject": "feat: research & technology system, national council, education, universities",
+      "task_title": "Harden auth route and middleware compatibility after feature expansion",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [],
+      "subskill": "request_validation_guardrails",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "expected_multi_domain": false,
+      "changed_files": [
+        "src/app/api/auth/route.ts",
+        "src/lib/siteAuth.ts",
+        "src/middleware.ts"
+      ],
+      "prompt": "A large feature merge touched auth-adjacent code. Patch auth route + middleware contracts to avoid regressions in gated access and session validation semantics.",
+      "acceptance": {
+        "required_outcomes": [
+          "Auth route status and payload shapes remain deterministic.",
+          "Middleware uses consistent auth signal checks."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Holdout slice for high-risk guardrails."
+    },
+    {
+      "id": "patch-research-hud-surface-18",
+      "split": "eval_public",
+      "source_commit": "c6b1726",
+      "source_subject": "feat: research & technology system, national council, education, universities",
+      "task_title": "Expose research progress in HUD without schema drift",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "resource_projection_cache_invalidation",
+      "complexity": "medium_high",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+        "src/lib/researchTick.ts"
+      ],
+      "prompt": "Display research/technology progression in HUD with concise tactical language while preserving typed field usage from game state.",
+      "acceptance": {
+        "required_outcomes": [
+          "HUD renders research status based on real typed fields.",
+          "No fabricated schema fields or unsafe casts."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/hud-status-summary"
+      },
+      "anti_overfit_notes": "Patch must bind to state logic, not static placeholder text."
+    },
+    {
+      "id": "patch-university-population-loop-19",
+      "split": "train_candidate",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Integrate university population effects into tick loop",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "progression_tick_ordering",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/universityPopulation.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Integrate university-driven population/training effects into the simulation tick and HUD surfaces while preserving deterministic economy behavior.",
+      "acceptance": {
+        "required_outcomes": [
+          "Loop invokes university/population logic in a stable order.",
+          "Store and types include required university state.",
+          "HUD reflects resulting state changes coherently."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Must modify loop integration; isolated helper addition is insufficient."
+    },
+    {
+      "id": "patch-game-server-deploy-contract-21",
+      "split": "eval_public",
+      "source_commit": "3d4b882",
+      "source_subject": "feat: add multiplayer game server for Railway/Vercel and deploy docs",
+      "task_title": "Align game-server container and deploy contract",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [],
+      "subskill": "railway_deployment_contract",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "expected_multi_domain": false,
+      "changed_files": [
+        "game-server/Dockerfile",
+        "railway.toml",
+        "game-server/package.json"
+      ],
+      "prompt": "Patch game-server deploy artifacts so production platform launches with correct build/runtime assumptions and expected exposed service behavior.",
+      "acceptance": {
+        "required_outcomes": [
+          "Container build/run config matches server package scripts.",
+          "Deploy config references correct service entrypoint."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Reject fixes that only change docs without deploy artifact updates."
+    },
+    {
+      "id": "patch-multiplayer-remap-safety-22",
+      "split": "holdout_eval",
+      "source_commit": "3d4b882",
+      "source_subject": "feat: add multiplayer game server for Railway/Vercel and deploy docs",
+      "task_title": "Harden multiplayer remap/bridge against schema mismatch",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "snapshot_schema_compatibility",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/multiplayerRemap.ts",
+        "src/lib/multiplayerBridge.ts",
+        "src/lib/simStateSerialization.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch multiplayer remap/bridge flow to protect against partial or stale payload shapes and preserve deterministic local state contracts.",
+      "acceptance": {
+        "required_outcomes": [
+          "Remap path validates required payload segments.",
+          "Fallback behavior avoids corrupting local game state.",
+          "Typed contracts reflect remapped structure."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Hidden holdout candidate for high-risk schema safety."
+    },
+    {
+      "id": "patch-combat-hud-density-refactor-23",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Refactor dense HUD panels without losing tactical signal",
+      "domain_primary": "combat_risk",
+      "domains_secondary": [
+        "hud_status",
+        "economy"
+      ],
+      "subskill": "deterministic_preview_state_isolation",
+      "complexity": "high",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/ui/panelThemes/MedievalBuildingPanels.tsx",
+        "src/app/globals.css",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "HUD has become too dense after feature expansion. Refactor panel composition and styling for clarity while retaining high-value tactical, economy, and combat signals.",
+      "acceptance": {
+        "required_outcomes": [
+          "Critical tactical data remains visible.",
+          "Layout hierarchy improves scanability.",
+          "No detached UI fields lacking state backing."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Patch must preserve signal density while improving readability."
+    },
+    {
+      "id": "patch-siege-recruitment-health-gates-24",
+      "split": "holdout_eval",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Add sim-health gating around siege recruitment changes",
+      "domain_primary": "combat_risk",
+      "domains_secondary": [
+        "economy",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "state_machine_transition_integrity",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "safety_guard",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "scripts/diag-sim-health.ts",
+        "src/lib/siegeRecruitment.ts",
+        "src/lib/armyReplenishment.ts",
+        "src/lib/territory.ts",
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "After siege recruitment mechanics evolve, add or adjust simulation health gates so unstable parameter combinations are detected before promotion/deployment.",
+      "acceptance": {
+        "required_outcomes": [
+          "Health checks cover relevant recruitment/sustainment signals.",
+          "Failure output is actionable for tuning loops.",
+          "Core game state remains type-safe under new mechanics."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Holdout task should stress robustness and observability, not single-line fixes."
+    },
+    {
+      "id": "patch-field-command-hud-25",
+      "split": "eval_public",
+      "source_commit": "e78f750",
+      "source_subject": "Major engagements, spatial formations, field command UI, map detail sprites, iron buff",
+      "task_title": "Stabilize field command HUD signal rendering",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "field_command_ui_signal_clarity",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/game/GameScene.tsx",
+        "src/lib/formationPlacement.ts"
+      ],
+      "prompt": "Patch field-command HUD integration so formation/engagement state is surfaced clearly and consistently while preserving existing command semantics. Ensure UI signals remain readable during active movement/engagement updates and do not desync from formation state.",
+      "acceptance": {
+        "required_outcomes": [
+          "Field command HUD signals are visible and readable in active engagement states.",
+          "Formation/command UI state remains consistent with underlying formation data.",
+          "No command-state desync occurs during movement/engagement tick updates."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must align HUD signal rendering to formation/engagement state, not only restyle static labels."
+    },
+    {
+      "id": "patch-hud-economy-mixed-panel-26",
+      "split": "eval_public",
+      "source_commit": "facda5d",
+      "source_subject": "feat: siege/build menu updates, L3 unit sprites, builder and stack UX",
+      "task_title": "Repair mixed HUD-economy panel integration",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy",
+        "army_operations"
+      ],
+      "subskill": "hud_economy_signal_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/app/globals.css",
+        "src/components/ui/panelThemes/BuilderCottagePanel.tsx",
+        "src/lib/armyReplenishment.ts"
+      ],
+      "prompt": "Patch mixed-domain HUD integration so economy-relevant cues (upkeep/pressure/readiness context) are surfaced in the updated HUD without regressing army stack UX. Keep tactical readability and avoid introducing modern-style visual drift.",
+      "acceptance": {
+        "required_outcomes": [
+          "HUD surfaces economy-relevant tactical cues without hiding army-state context.",
+          "Economy and army stack indicators stay visually distinct and readable together.",
+          "No regressions to stack UX behavior while economy cues are integrated."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Requires mixed-domain HUD integration; passing by changing only colors or only economy labels is insufficient."
+    },
+    {
+      "id": "patch-movement-supply-gating-27",
+      "split": "eval_public",
+      "source_commit": "c099ddf",
+      "source_subject": "Supply and movement: status gating, larger radius, aligned horizon",
+      "task_title": "Align movement supply-gating with radius and status policy",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "movement_supply_gating_consistency",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/military.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch movement gating so supply/status constraints, radius policy, and horizon alignment are applied consistently. Units that should be blocked must not move, allowed units should still move within intended radius, and status transitions must remain deterministic across ticks.",
+      "acceptance": {
+        "required_outcomes": [
+          "Supply/status gating blocks movement only when policy conditions are unmet.",
+          "Movement radius and horizon policy are applied consistently for eligible units.",
+          "No nondeterministic status-gate transitions appear across repeated ticks."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Requires policy-aligned movement gating logic, not just UI label changes."
+    },
+    {
+      "id": "patch-ai-move-target-eligibility-28",
+      "split": "eval_public",
+      "source_commit": "2b39f0f",
+      "source_subject": "ai: include starving/moving units for move targets; stricter default food params",
+      "task_title": "Fix AI move-target eligibility under starving/moving unit states",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_move_target_eligibility_rules",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts"
+      ],
+      "prompt": "Patch AI move-target selection so unit-state eligibility (including starving/moving units) is handled according to strategy policy and food constraints. Keep decisiveness while preventing invalid target assignment under disallowed states.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI includes/excludes unit states for move targets according to explicit eligibility policy.",
+          "Food/supply defaults do not cause invalid target assignments.",
+          "Move-target selection remains decisive without introducing contradictory state picks."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must implement state-aware eligibility logic; naive broad inclusion/exclusion should fail policy checks."
+    },
+    {
+      "id": "patch-farm-production-workforce-leveling-29",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Add farm level-up production scaling with workforce costs and HUD surfacing",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "farm_level_scaling_and_workforce_accounting",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Regression patch task: baseline build is missing farm progression behavior. Add farm leveling (L1-L3) where each level increases food output, updates required worker slots, and keeps economy tick accounting deterministic. Wire upgrade flow so the player can level farms through city actions, then surface per-level production/worker requirements in HUD and panel copy without breaking existing economy/research UI signals.",
+      "acceptance": {
+        "required_outcomes": [
+          "Farm levels are upgradeable through gameplay actions and persisted in typed state.",
+          "Each farm level changes food production output and worker consumption according to explicit per-level rules.",
+          "Economy tick uses level-aware farm output and worker requirements without breaking non-farm production paths.",
+          "HUD/building panel reflects current farm level plus production and worker requirements clearly.",
+          "Mixed HUD + simulation behavior remains stable under ml-cohort test suite."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Passing requires coordinated state+tick+HUD changes; adjusting text only or output constants only is insufficient."
+    },
+    {
+      "id": "patch-starvation-diagnosis-population-stability-30",
+      "split": "eval_public",
+      "source_commit": "f382ec6",
+      "source_subject": "Sim optimizations; hard food controls; total-starvation abort",
+      "task_title": "Diagnose starvation collapse and tune starvation/birth rates back to stable population",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "starvation_recovery_rate_tuning",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/lib/logistics.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Regression patch task: current build can enter a starvation spiral where deaths outpace births and population does not recover. Diagnose the starvation path, then tune starvation loss rates and birth-growth rates so populations stabilize under sustainable food conditions while still punishing persistent shortages. Keep simulation deterministic and update HUD starvation/population cues to reflect the corrected behavior.",
+      "acceptance": {
+        "required_outcomes": [
+          "Starvation diagnosis identifies and fixes runaway negative population feedback in economy tick logic.",
+          "Starvation rate and birth/growth rate parameters are tuned so sustainable cities recover toward stable population bands.",
+          "Persistent food deficits still produce meaningful population pressure (no trivial starvation disable).",
+          "HUD population/starvation indicators match the corrected simulation behavior and remain readable.",
+          "Changes pass ml-cohort regression checks without breaking unrelated economy/research flows."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires diagnosing feedback loops and balancing opposing rates; solutions that only mute starvation or only inflate births should fail balance intent."
+    },
+    {
+      "id": "patch-worker-elasticity-nonlinear-recovery-31",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Add tiered worker-elasticity for production with smooth restaff recovery",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "tiered_worker_elasticity_nonlinear_recovery",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Regression patch task: baseline build treats understaffed production too linearly, causing unrealistic outputs and abrupt rebounds. Implement tiered worker elasticity so production drops nonlinearly when assigned workers fall below requirement, then recovers smoothly as staffing is restored. Keep behavior deterministic, avoid oscillation/exploit loops, and surface effective output versus staffing pressure in HUD/panel feedback.",
+      "acceptance": {
+        "required_outcomes": [
+          "Understaffed production follows nonlinear tiered penalties rather than a flat linear drop.",
+          "Restaffing recovers production smoothly across ticks without abrupt spikes or oscillation loops.",
+          "Elasticity logic is applied consistently across relevant economy production paths.",
+          "HUD/panel output communicates staffing pressure and effective production clearly.",
+          "Changes pass ml-cohort regression checks without regressing existing economy/research behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Must implement stable nonlinear elasticity dynamics; simple coefficient tweaks or display-only changes should fail intent."
+    },
+    {
+      "id": "patch-university-research-focus-hud-32",
+      "split": "eval_public",
+      "source_commit": "c6b1726",
+      "source_subject": "feat: research & technology system, national council, education, universities",
+      "task_title": "Redesign university HUD to show research production and focus selection",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "university_research_focus_ui_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/ui/panelThemes/MedievalBuildingPanels.tsx",
+        "src/lib/researchTick.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch university UI so it surfaces research production per cycle and allows selecting a research focus from the panel. Keep focus selection wired to typed state and ensure projected research output updates consistently in HUD/panel views.",
+      "acceptance": {
+        "required_outcomes": [
+          "University panel shows current research production and selected focus state.",
+          "Player can change research focus through UI and state updates persist correctly.",
+          "Research output/readout reflects focus selection without stale HUD values.",
+          "Changes pass ml-cohort checks without breaking existing research progression logic."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires end-to-end UI+state wiring; static labels or mock focus controls are insufficient."
+    },
+    {
+      "id": "patch-army-ui-direct-move-orders-33",
+      "split": "eval_public",
+      "source_commit": "e78f750",
+      "source_subject": "Major engagements, spatial formations, field command UI, map detail sprites, iron buff",
+      "task_title": "Enable direct unit movement orders from army UI",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "army_ui_direct_order_dispatch",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/game/HexGrid.tsx",
+        "src/store/useGameStore.ts",
+        "src/lib/military.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch army UI so players can issue movement orders directly from the army panel (without map-only interaction). Wire orders into existing movement/command flows, preserve order validation, and keep panel state synchronized with active unit movement state.",
+      "acceptance": {
+        "required_outcomes": [
+          "Army panel can trigger valid move orders for selected units/stacks.",
+          "Order dispatch reuses existing movement validation/constraints.",
+          "HUD/army panel reflects issued orders and moving-state transitions without desync.",
+          "No regressions in map-issued movement behavior under ml-cohort tests."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Must connect UI action to real order pipeline; button-only UI changes should fail."
+    },
+    {
+      "id": "patch-mine-hud-production-chart-34",
+      "split": "eval_public",
+      "source_commit": "8fea706",
+      "source_subject": "Build diagnostics (early/late farms, markets, mines, etc.) + map size -33%",
+      "task_title": "Add mine HUD chart for production levels over cycles",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "mine_production_timeseries_visualization",
+      "complexity": "medium_high",
+      "risk": "medium_high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts",
+        "src/lib/gameLoop.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch mine HUD so it displays a compact production-over-cycles chart for mine output. Track recent cycle values in state, render a readable trend chart in the mine panel, and ensure values match simulation outputs used by economy ticks.",
+      "acceptance": {
+        "required_outcomes": [
+          "Mine panel includes a chart of recent production values across cycles.",
+          "Chart data is sourced from real cycle production state (not placeholders).",
+          "Displayed trend updates deterministically as cycles advance.",
+          "HUD chart integration does not regress existing mine/economy interactions."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires real timeseries plumbing; static sparkline or hardcoded values are insufficient."
+    },
+    {
+      "id": "patch-supply-network-chart-drawdown-35",
+      "split": "eval_public",
+      "source_commit": "c099ddf",
+      "source_subject": "Supply and movement: status gating, larger radius, aligned horizon",
+      "task_title": "Redesign supply network UI with production and drawdown charting",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status",
+        "army_operations"
+      ],
+      "subskill": "supply_network_production_drawdown_visualization",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/lib/logistics.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch supply network UI to show charted production versus drawdown over recent cycles. Integrate supply throughput and consumption signals so players can see trend direction, and ensure charted values remain aligned with movement/supply gating behavior.",
+      "acceptance": {
+        "required_outcomes": [
+          "Supply UI shows production and drawdown chart series over cycles.",
+          "Chart values align with underlying logistics/economy state calculations.",
+          "Supply trend feedback remains consistent with movement/supply gating outcomes.",
+          "Mixed economy+HUD behavior passes ml-cohort checks without stale-state regressions."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Must integrate charting with real supply math and mixed-domain behavior, not cosmetic-only UI additions."
+    },
+    {
+      "id": "patch-home-screen-multiplayer-entry-36",
+      "split": "eval_public",
+      "source_commit": "2e91187",
+      "source_subject": "feat: multiplayer client \u2014 HUD lobby, WS session, store snapshots, gameCore plans",
+      "task_title": "Design home screen with explicit multiplayer entry action",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "home_screen_multiplayer_entry_flow",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/game/GameScene.tsx",
+        "src/context/MultiplayerSessionContext.tsx",
+        "src/hooks/useMultiplayerSession.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch the home/start surface to include a clear Multiplayer button and entry path into multiplayer session flow. Keep single-player entry intact, preserve session/bootstrap guards, and ensure button state reflects multiplayer readiness.",
+      "acceptance": {
+        "required_outcomes": [
+          "Home/start UI includes a visible Multiplayer entry action.",
+          "Multiplayer button routes into existing session bootstrap/lobby flow correctly.",
+          "Button readiness/disabled states reflect multiplayer availability and prevent invalid entry.",
+          "Single-player/start flow remains functional after UI changes."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/hud-status-summary"
+      },
+      "anti_overfit_notes": "Task requires functional entry wiring, not just adding an unconnected button."
+    },
+    {
+      "id": "patch-ai-ocean-crossing-reachability-37",
+      "split": "eval_public",
+      "source_commit": "247ca24",
+      "source_subject": "AI naval expansion, training pipeline, scenarios, and related sim/store updates",
+      "task_title": "Add AI ocean-crossing logic with naval reachability constraints",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "ai_naval_reachability_pathing",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/navalReachability.ts",
+        "src/lib/military.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch AI planning so armies can evaluate and execute ocean-crossing routes through naval reachability logic. Ensure water traversal obeys embark/disembark and reachability constraints, and avoid invalid cross-ocean move plans that desync state.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI can generate valid ocean-crossing plans when naval path exists.",
+          "Invalid/unreachable water routes are rejected before order dispatch.",
+          "Ocean-crossing orders preserve deterministic state transitions without desync.",
+          "Changes pass ml-cohort checks without regressing land-only movement behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must integrate with actual reachability/path pipeline; naive straight-line water moves should fail."
+    },
+    {
+      "id": "patch-ai-starvation-farm-priority-38",
+      "split": "eval_public",
+      "source_commit": "16686eb",
+      "source_subject": "ai: evolvable farm priority when food is tight (farmPriorityThreshold)",
+      "task_title": "Ensure AI prioritizes farm construction during starvation pressure",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "ai_starvation_farm_priority_policy",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/aiParamsSchema.ts",
+        "src/lib/gameLoop.ts"
+      ],
+      "prompt": "Patch AI build logic so starvation or near-starvation states force farm-priority behavior before non-critical builds. Keep the policy tunable, avoid farm-spam when food stabilizes, and preserve deterministic build ordering.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI prioritizes farm builds when food pressure crosses starvation threshold.",
+          "Farm-priority behavior relaxes when food balance recovers (no permanent lock-in).",
+          "Build ordering remains deterministic and compatible with existing AI parameters.",
+          "Changes pass ml-cohort checks without breaking non-starvation build behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Requires policy-based starvation handling, not a hardcoded always-build-farm rule."
+    },
+    {
+      "id": "patch-ai-defend-invasion-reposition-39",
+      "split": "eval_public",
+      "source_commit": "247ca24",
+      "source_subject": "AI naval expansion, training pipeline, scenarios, and related sim/store updates",
+      "task_title": "Improve AI defensive unit repositioning against enemy invasion",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "ai_invasion_defense_repositioning",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/garrison.ts",
+        "src/lib/military.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI response logic so incoming enemy invasion pressure triggers defensive repositioning of nearby units toward threatened zones/cities. Preserve legal movement constraints and avoid oscillating defend/retreat loops.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI detects invasion pressure and assigns defensive reposition moves to relevant units.",
+          "Defensive moves obey movement constraints and do not create invalid orders.",
+          "AI avoids oscillation loops between defend states across adjacent ticks.",
+          "Changes pass ml-cohort checks without regressing normal expansion behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must implement threat-aware reposition policy; static nearest-city fallback should fail."
+    },
+    {
+      "id": "patch-ai-open-city-targeting-40",
+      "split": "eval_public",
+      "source_commit": "247ca24",
+      "source_subject": "AI naval expansion, training pipeline, scenarios, and related sim/store updates",
+      "task_title": "Add AI targeting logic for open enemy cities",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_open_city_target_selection",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/military.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI target selection so exposed enemy cities (low defense/open approaches) are prioritized as attack objectives when odds and supply conditions allow. Avoid suicidal city targeting when constraints are not met.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI identifies open/vulnerable enemy city targets and can prioritize them.",
+          "City-target selection respects odds/supply constraints before committing attack moves.",
+          "Targeting logic avoids reckless attacks under clearly unfavorable conditions.",
+          "Changes pass ml-cohort checks without regressing defensive AI behaviors."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Requires conditional city-target policy with risk gating; always-target-city heuristics should fail."
+    },
+    {
+      "id": "patch-ship-production-cost-material-balance-41",
+      "split": "eval_public",
+      "source_commit": "247ca24",
+      "source_subject": "AI naval expansion, training pipeline, scenarios, and related sim/store updates",
+      "task_title": "Rebalance ship production costs to require wood, planked wood, and stone",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "army_operations",
+        "hud_status"
+      ],
+      "subskill": "ship_build_cost_material_balance_enforcement",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/core/gameCore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch ship production balance so building ships consumes wood, planked wood, and stone in the intended proportions. Rework ship build cost constants and build-flow checks so all three materials are required and actually deducted on successful ship construction. Ensure costs are balanced (not trivially cheap or prohibitive), and prevent ship creation when any required material is insufficient.",
+      "acceptance": {
+        "required_outcomes": [
+          "Ship build cost model includes wood, planked wood, and stone as required materials.",
+          "Successful ship builds deduct all required materials from the correct state inventories.",
+          "Ship builds are blocked with clear failure path when any required material is below threshold.",
+          "Updated cost balance keeps ship production viable but meaningfully constrained by economy state.",
+          "Changes pass ml-cohort checks without regressing non-ship production flows."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Must enforce real multi-resource deductions and gating; changing only displayed cost text is insufficient."
+    },
+    {
+      "id": "patch-new-unit-combat-stats-economic-cost-42",
+      "split": "eval_public",
+      "source_commit": "facda5d",
+      "source_subject": "feat: siege/build menu updates, L3 unit sprites, builder and stack UX",
+      "task_title": "Add a new recruitable unit with combat stats and economic material cost",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "unit_definition_combat_economy_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/lib/combat.ts",
+        "src/lib/military.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch the game to introduce one new recruitable unit type. Define balanced combat stats (e.g., hp/attack/defense/speed behavior) and integrate the unit into recruit/build flows. Require explicit economic material costs for recruitment/production, and ensure those materials are validated and deducted correctly. Surface the unit stats and cost clearly in HUD/panel UI so players can evaluate trade-offs before recruiting.",
+      "acceptance": {
+        "required_outcomes": [
+          "New unit type is represented in typed state and recruitable through existing game flows.",
+          "Combat system applies the new unit's stats consistently in engagements.",
+          "Recruit/build flow enforces and deducts configured economic material costs for the new unit.",
+          "HUD/panel surfaces unit stats and material cost in a readable player-facing format.",
+          "Changes pass ml-cohort checks without regressing existing unit recruitment or combat balance paths."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Requires full cross-system integration (types, combat, economy costs, UI). Adding stats or UI alone is insufficient."
+    },
+    {
+      "id": "patch-special-unit-building-dragon-nest-43",
+      "split": "eval_public",
+      "source_commit": "facda5d",
+      "source_subject": "feat: siege/build menu updates, L3 unit sprites, builder and stack UX",
+      "task_title": "Add special-unit production building (dragon nest) with egg-to-unit progression",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "special_unit_building_progression_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/gameLoop.ts",
+        "src/lib/combat.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch the game to add a new special-unit production building (e.g., Dragon Nest). The building should produce an intermediate resource/state (eggs) that later matures into recruitable dragon units with unique combat stats and role. Ensure egg production/maturation is integrated with economy cycles, and that matured dragons are consumed through valid recruit/deploy flows with clear HUD/panel visibility.",
+      "acceptance": {
+        "required_outcomes": [
+          "New special-unit building is represented in typed state and build/recruit flows.",
+          "Egg production and maturation pipeline advances deterministically across cycles.",
+          "Matured dragon units have unique combat stats and integrate into combat resolution.",
+          "Economy and UI surfaces show production/maturation state and recruit availability clearly.",
+          "Changes pass ml-cohort checks without regressing existing building/recruit systems."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Requires full pipeline integration (building -> eggs -> unit -> combat/UI); adding a static unit type alone is insufficient."
+    },
+    {
+      "id": "patch-ai-catapult-siege-workshop-planning-44",
+      "split": "eval_public",
+      "source_commit": "467f58e",
+      "source_subject": "Add siege workshop; hide starter barracks/university from build menu",
+      "task_title": "Update AI planning so catapults are built via siege workshop instead of barracks",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_siege_production_routing_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch AI planning and production routing so catapult production is sourced from siege workshops (not barracks). Update build prerequisites, planner decision rules, and recruit execution paths so AI correctly builds/uses siege workshops when pursuing catapult-heavy plans.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI no longer routes catapult production through barracks logic.",
+          "AI can plan and satisfy siege-workshop prerequisites for catapult production.",
+          "Recruit/execution path produces catapults through workshop flow without state desync.",
+          "Changes pass ml-cohort checks without regressing non-siege unit production."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must change planner + execution routing; display-only or label-only edits are insufficient."
+    },
+    {
+      "id": "patch-population-food-steady-state-dynamics-45",
+      "split": "eval_public",
+      "source_commit": "33e2a90",
+      "source_subject": "Starvation instrumentation, diag metrics, seed pool league, birth taper",
+      "task_title": "Implement food-supported steady-state population dynamics",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "food_supported_population_steady_state_dynamics",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/core/gameCore.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch population dynamics so each city converges toward a food-supported steady-state population instead of oscillating or collapsing unrealistically. Implement carrying-capacity behavior driven by food support, with starvation pressure when above support and tapering growth when near equilibrium. Keep dynamics deterministic across ticks and expose key population pressure/support signals in HUD so players can reason about recovery and limits.",
+      "acceptance": {
+        "required_outcomes": [
+          "Population update model uses food support/carrying-capacity dynamics with stable convergence behavior.",
+          "Over-support populations experience starvation/decline pressure without runaway collapse under recoverable conditions.",
+          "Near-equilibrium populations show tapered growth rather than unbounded increase or oscillation spikes.",
+          "HUD surfaces enough population/food pressure context to explain steady-state behavior.",
+          "Changes pass ml-cohort checks without regressing existing economy/research systems."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires real dynamic model change; constant caps or UI-only messaging should fail steady-state intent."
+    },
+    {
+      "id": "patch-fish-yield-double-vs-grain-46",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Rebalance food valuation so fish counts double versus grain",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "food_value_weighting_fish_vs_grain",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/lib/empireEconomy.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch food valuation so fish contributes 2x the support/economic weight of grain in population/economy calculations where food equivalence is used. Keep valuation consistent across all relevant food-balance paths and reflect the weighting in player-facing economy/HUD summaries.",
+      "acceptance": {
+        "required_outcomes": [
+          "Fish is valued at double grain in food-support/economy equivalence logic.",
+          "Food weighting is applied consistently across dependent simulation paths (no split-brain formulas).",
+          "HUD/economy readouts communicate the effective fish-vs-grain contribution clearly.",
+          "Changes pass ml-cohort checks without regressing non-food economy systems."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires systemic weighting update, not a single display multiplier."
+    },
+    {
+      "id": "patch-worker-wage-productivity-balance-47",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Add worker wage function that trades gold drain for productivity gains",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "worker_wage_productivity_tradeoff_balancing",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts",
+        "src/lib/ai.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch economy dynamics to add worker wages: paying wages depletes gold each cycle but increases productivity according to a balanced function. Implement configurable wage-to-productivity behavior, prevent runaway exploit loops, and ensure low-gold states degrade wage effects safely. Surface wage costs and productivity impact in HUD/economy summaries.",
+      "acceptance": {
+        "required_outcomes": [
+          "Wage function deducts gold and applies corresponding productivity effects each cycle.",
+          "Balance prevents degenerate exploits (infinite productivity from unsustainable wage settings).",
+          "Low-gold conditions apply safe fallback behavior (no negative-state corruption).",
+          "HUD/economy views display wage cost and productivity impact clearly.",
+          "Changes pass ml-cohort checks without regressing baseline production logic."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Must implement real dynamic tradeoff and stability guards, not static bonus toggles."
+    },
+    {
+      "id": "patch-ship-fishing-task-production-48",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Add ship fishing task that produces fish over cycles",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "economy",
+        "army_operations",
+        "hud_status"
+      ],
+      "subskill": "ship_task_fishing_production_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/gameLoop.ts",
+        "src/lib/military.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch ship tasking so ships can be assigned a fishing task that produces fish over simulation cycles. Integrate task assignment, per-cycle fish production, and task-state transitions with existing ship order/state flows. Ensure fishing output is consumed by economy systems and exposed in HUD/task status panels.",
+      "acceptance": {
+        "required_outcomes": [
+          "Ships can receive and maintain a fishing task state through existing order mechanisms.",
+          "Fishing-task ships produce fish deterministically across cycles.",
+          "Produced fish flows into economy/resource accounting without state desync.",
+          "HUD/task panels display fishing assignment and output clearly.",
+          "Changes pass ml-cohort checks without regressing non-fishing ship behaviors."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires full task-state + production integration; adding passive fish income without ship tasking is insufficient."
+    },
+    {
+      "id": "patch-archer-max-range-auto-positioning-49",
+      "split": "eval_public",
+      "source_commit": "e78f750",
+      "source_subject": "Major engagements, spatial formations, field command UI, map detail sprites, iron buff",
+      "task_title": "Auto-position archers at max attack range during combat",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "archer_max_range_auto_positioning_logic",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/combat.ts",
+        "src/lib/military.ts",
+        "src/lib/formationPlacement.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch combat behavior so archer units automatically maintain their maximum effective attack range against enemy units during engagements. Ensure positioning logic prefers legal max-range standoff positions, updates when fronts shift, and does not break melee pathing or engagement resolution determinism.",
+      "acceptance": {
+        "required_outcomes": [
+          "Archers attempt to hold/seek maximum legal attack range while engaging targets.",
+          "Range-aware repositioning updates correctly as enemy positions shift during combat.",
+          "Melee units and non-archer behaviors are not regressed by archer standoff logic.",
+          "Combat outcomes remain deterministic and stable under repeated runs.",
+          "Changes pass ml-cohort checks without breaking existing combat UI signals."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Must implement real range-aware positioning in combat flow; tuning damage only is insufficient."
+    },
+    {
+      "id": "patch-aluminum-resource-chain-infantry-cost-50",
+      "split": "eval_public",
+      "source_commit": "40ef4b7",
+      "source_subject": "UI overhaul, economy rebalance, AI spawn fix, and new sprites",
+      "task_title": "Add aluminum resource chain and apply infantry material cost routing",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "economy",
+        "army_operations",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "new_resource_chain_infantry_cost_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/lib/gameLoop.ts",
+        "src/lib/empireEconomy.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/military.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch the game to add a new resource, aluminum (alluminum), including extraction/production support via a new mining building. Integrate aluminum into resource accounting and route infantry recruitment/production costs to consume aluminum alongside existing materials. Ensure costs are enforced and deducted correctly, and surface aluminum production/usage in HUD/economy views.",
+      "acceptance": {
+        "required_outcomes": [
+          "Typed state includes aluminum resource and new building/resource-production hooks.",
+          "Aluminum mining/production is integrated into economy tick/resource flow.",
+          "Infantry production/recruitment validates and deducts aluminum costs correctly.",
+          "HUD/economy surfaces display aluminum stock, production, and cost pressure signals.",
+          "Changes pass ml-cohort checks without regressing existing resource/unit production systems."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Requires full resource-chain plus infantry-cost enforcement; adding aluminum as a dead stat is insufficient."
+    },
+    {
+      "id": "patch-academy-general-production-assignment-51",
+      "split": "eval_public",
+      "source_commit": "25e1cd0",
+      "source_subject": "Game systems: commanders, siege, garrison, biomes; sprites and train-ai scripts",
+      "task_title": "Add academies that produce assignable generals with army stat effects",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "academy_general_production_assignment_pipeline",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/types/game.ts",
+        "src/lib/commanders.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/military.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch the game so academies produce generals over time, and generals can be assigned to armies to provide stat modifiers/bonuses. Integrate production timing, assignment state, and combat stat application with clear UI for available generals and active assignments. Ensure assignment effects are deterministic and do not stack illegally.",
+      "acceptance": {
+        "required_outcomes": [
+          "Academy/general production pipeline advances and yields assignable generals in state.",
+          "Generals can be assigned/unassigned to armies through valid game flows.",
+          "Assigned generals provide intended stat effects during combat/army resolution.",
+          "Assignment UI clearly shows available generals, assigned status, and active bonuses.",
+          "Changes pass ml-cohort checks without regressing baseline army/combat behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Must integrate production->assignment->combat effect path; UI labels without functional stat binding should fail."
+    },
+    {
+      "id": "patch-contested-zone-capture-payout-52",
+      "split": "eval_public",
+      "source_commit": "25e1cd0",
+      "source_subject": "Game systems: commanders, siege, garrison, biomes; sprites and train-ai scripts",
+      "task_title": "Add contested-zone capture rewards with economy and HUD integration",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "contested_zone_capture_reward_integration",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/core/gameCore.ts",
+        "src/lib/military.ts",
+        "src/lib/contestedZone.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch contested-zone logic so captured/held contested zones between rival capitals grant configured economy rewards (e.g., gold/iron) and emit clear HUD notifications. Keep reward timing deterministic, prevent duplicate payout exploits, and ensure zone ownership transitions remain consistent with military capture rules.",
+      "acceptance": {
+        "required_outcomes": [
+          "Contested-zone capture/hold events trigger intended economy rewards exactly once per reward interval.",
+          "Ownership transition and payout gating prevent duplicate or replay reward exploits.",
+          "HUD surfaces contested-zone reward events and status clearly.",
+          "Changes pass ml-cohort checks without regressing baseline capture/combat resolution."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Requires coupled military-state/economy/HUD integration; adding notifications only is insufficient."
+    },
+    {
+      "id": "patch-builder-automation-university-task-queue-53",
+      "split": "eval_public",
+      "source_commit": "40ef4b7",
+      "source_subject": "UI overhaul, economy rebalance, AI spawn fix, and new sprites",
+      "task_title": "Integrate builder automation with university task queue and progress surfacing",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "economy",
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "builder_university_task_queue_progression",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/builderAutomation.ts",
+        "src/lib/builders.ts",
+        "src/lib/gameLoop.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch builder automation so university-driven builder tasks are queued, progressed, and resolved through a deterministic pipeline. Ensure task priority/assignment logic interacts correctly with economy constraints and expose queue/progress status in builder-facing HUD panels.",
+      "acceptance": {
+        "required_outcomes": [
+          "University/builder tasks are represented and progressed through a deterministic queue lifecycle.",
+          "Builder automation respects economy/resource constraints when advancing queued tasks.",
+          "HUD/panel views show task queue state and progression clearly.",
+          "Changes pass ml-cohort checks without regressing baseline build automation behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Must implement queue lifecycle + progression behavior, not static panel text."
+    },
+    {
+      "id": "patch-battalion-training-health-gates-54",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Add battalion training progression with sim health gating",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "battalion_training_health_gate_progression",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/battalionTraining.ts",
+        "src/lib/gameLoop.ts",
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch battalion training so recruits progress through staged training cycles with costs/time gates and simulation health constraints. Ensure progression, cancellation/failure behavior, and completion handoff are deterministic, and surface training status in army/HUD views.",
+      "acceptance": {
+        "required_outcomes": [
+          "Training pipeline stages recruits through deterministic progression states.",
+          "Sim health gates/cost constraints correctly block or defer unsafe training progression.",
+          "Completion handoff transitions trained battalions into valid army/recruit states.",
+          "HUD surfaces training state/progress without stale or contradictory signals.",
+          "Changes pass ml-cohort checks without regressing existing recruit flows."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/combat-risk-preview"
+      },
+      "anti_overfit_notes": "Requires real progression/gating transitions, not timer-only placeholders."
+    },
+    {
+      "id": "patch-ai-wall-ring-supply-expansion-55",
+      "split": "eval_public",
+      "source_commit": "a480c6c",
+      "source_subject": "AI: wall intelligence, supply expansion, fortress scenario and telemetry",
+      "task_title": "Improve AI wall-ring and supply-aware expansion policy",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_wall_ring_supply_expansion_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/core/gameCore.ts",
+        "src/lib/logistics.ts",
+        "src/lib/military.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch AI strategy to coordinate wall-ring planning with supply-aware expansion decisions. AI should prioritize defensible wall completion and adjust village/city expansion when supply posture is weak, while still exploiting favorable opportunities under stable supply conditions.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI wall-ring planning chooses coherent build/repair ordering for defensive closure.",
+          "Expansion policy incorporates supply posture and avoids overextension under weak support.",
+          "AI still expands opportunistically when supply and defense conditions are favorable.",
+          "Changes pass ml-cohort checks without regressing baseline tactical movement/defense flows."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Must couple defense topology and supply-aware expansion, not isolated weight tweaks."
+    },
+    {
+      "id": "patch-ai-construction-site-sim-builds-56",
+      "split": "eval_public",
+      "source_commit": "ebad682",
+      "source_subject": "Sim: AI builds use construction sites; add builderRecruitForMinesAndSiege param",
+      "task_title": "Route AI builds through construction-site completion pipeline",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "economy",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "ai_construction_site_build_planning",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch AI build planning so headless/runtime paths queue construction sites that complete through builder BP progression instead of instant build placement.",
+      "acceptance": {
+        "required_outcomes": [
+          "AI issues build intents that materialize as construction-site state before completion.",
+          "Builder progression and resource checks gate completion deterministically.",
+          "No instant-placement bypass remains in AI build execution paths.",
+          "Behavior passes ml-cohort without regressing existing build order semantics."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-composition-tactics-scoring-57",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Add composition-scoring tactics module for AI recruit planning",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_composition_tactics_mix_scoring",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/aiTactics.ts",
+        "src/lib/aiParamsSchema.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI turn planning to score and choose recruits against target army composition mixes (melee/ranged/siege and tier balance).",
+      "acceptance": {
+        "required_outcomes": [
+          "Planner computes composition deltas against target mix before recruit choice.",
+          "Recruit picks move composition toward targets while respecting constraints.",
+          "Composition logic remains deterministic and parameter-driven.",
+          "No regressions to non-composition tactical decisions."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-food-aware-recruit-gating-58",
+      "split": "eval_public",
+      "source_commit": "df6cdec",
+      "source_subject": "Economy fixes + extended evolvable params for ML",
+      "task_title": "Gate AI recruiting by projected food surplus",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "ai_food_surplus_recruit_gating",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/gameLoop.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch AI recruitment so projected food surplus and sustainable military thresholds block unsafe over-recruiting.",
+      "acceptance": {
+        "required_outcomes": [
+          "Recruit planner checks projected food surplus before issuing recruit actions.",
+          "Unsafe food states suppress or downscale recruitment deterministically.",
+          "Recruiting resumes when surplus returns to safe thresholds.",
+          "No starvation-lock regressions from recruit spam."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-city-defense-ring-coverage-59",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Improve AI city defense assignment by ring coverage",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "ai_city_defense_ring_coverage_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/military.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI defense planning so threatened cities maintain minimum ring coverage and generate defend assignments without conflicting with critical strategic tasks.",
+      "acceptance": {
+        "required_outcomes": [
+          "Defense planner computes and enforces city ring coverage targets.",
+          "Defend assignments route eligible units without illegal order conflicts.",
+          "Assignments adapt as threat level changes across ticks.",
+          "Defense logic preserves deterministic planning order."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-incorporation-move-reservation-60",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Reserve units on incorporation hexes against conflicting move plans",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_incorporation_move_reservation_guard",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI planning so units reserved for village/city incorporation are excluded from conflicting movement assignments.",
+      "acceptance": {
+        "required_outcomes": [
+          "Incorporation-reserved units are marked and excluded from other move target sets.",
+          "No duplicate/conflicting orders are emitted for reserved units.",
+          "Incorporation completion paths still execute successfully.",
+          "Reservation logic is deterministic and idempotent per tick."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-battle-flank-reinforcement-61",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Add AI flank reinforcement routing during active battles",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "ai_battle_flank_reinforcement_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/military.ts",
+        "src/lib/combat.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI so nearby idle stacks are routed to stable flank reinforcement positions for active battles when beneficial.",
+      "acceptance": {
+        "required_outcomes": [
+          "Planner identifies reinforce-eligible stacks near active engagements.",
+          "Reinforcement targets are legal, deterministic, and non-duplicative.",
+          "Flank routing avoids invalid pathing/conflict with current orders.",
+          "Battle outcomes remain stable without oscillatory rerouting."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-pending-recruit-backlog-caps-62",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Cap AI recruit issuance by pending backlog and material stock",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "ai_pending_recruit_backlog_cap_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/applyAiPlan.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch AI recruit logic to account for pending recruit backlog and material constraints before issuing additional recruit actions.",
+      "acceptance": {
+        "required_outcomes": [
+          "Planner includes pending recruit backlog in recruit cap calculations.",
+          "Material stock checks prevent impossible recruit issuance.",
+          "Recruit queue growth stays bounded under sustained pressure.",
+          "No regressions to valid low-backlog recruit behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-ai-commander-field-stack-assignment-63",
+      "split": "eval_public",
+      "source_commit": "40ef4b7",
+      "source_subject": "UI overhaul, economy rebalance, AI spawn fix, and new sprites",
+      "task_title": "Assign commanders to field stacks based on strategic thresholds",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "ai_commander_field_assignment_thresholds",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/commanders.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch AI commander assignment so idle commanders are promoted onto eligible field stacks when strategic thresholds are met.",
+      "acceptance": {
+        "required_outcomes": [
+          "Commander assignment considers stack size/threat thresholds before assignment.",
+          "Assignment/unassignment transitions are valid and non-duplicative.",
+          "Assigned commander effects apply on intended combat/army paths.",
+          "No commander-state corruption during repeated plan application."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-out-of-supply-movement-halt-64",
+      "split": "eval_public",
+      "source_commit": "c099ddf",
+      "source_subject": "Supply and movement: status gating, larger radius, aligned horizon",
+      "task_title": "Halt army movement while out-of-supply",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "out_of_supply_movement_halt_enforcement",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/military.ts",
+        "src/lib/logistics.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch movement processing so out-of-supply armies cannot continue advancing until supply status recovers.",
+      "acceptance": {
+        "required_outcomes": [
+          "Out-of-supply status blocks forward movement deterministically.",
+          "Movement resumes when supply condition returns to valid state.",
+          "No bypass paths allow deep advance while starving/out-of-supply.",
+          "Supply halt does not deadlock valid retreat/recovery orders."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-siege-composition-recruit-gates-65",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Unify siege composition recruit gates across all recruit flows",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "economy",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "siege_composition_recruit_gate_consistency",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/siegeRecruitment.ts",
+        "src/lib/ai.ts",
+        "src/store/useGameStore.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch recruit logic so catapult/ram and siege composition gates are enforced consistently across player, AI, and replenishment paths.",
+      "acceptance": {
+        "required_outcomes": [
+          "Siege recruit gate rules are shared and consistent across all entry points.",
+          "Invalid composition attempts fail with deterministic guard behavior.",
+          "Valid compositions still recruit successfully under resources/tech gates.",
+          "No drift remains between player and AI siege recruit enforcement."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-formation-fallback-placement-validity-66",
+      "split": "eval_public",
+      "source_commit": "e78f750",
+      "source_subject": "Major engagements, spatial formations, field command UI, map detail sprites, iron buff",
+      "task_title": "Improve formation fallback placement for blocked slots",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "formation_fallback_placement_validity",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/formationPlacement.ts",
+        "src/lib/military.ts",
+        "src/components/game/HexGrid.tsx"
+      ],
+      "prompt": "Patch formation targeting so blocked preset slots choose legal fallback hexes without collisions or out-of-range placements.",
+      "acceptance": {
+        "required_outcomes": [
+          "Blocked formation slots resolve to valid fallback positions.",
+          "Fallback placement avoids overlapping/colliding unit targets.",
+          "Formation intent remains coherent after fallback mapping.",
+          "No invalid map bounds/terrain placements are emitted."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-map-controller-box-select-pan-lock-67",
+      "split": "eval_public",
+      "source_commit": "cc43acf",
+      "source_subject": "feat: site password gate, map box select, siege workshop updates",
+      "task_title": "Lock pan/zoom through full box-select lifecycle",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "box_select_pan_zoom_lock_lifecycle",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/components/game/MapController.tsx",
+        "src/components/game/GameScene.tsx",
+        "src/lib/mapBoxSelect.ts"
+      ],
+      "prompt": "Patch map controller interaction so camera pan/zoom remains locked for the full box-select drag lifecycle, including cancel/interrupt paths.",
+      "acceptance": {
+        "required_outcomes": [
+          "Pan/zoom is consistently disabled during active box-select drag lifecycle.",
+          "Cancel/pointer-loss paths correctly restore controls without stuck state.",
+          "Selection rectangle coordinates remain stable while dragging.",
+          "No camera drift interferes with multi-unit selection accuracy."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-supply-cache-invalidation-capture-68",
+      "split": "eval_public",
+      "source_commit": "a480c6c",
+      "source_subject": "AI: wall intelligence, supply expansion, fortress scenario and telemetry",
+      "task_title": "Invalidate supply cache on capture/territory transition",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "supply_cache_invalidation_on_capture",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/logistics.ts",
+        "src/core/gameCore.ts",
+        "src/lib/military.ts"
+      ],
+      "prompt": "Patch supply cache invalidation so captures and territory transitions cannot reuse stale in-supply calculations.",
+      "acceptance": {
+        "required_outcomes": [
+          "Supply cache invalidates on all ownership/territory transitions affecting path supply.",
+          "Post-capture movement/upkeep reads fresh supply state.",
+          "No stale supply grants persist beyond transition tick.",
+          "Invalidation scope avoids unnecessary global recomputation."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-garrison-deploy-flag-order-parity-69",
+      "split": "eval_public",
+      "source_commit": "25e1cd0",
+      "source_subject": "Game systems: commanders, siege, garrison, biomes; sprites and train-ai scripts",
+      "task_title": "Ensure deploy/patrol flags stay consistent across explicit orders",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "garrison_deploy_flag_order_parity",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/military.ts",
+        "src/lib/garrison.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch order handling so explicit move/deploy commands and automatic patrol/garrison flows keep deployment flags consistent and non-destructive.",
+      "acceptance": {
+        "required_outcomes": [
+          "Explicit orders clear/set deploy flags according to contract.",
+          "Auto patrol/garrison updates do not unintentionally strip explicit assignment flags.",
+          "Flag transitions remain deterministic across repeated order cycles.",
+          "No order-state desync appears between UI and simulation state."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-tactical-batch-stack-order-dispatch-70",
+      "split": "eval_public",
+      "source_commit": "05bc949",
+      "source_subject": "Evolution lab, tactical HoI4-style orders, stack split, train-ai updates",
+      "task_title": "Dispatch batch tactical orders for selected stacks",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "tactical_batch_stack_order_dispatch",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/store/useGameStore.ts",
+        "src/components/game/GameScene.tsx",
+        "src/lib/military.ts"
+      ],
+      "prompt": "Patch tactical control flow so multiple selected stacks can receive coordinated move/attack/defend orders in a single dispatch path.",
+      "acceptance": {
+        "required_outcomes": [
+          "Multi-stack tactical selection can dispatch a batch order atomically.",
+          "Each stack receives valid, non-overwriting target/order data.",
+          "Batch dispatch preserves per-stack constraints and legality checks.",
+          "UI tactical selection state remains synchronized post-dispatch."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-army-stack-split-adjacent-flow-71",
+      "split": "eval_public",
+      "source_commit": "05bc949",
+      "source_subject": "Evolution lab, tactical HoI4-style orders, stack split, train-ai updates",
+      "task_title": "Implement robust adjacent-hex stack split flow",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "army_stack_split_adjacent_flow",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/store/useGameStore.ts",
+        "src/components/game/HexGrid.tsx",
+        "src/lib/military.ts"
+      ],
+      "prompt": "Patch stack split flow so players can split a subset of units into adjacent hexes while preserving order integrity and unit accounting.",
+      "acceptance": {
+        "required_outcomes": [
+          "Stack split creates valid new stack with exact transferred unit count.",
+          "Source and target stacks maintain consistent totals after split.",
+          "Split respects adjacency/path legality constraints.",
+          "No duplicate unit references or lost units after repeated splits."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-archer-line-priority-targeting-72",
+      "split": "eval_public",
+      "source_commit": "e78f750",
+      "source_subject": "Major engagements, spatial formations, field command UI, map detail sprites, iron buff",
+      "task_title": "Prioritize archer target lines while maintaining range discipline",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "archer_line_priority_targeting_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/combat.ts",
+        "src/lib/military.ts",
+        "src/lib/formationPlacement.ts"
+      ],
+      "prompt": "Patch combat targeting so archers prioritize high-value reachable lines while maintaining legal range discipline and avoiding unnecessary frontline overcommit.",
+      "acceptance": {
+        "required_outcomes": [
+          "Archer target selection prioritizes configured line/value targets when reachable.",
+          "Range discipline prevents archers from collapsing into melee unnecessarily.",
+          "Target switching is stable and deterministic as battle state updates.",
+          "No regression to baseline non-archer targeting behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-pop-birth-food-buffer-taper-73",
+      "split": "eval_public",
+      "source_commit": "33e2a90",
+      "source_subject": "Starvation instrumentation, diag metrics, seed pool league, birth taper",
+      "task_title": "Taper births by food buffer pressure near carrying limits",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "population_birth_food_buffer_taper",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/core/gameCore.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch birth dynamics so low food buffers taper births smoothly while preserving recovery behavior under restored support.",
+      "acceptance": {
+        "required_outcomes": [
+          "Birth rate tapers as food buffer approaches stress thresholds.",
+          "Taper behavior avoids abrupt oscillation and runaway collapse.",
+          "Recovery path restores growth when food support stabilizes.",
+          "Dynamics remain deterministic across repeated cycles."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-market-price-elasticity-stock-pressure-74",
+      "split": "eval_public",
+      "source_commit": "40ef4b7",
+      "source_subject": "UI overhaul, economy rebalance, AI spawn fix, and new sprites",
+      "task_title": "Add market price elasticity under stock pressure",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "market_price_elasticity_stock_pressure",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/empireEconomy.ts",
+        "src/lib/gameLoop.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch market pricing so resource price adjusts with stock pressure and recent supply/demand flow while remaining bounded and readable.",
+      "acceptance": {
+        "required_outcomes": [
+          "Price function responds to stock pressure with bounded elasticity.",
+          "Price updates are deterministic and avoid unstable spikes.",
+          "Economy outputs reflect adjusted pricing in gold/resource flows.",
+          "HUD displays meaningful market pressure and price signals."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-warehouse-spoilage-food-decay-balance-75",
+      "split": "eval_public",
+      "source_commit": "f382ec6",
+      "source_subject": "Sim optimizations; hard food controls; total-starvation abort",
+      "task_title": "Add warehouse spoilage and food decay balance",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "warehouse_spoilage_food_decay_balance",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/types/game.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch food storage logic to include bounded spoilage/decay behavior with balance controls that prevent trivial hoarding without causing unavoidable collapse.",
+      "acceptance": {
+        "required_outcomes": [
+          "Stored food decays/spoils according to configured bounded rules.",
+          "Decay integrates with existing food support and consumption flows.",
+          "Balance prevents both infinite hoarding and unavoidable starvation spiral.",
+          "HUD surfaces decay/spoilage contributions clearly."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-army-upkeep-progressive-size-scaling-76",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Scale army upkeep progressively by force size bands",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "army_upkeep_progressive_size_scaling",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/empireEconomy.ts",
+        "src/lib/gameLoop.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch upkeep model so large standing forces incur progressive upkeep scaling bands while preserving small-army viability and readability.",
+      "acceptance": {
+        "required_outcomes": [
+          "Upkeep scales progressively with army size bands.",
+          "Scaling is smooth and bounded without discontinuity exploits.",
+          "Gold pressure reflects new upkeep model in cycle outcomes.",
+          "No regression to baseline recruit/combat state logic."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-quarry-mine-output-energy-upkeep-77",
+      "split": "eval_public",
+      "source_commit": "8fea706",
+      "source_subject": "Build diagnostics (early/late farms, markets, mines, etc.) + map size -33%",
+      "task_title": "Tie mine/quarry output to energy-style upkeep budget",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "multidomain"
+      ],
+      "subskill": "mine_quarry_output_upkeep_budget_coupling",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/lib/empireEconomy.ts",
+        "src/types/game.ts"
+      ],
+      "prompt": "Patch mine/quarry output so production efficiency depends on upkeep budget support, reducing output under sustained underfunded operation.",
+      "acceptance": {
+        "required_outcomes": [
+          "Mine/quarry output efficiency responds to upkeep budget support state.",
+          "Underfunded operation reduces output in deterministic bounded way.",
+          "Recovered budget restores output according to defined curve.",
+          "No deadlock where mines cannot recover after temporary deficits."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-fisher-farm-seasonal-yield-weighting-78",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Add seasonal weighting between fishery and farm yields",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "seasonal_fish_farm_yield_weighting",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/lib/empireEconomy.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch food production so fisheries and farms receive seasonal yield weighting that changes effective output but remains balanced across year-cycle.",
+      "acceptance": {
+        "required_outcomes": [
+          "Seasonal weighting modifies fish/farm effective output by defined season profile.",
+          "Weighting remains bounded and does not collapse one food path permanently.",
+          "Season transitions update yield consistently and deterministically.",
+          "HUD/economy views expose seasonal contribution context."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-wage-inflation-productivity-feedback-79",
+      "split": "eval_public",
+      "source_commit": "db08c10",
+      "source_subject": "feat: HUD panels, university, economy cycles, multiplayer, sprites",
+      "task_title": "Add wage inflation feedback to productivity policy",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "wage_inflation_productivity_feedback_control",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/lib/empireEconomy.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch wage system with inflation feedback so sustained high wages have diminishing productivity returns and macro gold pressure balancing.",
+      "acceptance": {
+        "required_outcomes": [
+          "Wage increases raise productivity but with diminishing returns under inflation feedback.",
+          "Inflation state evolves deterministically from wage policy history.",
+          "Feedback prevents runaway exploit loops from pure wage pumping.",
+          "Low wage normalization recovers inflation pressure over time."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-city-food-buffer-policy-thresholds-80",
+      "split": "eval_public",
+      "source_commit": "33e2a90",
+      "source_subject": "Starvation instrumentation, diag metrics, seed pool league, birth taper",
+      "task_title": "Implement city-level food buffer policy thresholds",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "hud_status"
+      ],
+      "subskill": "city_food_buffer_policy_thresholds",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/types/game.ts",
+        "src/lib/ai.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch city food policy so explicit buffer thresholds drive growth, recruit, and emergency conservation behavior per city.",
+      "acceptance": {
+        "required_outcomes": [
+          "City policy thresholds are represented and enforced in food-related decisions.",
+          "Threshold crossings trigger deterministic policy state transitions.",
+          "Policy reduces starvation risk without freezing normal growth permanently.",
+          "HUD surfaces city buffer policy status clearly for player reasoning."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/economy-tooltip"
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-scout-tower-vision-hud-integration-81",
+      "split": "eval_public",
+      "source_commit": "783d10b",
+      "source_subject": "1v1 simulation, AI menus (play mode), scout towers, and related fixes",
+      "task_title": "Integrate scout tower vision coverage signals into HUD/map feedback",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "army_operations",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "scout_tower_vision_signal_integration",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/combat.ts",
+        "src/store/useGameStore.ts",
+        "src/components/game/HexGrid.tsx",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch visibility system so scout towers contribute deterministic vision coverage and expose that state in map/HUD tactical signals.",
+      "acceptance": {
+        "required_outcomes": [
+          "Scout towers expand vision coverage according to configured range rules.",
+          "Vision recomputation updates deterministically on tower/state changes.",
+          "HUD/map feedback surfaces scout vision contribution clearly.",
+          "No regression to baseline fog-of-war visibility logic."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ],
+        "preview_path": "/test-env/hud-status-summary"
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-multiplayer-formation-move-parity-82",
+      "split": "eval_public",
+      "source_commit": "2e91187",
+      "source_subject": "feat: multiplayer client \u2014 HUD lobby, WS session, store snapshots, gameCore plans",
+      "task_title": "Align multiplayer movement with local formation/echelon dispatch",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "state_perstitence_integrity",
+        "hud_status"
+      ],
+      "subskill": "multiplayer_formation_move_parity_contract",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/store/useGameStore.ts",
+        "src/lib/military.ts",
+        "src/components/game/MapController.tsx",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch multiplayer order dispatch so move plans use the same formation/echelon targeting semantics as local singleplayer move flows.",
+      "acceptance": {
+        "required_outcomes": [
+          "Multiplayer move dispatch preserves formation/echelon spread instead of flat single-hex collapse.",
+          "Order payloads stay schema-compatible across multiplayer bridge paths.",
+          "Local and multiplayer movement outcomes are behaviorally consistent for equivalent orders.",
+          "No desync introduced in multiplayer snapshot/apply loops."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-contested-zone-majority-payout-gating-83",
+      "split": "eval_public",
+      "source_commit": "25e1cd0",
+      "source_subject": "Game systems: commanders, siege, garrison, biomes; sprites and train-ai scripts",
+      "task_title": "Harden contested-zone majority payout gating and anti-double-pay",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "contested_zone_majority_payout_gating",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/contestedZone.ts",
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch contested-zone payout logic to enforce deterministic majority/rival gating and prevent duplicate payouts during rapid ownership flips.",
+      "acceptance": {
+        "required_outcomes": [
+          "Payout gating requires valid majority/rival conditions per contract.",
+          "Rapid zone-state flips cannot trigger duplicate payout in same interval.",
+          "Economy rewards and ownership transitions remain synchronized.",
+          "State serialization reflects payout state without corruption."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-battalion-training-tick-ordering-84",
+      "split": "eval_public",
+      "source_commit": "038f989",
+      "source_subject": "feat: sim health gates, siege recruitment, training pipeline and docs",
+      "task_title": "Enforce deterministic tick ordering for battalion training resource pulls",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "state_perstitence_integrity"
+      ],
+      "subskill": "battalion_training_tick_ordering_integrity",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/battalionTraining.ts",
+        "src/lib/gameLoop.ts",
+        "src/core/gameCore.ts"
+      ],
+      "prompt": "Patch training progression so resource pulls and completion transitions occur in deterministic phase order relative to economy turn processing.",
+      "acceptance": {
+        "required_outcomes": [
+          "Training progression executes in defined phase order each cycle.",
+          "Resource pulls occur at consistent stage with no double-spend race.",
+          "Completion transitions maintain valid state under lagged resources.",
+          "Ordering is stable across repeated deterministic runs."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-map-box-select-multi-stack-orders-85",
+      "split": "eval_public",
+      "source_commit": "cc43acf",
+      "source_subject": "feat: site password gate, map box select, siege workshop updates",
+      "task_title": "Support coordinated multi-stack tactical dispatch from box selection",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "hud_status"
+      ],
+      "subskill": "map_box_select_multi_stack_order_dispatch",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/mapBoxSelect.ts",
+        "src/components/game/GameScene.tsx",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch box-select tactical flow so multiple selected stacks can receive coordinated order dispatch with stable UI selection state.",
+      "acceptance": {
+        "required_outcomes": [
+          "Box-selected multiple stacks can receive one coordinated order action.",
+          "Dispatch preserves per-stack constraints and order legality.",
+          "Selection UI state updates correctly after batch dispatch.",
+          "No duplicate/phantom stack orders emitted."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-battle-preview-nearby-engagement-clusters-86",
+      "split": "eval_public",
+      "source_commit": "51f8ffa",
+      "source_subject": "feat: remove major engagement, battle UI, sprites and scripts",
+      "task_title": "Expose nearby engagement cluster previews in tactical HUD",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "hud_status"
+      ],
+      "subskill": "nearby_engagement_cluster_preview_signal",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/battlePreview.ts",
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts"
+      ],
+      "prompt": "Patch battle preview flow to cluster nearby engagements and surface deterministic pre-contact outlook signals in tactical HUD.",
+      "acceptance": {
+        "required_outcomes": [
+          "Nearby opposing stacks are clustered into preview groups by defined radius rules.",
+          "HUD shows stable cluster preview outputs for same world state.",
+          "Preview does not mutate combat state or interfere with actual engagement resolution.",
+          "Cluster computations remain performant and deterministic."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-incorporation-army-halt-stateflow-87",
+      "split": "eval_public",
+      "source_commit": "ebad682",
+      "source_subject": "Sim: AI builds use construction sites; add builderRecruitForMinesAndSiege param",
+      "task_title": "Halt army flow on incorporation hex with HUD-visible hold state",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "incorporation_army_halt_stateflow",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/core/gameCore.ts",
+        "src/lib/military.ts",
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch incorporation queue handling so armies on incorporation hexes enter a deterministic temporary hold state and HUD reflects hold reason/duration.",
+      "acceptance": {
+        "required_outcomes": [
+          "Incorporation hold state triggers on queued incorporation hexes.",
+          "Hold state blocks conflicting movement until release conditions are met.",
+          "HUD clearly indicates incorporation hold status and release transitions.",
+          "No stuck-hold state persists after incorporation completion/cancel."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-naval-supply-convoy-protection-routing-88",
+      "split": "eval_public",
+      "source_commit": "247ca24",
+      "source_subject": "AI naval expansion, training pipeline, scenarios, and related sim/store updates",
+      "task_title": "Add naval convoy protection routing tied to supply lanes",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "ai_strategy_and_planning",
+        "army_operations",
+        "economy"
+      ],
+      "subskill": "naval_convoy_supply_protection_routing",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/lib/navalReachability.ts",
+        "src/lib/logistics.ts",
+        "src/lib/military.ts"
+      ],
+      "prompt": "Patch naval planning so convoy-style supply lanes can be protected by assigned ships, with route threat checks influencing supply stability.",
+      "acceptance": {
+        "required_outcomes": [
+          "Naval planner assigns protection tasks to supply convoy routes.",
+          "Supply lane disruption risk influences naval assignment decisions.",
+          "Protected convoy state feeds into supply outcomes deterministically.",
+          "No regression to baseline non-convoy naval movement behavior."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-fortress-upgrade-resource-routing-89",
+      "split": "eval_public",
+      "source_commit": "a480c6c",
+      "source_subject": "AI: wall intelligence, supply expansion, fortress scenario and telemetry",
+      "task_title": "Route fortress upgrade decisions through resource and supply priorities",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "fortress_upgrade_resource_routing_policy",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/ai.ts",
+        "src/core/gameCore.ts",
+        "src/lib/builders.ts",
+        "src/lib/logistics.ts"
+      ],
+      "prompt": "Patch fortress/wall upgrade decisions so resource spending routes through supply-aware defensive priority policy instead of isolated static thresholds.",
+      "acceptance": {
+        "required_outcomes": [
+          "Upgrade planner ranks fortress/wall upgrades using supply+threat+resource context.",
+          "Resource routing avoids starving critical economy loops during defensive upgrades.",
+          "Policy adapts as threat/supply posture changes across cycles.",
+          "No degenerate always-upgrade or never-upgrade loops remain."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-commander-trait-economy-morale-coupling-90",
+      "split": "eval_public",
+      "source_commit": "25e1cd0",
+      "source_subject": "Game systems: commanders, siege, garrison, biomes; sprites and train-ai scripts",
+      "task_title": "Couple commander traits to economy and morale combat outcomes",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "army_operations",
+        "economy",
+        "hud_status"
+      ],
+      "subskill": "commander_trait_economy_morale_coupling",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/commanders.ts",
+        "src/lib/combat.ts",
+        "src/lib/empireEconomy.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch commander trait effects so selected traits influence both morale/combat modifiers and constrained economy-side impacts, with clear player-facing trait outcome signals.",
+      "acceptance": {
+        "required_outcomes": [
+          "Commander traits apply intended morale/combat modifiers on valid combat paths.",
+          "Economy-side coupling effects are applied with bounded, non-exploitative impact.",
+          "HUD surfaces active trait effects and coupled outcome context.",
+          "Trait stacking/interaction rules remain deterministic and legal."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    },
+    {
+      "id": "patch-weather-production-combat-routing-91",
+      "split": "eval_public",
+      "source_commit": "40ef4b7",
+      "source_subject": "UI overhaul, economy rebalance, AI spawn fix, and new sprites",
+      "task_title": "Route weather effects consistently across production and combat modifiers",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "economy",
+        "army_operations",
+        "hud_status"
+      ],
+      "subskill": "weather_production_combat_routing_consistency",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "expected_multi_domain": true,
+      "changed_files": [
+        "src/lib/gameLoop.ts",
+        "src/lib/combat.ts",
+        "src/lib/empireEconomy.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "prompt": "Patch weather system routing so production penalties/bonuses and combat modifiers are sourced from a consistent shared weather state contract.",
+      "acceptance": {
+        "required_outcomes": [
+          "Weather state is read from one consistent source across economy and combat calculations.",
+          "Production and combat weather effects update in sync by cycle/turn rules.",
+          "HUD displays weather impact on both economy and combat outcomes coherently.",
+          "No split-brain weather logic remains between subsystems."
+        ],
+        "verify_commands": [
+          "npm run test:ml-cohort"
+        ]
+      },
+      "anti_overfit_notes": "Task requires functional cross-path integration; superficial constant or UI-only edits are insufficient."
+    }
+  ]
+}

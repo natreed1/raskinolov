@@ -32,7 +32,7 @@ Legacy UI entrypoints (`chat_gradio`, `human_eval_ui`, `train_ui_gradio`, `landi
 - `python scripts/ml_workflow.py mock-specialist-pairwise` now generates synthetic pairwise rows (`winner_output` + weak loser baseline) from specialist-tagged benchmark task files, enabling quick bootstrap/refresh corpora for low-data specialists (default output: `benchmarks/results/mock_specialist_pairwise_training_data_v1.jsonl`).
 - `scripts/model_router.py` defaults the local backend to `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit`; this keeps Linux `LOCAL_BACKEND=transformers` smoke/eval runs compatible with the current 7B specialist adapters.
 - As of 2026-05-30, stable adapter IDs remain unchanged for checkpoint compatibility, but user-facing specialist roles use measured names from the full crossdomain 121-task baseline: `loading_screen` -> `ui_surface_composer`, `hud_status` -> `ui_state_signals`, `economy_tooltip` -> `resource_ui_projection`, `combat_risk` -> `army_ui_flow`, `save_load_api_guard` -> `state_contract_guard`, and `ai_planning_explanation` -> `crossdomain_state_patch`.
-- `economistRL` is a new experimental LoRA adapter lane for RL-scored hard economy mechanics plus common RL/generalist skills. Seed tasks live in `benchmarks/economistRL_tasks_v1.json`; deterministic reward scoring and task append tools live in `scripts/economist_rl_tasks.py`; seed SFT data is built with `python scripts/ml_workflow.py economist-rl-dataset`; training config is `training/economistRL_lora_qwen25_coder_7b.yaml`. The curriculum target is `500` prompts split `70%` economy (`350`) and `30%` generalist/common RL framework skills (`150`).
+- `economistRL` is a new experimental LoRA adapter lane for RL-scored hard economy mechanics plus common RL/generalist skills. Seed tasks live in `benchmarks/economistRL_tasks_v1.json`; deterministic reward scoring and task append tools live in `scripts/economist_rl_reward_engine.py`; seed bootstrap data is built with `python scripts/ml_workflow.py economist-rl-dataset`; bootstrap LoRA checkpoint is `checkpoints/adapters/economistRL/seed_bootstrap` via `training/economistRL_lora_qwen25_coder_7b.yaml`. The current curriculum is `500` prompts split `70%` economy (`350`) and `30%` generalist/common RL framework skills (`150`), expanding to `1,500` seed bootstrap rows.
 
 ## Environment
 
@@ -123,6 +123,45 @@ Measured specialist-role metadata is stored in `training/adapter_registry_v1.jso
 `economistRL` is intentionally marked `promotion_state: experimental` in `training/adapter_registry_v1.json`. Use it for economy RL task-bank rollouts and reward scoring before considering default routing promotion; compare against `resource_ui_projection`, `crossdomain_state_patch`, and the base model on the same `benchmarks/economistRL_tasks_v1.json` tasks.
 
 Smoke outcome: a 2026-05-28 `--specialist-suite --max-tasks 1` run launched six `gpu_1x_a10` workers in `us-west-1` with `Evaluation-Runs` attached, passed bootstrap mount checks, synced all specialist adapters (including registry fallback paths for `save_load_api_guard` and `ai_planning_explanation`), started all six remote tmux jobs, confirmed durable cleanup artifact staging under `/lambda/nfs/Evaluation-Runs/fallen-empire-lora-artifacts` while workers were active, and returned Lambda active instance count to `0`.
+
+#### economistRL Lambda overnight watch (4×10 PPO chaining)
+
+Local poller for chained economistRL PPO cycles on Lambda. Use when a smoke run must survive overnight without manual SSH, and when instance loss mid-rollout should still leave recoverable logs locally.
+
+| Path | Purpose |
+|---|---|
+| `scripts/lambda/watch_economist_rl_lambda_overnight.py` | Launch/poll/relaunch loop |
+| `logs/economist_rl_overnight_watch.json` | Current attempt, instance id, host, progress, failure class |
+| `logs/economist_rl_overnight_watch.log` | Append-only watcher log |
+| `benchmarks/results/economistRL/extracts/` | Structured artifact archive (see `extracts/README.md`) |
+| `benchmarks/results/economistRL/extracts/index.jsonl` | Append-only index of every extract |
+| `benchmarks/results/economistRL/extracts/live_<instance_id>/` | Lightweight snapshot each poll while worker is SSH-reachable |
+
+Default cycle args (override after `--` on the watch command): **4 cycles × 10 rollouts**, `--skip-eval`, PPO `--ppo-min-samples 4 --ppo-max-samples 8 --ppo-epochs 1 --ppo-logprob-window-tokens 1536`, init adapter `checkpoints/fe-lora-arena-apply-sft`, task DB `benchmarks/economistRL_tasks_v3_execution.json`. Adapter chaining requires `.economist_rl_ppo_trained` marker on each `rl_pass_*` (see `docs/ECONOMIST_RL_ADAPTER.md`).
+
+**Failure classes** written to `EXTRACT_MANIFEST.json`: `completed`, `instance_gone` (Lambda API shows no worker mid-run — most common crash pattern in Jun 2026 smokes), `training_failed` / `training_failed_oom`, `launch_failed`, `ssh_failed`.
+
+**Start a fresh run** (clears stale watch state, launches worker, polls every 10 min, up to 8 restarts / 14 h):
+
+```bash
+cd /Users/natreed/fallen-empire-lora
+nohup .venv/bin/python scripts/lambda/watch_economist_rl_lambda_overnight.py \
+  --reset-state --launch-initial --poll-minutes 10 --max-restarts 8 --max-hours 14 \
+  >> logs/economist_rl_overnight_watch.log 2>&1 &
+```
+
+**Monitor:**
+
+```bash
+cat logs/economist_rl_overnight_watch.json
+tail -20 logs/economist_rl_overnight_watch.log
+tail -3 benchmarks/results/economistRL/extracts/index.jsonl
+ls benchmarks/results/economistRL/extracts/live_*/
+```
+
+On failure the watcher rsyncs `~/cloud-eval-logs/` and remote `benchmarks/results/economistRL/` into `extracts/attempt_<NNN>_<id>_<class>_<UTC>/` plus `cycle_log_tail.txt` and local launch log. If the instance is already gone, manifest + tail still land locally (rsync may be partial).
+
+**Known issue (2026-06-08):** Several 4×10 smokes lost workers at 6–9/10 rollouts with no PPO phase and no remote cleanup log — classified as `instance_gone`, not rollout logic stopping early. PPO OOM fixes landed but end-to-end PPO on Lambda is not yet verified in this watch path.
 
 ### Create venv and install
 

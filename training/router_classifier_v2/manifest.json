@@ -1,0 +1,74 @@
+{
+  "schema_version": "router_classifier_artifact_v1",
+  "model_version": "router_classifier_linear_v1",
+  "labels": [
+    "ai_planning_explanation",
+    "combat_risk",
+    "documentation",
+    "economy_tooltip",
+    "general_fallback",
+    "hud_status",
+    "loading_screen",
+    "save_load_api_guard"
+  ],
+  "feature_type": "bow_log_tf_linear_softmax",
+  "vocab_size": 350,
+  "weights_shape": [
+    8,
+    351
+  ],
+  "train_summary": {
+    "train_accuracy": 1.0,
+    "valid_accuracy": 0.6,
+    "labels": [
+      "ai_planning_explanation",
+      "combat_risk",
+      "documentation",
+      "economy_tooltip",
+      "general_fallback",
+      "hud_status",
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "vocab_size": 350,
+    "model_version": "router_classifier_linear_v1",
+    "epochs": 160,
+    "learning_rate": 0.18,
+    "l2": 0.0005,
+    "test_accuracy": 0.6667,
+    "test_rows": 3
+  },
+  "dataset_manifest": {
+    "schema_version": "routing_classifier_dataset_v1",
+    "created_utc": "2026-05-18T05:24:20Z",
+    "dataset_version": "router-v3-gapfill-20260518",
+    "seed": 42,
+    "rows_total": 52,
+    "rows_train": 44,
+    "rows_valid": 5,
+    "rows_test": 3,
+    "low_confidence_threshold": 0.62,
+    "labels": {
+      "ai_planning_explanation": 8,
+      "combat_risk": 4,
+      "documentation": 7,
+      "economy_tooltip": 5,
+      "general_fallback": 14,
+      "hud_status": 4,
+      "loading_screen": 5,
+      "save_load_api_guard": 5
+    },
+    "sources": {
+      "benchmark_tasks": 12,
+      "curated": 40
+    },
+    "inputs": {
+      "benchmark_tasks": "/Users/natreed/fallen-empire-lora/benchmarks/task_routing_tasks.json",
+      "live_jsonl": [],
+      "curated_jsonl": [
+        "/Users/natreed/fallen-empire-lora/data/routing/router_cases_v1.jsonl",
+        "/Users/natreed/fallen-empire-lora/data/routing/router_cases_v2.jsonl"
+      ]
+    }
+  }
+}

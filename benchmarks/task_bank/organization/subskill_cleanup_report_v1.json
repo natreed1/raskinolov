@@ -1,0 +1,11 @@
+{
+  "schema_version": "subskill_cleanup_report_v1",
+  "normalized_subskill_count": 101,
+  "normalization": "snake_case enforced across patch/swe/custom tasks",
+  "families_in_skill_index": 109,
+  "notes": [
+    "Removed empty/duplicate skill families",
+    "Backfilled missing task->family links from source manifests",
+    "Aligned taxonomy controlled_subskills and canonical_subskills to current task universe"
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": "task_source_registry_v1",
+  "source_id": "multiplayer_runtime_tasks_v1",
+  "source_type": "curated_multiplayer_runtime",
+  "origin": {
+    "derived_from": [
+      "benchmarks/patch_task_bank_v1.json",
+      "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json"
+    ],
+    "lineage_note": "Curated multiplayer/runtime/deploy product-behavior tasks only; excludes eval/test-harness infrastructure tasks."
+  },
+  "domain_primary": "state_perstitence_integrity",
+  "task_count": 11,
+  "task_refs": [
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-node-path-runtime-resolution-01"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-railway-missing-dep-02"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-server-bootstrap-12"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-game-server-deploy-contract-21"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-remap-safety-22"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-005"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-011"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-016"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-017"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-024"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "task_id": "swev-gm-025"
+    }
+  ],
+  "subskill_tags": {
+    "patch-multiplayer-server-bootstrap-12": "railway_service_bootstrap_contract",
+    "patch-multiplayer-remap-safety-22": "snapshot_schema_compatibility",
+    "swev-gm-005": "cross_node_state_reconciliation",
+    "swev-gm-011": "snapshot_schema_compatibility",
+    "swev-gm-016": "deploy_env_timeout_policy",
+    "swev-gm-017": "cross_node_state_reconciliation",
+    "swev-gm-024": "websocket_handshake_recovery",
+    "swev-gm-025": "reconnect_idempotency_and_lifecycle_cleanup"
+  },
+  "status": {
+    "curation_state": "active_seed",
+    "use_for_metrics": true
+  },
+  "subdomain_tag": "multiplayer_runtime_deploy"
+}

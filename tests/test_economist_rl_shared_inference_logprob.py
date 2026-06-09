@@ -54,6 +54,42 @@ def test_attach_old_logprob_passes_inference_backend(monkeypatch) -> None:
         inference_backend=backend,
     )
     assert row["old_logprob"] == -0.5
+    assert row["old_logprob_source"] == "computed"
+
+
+def test_attach_old_logprob_proxy_error_is_tagged(monkeypatch) -> None:
+    def _boom(**kwargs) -> float:
+        raise RuntimeError("logprob backend unavailable")
+
+    monkeypatch.setattr(trainer, "compute_sequence_logprob", _boom)
+
+    row = attach_old_logprob_to_rollout(
+        rollout_row={"task_id": "t1", "prompt": "p", "output": "completion"},
+        system_prompt="system",
+        base_model="mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+        adapter_path=None,
+    )
+    assert row["old_logprob_source"] == "proxy_error"
+    assert "logprob backend unavailable" in row["old_logprob_error"]
+
+
+def test_attach_old_logprob_strict_raises(monkeypatch) -> None:
+    monkeypatch.setattr(
+        trainer,
+        "compute_sequence_logprob",
+        lambda **kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+    )
+    try:
+        attach_old_logprob_to_rollout(
+            rollout_row={"task_id": "t1", "prompt": "p", "output": "completion"},
+            system_prompt="system",
+            base_model="mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+            adapter_path=None,
+            strict=True,
+        )
+        raise AssertionError("expected strict attach to fail")
+    except RuntimeError as exc:
+        assert "old_logprob attach failed" in str(exc)
 
 
 def test_attach_old_logprob_forwards_logprob_window(monkeypatch) -> None:

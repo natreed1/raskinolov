@@ -1,0 +1,50 @@
+{
+  "schema_version": "task_source_registry_v1",
+  "source_id": "swebench_verified_github_candidates_v1",
+  "source_type": "swe_benchmark_verified",
+  "origin": {
+    "upstream_repo": "https://github.com/SWE-bench/SWE-bench.git",
+    "upstream_dataset": "SWE-bench/SWE-bench_Verified",
+    "sample_cache_file": "data/routing/swebench_verified_sample_200.json",
+    "mapped_tasks_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+    "lineage_note": "Task prompts are mapped from real SWE-bench Verified issue families to Fallen Empire domains."
+  },
+  "derived_source_manifests": [
+    "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+    "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+    "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json"
+  ],
+  "task_count": 25,
+  "task_ids": [
+    "swev-gm-001",
+    "swev-gm-002",
+    "swev-gm-003",
+    "swev-gm-004",
+    "swev-gm-005",
+    "swev-gm-006",
+    "swev-gm-007",
+    "swev-gm-008",
+    "swev-gm-009",
+    "swev-gm-010",
+    "swev-gm-011",
+    "swev-gm-012",
+    "swev-gm-013",
+    "swev-gm-014",
+    "swev-gm-015",
+    "swev-gm-016",
+    "swev-gm-017",
+    "swev-gm-018",
+    "swev-gm-019",
+    "swev-gm-020",
+    "swev-gm-021",
+    "swev-gm-022",
+    "swev-gm-023",
+    "swev-gm-024",
+    "swev-gm-025"
+  ],
+  "status": {
+    "curation_state": "active_seed",
+    "use_for_metrics": true
+  }
+}
+

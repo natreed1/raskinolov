@@ -1,0 +1,53 @@
+lambda_capacity_preflight_loaded cpu_4x_general=- cpu_4x_generalx=- gpu_1x_a10=us-east-1,us-west-1 gpu_1x_a100=- gpu_1x_a100_sxm4=us-east-1,us-west-2 gpu_1x_a6000=- gpu_1x_b200_sxm6=- gpu_1x_gh200=- gpu_1x_h100_pcie=- gpu_1x_h100_sxm5=us-southeast-1 gpu_1x_rtx6000=- gpu_2x_a100=- gpu_2x_a6000=- gpu_2x_b200_sxm6=- gpu_2x_h100_sxm5=- gpu_4x_a100=- gpu_4x_a6000=- gpu_4x_b200_sxm6=- gpu_4x_h100_sxm5=- gpu_8x_a100=asia-northeast-2 gpu_8x_a100_80gb_sxm4=- gpu_8x_b200_sxm6=- gpu_8x_h100_sxm5=- gpu_8x_v100=- gpu_8x_v100_n=us-south-2
+lambda_capacity_candidate_added instance_type=gpu_1x_a10 region=us-east-1 reason=requested_pair
+lambda_capacity_candidate_added instance_type=gpu_1x_a10 region=us-west-1 reason=requested_type_available_region
+lambda_capacity_candidate_order 1:gpu_1x_a10@us-east-1 2:gpu_1x_a10@us-west-1
+lambda_launch_candidate_try index=1/2 instance_type=gpu_1x_a10 region=us-east-1 quantity=1
+lambda_launch_candidate_selected instance_type=gpu_1x_a10 region=us-east-1 instance_count=1
+ssh: connect to host 150.136.47.89 port 22: Operation timed out
+bootstrap_retry host=150.136.47.89 attempt=2/5 sleep_s=30.0 error=Command '['ssh', '-i', '/Users/natreed/.ssh/lambda_cloud_cursor', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=20', 'ubuntu@150.136.47.89', 'set -euo pipefail; mkdir -p ~/fallen-empire-lora ~/fallen-empire ~/cloud-eval-logs; sudo apt-get update -y; sudo apt-get install -y curl ca-certificates gnupg tmux rsync; if ! command -v node >/dev/null 2>&1 || [ "$(node -v | tr -d v | cut -d. -f1)" -lt 20 ]; then   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;   sudo apt-get install -y nodejs; fi']' returned non-zero exit status 255.
+ssh: connect to host 150.136.47.89 port 22: Operation timed out
+bootstrap_retry host=150.136.47.89 attempt=3/5 sleep_s=30.0 error=Command '['ssh', '-i', '/Users/natreed/.ssh/lambda_cloud_cursor', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=20', 'ubuntu@150.136.47.89', 'set -euo pipefail; mkdir -p ~/fallen-empire-lora ~/fallen-empire ~/cloud-eval-logs; sudo apt-get update -y; sudo apt-get install -y curl ca-certificates gnupg tmux rsync; if ! command -v node >/dev/null 2>&1 || [ "$(node -v | tr -d v | cut -d. -f1)" -lt 20 ]; then   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;   sudo apt-get install -y nodejs; fi']' returned non-zero exit status 255.
+ssh: connect to host 150.136.47.89 port 22: Operation timed out
+bootstrap_retry host=150.136.47.89 attempt=4/5 sleep_s=30.0 error=Command '['ssh', '-i', '/Users/natreed/.ssh/lambda_cloud_cursor', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=20', 'ubuntu@150.136.47.89', 'set -euo pipefail; mkdir -p ~/fallen-empire-lora ~/fallen-empire ~/cloud-eval-logs; sudo apt-get update -y; sudo apt-get install -y curl ca-certificates gnupg tmux rsync; if ! command -v node >/dev/null 2>&1 || [ "$(node -v | tr -d v | cut -d. -f1)" -lt 20 ]; then   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;   sudo apt-get install -y nodejs; fi']' returned non-zero exit status 255.
+ssh: connect to host 150.136.47.89 port 22: Operation timed out
+bootstrap_retry host=150.136.47.89 attempt=5/5 sleep_s=30.0 error=Command '['ssh', '-i', '/Users/natreed/.ssh/lambda_cloud_cursor', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=20', 'ubuntu@150.136.47.89', 'set -euo pipefail; mkdir -p ~/fallen-empire-lora ~/fallen-empire ~/cloud-eval-logs; sudo apt-get update -y; sudo apt-get install -y curl ca-certificates gnupg tmux rsync; if ! command -v node >/dev/null 2>&1 || [ "$(node -v | tr -d v | cut -d. -f1)" -lt 20 ]; then   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;   sudo apt-get install -y nodejs; fi']' returned non-zero exit status 255.
+ssh: connect to host 150.136.47.89 port 22: Operation timed out
+setup_cleanup_terminate_start reason=setup_failure_before_remote_start instance_count=1 ids=026605fa5d764b418d282ed47c7c6835
+setup_cleanup_terminate_done reason=setup_failure_before_remote_start terminated_count=1
+setup_cleanup_terminated id=026605fa5d764b418d282ed47c7c6835 name=fe-economist-rl-1780958339 status=terminating
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 1150, in _run_workers_parallel
+    future.result()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/_base.py", line 438, in result
+    return self.__get_result()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/_base.py", line 390, in __get_result
+    raise self._exception
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/concurrent/futures/thread.py", line 52, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 1143, in run_item_with_retries
+    raise last_exc
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 1130, in run_item_with_retries
+    fn(item)
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py", line 343, in <lambda>
+    lambda item: lab._bootstrap_worker(args.ssh_key_path, item[0], file_system_mount_point),
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 884, in _bootstrap_worker
+    _ssh(ssh_key_path, host, cmd)
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 523, in _ssh
+    _shell(
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 153, in _shell
+    subprocess.run(cmd, check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['ssh', '-i', '/Users/natreed/.ssh/lambda_cloud_cursor', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=20', 'ubuntu@150.136.47.89', 'set -euo pipefail; mkdir -p ~/fallen-empire-lora ~/fallen-empire ~/cloud-eval-logs; sudo apt-get update -y; sudo apt-get install -y curl ca-certificates gnupg tmux rsync; if ! command -v node >/dev/null 2>&1 || [ "$(node -v | tr -d v | cut -d. -f1)" -lt 20 ]; then   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;   sudo apt-get install -y nodejs; fi']' returned non-zero exit status 255.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py", line 428, in <module>
+    raise SystemExit(main())
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py", line 340, in main
+    lab._run_workers_parallel(
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 1152, in _run_workers_parallel
+    raise RuntimeError(f"{label} failed for {item[0]}: {exc}") from exc
+RuntimeError: bootstrap failed for 150.136.47.89: Command '['ssh', '-i', '/Users/natreed/.ssh/lambda_cloud_cursor', '-o', 'StrictHostKeyChecking=accept-new', '-o', 'ConnectTimeout=20', 'ubuntu@150.136.47.89', 'set -euo pipefail; mkdir -p ~/fallen-empire-lora ~/fallen-empire ~/cloud-eval-logs; sudo apt-get update -y; sudo apt-get install -y curl ca-certificates gnupg tmux rsync; if ! command -v node >/dev/null 2>&1 || [ "$(node -v | tr -d v | cut -d. -f1)" -lt 20 ]; then   curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -;   sudo apt-get install -y nodejs; fi']' returned non-zero exit status 255.

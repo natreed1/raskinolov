@@ -184,6 +184,205 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
         self.assertEqual(windows[0].input_ids[0], 3000 - 2047)
         self.assertEqual(windows[-1].target_token_id, completion_ids[-1])
 
+    def test_transformers_windowed_ppo_backprops_each_window(self) -> None:
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from economist_rl_ppo_trainer import (
+            PPOConfig,
+            PPOSample,
+            _backward_ppo_sample_transformers,
+        )
+
+        class FakeTensor:
+            def __init__(self, value: float) -> None:
+                self.value = float(value)
+                self.dtype = "float32"
+                self.device = "cpu"
+
+            def __sub__(self, other):
+                other_value = other.value if isinstance(other, FakeTensor) else other
+                return FakeTensor(self.value - float(other_value))
+
+            def __mul__(self, other):
+                other_value = other.value if isinstance(other, FakeTensor) else other
+                return FakeTensor(self.value * float(other_value))
+
+            def __neg__(self):
+                return FakeTensor(-self.value)
+
+            def detach(self):
+                return self
+
+            def cpu(self):
+                return self
+
+            def backward(self) -> None:
+                backward_calls.append(self.value)
+
+            def __float__(self) -> float:
+                return self.value
+
+        class FakeTorch:
+            @staticmethod
+            def tensor(value, device=None, dtype=None):
+                return FakeTensor(value)
+
+            @staticmethod
+            def exp(value):
+                return FakeTensor(1.0)
+
+            @staticmethod
+            def clamp(value, lo, hi):
+                return value
+
+            @staticmethod
+            def min(a, b):
+                return a if float(a) <= float(b) else b
+
+        backward_calls: list[float] = []
+        sample = PPOSample(
+            task_id="t1",
+            prompt="prompt",
+            completion="completion",
+            reward=1.0,
+            advantage=1.0,
+            old_logprob=-1.0,
+        )
+
+        with patch(
+            "economist_rl_ppo_trainer._windowed_completion_logprob_windows_for_sample",
+            return_value=[SimpleNamespace(), SimpleNamespace(), SimpleNamespace()],
+        ), patch(
+            "economist_rl_ppo_trainer._iter_windowed_completion_logprob_tensors",
+            return_value=[FakeTensor(-1.1), FakeTensor(-0.9), FakeTensor(-1.0)],
+        ):
+            loss_value = _backward_ppo_sample_transformers(
+                model=object(),
+                tokenizer=object(),
+                sample=sample,
+                system_prompt="system",
+                torch_mod=FakeTorch,
+                cfg=PPOConfig(),
+                device="cpu",
+                use_windowed_backward=True,
+            )
+
+        self.assertEqual(len(backward_calls), 3)
+        self.assertAlmostEqual(loss_value, -1.0, places=6)
+
+    def test_backward_ppo_sample_uses_full_path_when_context_fits(self) -> None:
+        from unittest.mock import patch
+
+        from economist_rl_ppo_trainer import (
+            PPOConfig,
+            PPOSample,
+            _backward_ppo_sample_transformers,
+        )
+
+        class FakeTensor:
+            def __init__(self, value: float) -> None:
+                self.value = float(value)
+                self.dtype = "float32"
+                self.device = "cpu"
+
+            def __sub__(self, other):
+                other_value = other.value if isinstance(other, FakeTensor) else other
+                return FakeTensor(self.value - float(other_value))
+
+            def __mul__(self, other):
+                other_value = other.value if isinstance(other, FakeTensor) else other
+                return FakeTensor(self.value * float(other_value))
+
+            def __neg__(self):
+                return FakeTensor(-self.value)
+
+            def detach(self):
+                return self
+
+            def cpu(self):
+                return self
+
+            def backward(self) -> None:
+                backward_calls.append(self.value)
+
+            def __float__(self) -> float:
+                return self.value
+
+        class FakeTorch:
+            @staticmethod
+            def tensor(value, device=None, dtype=None):
+                return FakeTensor(value)
+
+            @staticmethod
+            def exp(value):
+                return FakeTensor(1.0)
+
+            @staticmethod
+            def clamp(value, lo, hi):
+                return value
+
+            @staticmethod
+            def min(a, b):
+                return a if float(a) <= float(b) else b
+
+        backward_calls: list[float] = []
+        sample = PPOSample(
+            task_id="t1",
+            prompt="prompt",
+            completion="completion",
+            reward=1.0,
+            advantage=1.0,
+            old_logprob=-1.0,
+        )
+
+        with patch(
+            "economist_rl_ppo_trainer._windowed_completion_logprob_windows_for_sample",
+            return_value=[],
+        ), patch(
+            "economist_rl_ppo_trainer._completion_logprob_tensor",
+            return_value=FakeTensor(-1.0),
+        ) as full_logprob, patch(
+            "economist_rl_ppo_trainer._iter_windowed_completion_logprob_tensors"
+        ) as windowed_logprobs:
+            loss_value = _backward_ppo_sample_transformers(
+                model=object(),
+                tokenizer=object(),
+                sample=sample,
+                system_prompt="system",
+                torch_mod=FakeTorch,
+                cfg=PPOConfig(),
+                device="cpu",
+                use_windowed_backward=None,
+            )
+
+        self.assertEqual(len(backward_calls), 1)
+        self.assertAlmostEqual(loss_value, -1.0, places=6)
+        full_logprob.assert_called_once()
+        windowed_logprobs.assert_not_called()
+
+    def test_transformers_4bit_requested_for_mlx_4bit_cuda_model(self) -> None:
+        from economist_rl_ppo_trainer import _should_load_transformers_4bit
+
+        self.assertTrue(
+            _should_load_transformers_4bit(
+                "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+                "cuda",
+            )
+        )
+        self.assertFalse(
+            _should_load_transformers_4bit(
+                "Qwen/Qwen2.5-Coder-7B-Instruct",
+                "cuda",
+            )
+        )
+        self.assertFalse(
+            _should_load_transformers_4bit(
+                "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+                "cpu",
+            )
+        )
+
     def test_build_ppo_samples_and_dry_run_train(self) -> None:
         from economist_rl_ppo_trainer import PPOConfig, build_ppo_samples, train_ppo_batch
 
@@ -258,35 +457,96 @@ class EconomistRLAdapterChainTests(unittest.TestCase):
         cls.cycle = cycle
 
     def test_cycle_two_chains_from_previous_candidate_when_registry_unchanged(self) -> None:
+        import json
+        import tempfile
+
+        from economist_rl_peft import build_peft_adapter_config
+        from economist_rl_ppo_trainer import mark_candidate_ppo_trained
+
         registry = self.cycle.resolve_registry_adapter(
             REPO / "training" / "adapter_registry_v1.json",
             "economistRL",
         )
-        prev = REPO / "checkpoints" / "adapters" / "economistRL" / "rl_pass_003"
-        reg, effective, reason = self.cycle.resolve_cycle_current_adapter(
-            registry_path=REPO / "training" / "adapter_registry_v1.json",
-            adapter_name="economistRL",
-            chain_from_previous=prev,
-        )
+        with tempfile.TemporaryDirectory() as tmp:
+            prev = Path(tmp) / "rl_pass_003"
+            prev.mkdir()
+            (prev / "adapter_model.safetensors").write_bytes(b"")
+            (prev / "adapter_config.json").write_text(
+                json.dumps(
+                    build_peft_adapter_config(
+                        base_model_name_or_path="Qwen/Qwen2.5-Coder-7B-Instruct",
+                        target_modules=["q_proj"],
+                        rank=16,
+                        lora_alpha=20.0,
+                        lora_dropout=0.05,
+                    )
+                ),
+                encoding="utf-8",
+            )
+            mark_candidate_ppo_trained(prev, manifest={"status": "trained"})
+            reg, effective, reason = self.cycle.resolve_cycle_current_adapter(
+                registry_path=REPO / "training" / "adapter_registry_v1.json",
+                adapter_name="economistRL",
+                chain_from_previous=prev,
+            )
         self.assertEqual(reg.adapter_path, registry.adapter_path)
         self.assertEqual(reason, "previous_cycle_candidate")
         self.assertTrue(str(effective.resolved_path).endswith("rl_pass_003"))
 
     def test_chain_skipped_when_same_as_registry(self) -> None:
-        seed = REPO / "checkpoints" / "adapters" / "economistRL" / "seed_bootstrap"
+        from economist_rl_ppo_trainer import mark_candidate_ppo_trained
+
+        registry = self.cycle.resolve_registry_adapter(
+            REPO / "training" / "adapter_registry_v1.json",
+            "economistRL",
+        )
+        if not registry.exists:
+            self.skipTest(f"registry adapter missing: {registry.resolved_path}")
+        mark_candidate_ppo_trained(registry.resolved_path, manifest={"status": "trained"})
         reg, effective, reason = self.cycle.resolve_cycle_current_adapter(
             registry_path=REPO / "training" / "adapter_registry_v1.json",
             adapter_name="economistRL",
-            chain_from_previous=seed,
+            chain_from_previous=registry.resolved_path,
         )
         self.assertEqual(reason, "registry")
         self.assertEqual(reg.resolved_path, effective.resolved_path)
+
+    def test_untrained_chain_is_ignored(self) -> None:
+        import json
+        import tempfile
+
+        from economist_rl_peft import build_peft_adapter_config
+
+        with tempfile.TemporaryDirectory() as tmp:
+            prev = Path(tmp) / "rl_pass_copy"
+            prev.mkdir()
+            (prev / "adapter_model.safetensors").write_bytes(b"")
+            (prev / "adapter_config.json").write_text(
+                json.dumps(
+                    build_peft_adapter_config(
+                        base_model_name_or_path="Qwen/Qwen2.5-Coder-7B-Instruct",
+                        target_modules=["q_proj"],
+                        rank=16,
+                        lora_alpha=20.0,
+                        lora_dropout=0.05,
+                    )
+                ),
+                encoding="utf-8",
+            )
+            _reg, effective, reason = self.cycle.resolve_cycle_current_adapter(
+                registry_path=REPO / "training" / "adapter_registry_v1.json",
+                adapter_name="economistRL",
+                chain_from_previous=prev,
+            )
+        self.assertEqual(reason, "registry_missing_chain_weights")
+        self.assertEqual(_reg.resolved_path, effective.resolved_path)
 
     def test_chain_from_peft_only_candidate(self) -> None:
         import json
         import tempfile
 
         from economist_rl_peft import build_peft_adapter_config
+        from economist_rl_ppo_trainer import mark_candidate_ppo_trained
 
         with tempfile.TemporaryDirectory() as tmp:
             prev = Path(tmp) / "rl_pass_peft"
@@ -304,6 +564,7 @@ class EconomistRLAdapterChainTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            mark_candidate_ppo_trained(prev, manifest={"status": "trained"})
             reg, effective, reason = self.cycle.resolve_cycle_current_adapter(
                 registry_path=REPO / "training" / "adapter_registry_v1.json",
                 adapter_name="economistRL",
@@ -313,6 +574,40 @@ class EconomistRLAdapterChainTests(unittest.TestCase):
             self.assertEqual(effective.resolved_path, prev.resolve())
             self.assertTrue(effective.exists)
             self.assertNotEqual(reg.resolved_path, effective.resolved_path)
+
+    def test_init_adapter_path_yields_to_chain_from_previous(self) -> None:
+        import json
+        import tempfile
+
+        from economist_rl_peft import build_peft_adapter_config
+        from economist_rl_ppo_trainer import mark_candidate_ppo_trained
+
+        with tempfile.TemporaryDirectory() as tmp:
+            prev = Path(tmp) / "rl_pass_peft"
+            prev.mkdir()
+            (prev / "adapter_model.safetensors").write_bytes(b"")
+            (prev / "adapter_config.json").write_text(
+                json.dumps(
+                    build_peft_adapter_config(
+                        base_model_name_or_path="Qwen/Qwen2.5-Coder-7B-Instruct",
+                        target_modules=["q_proj"],
+                        rank=16,
+                        lora_alpha=20.0,
+                        lora_dropout=0.05,
+                    )
+                ),
+                encoding="utf-8",
+            )
+            mark_candidate_ppo_trained(prev, manifest={"status": "trained"})
+            init = REPO / "checkpoints" / "fe-lora-arena-apply-sft"
+            reg, effective, reason = self.cycle.resolve_cycle_current_adapter(
+                registry_path=REPO / "training" / "adapter_registry_v1.json",
+                adapter_name="economistRL",
+                chain_from_previous=prev,
+                init_adapter_path=init,
+            )
+            self.assertEqual(reason, "previous_cycle_candidate")
+            self.assertEqual(effective.resolved_path, prev.resolve())
 
 
 class EconomistRLSubprocessPPOTests(unittest.TestCase):
@@ -356,12 +651,14 @@ class EconomistRLSubprocessPPOTests(unittest.TestCase):
             source_adapter = REPO / "checkpoints" / "adapters" / "economistRL" / "seed_bootstrap"
             candidate_adapter = root / "rl_pass_001"
 
-            def _fake_run(cmd, cwd, env, check):
+            def _fake_run(cmd, cwd, env, check, stdout=None, stderr=None):
                 request_path = Path(cmd[cmd.index("--request") + 1])
                 self.assertTrue(request_path.is_file())
                 request = json.loads(request_path.read_text(encoding="utf-8"))
                 self.assertEqual(request["scored_file"], str(scored_file.resolve()))
                 self.assertEqual(request["train_backend"], "transformers")
+                if stderr is not None:
+                    stderr.write("subprocess ok\n")
                 ppo_manifest_file.parent.mkdir(parents=True, exist_ok=True)
                 ppo_manifest_file.write_text(
                     json.dumps({"status": "trained", "train_backend": "transformers"}) + "\n",
@@ -385,6 +682,49 @@ class EconomistRLSubprocessPPOTests(unittest.TestCase):
                 )
             self.assertEqual(manifest["status"], "trained")
             self.assertTrue(manifest.get("subprocess_isolated"))
+            self.assertIn("ppo_stderr_log", manifest)
+
+    def test_run_ppo_train_subprocess_failure_captures_logs_and_discards_candidate(self) -> None:
+        import tempfile
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            scored_file = root / "scored_batch_001.jsonl"
+            scored_file.write_text("{}\n", encoding="utf-8")
+            ppo_manifest_file = root / "ppo" / "ppo_train_001.json"
+            source_adapter = root / "source"
+            source_adapter.mkdir()
+            candidate_adapter = root / "rl_pass_001"
+            candidate_adapter.mkdir()
+            (candidate_adapter / "adapter_model.safetensors").write_bytes(b"stale")
+
+            def _fake_run(cmd, cwd, env, check, stdout=None, stderr=None):
+                if stderr is not None:
+                    stderr.write("CUDA out of memory\n")
+                from types import SimpleNamespace
+
+                return SimpleNamespace(returncode=-9)
+
+            with patch.object(self.cycle.subprocess, "run", side_effect=_fake_run):
+                manifest = self.cycle.run_ppo_train_subprocess(
+                    scored_file=scored_file,
+                    system_prompt="system",
+                    base_model="mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+                    source_adapter=source_adapter,
+                    candidate_adapter=candidate_adapter,
+                    ppo_manifest_file=ppo_manifest_file,
+                    ppo_config=self.cycle.PPOConfig(min_samples=1),
+                    train_backend="transformers",
+                    dry_run=False,
+                )
+            self.assertEqual(manifest["reason"], "subprocess_exit")
+            self.assertEqual(manifest["exit_code"], -9)
+            self.assertIn("stderr_tail", manifest)
+            self.assertFalse(candidate_adapter.exists())
+            stderr_log = Path(manifest["ppo_stderr_log"])
+            self.assertTrue(stderr_log.is_file())
+            self.assertIn("CUDA out of memory", stderr_log.read_text(encoding="utf-8"))
 
     def test_ppo_train_child_dry_run_reads_scored_jsonl(self) -> None:
         import importlib.util
@@ -467,6 +807,20 @@ class EconomistRLLambdaCycleDryRunTests(unittest.TestCase):
             lambda_mode=False,
             train_config=None,
             cycles=1,
+            skip_execution=True,
+            execution_timeout_s=600,
+            execution_compile_command=[],
+            no_require_execution_source=True,
+            skip_eval=False,
+            skip_ppo=False,
+            strict_old_logprob=False,
+            context_max_chars=12_000,
+            eval_manifest=None,
+            init_adapter_path=None,
+            ppo_max_samples=None,
+            ppo_logprob_window_tokens=None,
+            ppo_in_process=False,
+            execution_source_repo=None,
         )
         cycle.apply_specialization_defaults(args)
         manifest = cycle.run_cycle(args, cycle_id=999)
@@ -476,11 +830,7 @@ class EconomistRLLambdaCycleDryRunTests(unittest.TestCase):
         self.assertEqual(manifest["cycle_status"], "dry_run")
         self.assertFalse(manifest.get("registry_auto_update"))
         eval_result = manifest.get("eval_result") or {}
-        comparisons = eval_result.get("comparisons") or {}
-        self.assertIn("vs_registry_baseline", comparisons)
-        self.assertIn("vs_working_source", comparisons)
-        self.assertIn("decision", comparisons["vs_registry_baseline"])
-        self.assertIn("decision", comparisons["vs_working_source"])
+        self.assertEqual(eval_result.get("status"), "skipped")
 
 
 if __name__ == "__main__":

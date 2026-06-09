@@ -4,7 +4,7 @@ After benchmark or train+benchmark passes, prefer logging them via **`python scr
 
 This file explains benchmark types and how to run them. Use `docs/RUNS.md` for current-vs-historical adapter interpretation, and keep the full row archive in `docs/run_history.md`.
 
-Versioned **task definitions** live here as JSON. The **game** suite (`fallen_empire_tasks.json`) is tuned to this game’s stack (TypeScript, hex `q/r`, Zustand, AI param names). The **general** suite (`general_coding_tasks.json`) uses generic CS trivia (HTTP, SQL, encodings, semver) with a **neutral** system prompt so you can compare **base vs LoRA** without always-on Fallen Empire context. These legacy tasks are scored by **cheap string rules** (`all_contains`, `any_contains`, `none_contains`, `min_chars`) and should be treated as lexical smoke/regression checks.
+Versioned **task definitions** live here as JSON. The active lexical suite is `specialist_benchmark_tasks.json`, which maps prompts to one or more specialist adapters and is scored by cheap string rules (`all_contains`, `any_contains`, `none_contains`, `min_chars`). Treat this as a specialist regression/smoke signal, not a replacement for arena acceptance.
 
 This measures whether the model follows instructions and uses expected substrings; it does **not** measure game-code task completion via apply/compile/preview. For deterministic game-edit capability, use `scripts/run_arena_acceptance_tests.py` or `python scripts/ml_workflow.py arena-acceptance`, which reports the **Arena Capability Index** from applyability, TypeScript checks, export preservation, preview readiness, retry count, token pressure, and task complexity. For open-source execution-based Python coding checks, use `scripts/run_evalplus_benchmark.py` or `python scripts/ml_workflow.py evalplus`.
 
@@ -14,15 +14,15 @@ From the repo root with the venv active:
 
 ```bash
 python scripts/run_game_benchmark.py
-python scripts/run_game_benchmark.py --profile general
+python scripts/run_game_benchmark.py --specialist combat_risk --specialist ai_planning_explanation
 python scripts/run_game_benchmark.py --tier A
-python scripts/run_game_benchmark.py --tasks benchmarks/fallen_empire_tasks.json --output-jsonl benchmarks/results/run.jsonl
+python scripts/run_game_benchmark.py --tasks benchmarks/specialist_benchmark_tasks.json --output-jsonl benchmarks/results/run.jsonl
 python scripts/ml_workflow.py arena-acceptance --adapter-path checkpoints/fe-lora-qwen25-coder-7b-chunk6k-20260428 --task-id loading-screen-polish
 python scripts/run_evalplus_benchmark.py --suite humaneval --limit 5 --adapter-path checkpoints/fe-lora-30m
 python scripts/run_routing_benchmark.py
 ```
 
-`python scripts/ml_workflow.py benchmark` defaults to the **game** profile; add `--profile general` for the general suite, or `full` / `train --evaluate` with `--bench-profile general`.
+`python scripts/ml_workflow.py benchmark` defaults to the specialist task suite; use repeated `--specialist <id>` to scope to one or more specialists, or `full` / `train --evaluate` with repeated `--bench-specialist <id>`.
 
 `python scripts/ml_workflow.py evalplus --limit 5 --adapter-path …` records the EvalPlus run in the normal workflow artifacts. EvalPlus executes generated Python code in guarded subprocesses and downloads HumanEval+/MBPP+ datasets on first run.
 
@@ -125,9 +125,10 @@ Exit code **1** if any task fails (useful in CI). Machine-written lines under `b
 
 ## Adding tasks
 
-Append objects to `fallen_empire_tasks.json` (or add another file and pass `--tasks`):
+Append objects to `specialist_benchmark_tasks.json` (or add another file and pass `--tasks`):
 
 - `id` — stable slug
 - `category` — free-form tag for reports
+- `specialists` — array of specialist ids this task should exercise
 - `prompt` — user message (system prompt is fixed in the runner)
 - `expect` — scoring object; all listed constraints must pass

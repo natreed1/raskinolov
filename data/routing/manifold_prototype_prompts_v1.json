@@ -1,0 +1,102 @@
+[
+  {
+    "id": "manifold-proto-ai-planning-01",
+    "prompt": "Explain the AI planning rationale for the next three turns, including tradeoffs and fallback branches.",
+    "expected_adapter_id": "ai_planning_explanation"
+  },
+  {
+    "id": "manifold-proto-ai-planning-02",
+    "prompt": "Review this strategy planner output and summarize why the AI prioritized economy over early combat.",
+    "expected_adapter_id": "ai_planning_explanation"
+  },
+  {
+    "id": "manifold-proto-ai-planning-03",
+    "prompt": "Optimize the planning policy and describe the risk/reward tradeoff for each candidate action.",
+    "expected_adapter_id": "ai_planning_explanation"
+  },
+  {
+    "id": "manifold-proto-loading-01",
+    "prompt": "Polish the loading screen visuals with a medieval royal crest, banner treatment, and legible tip text.",
+    "expected_adapter_id": "loading_screen"
+  },
+  {
+    "id": "manifold-proto-loading-02",
+    "prompt": "Create a splash screen variant for kingdom mode with thematic art direction and loading-state UX cues.",
+    "expected_adapter_id": "loading_screen"
+  },
+  {
+    "id": "manifold-proto-loading-03",
+    "prompt": "Adjust loading-screen composition so status text, title, and progress affordances are readable at 16:9.",
+    "expected_adapter_id": "loading_screen"
+  },
+  {
+    "id": "manifold-proto-save-load-01",
+    "prompt": "Harden save/load API guard checks for auth, schema validation, and replay-safe request handling.",
+    "expected_adapter_id": "save_load_api_guard"
+  },
+  {
+    "id": "manifold-proto-save-load-02",
+    "prompt": "Add defensive validation around savegame serialization and reject malformed load payloads.",
+    "expected_adapter_id": "save_load_api_guard"
+  },
+  {
+    "id": "manifold-proto-save-load-03",
+    "prompt": "Audit load game endpoints for privilege escalation and add checklist-style guardrail coverage.",
+    "expected_adapter_id": "save_load_api_guard"
+  },
+  {
+    "id": "manifold-proto-hud-01",
+    "prompt": "Refine the HUD status summary card hierarchy and ensure key metrics remain scannable under stress.",
+    "expected_adapter_id": "hud_status"
+  },
+  {
+    "id": "manifold-proto-econ-01",
+    "prompt": "Improve economy tooltip clarity by highlighting net income, upkeep, and per-turn deltas.",
+    "expected_adapter_id": "economy_tooltip"
+  },
+  {
+    "id": "manifold-proto-combat-01",
+    "prompt": "Improve combat risk preview with enemy-versus-player stat comparison and confidence labels.",
+    "expected_adapter_id": "combat_risk"
+  },
+  {
+    "id": "manifold-proto-docs-01",
+    "prompt": "Update PROJECT_STATE and SESSION_LOG with the exact routing benchmark commands and outcomes.",
+    "expected_adapter_id": "documentation"
+  },
+  {
+    "id": "manifold-proto-fallback-01",
+    "prompt": "Rename a simple helper and update its README note with no architectural changes.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-proto-ai-planning-04",
+    "prompt": "Provide a performance review of the AI planner and explain which strategy branch should win under uncertainty.",
+    "expected_adapter_id": "ai_planning_explanation"
+  },
+  {
+    "id": "manifold-proto-ai-planning-05",
+    "prompt": "Draft an architecture plan for AI intent scoring and justify the planning tradeoffs in plain language.",
+    "expected_adapter_id": "ai_planning_explanation"
+  },
+  {
+    "id": "manifold-proto-loading-04",
+    "prompt": "Design a loading screen plus lightweight HUD status strip so progress and active buffs are visible together.",
+    "expected_adapter_id": "loading_screen"
+  },
+  {
+    "id": "manifold-proto-hud-02",
+    "prompt": "Improve HUD status readability when a loading overlay is present without changing full-screen art direction.",
+    "expected_adapter_id": "hud_status"
+  },
+  {
+    "id": "manifold-proto-fallback-02",
+    "prompt": "Do a code review pass on naming and comments only, without introducing specialist game-domain logic.",
+    "expected_adapter_id": "general_fallback"
+  },
+  {
+    "id": "manifold-proto-fallback-03",
+    "prompt": "Summarize benchmark results and suggest small wording edits for documentation consistency.",
+    "expected_adapter_id": "general_fallback"
+  }
+]

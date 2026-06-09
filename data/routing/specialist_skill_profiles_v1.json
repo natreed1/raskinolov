@@ -1,0 +1,274 @@
+{
+  "schema_version": "specialist_skill_profiles_v1+measured_role_metadata",
+  "created_utc": "2026-05-17T23:00:58Z",
+  "rows_count": 90,
+  "specialists": {
+    "ai_planning_explanation": {
+      "specialist": "ai_planning_explanation",
+      "task_count": 12,
+      "overall_pass_rate": 0.25,
+      "skills": {
+        "bucket::constraints": {
+          "support_tasks": 3,
+          "pass_rate": 0.0,
+          "delta_vs_skill_global": -0.2857142857142857
+        }
+      },
+      "display_name": "crossdomain_state_patch",
+      "role": "Crossdomain state-patch specialist for generic state logic, schema updates, shared logic, and repair-candidate patches; not a proven AI-policy specialist.",
+      "routing_tags": [
+        "general_patch",
+        "state_logic",
+        "crossdomain",
+        "schema_update",
+        "shared_logic",
+        "repair_candidate",
+        "fallback_specialist"
+      ],
+      "demoted_tags": [
+        "ai_strategy",
+        "planner_policy",
+        "combat_math",
+        "targeting_policy",
+        "market_dynamics"
+      ],
+      "measured_strengths": [
+        "state_perstitence_integrity",
+        "hud_status",
+        "economy"
+      ],
+      "measured_weaknesses": [
+        "ai_strategy_and_planning",
+        "multidomain",
+        "hard_combat_logic"
+      ],
+      "adapter_aliases": [
+        "crossdomain_state_patch"
+      ],
+      "legacy_adapter_id": "ai_planning_explanation"
+    },
+    "combat_risk": {
+      "specialist": "combat_risk",
+      "task_count": 12,
+      "overall_pass_rate": 0.4166666666666667,
+      "skills": {
+        "bucket::constraints": {
+          "support_tasks": 3,
+          "pass_rate": 0.3333333333333333,
+          "delta_vs_skill_global": 0.047619047619047616
+        }
+      },
+      "display_name": "army_ui_flow",
+      "role": "Army UI/order-flow specialist for formation flow, selection, order dispatch, tactical controls, and combat-preview presentation.",
+      "routing_tags": [
+        "army_ui",
+        "formation_flow",
+        "order_dispatch",
+        "movement_ui",
+        "combat_preview",
+        "tactical_controls",
+        "selection_flow"
+      ],
+      "demoted_tags": [
+        "combat_math",
+        "targeting_policy",
+        "economy_simulation",
+        "ai_strategy",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity",
+        "army_operations"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain",
+        "hard_combat_logic"
+      ],
+      "adapter_aliases": [
+        "army_ui_flow"
+      ],
+      "legacy_adapter_id": "combat_risk"
+    },
+    "economy_tooltip": {
+      "specialist": "economy_tooltip",
+      "task_count": 12,
+      "overall_pass_rate": 0.6666666666666666,
+      "skills": {
+        "bucket::constraints": {
+          "support_tasks": 3,
+          "pass_rate": 0.3333333333333333,
+          "delta_vs_skill_global": 0.047619047619047616
+        }
+      },
+      "display_name": "resource_ui_projection",
+      "role": "Resource projection/UI helper for economy-facing signals, tooltips, signed deltas, production display, and resource cache surfaces.",
+      "routing_tags": [
+        "resource_projection",
+        "economy_ui",
+        "tooltip",
+        "cost_display",
+        "production_signal",
+        "resource_cache",
+        "signed_delta"
+      ],
+      "demoted_tags": [
+        "economy_simulation",
+        "market_dynamics",
+        "ai_strategy",
+        "combat_math",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain"
+      ],
+      "adapter_aliases": [
+        "resource_ui_projection"
+      ],
+      "legacy_adapter_id": "economy_tooltip"
+    },
+    "hud_status": {
+      "specialist": "hud_status",
+      "task_count": 12,
+      "overall_pass_rate": 0.4166666666666667,
+      "skills": {
+        "bucket::constraints": {
+          "support_tasks": 3,
+          "pass_rate": 0.3333333333333333,
+          "delta_vs_skill_global": 0.047619047619047616
+        }
+      },
+      "display_name": "ui_state_signals",
+      "role": "HUD state-signal specialist for compact status readouts, resource/status indicators, UI contracts, and input flow.",
+      "routing_tags": [
+        "ui",
+        "hud",
+        "status_signal",
+        "resource_signal",
+        "state_exposure",
+        "indicator_logic",
+        "ui_contract",
+        "input_flow"
+      ],
+      "demoted_tags": [
+        "economy_simulation",
+        "ai_strategy",
+        "combat_math",
+        "targeting_policy",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity",
+        "army_operations"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain"
+      ],
+      "adapter_aliases": [
+        "ui_state_signals"
+      ],
+      "legacy_adapter_id": "hud_status"
+    },
+    "loading_screen": {
+      "specialist": "loading_screen",
+      "task_count": 30,
+      "overall_pass_rate": 0.6333333333333333,
+      "skills": {
+        "bucket::constraints": {
+          "support_tasks": 6,
+          "pass_rate": 0.16666666666666666,
+          "delta_vs_skill_global": -0.11904761904761904
+        }
+      },
+      "display_name": "ui_surface_composer",
+      "role": "UI surface composition specialist for HUD/loading visual hierarchy, panels, sprites, overlays, and theme integration.",
+      "routing_tags": [
+        "ui",
+        "hud",
+        "visual_surface",
+        "panel_theme",
+        "sprite_overlay",
+        "isometric_display",
+        "loading_screen",
+        "render_contract"
+      ],
+      "demoted_tags": [
+        "economy_simulation",
+        "ai_strategy",
+        "combat_math",
+        "targeting_policy",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "hud_status",
+        "state_perstitence_integrity"
+      ],
+      "measured_weaknesses": [
+        "economy",
+        "ai_strategy_and_planning",
+        "multidomain"
+      ],
+      "adapter_aliases": [
+        "ui_surface_composer"
+      ],
+      "legacy_adapter_id": "loading_screen"
+    },
+    "save_load_api_guard": {
+      "specialist": "save_load_api_guard",
+      "task_count": 12,
+      "overall_pass_rate": 0.5833333333333334,
+      "skills": {
+        "bucket::constraints": {
+          "support_tasks": 3,
+          "pass_rate": 0.6666666666666666,
+          "delta_vs_skill_global": 0.38095238095238093
+        }
+      },
+      "display_name": "state_contract_guard",
+      "role": "State/API contract guard for persistence, serialization, request validation, identity integrity, snapshots, and deployment contracts.",
+      "routing_tags": [
+        "state_persistence",
+        "serialization",
+        "snapshot_schema",
+        "request_validation",
+        "identity_integrity",
+        "api_guard",
+        "cross_node_state",
+        "deploy_contract"
+      ],
+      "demoted_tags": [
+        "ai_strategy",
+        "combat_math",
+        "targeting_policy",
+        "market_dynamics",
+        "multidomain_systems"
+      ],
+      "measured_strengths": [
+        "state_perstitence_integrity",
+        "hud_status",
+        "army_operations"
+      ],
+      "measured_weaknesses": [
+        "ai_strategy_and_planning",
+        "multidomain",
+        "economy_simulation"
+      ],
+      "adapter_aliases": [
+        "state_contract_guard"
+      ],
+      "legacy_adapter_id": "save_load_api_guard"
+    }
+  },
+  "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+}

@@ -966,6 +966,24 @@ class LocalMlxBackend:
             self._backend_kind = "transformers"
         return self._model, self._tokenizer
 
+    def release_gpu(self) -> None:
+        """Drop loaded weights and free accelerator memory for a follow-on train step."""
+        self._model = None
+        self._tokenizer = None
+        self._backend_kind = ""
+        try:
+            import gc
+
+            gc.collect()
+            import torch
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+                if hasattr(torch.cuda, "ipc_collect"):
+                    torch.cuda.ipc_collect()
+        except ImportError:
+            pass
+
     @staticmethod
     def _transformers_model_id(model_id: str) -> str:
         model = (model_id or "").strip()

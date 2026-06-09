@@ -1,0 +1,675 @@
+[
+  {
+    "id": "eco-mass-cause-effect-01",
+    "category": "eco_core",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "In 2-4 sentences, explain why net gold dropped this turn using upkeep, workforce, and markets.",
+    "expect": {
+      "all_contains": [
+        "gold"
+      ],
+      "any_contains": [
+        "upkeep",
+        "workforce",
+        "market"
+      ],
+      "min_chars": 100
+    },
+    "domains": [
+      "economy"
+    ]
+  },
+  {
+    "id": "eco-mass-actionable-02",
+    "category": "eco_core",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write a tooltip that explains low income and gives two next-turn actions with one trade-off.",
+    "expect": {
+      "any_contains": [
+        "income",
+        "gold",
+        "trade-off",
+        "tradeoff"
+      ],
+      "min_chars": 105
+    },
+    "domains": [
+      "economy"
+    ]
+  },
+  {
+    "id": "eco-mass-territory-lines-03",
+    "category": "eco_core",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Explain in 2-3 sentences how territory and supply lines can pressure income.",
+    "expect": {
+      "any_contains": [
+        "territory",
+        "supply"
+      ],
+      "all_contains": [
+        "income"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "economy"
+    ]
+  },
+  {
+    "id": "eco-mass-ui-hint-04",
+    "category": "eco_ui_change",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Suggest one tooltip UI change that makes economy cause-and-effect easier to scan.",
+    "expect": {
+      "any_contains": [
+        "tooltip",
+        "scan",
+        "cause",
+        "effect",
+        "hierarchy"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "economy",
+      "ui"
+    ]
+  },
+  {
+    "id": "eco-mass-short-copy-05",
+    "category": "eco_ui_change",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write one compact warning line and one recovery line for economy pressure.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "recover",
+        "pressure",
+        "income"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "economy",
+      "ui"
+    ]
+  },
+  {
+    "id": "eco-mass-comparison-06",
+    "category": "eco_ui_change",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "In 2 sentences, contrast short-term income fixes versus long-term economy stability.",
+    "expect": {
+      "any_contains": [
+        "short-term",
+        "long-term",
+        "stability",
+        "income"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "economy",
+      "ui"
+    ]
+  },
+  {
+    "id": "eco-mass-constraints-07",
+    "category": "eco_constraints",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Plain text only: one sentence that includes gold, upkeep, and one action verb.",
+    "expect": {
+      "all_contains": [
+        "gold",
+        "upkeep"
+      ],
+      "any_contains": [
+        "reduce",
+        "shift",
+        "build",
+        "secure"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "economy",
+      "constraints"
+    ]
+  },
+  {
+    "id": "eco-mass-constraints-08",
+    "category": "eco_constraints",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Output one comma-separated line with exactly four economy factors.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "income",
+        "gold",
+        "upkeep",
+        "market",
+        "supply"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "economy",
+      "constraints"
+    ]
+  },
+  {
+    "id": "eco-mass-constraints-09",
+    "category": "eco_constraints",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Exactly two lines: first describes the drop, second gives one mitigation step.",
+    "expect": {
+      "any_contains": [
+        "drop",
+        "mitigate",
+        "income",
+        "gold"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "economy",
+      "constraints"
+    ]
+  },
+  {
+    "id": "eco-mass-transfer-loading-10",
+    "category": "eco_transfer",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write a loading hint line foreshadowing economy pressure from upkeep.",
+    "expect": {
+      "all_contains": [
+        "upkeep"
+      ],
+      "any_contains": [
+        "loading",
+        "hint",
+        "pressure"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "economy",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "eco-mass-transfer-hud-11",
+    "category": "eco_transfer",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Provide a HUD-friendly tooltip snippet tying supply pressure to net gold.",
+    "expect": {
+      "all_contains": [
+        "supply",
+        "gold"
+      ],
+      "min_chars": 50
+    },
+    "domains": [
+      "economy",
+      "hud"
+    ]
+  },
+  {
+    "id": "eco-mass-transfer-ai-12",
+    "category": "eco_transfer",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Draft one AI-council rationale line that chooses economy stabilization over expansion.",
+    "expect": {
+      "any_contains": [
+        "stabilization",
+        "defense",
+        "expansion",
+        "economy"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "economy",
+      "planning"
+    ]
+  },
+  {
+    "id": "eco-mass-terse-breakdown-13",
+    "category": "eco_constraints",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Give one comma-separated line with income, upkeep, workforce, and market trend.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "income",
+        "upkeep",
+        "workforce",
+        "market"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "economy",
+      "constraints"
+    ]
+  },
+  {
+    "id": "eco-mass-warning-window-14",
+    "category": "eco_ui_change",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write one warning-state economy tooltip and one steady-state tooltip with concise wording.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "steady",
+        "income",
+        "gold",
+        "pressure"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "economy",
+      "ui"
+    ]
+  },
+  {
+    "id": "eco-mass-turn-forward-15",
+    "category": "eco_core",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Explain one next-turn economy fix and one second-order consequence in 2-3 sentences.",
+    "expect": {
+      "any_contains": [
+        "next turn",
+        "income",
+        "consequence",
+        "trade-off",
+        "upkeep"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "economy"
+    ]
+  },
+  {
+    "id": "eco-mass-supply-tax-16",
+    "category": "eco_core",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Describe how long supply lines can create an upkeep-like drag on net gold.",
+    "expect": {
+      "all_contains": [
+        "gold"
+      ],
+      "any_contains": [
+        "supply",
+        "upkeep",
+        "drag",
+        "income"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "economy"
+    ]
+  },
+  {
+    "id": "eco-mass-compact-three-17",
+    "category": "eco_constraints",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Exactly three short lines: income summary, pressure source, mitigation step.",
+    "expect": {
+      "any_contains": [
+        "income",
+        "pressure",
+        "mitigate",
+        "gold"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "economy",
+      "constraints"
+    ]
+  },
+  {
+    "id": "eco-mass-ai-ops-18",
+    "category": "eco_transfer",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write one AI planning note that delays expansion due to upkeep and market contraction.",
+    "expect": {
+      "any_contains": [
+        "expansion",
+        "upkeep",
+        "market",
+        "economy"
+      ],
+      "min_chars": 60
+    },
+    "domains": [
+      "economy",
+      "planning"
+    ]
+  },
+  {
+    "id": "eco-mass-hud-chip-19",
+    "category": "eco_transfer",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Provide two HUD chip labels that expose economy trend and supply drag.",
+    "expect": {
+      "any_contains": [
+        "economy",
+        "income",
+        "supply",
+        "drag",
+        "trend"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "economy",
+      "hud"
+    ]
+  },
+  {
+    "id": "eco-mass-combat-link-20",
+    "category": "eco_transfer",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write one tooltip line tying low income to reduced combat readiness.",
+    "expect": {
+      "any_contains": [
+        "income",
+        "combat",
+        "readiness",
+        "upkeep"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "eco-mass-save-note-21",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Draft one save/load note that verifies economy fields before applying turn simulation.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "load",
+        "economy",
+        "fields",
+        "verify"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "economy",
+      "save_load"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-hud-combat-22",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "In 2 sentences connect economy pressure, morale trend, and combat risk visibility.",
+    "expect": {
+      "any_contains": [
+        "economy",
+        "morale",
+        "combat",
+        "risk"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "economy",
+      "hud",
+      "combat"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-loading-ai-23",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write two loading hints that reference economy pressure and AI intent to defend or expand.",
+    "expect": {
+      "any_contains": [
+        "economy",
+        "income",
+        "intent",
+        "defend",
+        "expand"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "economy",
+      "loading_screen",
+      "planning"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-compact-24",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "One comma-separated line with economy trend, supply pressure, combat readiness, and save integrity.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "economy",
+        "supply",
+        "combat",
+        "save",
+        "integrity"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "economy",
+      "combat",
+      "save_load"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-recovery-25",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Provide one fallback plan when income drops and save validation blocks risky migration.",
+    "expect": {
+      "any_contains": [
+        "income",
+        "save",
+        "validation",
+        "migration",
+        "fallback"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "economy",
+      "save_load"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-ai-combat-26",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Write a war-council explanation linking gold shortage to delayed attack timing.",
+    "expect": {
+      "any_contains": [
+        "gold",
+        "attack",
+        "delay",
+        "council",
+        "risk"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "economy",
+      "planning",
+      "combat"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-hud-save-27",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Create a system tooltip merging economy summary with save compatibility status.",
+    "expect": {
+      "any_contains": [
+        "economy",
+        "income",
+        "save",
+        "compatibility",
+        "status"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "economy",
+      "hud",
+      "save_load"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-ops-28",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Plain text only: summarize economy trend, AI plan, and combat readiness in two lines.",
+    "expect": {
+      "any_contains": [
+        "economy",
+        "income",
+        "plan",
+        "combat",
+        "readiness"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "economy",
+      "planning",
+      "combat"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-limits-29",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Give one sentence on why over-expansion can hurt economy, morale, and save stability.",
+    "expect": {
+      "any_contains": [
+        "expansion",
+        "economy",
+        "morale",
+        "save",
+        "stability"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "economy",
+      "planning",
+      "save_load"
+    ]
+  },
+  {
+    "id": "eco-mass-domain-aci-30",
+    "category": "eco_multidomain",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "prompt": "Propose four compact metrics for an economy-health panel spanning finance, risk, and persistence safety.",
+    "expect": {
+      "any_contains": [
+        "metric",
+        "economy",
+        "risk",
+        "save",
+        "income",
+        "upkeep"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "economy",
+      "combat",
+      "save_load"
+    ]
+  }
+]

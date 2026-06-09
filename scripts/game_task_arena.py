@@ -61,6 +61,17 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 from model_router import ChatMessage, GenerationRequest, LocalMlxBackend, OpenAICompatibleBackend, estimate_tokens
+from documentation_rag import build_context as rag_build_context, load_corpus as rag_load_corpus, retrieve as rag_retrieve
+
+DEFAULT_BUG_CHECK_SYSTEM_PROMPT = (
+    "You are a strict patch reviewer. Inspect the candidate patch for likely TypeScript/import/export/path "
+    "bugs and task-shape violations. If needed, rewrite the candidate to fix issues. Return only the final "
+    "patch output in the same format (unified diff or fenced files), with no commentary."
+)
+DEFAULT_BUG_FIX_RAG_CORPUS = REPO / "data" / "rag" / "bug_fix_agent_corpus.json"
+_BUG_FIX_CORPUS_CACHE: Dict[str, List[Any]] = {}
+_LOCAL_BACKEND_CACHE: Dict[Tuple[str, str], LocalMlxBackend] = {}
+_FRONTIER_BACKEND_CACHE: Dict[Tuple[str, str], OpenAICompatibleBackend] = {}
 
 
 @dataclass
@@ -154,6 +165,18 @@ def preview_env(trial: TrialManifest, port: int) -> Dict[str, str]:
     path_parts = [str(node_bin)] if node_bin.is_dir() else []
     path_parts.append(os.environ.get("PATH", ""))
     env = {**os.environ, "PORT": str(port), "PATH": os.pathsep.join(path_parts), "WATCHPACK_POLLING": "true"}
+    source_node_modules = source_repo / "node_modules"
+    if source_node_modules.is_dir():
+        env["NODE_PATH"] = str(source_node_modules)
+    return env
+
+
+def verify_env(trial: TrialManifest) -> Dict[str, str]:
+    source_repo = Path(trial.source_repo)
+    node_bin = source_repo / "node_modules" / ".bin"
+    path_parts = [str(node_bin)] if node_bin.is_dir() else []
+    path_parts.append(os.environ.get("PATH", ""))
+    env = {**os.environ, "PATH": os.pathsep.join(path_parts)}
     source_node_modules = source_repo / "node_modules"
     if source_node_modules.is_dir():
         env["NODE_PATH"] = str(source_node_modules)
@@ -624,16 +647,17 @@ class ContextPackResult:
     meta: Dict[str, Any] = field(default_factory=dict)
 
 
-def build_context_pack(
-    trial: TrialManifest,
+def build_context_pack_for_task_spec(
+    repo: Path,
+    task: TaskSpec,
     max_chars: int = 16000,
     *,
     log_dir: Optional[Path] = None,
     use_bm25: bool = True,
+    header_markdown: Optional[str] = None,
+    include_git_status: bool = True,
 ) -> ContextPackResult:
-    """Assemble repo context: reserved prefix, literal vs glob files, BM25 order for globs, head/tail truncation."""
-    repo = Path(trial.source_repo)
-    task = trial.task
+    """Assemble repo context for a TaskSpec without a full trial manifest."""
     meta: Dict[str, Any] = {
         "max_chars": max_chars,
         "use_bm25": use_bm25,
@@ -642,11 +666,31 @@ def build_context_pack(
         "included_files": [],
         "skipped_due_to_budget": [],
     }
+    if header_markdown is not None:
+        task_md = header_markdown
+    else:
+        task_md = f"""# {task.title}
 
-    status = git_output(repo, ["status", "--short"])
-    task_md = render_task_markdown(trial)
-    git_chunk = f"## Git Status\n\n```text\n{status}\n```"
-    prefix_parts = [task_md, git_chunk]
+- **Task id:** `{task.id}`
+- **Type:** `{task.task_type}`
+- **Preview path:** `{task.preview_path or "/"}`
+
+## Prompt
+
+{task.prompt}
+
+## Allowed Paths
+
+{chr(10).join(f"- `{p}`" for p in task.allowed_paths)}
+
+## Fixed Verification Commands
+
+{chr(10).join(f"- `{c}`" for c in task.verify_commands) or "- None"}
+"""
+    prefix_parts = [task_md]
+    if include_git_status:
+        status = git_output(repo, ["status", "--short"])
+        prefix_parts.append(f"## Git Status\n\n```text\n{status}\n```")
     package_json = repo / "package.json"
     if package_json.is_file():
         pkg_body = read_text(package_json)[:_CONTEXT_PACKAGE_JSON_CAP]
@@ -708,6 +752,27 @@ def build_context_pack(
         write_text(log_dir / "context_pack.json", json.dumps(meta, indent=2) + "\n")
 
     return ContextPackResult(text=full, meta=meta)
+
+
+def build_context_pack(
+    trial: TrialManifest,
+    max_chars: int = 16000,
+    *,
+    log_dir: Optional[Path] = None,
+    use_bm25: bool = True,
+) -> ContextPackResult:
+    """Assemble repo context: reserved prefix, literal vs glob files, BM25 order for globs, head/tail truncation."""
+    repo = Path(trial.source_repo)
+    task = trial.task
+    return build_context_pack_for_task_spec(
+        repo,
+        task,
+        max_chars,
+        log_dir=log_dir,
+        use_bm25=use_bm25,
+        header_markdown=render_task_markdown(trial),
+        include_git_status=True,
+    )
 
 
 def selected_context(
@@ -774,6 +839,138 @@ SPECIAL_TOKEN_RE = re.compile(r"(?:<\|[^|]+?\|>|</s>|<s>)+")
 def sanitize_model_output(text: str) -> str:
     text = SPECIAL_TOKEN_RE.sub("", text)
     return text.rstrip() + "\n"
+
+
+def _resolve_corpus_path(raw: str) -> Path:
+    path = Path(raw).expanduser()
+    if not path.is_absolute():
+        path = (REPO / path).resolve()
+    return path
+
+
+def _load_bug_fix_corpus_cached(path: Path) -> List[Any]:
+    key = str(path.resolve())
+    cached = _BUG_FIX_CORPUS_CACHE.get(key)
+    if cached is not None:
+        return cached
+    if not path.is_file():
+        _BUG_FIX_CORPUS_CACHE[key] = []
+        return []
+    try:
+        corpus = rag_load_corpus(path)
+    except Exception:
+        corpus = []
+    _BUG_FIX_CORPUS_CACHE[key] = corpus
+    return corpus
+
+
+def build_bug_fix_rag_context(
+    *,
+    original_prompt: str,
+    candidate_text: str,
+    corpus_path: Path,
+    top_k: int,
+    max_chars: int,
+) -> Tuple[str, int]:
+    corpus = _load_bug_fix_corpus_cached(corpus_path)
+    if not corpus:
+        return "", 0
+    query = (
+        f"{original_prompt}\n\n"
+        "Patch candidate excerpt:\n"
+        f"{candidate_text[:1600]}\n\n"
+        "Find likely apply/tsc/export/path/format failures."
+    )
+    hits = rag_retrieve(query, corpus, top_k=max(1, top_k))
+    if not hits:
+        return "", 0
+    return rag_build_context(hits, max_chars=max(400, max_chars)), len(hits)
+
+
+def run_bug_check_loop(
+    *,
+    backend_kind: str,
+    candidate_text: str,
+    original_prompt: str,
+    rounds: int,
+    max_tokens: int,
+    system_prompt: str,
+    temp: float,
+    rag_enabled: bool,
+    rag_corpus_path: Path,
+    rag_top_k: int,
+    rag_max_chars: int,
+    local_backend: Optional[LocalMlxBackend] = None,
+    frontier_backend: Optional[OpenAICompatibleBackend] = None,
+) -> Tuple[str, bool, int, int]:
+    if rounds <= 0 or not candidate_text.strip():
+        return candidate_text, False, 0, 0
+    current = candidate_text.strip()
+    changed = False
+    rounds_run = 0
+    rag_hits_total = 0
+    for _ in range(rounds):
+        rounds_run += 1
+        rag_context = ""
+        if rag_enabled:
+            rag_context, hits = build_bug_fix_rag_context(
+                original_prompt=original_prompt,
+                candidate_text=current,
+                corpus_path=rag_corpus_path,
+                top_k=rag_top_k,
+                max_chars=rag_max_chars,
+            )
+            rag_hits_total += hits
+        review_user = (
+            "Original task prompt:\n"
+            f"{original_prompt}\n\n"
+            + (
+                "Reference bug-fix context:\n"
+                f"{rag_context}\n\n"
+                if rag_context
+                else ""
+            )
+            +
+            "Candidate patch output:\n"
+            f"{current}\n\n"
+            "Return only the final patch output."
+        )
+        req = GenerationRequest(
+            messages=[
+                ChatMessage("system", system_prompt),
+                ChatMessage("user", review_user),
+            ],
+            max_tokens=max_tokens,
+            temperature=temp,
+        )
+        if backend_kind == "frontier":
+            assert frontier_backend is not None
+            reviewed, _ = frontier_backend.generate(req)
+        else:
+            assert local_backend is not None
+            reviewed = local_backend.generate(req)
+        reviewed_clean = sanitize_model_output(reviewed).strip()
+        if not reviewed_clean:
+            break
+        if reviewed_clean == current:
+            break
+        current = reviewed_clean
+        changed = True
+    return current + "\n", changed, rounds_run, rag_hits_total
+
+
+def resolve_local_model_id(adapter_path: str, explicit_model: Optional[str]) -> str:
+    if explicit_model:
+        return explicit_model
+    cfg = Path(adapter_path) / "adapter_config.json"
+    if cfg.is_file():
+        try:
+            model = json.loads(cfg.read_text(encoding="utf-8")).get("model")
+            if model:
+                return str(model)
+        except (OSError, json.JSONDecodeError):
+            pass
+    return os.environ.get("MODEL", "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit")
 
 
 def extract_diff(text: str) -> str:
@@ -985,6 +1182,8 @@ def verify(args: argparse.Namespace) -> AttemptManifest:
     attempt = trial.attempts[args.attempt]
     worktree = Path(attempt.worktree_path)
     adir = attempt_dir(trial.trial_id, attempt.attempt)
+    ensure_preview_node_modules(trial, attempt)
+    verify_runtime_env = {**verify_env(trial), "CI": "1"}
     results = []
     ok = True
     for idx, command in enumerate(trial.task.verify_commands):
@@ -994,7 +1193,7 @@ def verify(args: argparse.Namespace) -> AttemptManifest:
             cwd=worktree,
             log_path=adir / "logs" / f"verify_{idx + 1}_{slug(command, 24)}.log",
             timeout_s=args.timeout,
-            env={"CI": "1"},
+            env=verify_runtime_env,
         )
         results.append({"command": command, "exit_code": code, "elapsed_s": elapsed})
         if code != 0:
@@ -1182,8 +1381,27 @@ def generate_attempt(args: argparse.Namespace) -> Path:
     started = time.perf_counter()
     usage: Dict[str, Any] = {}
     estimated_cost_usd = 0.0
+    bug_loop_enabled = bool(getattr(args, "bug_check_loop", True))
+    bug_loop_rounds = max(1, int(getattr(args, "bug_check_rounds", 1)))
+    bug_loop_max_tokens = max(256, int(getattr(args, "bug_check_max_tokens", requested_max_tokens)))
+    bug_loop_system = str(getattr(args, "bug_check_system_prompt", DEFAULT_BUG_CHECK_SYSTEM_PROMPT))
+    bug_rag_enabled = bool(getattr(args, "bug_check_rag", True))
+    bug_rag_corpus = _resolve_corpus_path(
+        str(getattr(args, "bug_check_rag_corpus", str(DEFAULT_BUG_FIX_RAG_CORPUS)))
+    )
+    bug_rag_top_k = max(1, int(getattr(args, "bug_check_rag_top_k", 6)))
+    bug_rag_max_chars = max(400, int(getattr(args, "bug_check_rag_max_chars", 2200)))
+    bug_loop_changed = False
+    bug_loop_rounds_run = 0
+    bug_rag_hits_total = 0
     if args.backend == "local":
-        backend = LocalMlxBackend(adapter_path=args.adapter_path)
+        local_model_id = resolve_local_model_id(args.adapter_path, getattr(args, "local_model", None))
+        adapter_key = str(args.adapter_path or "").strip()
+        local_cache_key = (str(local_model_id), adapter_key)
+        backend = _LOCAL_BACKEND_CACHE.get(local_cache_key)
+        if backend is None:
+            backend = LocalMlxBackend(model_id=local_model_id, adapter_path=args.adapter_path)
+            _LOCAL_BACKEND_CACHE[local_cache_key] = backend
         text = backend.generate(
             GenerationRequest(
                 messages=[ChatMessage("system", "You are a careful TypeScript game engineer."), ChatMessage("user", prompt)],
@@ -1191,8 +1409,31 @@ def generate_attempt(args: argparse.Namespace) -> Path:
                 temperature=args.temp,
             )
         )
+        if bug_loop_enabled:
+            text, bug_loop_changed, bug_loop_rounds_run, bug_rag_hits_total = run_bug_check_loop(
+                backend_kind="local",
+                candidate_text=text,
+                original_prompt=prompt,
+                rounds=bug_loop_rounds,
+                max_tokens=bug_loop_max_tokens,
+                system_prompt=bug_loop_system,
+                temp=args.temp,
+                rag_enabled=bug_rag_enabled,
+                rag_corpus_path=bug_rag_corpus,
+                rag_top_k=bug_rag_top_k,
+                rag_max_chars=bug_rag_max_chars,
+                local_backend=backend,
+            )
     elif args.backend == "frontier":
-        backend = OpenAICompatibleBackend(model=args.model)
+        frontier_model_key = str(args.model or "")
+        frontier_base_url_key = str(
+            os.environ.get("FRONTIER_API_BASE_URL") or os.environ.get("OPENAI_API_BASE_URL") or "https://api.openai.com/v1"
+        ).rstrip("/")
+        frontier_cache_key = (frontier_model_key, frontier_base_url_key)
+        backend = _FRONTIER_BACKEND_CACHE.get(frontier_cache_key)
+        if backend is None:
+            backend = OpenAICompatibleBackend(model=args.model)
+            _FRONTIER_BACKEND_CACHE[frontier_cache_key] = backend
         text, usage = backend.generate(
             GenerationRequest(
                 messages=[ChatMessage("system", "You are a careful TypeScript game engineer."), ChatMessage("user", prompt)],
@@ -1200,6 +1441,21 @@ def generate_attempt(args: argparse.Namespace) -> Path:
                 temperature=args.temp,
             )
         )
+        if bug_loop_enabled:
+            text, bug_loop_changed, bug_loop_rounds_run, bug_rag_hits_total = run_bug_check_loop(
+                backend_kind="frontier",
+                candidate_text=text,
+                original_prompt=prompt,
+                rounds=bug_loop_rounds,
+                max_tokens=bug_loop_max_tokens,
+                system_prompt=bug_loop_system,
+                temp=args.temp,
+                rag_enabled=bug_rag_enabled,
+                rag_corpus_path=bug_rag_corpus,
+                rag_top_k=bug_rag_top_k,
+                rag_max_chars=bug_rag_max_chars,
+                frontier_backend=backend,
+            )
         estimated_cost_usd = (
             (usage.get("prompt_tokens", input_tokens) * 5.0)
             + (usage.get("completion_tokens", 0) * 15.0)
@@ -1230,6 +1486,15 @@ def generate_attempt(args: argparse.Namespace) -> Path:
         "total_tokens": total_tokens,
         "estimated_cost_usd": estimated_cost_usd,
         "usage": usage,
+        "bug_check_loop_enabled": bug_loop_enabled,
+        "bug_check_rounds_requested": bug_loop_rounds if bug_loop_enabled else 0,
+        "bug_check_rounds_run": bug_loop_rounds_run,
+        "bug_check_changed_output": bug_loop_changed,
+        "bug_check_rag_enabled": bool(bug_loop_enabled and bug_rag_enabled),
+        "bug_check_rag_corpus": str(bug_rag_corpus),
+        "bug_check_rag_top_k": bug_rag_top_k if bug_rag_enabled else 0,
+        "bug_check_rag_max_chars": bug_rag_max_chars if bug_rag_enabled else 0,
+        "bug_check_rag_hits_total": bug_rag_hits_total,
     }
     attempt.generation_elapsed_s = elapsed
     attempt.generation_input_tokens = metrics["input_tokens"]
@@ -1326,6 +1591,45 @@ def report(_: argparse.Namespace) -> Path:
     write_text(out, "\n".join(lines) + "\n")
     print(out)
     return out
+
+
+def validation_artifact_paths(limit: int = 40) -> List[Path]:
+    return sorted(
+        (REPO / "benchmarks" / "results").glob("multi_agent_orchestration_validation*.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )[:limit]
+
+
+def summarize_validation_artifact(path: Path) -> Tuple[str, str]:
+    if not path.is_file():
+        return f"Validation artifact not found: `{path}`", ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return f"Invalid JSON in `{path}`: `{exc}`", ""
+    rel = path.relative_to(REPO).as_posix()
+    lines = [
+        f"### Validation: `{rel}`",
+        "",
+        f"- Rows: `{payload.get('rows', 0)}`",
+        f"- Split valid: `{payload.get('split_valid_rows', 0)}` (`{payload.get('split_valid_rate', 0):.3f}`)",
+        f"- Merge valid: `{payload.get('merge_valid_rows', 0)}` (`{payload.get('merge_valid_rate', 0):.3f}`)",
+        f"- Multi-agent rows: `{payload.get('multi_agent_rows', 0)}`",
+    ]
+    if "expected_multi_agent_rows" in payload:
+        lines.append(f"- Expected multi-agent rows: `{payload.get('expected_multi_agent_rows', 0)}`")
+    if "expected_multi_agent_hit_rate" in payload:
+        lines.append(f"- Expected multi-agent hit rate: `{payload.get('expected_multi_agent_hit_rate', 0):.3f}`")
+    if "unexpected_multi_agent_rate" in payload:
+        lines.append(f"- Unexpected multi-agent rate: `{payload.get('unexpected_multi_agent_rate', 0):.3f}`")
+    if "split_unique_adapter_rows" in payload:
+        lines.append(f"- Split unique-adapter rows: `{payload.get('split_unique_adapter_rows', 0)}`")
+    if "split_nonempty_rows" in payload:
+        lines.append(f"- Split non-empty rows: `{payload.get('split_nonempty_rows', 0)}`")
+    if "split_priority_sorted_rows" in payload:
+        lines.append(f"- Split priority-sorted rows: `{payload.get('split_priority_sorted_rows', 0)}`")
+    return "\n".join(lines), json.dumps(payload, indent=2, ensure_ascii=False)
 
 
 def build_app():
@@ -1523,6 +1827,14 @@ body {
                         temp=0.0,
                         context_chars=context_chars,
                         no_context_bm25=False,
+                        bug_check_loop=True,
+                        bug_check_rounds=1,
+                        bug_check_max_tokens=int(max_tokens or 4096),
+                        bug_check_system_prompt=DEFAULT_BUG_CHECK_SYSTEM_PROMPT,
+                        bug_check_rag=True,
+                        bug_check_rag_corpus=str(DEFAULT_BUG_FIX_RAG_CORPUS),
+                        bug_check_rag_top_k=6,
+                        bug_check_rag_max_chars=2200,
                     )
                 )
                 manifest = apply_output(
@@ -1679,6 +1991,58 @@ body {
 
     def report_ui():
         return read_text(report(argparse.Namespace()))
+
+    def validation_choices() -> List[str]:
+        return [p.relative_to(REPO).as_posix() for p in validation_artifact_paths()]
+
+    def refresh_validation_ui(selected_rel: str = ""):
+        choices = validation_choices()
+        selected = selected_rel if selected_rel in choices else (choices[0] if choices else "")
+        summary, raw = ("No validation artifacts found yet.", "")
+        if selected:
+            summary, raw = summarize_validation_artifact(REPO / selected)
+        return gr.update(choices=choices, value=selected), summary, raw
+
+    def view_validation_ui(selected_rel: str):
+        if not selected_rel:
+            return "Select a validation artifact.", ""
+        return summarize_validation_artifact(REPO / selected_rel)
+
+    def run_expanded_validation_ui():
+        out = REPO / "benchmarks" / "results" / "multi_agent_orchestration_validation_arena_latest.json"
+        cmd = [
+            sys.executable,
+            str(REPO / "scripts" / "validate_multi_agent_orchestration.py"),
+            "--tasks",
+            str(REPO / "benchmarks" / "hud_combat_field_flow_low_tasks_v1.json"),
+            "--tasks",
+            str(REPO / "benchmarks" / "multi_agent_orchestration_mass_tasks_v1.json"),
+            "--tasks",
+            str(REPO / "benchmarks" / "task_routing_mixed_tasks_v1.json"),
+            "--expected-multi-agent-min-rate",
+            "0.6",
+            "--max-unexpected-multi-agent-rate",
+            "0.25",
+            "--output-json",
+            str(out),
+        ]
+        log = REPORTS_DIR / "arena_validation_run.log"
+        code, elapsed = run_cmd(cmd, cwd=REPO, log_path=log, timeout_s=600)
+        if code != 0:
+            return (
+                f"Validation command failed (`exit={code}`) in {elapsed:.1f}s. "
+                f"See `{log.relative_to(REPO).as_posix()}`.",
+                gr.update(),
+                "",
+                "",
+            )
+        choices_update, summary, raw = refresh_validation_ui(out.relative_to(REPO).as_posix())
+        status = (
+            f"Expanded split/merge validation completed in {elapsed:.1f}s.\n\n"
+            f"Output: `{out.relative_to(REPO).as_posix()}`\n"
+            f"Log: `{log.relative_to(REPO).as_posix()}`"
+        )
+        return status, choices_update, summary, raw
 
     def task_details_ui(task_id):
         task = load_task_specs()[task_id]
@@ -1884,6 +2248,38 @@ body {
             outputs=[complete_status],
         )
 
+        with gr.Accordion("Split/Merge Validity Testing", open=False):
+            gr.Markdown(
+                "Review expanded multi-agent split/merge validation artifacts and run a fresh expanded pass "
+                "directly from the arena UI."
+            )
+            validation_picker = gr.Dropdown(label="Validation artifact", choices=validation_choices(), value=(validation_choices()[0] if validation_choices() else ""))
+            with gr.Row():
+                validation_refresh_btn = gr.Button("Refresh Artifact List")
+                validation_run_btn = gr.Button("Run Expanded Validation", variant="primary")
+            validation_status = gr.Markdown()
+            validation_summary = gr.Markdown()
+            validation_raw = gr.Textbox(label="Validation JSON", lines=14)
+            validation_refresh_btn.click(
+                refresh_validation_ui,
+                inputs=[validation_picker],
+                outputs=[validation_picker, validation_summary, validation_raw],
+            )
+            validation_picker.change(
+                view_validation_ui,
+                inputs=[validation_picker],
+                outputs=[validation_summary, validation_raw],
+            )
+            validation_run_btn.click(
+                run_expanded_validation_ui,
+                outputs=[validation_status, validation_picker, validation_summary, validation_raw],
+            )
+            demo.load(
+                refresh_validation_ui,
+                inputs=[validation_picker],
+                outputs=[validation_picker, validation_summary, validation_raw],
+            )
+
         with gr.Accordion("Details: manual packet / verification / reports", open=False):
             attempt = gr.Radio(["local", "frontier"], value="local", label="Attempt")
             with gr.Row():
@@ -1939,10 +2335,61 @@ def main() -> None:
     p_generate.add_argument("--attempt", required=True)
     p_generate.add_argument("--backend", choices=["packet", "local", "frontier"], default="packet")
     p_generate.add_argument("--adapter-path", default="checkpoints/fe-lora-30m")
+    p_generate.add_argument(
+        "--local-model",
+        default=os.environ.get("MODEL"),
+        help="Local MLX base model id (defaults to adapter_config.json model, then $MODEL).",
+    )
     p_generate.add_argument("--model", default=os.environ.get("FRONTIER_MODEL"))
     p_generate.add_argument("--max-tokens", type=int, default=4096)
     p_generate.add_argument("--temp", type=float, default=0.0)
     p_generate.add_argument("--context-chars", type=int, default=16000)
+    p_generate.add_argument(
+        "--bug-check-loop",
+        action=argparse.BooleanOptionalAction,
+        default=os.environ.get("GAME_TASK_ARENA_BUG_CHECK_LOOP", "1") not in {"0", "false", "False"},
+        help="Run a post-generation patch bug-check loop (default on).",
+    )
+    p_generate.add_argument(
+        "--bug-check-rounds",
+        type=int,
+        default=max(1, int(os.environ.get("GAME_TASK_ARENA_BUG_CHECK_ROUNDS", "1"))),
+        help="Maximum bug-check rounds (default 1).",
+    )
+    p_generate.add_argument(
+        "--bug-check-max-tokens",
+        type=int,
+        default=max(256, int(os.environ.get("GAME_TASK_ARENA_BUG_CHECK_MAX_TOKENS", "4096"))),
+        help="Decode budget per bug-check round.",
+    )
+    p_generate.add_argument(
+        "--bug-check-system-prompt",
+        default=os.environ.get("GAME_TASK_ARENA_BUG_CHECK_SYSTEM_PROMPT", DEFAULT_BUG_CHECK_SYSTEM_PROMPT),
+        help="System prompt for the bug-check reviewer stage.",
+    )
+    p_generate.add_argument(
+        "--bug-check-rag",
+        action=argparse.BooleanOptionalAction,
+        default=os.environ.get("GAME_TASK_ARENA_BUG_CHECK_RAG", "1") not in {"0", "false", "False"},
+        help="Enable bug-fix RAG context retrieval for bug-check rounds.",
+    )
+    p_generate.add_argument(
+        "--bug-check-rag-corpus",
+        default=os.environ.get("GAME_TASK_ARENA_BUG_CHECK_RAG_CORPUS", str(DEFAULT_BUG_FIX_RAG_CORPUS)),
+        help="Bug-fix RAG corpus path.",
+    )
+    p_generate.add_argument(
+        "--bug-check-rag-top-k",
+        type=int,
+        default=max(1, int(os.environ.get("GAME_TASK_ARENA_BUG_CHECK_RAG_TOP_K", "6"))),
+        help="Top-k retrieval hits for each bug-check round.",
+    )
+    p_generate.add_argument(
+        "--bug-check-rag-max-chars",
+        type=int,
+        default=max(400, int(os.environ.get("GAME_TASK_ARENA_BUG_CHECK_RAG_MAX_CHARS", "2200"))),
+        help="Character cap for bug-check RAG context block.",
+    )
     p_generate.add_argument(
         "--no-context-bm25",
         action="store_true",

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build a seed SFT dataset for the economistRL adapter experiment.
+"""DEPRECATED: stub seed SFT dataset builder for economistRL.
 
-The RL lane should ultimately train from scored rollouts, but a small SFT seed
-keeps the adapter grounded in the economy task format before RL optimization.
-Rows come from `benchmarks/economistRL_tasks_v1.json` reference answers.
+Stub ``reference_answer`` SFT was removed from the RL pipeline. economistRL
+rollouts now initialize from ``checkpoints/fe-lora-arena-apply-sft``. Do not
+rebuild ``data/lora/adapters/economistRL_seed`` for training.
 """
 
 from __future__ import annotations
@@ -16,14 +16,15 @@ from pathlib import Path
 from typing import Any
 
 REPO = Path(__file__).resolve().parents[2]
-DEFAULT_TASKS = REPO / "benchmarks" / "economistRL_tasks_v1.json"
-DEFAULT_OUT_DIR = REPO / "data" / "lora" / "adapters" / "economistRL_seed"
+DEFAULT_TASKS = REPO / "benchmarks" / "economistRL_tasks_v2_coding.json"
+DEFAULT_OUT_DIR = REPO / "data" / "lora" / "adapters" / "_deprecated_economistRL_stub_sft"
 
-SYSTEM_PROMPT = (
-    "You are economistRL, an experimental Fallen Empire economy systems specialist. "
-    "Optimize for explicit resource accounting, feedback loops, bounded formulas, "
-    "and testable invariants. Avoid shallow tooltip-only answers."
-)
+import sys
+
+sys.path.insert(0, str(REPO / "scripts"))
+from economist_rl_coding_contract import CODING_SYSTEM_PROMPT  # noqa: E402
+
+SYSTEM_PROMPT = CODING_SYSTEM_PROMPT
 
 
 def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -86,7 +87,7 @@ def _row(task: dict[str, Any], variant: str, assistant: str) -> dict[str, Any]:
         "risk_class": "medium",
         "dataset_role": f"economistRL_seed_{variant}",
         "record_id": f"economistRL:{task_id}:{variant}",
-        "lineage": "economistRL:v1:seed_sft",
+        "lineage": "economistRL:v1:seed_bootstrap",
         "policy_version": "economist_rl_policy_v1",
         "rl_focus": list(task.get("rl_focus") or []),
         "subskill": str(task.get("subskill") or ""),
@@ -123,7 +124,7 @@ def build_dataset(tasks_path: Path, out_dir: Path, seed: int, repeats: int) -> d
         "created_at": datetime.now(timezone.utc).isoformat(),
         "adapter_id": "economistRL",
         "out_dir": str(out_dir),
-        "lineage": "economistRL:v1:seed_sft",
+        "lineage": "economistRL:v1:seed_bootstrap",
         "policy_version": "economist_rl_policy_v1",
         "inputs": {
             "tasks": str(tasks_path),
@@ -146,7 +147,12 @@ def build_dataset(tasks_path: Path, out_dir: Path, seed: int, repeats: int) -> d
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build economistRL seed SFT dataset.")
+    raise SystemExit(
+        "economistRL stub seed SFT is deprecated and disabled. "
+        "Use checkpoints/fe-lora-arena-apply-sft as RL init via run_economist_rl_lambda_cycle.py. "
+        "See data/lora/adapters/_deprecated_economistRL_stub_sft/README.md"
+    )
+    parser = argparse.ArgumentParser(description="Build economistRL seed bootstrap dataset.")
     parser.add_argument("--tasks", type=Path, default=DEFAULT_TASKS)
     parser.add_argument("--out-dir", type=Path, default=DEFAULT_OUT_DIR)
     parser.add_argument("--seed", type=int, default=42)

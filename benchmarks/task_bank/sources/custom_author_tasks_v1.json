@@ -1,0 +1,361 @@
+{
+  "schema_version": "custom_task_bank_v1",
+  "source_id": "custom_author_tasks_v1",
+  "description": "Hand-authored tasks curated for Fallen Empire eval quality.",
+  "task_count": 7,
+  "tasks": [
+    {
+      "id": "custom-hud-royal-theme-restyle-001",
+      "source_family": "ui_theme_regression_repair",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "multidomain"
+      ],
+      "subskill": "hud_theme_royal_restyling",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "prompt": "The HUD visual language drifted into a modern/minimal style that no longer fits Fallen Empire. Restyle the HUD to a royal-medieval theme: deep navy or charcoal foundations, gold/bronze accents, parchment-readable text contrast, and restrained jewel-tone status highlights. Keep information hierarchy intact, improve chip/panel color clarity, and avoid changing gameplay logic or store contracts.",
+      "canonical_file_hints": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/ui/panelThemes/MapRoomPanel.tsx",
+        "src/components/ui/panelThemes/MedievalBuildingPanels.tsx",
+        "src/app/globals.css"
+      ],
+      "acceptance_signals": [
+        "HUD palette is visibly royal-medieval rather than modern/minimal.",
+        "Primary text contrast remains readable across main HUD panels.",
+        "Accent colors improve status chip distinction without neon over-saturation.",
+        "No gameplay/state logic files are modified."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/components/ui/",
+          "src/components/test/",
+          "src/app/",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/",
+          "src/store/",
+          "src/types/"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    },
+    {
+      "id": "custom-hud-isometric-image-integration-002",
+      "source_family": "sprite_integration_regression_repair",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "multidomain"
+      ],
+      "subskill": "isometric_sprite_integration_contract",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "ui_behavior",
+      "prompt": "Replace a HUD-adjacent 2D isometric sprite with a new asset and integrate it correctly using existing game conventions. Follow current sprite-path and loading patterns used by the renderer/HUD, ensure the new image is visible with correct layering/clarity, and avoid the recurring bad integrations where assets are added but not mapped, mapped but not rendered, or rendered with placeholder/fallback behavior.",
+      "canonical_file_hints": [
+        "public/sprites/**/*",
+        "src/components/game/HexGrid.tsx",
+        "src/components/ui/GameHUD.tsx",
+        "src/app/globals.css"
+      ],
+      "acceptance_signals": [
+        "A new non-empty sprite asset exists under public/sprites with a supported image extension.",
+        "The new sprite path is referenced through existing sprite mapping conventions (not orphaned).",
+        "Integration follows existing texture/render pipeline and remains visibly correct in HUD/game view.",
+        "No placeholder/fallback-only integration remains for the replaced visual.",
+        "No gameplay/state logic files are modified outside approved integration scope."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "public/sprites/",
+          "src/components/game/HexGrid.tsx",
+          "src/components/ui/",
+          "src/app/globals.css",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/ai.ts",
+          "src/lib/aiTactics.ts",
+          "src/store/",
+          "src/types/"
+        ],
+        "require_sprite_asset": true,
+        "require_sprite_reference": true,
+        "required_integration_files": [
+          "src/components/game/HexGrid.tsx",
+          "src/components/ui/GameHUD.tsx"
+        ],
+        "forbid_placeholder_tokens": [
+          "placeholder until",
+          "todo sprite",
+          "fallback sprite only"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    },
+    {
+      "id": "custom-hud-unit-overlay-replacement-003",
+      "source_family": "unit_overlay_integration_regression_repair",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "unit_overlay_sprite_replacement_contract",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "ui_behavior",
+      "prompt": "Replace one existing unit overlay sprite with a new 2D isometric version and integrate it correctly in the current render stack. Follow existing sprite-path, texture-loading, and layering conventions so the overlay appears on the intended unit context and does not regress visibility/legibility.",
+      "canonical_file_hints": [
+        "public/sprites/units/**/*",
+        "public/sprites/overlays/**/*",
+        "src/components/game/HexGrid.tsx",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "acceptance_signals": [
+        "A new non-empty unit/overlay sprite asset exists in public/sprites with a supported image extension.",
+        "The new overlay sprite path is referenced in existing sprite mapping code (not orphaned).",
+        "Overlay renders on intended unit context with correct layer/clarity and without replacing unrelated sprites.",
+        "No placeholder or fallback-only token remains for this overlay integration.",
+        "No gameplay/state logic files are modified outside approved integration scope."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "public/sprites/",
+          "src/components/game/HexGrid.tsx",
+          "src/components/ui/",
+          "src/app/globals.css",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/ai.ts",
+          "src/lib/aiTactics.ts",
+          "src/store/",
+          "src/types/"
+        ],
+        "require_sprite_asset": true,
+        "require_sprite_reference": true,
+        "required_integration_files": [
+          "src/components/game/HexGrid.tsx"
+        ],
+        "forbid_placeholder_tokens": [
+          "placeholder until",
+          "todo sprite",
+          "fallback sprite only"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    },
+    {
+      "id": "custom-hud-army-stack-graphic-004",
+      "source_family": "single_to_army_stack_visual_contract",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "army_operations",
+        "multidomain"
+      ],
+      "subskill": "army_stack_sprite_aggregation_contract",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "ui_behavior",
+      "prompt": "Replace the single-unit stack visual treatment with an army-stack treatment representing 10 units as one coherent graphic/system. Update UI/render behavior so stacked armies are visually distinct from single units, preserve readability at gameplay zoom levels, and integrate via existing sprite/overlay conventions without altering combat logic.",
+      "canonical_file_hints": [
+        "public/sprites/units/**/*",
+        "public/sprites/overlays/**/*",
+        "src/components/game/HexGrid.tsx",
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts"
+      ],
+      "acceptance_signals": [
+        "Army stack of 10 units has distinct visual treatment from a single-unit stack.",
+        "Army-stack graphic path is integrated into existing mapping/render pipeline and references valid sprite assets.",
+        "Stack visuals remain readable/aligned at common gameplay zoom levels.",
+        "No fallback-only/placeholder integration remains in stack-render path.",
+        "No combat/state-transition gameplay logic is changed outside visual aggregation scope."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "public/sprites/",
+          "src/components/game/HexGrid.tsx",
+          "src/components/ui/",
+          "src/store/useGameStore.ts",
+          "src/app/globals.css",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/combat.ts",
+          "src/lib/ai.ts",
+          "src/lib/aiTactics.ts",
+          "src/types/"
+        ],
+        "require_sprite_asset": true,
+        "require_sprite_reference": true,
+        "required_integration_files": [
+          "src/components/game/HexGrid.tsx",
+          "src/components/ui/GameHUD.tsx"
+        ],
+        "forbid_placeholder_tokens": [
+          "placeholder until",
+          "todo sprite",
+          "fallback sprite only"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    },
+    {
+      "id": "custom-army-movement-order-idempotency-005",
+      "source_family": "movement_order_replay_regression",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "movement_order_idempotency",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "prompt": "Fix army movement so replayed or duplicate move commands in the same tick do not apply twice. Ensure movement order processing is idempotent per unit per tick, preserves valid order sequencing, and does not alter combat resolution semantics.",
+      "canonical_file_hints": [
+        "src/core/gameCore.ts",
+        "src/lib/military.ts",
+        "src/lib/mapBoxSelect.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "acceptance_signals": [
+        "Duplicate/replayed move orders do not apply movement more than once per unit per tick.",
+        "Valid move sequences still execute in intended order.",
+        "No combat or capture side effects trigger twice from duplicate movement input."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/core/gameCore.ts",
+          "src/lib/military.ts",
+          "src/lib/mapBoxSelect.ts",
+          "src/store/useGameStore.ts",
+          "src/components/game/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/lib/ai.ts",
+          "src/lib/aiTactics.ts",
+          "src/lib/siteAuth.ts",
+          "src/app/api/"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    },
+    {
+      "id": "custom-army-formation-path-consistency-006",
+      "source_family": "formation_route_drift_regression",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "multidomain"
+      ],
+      "subskill": "formation_path_consistency",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "prompt": "Fix a formation/path inconsistency where grouped armies compute one path preview but execute a different march route after tick advance. Align previewed formation movement with executed pathing rules across terrain and supply constraints.",
+      "canonical_file_hints": [
+        "src/lib/formationPlacement.ts",
+        "src/lib/military.ts",
+        "src/lib/navalReachability.ts",
+        "src/core/gameCore.ts"
+      ],
+      "acceptance_signals": [
+        "Formation route preview matches executed movement path for the same input.",
+        "Terrain/supply constraints are applied consistently in preview and execution.",
+        "No cross-tick drift appears between queued and applied formation moves."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/lib/formationPlacement.ts",
+          "src/lib/military.ts",
+          "src/lib/navalReachability.ts",
+          "src/core/gameCore.ts",
+          "src/components/game/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/lib/siteAuth.ts",
+          "src/app/api/",
+          "src/lib/ai.ts",
+          "src/lib/aiTactics.ts"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    },
+    {
+      "id": "custom-army-stack-overlay-coherence-007",
+      "source_family": "stack_overlay_movement_visibility_regression",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status",
+        "multidomain"
+      ],
+      "subskill": "stack_overlay_movement_coherence",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "ui_behavior",
+      "prompt": "Fix army stack overlays so movement state and stack-size indicators remain coherent while armies move between hexes. Overlays should update without flicker/stale labels, preserve readable alignment, and stay consistent with underlying stack state.",
+      "canonical_file_hints": [
+        "src/components/game/HexGrid.tsx",
+        "src/components/game/GameScene.tsx",
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts",
+        "public/sprites/overlays/**/*"
+      ],
+      "acceptance_signals": [
+        "Stack overlay labels and markers remain synchronized with current stack state during movement.",
+        "Overlay positioning/alignment remains readable with no persistent flicker or stale indicator trails.",
+        "Movement-complete state clears transient overlay markers correctly.",
+        "No gameplay logic outside army/overlay integration scope is modified."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/components/game/",
+          "src/components/ui/",
+          "src/store/useGameStore.ts",
+          "public/sprites/overlays/",
+          "src/app/globals.css",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/lib/siteAuth.ts",
+          "src/app/api/",
+          "src/lib/ai.ts",
+          "src/lib/aiTactics.ts"
+        ],
+        "require_sprite_reference": true,
+        "required_integration_files": [
+          "src/components/game/HexGrid.tsx"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "eval"
+    }
+  ]
+}

@@ -1,0 +1,843 @@
+[
+  {
+    "id": "ls-ls-core-tone-two-lines-01",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write exactly 2 short loading-screen status lines for Fallen Empire with medieval strategy tone. Include one empire reference and one readiness cue.",
+    "expect": {
+      "any_contains": [
+        "Empire",
+        "empire",
+        "realm",
+        "banner",
+        "legion",
+        "crown",
+        "ready",
+        "readiness"
+      ],
+      "none_contains": [
+        "```",
+        "python",
+        "def "
+      ],
+      "min_chars": 45
+    }
+  },
+  {
+    "id": "ls-ls-core-terse-variants-02",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Provide 3 terse loading lines with tactical flavor. Mention either scouts, supply, or fortifications in at least one line.",
+    "expect": {
+      "any_contains": [
+        "scout",
+        "supply",
+        "fortification",
+        "fortified",
+        "watch",
+        "vanguard"
+      ],
+      "none_contains": [
+        "function ",
+        "const ",
+        "class "
+      ],
+      "min_chars": 55
+    }
+  },
+  {
+    "id": "ls-ls-core-anticipation-copy-03",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write 2-3 sentences of anticipation copy for a loading screen before a major campaign turn. Keep it in-world and practical.",
+    "expect": {
+      "any_contains": [
+        "campaign",
+        "turn",
+        "march",
+        "front",
+        "supply",
+        "morale",
+        "war council"
+      ],
+      "min_chars": 110
+    }
+  },
+  {
+    "id": "ls-ls-core-start-button-support-04",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Draft one subtitle under a loading title and one short helper line above a Start button. Keep wording compact and strategy-themed.",
+    "expect": {
+      "any_contains": [
+        "Start",
+        "start",
+        "ready",
+        "command",
+        "orders"
+      ],
+      "none_contains": [
+        "lorem",
+        "ipsum"
+      ],
+      "min_chars": 70
+    }
+  },
+  {
+    "id": "ls-ls-core-status-cycle-05",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "List four rotating loading statuses for simulation prep. Include one line about terrain data and one about unit rosters.",
+    "expect": {
+      "all_contains": [
+        "terrain",
+        "roster"
+      ],
+      "any_contains": [
+        "sim",
+        "simulation",
+        "marshal",
+        "deploy",
+        "formation"
+      ],
+      "min_chars": 85
+    }
+  },
+  {
+    "id": "ls-ls-core-accessibility-plain-06",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write a plain-language loading explanation for new players in 2 sentences while preserving Fallen Empire tone.",
+    "expect": {
+      "any_contains": [
+        "loading",
+        "preparing",
+        "ready",
+        "match",
+        "battle",
+        "campaign"
+      ],
+      "min_chars": 90
+    }
+  },
+  {
+    "id": "ls-ls-core-warning-neutral-07",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Create one warning-state line and one neutral-state line for a loading indicator. Keep urgency restrained.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "delay",
+        "hold",
+        "ready",
+        "stable",
+        "queued"
+      ],
+      "none_contains": [
+        "panic",
+        "catastrophe"
+      ],
+      "min_chars": 60
+    }
+  },
+  {
+    "id": "ls-ls-core-faction-flavor-08",
+    "category": "loading_copy_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write two faction-agnostic loading lines that still feel like medieval strategy UI copy.",
+    "expect": {
+      "any_contains": [
+        "realm",
+        "banner",
+        "council",
+        "marshal",
+        "frontier",
+        "citadel"
+      ],
+      "min_chars": 50
+    }
+  },
+  {
+    "id": "ls-ls-ui-hierarchy-title-subtitle-09",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "In 3 sentences, propose one visual hierarchy improvement for a dark parchment loading panel. Must mention title, subtitle, and progress bar behavior.",
+    "expect": {
+      "all_contains": [
+        "title",
+        "subtitle"
+      ],
+      "any_contains": [
+        "progress",
+        "bar",
+        "indicator"
+      ],
+      "min_chars": 130
+    }
+  },
+  {
+    "id": "ls-ls-ui-progress-signal-10",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Describe one UI change that makes loading progress feel trustworthy. Mention pacing and at least one micro-interaction cue.",
+    "expect": {
+      "any_contains": [
+        "progress",
+        "pacing",
+        "pulse",
+        "tick",
+        "phase",
+        "step"
+      ],
+      "min_chars": 115
+    }
+  },
+  {
+    "id": "ls-ls-ui-start-readiness-11",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Propose a loading-to-start transition tweak in 2-3 sentences. Include when the Start action should become active.",
+    "expect": {
+      "any_contains": [
+        "Start",
+        "start",
+        "active",
+        "enabled",
+        "ready"
+      ],
+      "min_chars": 95
+    }
+  },
+  {
+    "id": "ls-ls-ui-state-badge-12",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Suggest one compact status badge pattern for loading states (queued, preparing, ready). Explain placement and color intent.",
+    "expect": {
+      "all_contains": [
+        "queued",
+        "ready"
+      ],
+      "any_contains": [
+        "preparing",
+        "badge",
+        "placement",
+        "color"
+      ],
+      "min_chars": 100
+    }
+  },
+  {
+    "id": "ls-ls-ui-copy-grouping-13",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Explain how to group title, subtitle, and rotating status text so the eye path is clear on first glance.",
+    "expect": {
+      "all_contains": [
+        "title",
+        "subtitle"
+      ],
+      "any_contains": [
+        "status",
+        "hierarchy",
+        "scan",
+        "eye",
+        "group"
+      ],
+      "min_chars": 105
+    }
+  },
+  {
+    "id": "ls-ls-ui-reduced-jitter-14",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Recommend one change that reduces visual jitter while the loading message updates. Keep the recommendation practical.",
+    "expect": {
+      "any_contains": [
+        "stable",
+        "jitter",
+        "fixed",
+        "layout",
+        "reserve",
+        "height"
+      ],
+      "min_chars": 90
+    }
+  },
+  {
+    "id": "ls-ls-ui-contrast-guidance-15",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Give a 2-3 sentence contrast guidance note for parchment text on dark backgrounds in a loading card.",
+    "expect": {
+      "any_contains": [
+        "contrast",
+        "parchment",
+        "dark",
+        "readable",
+        "accent"
+      ],
+      "min_chars": 95
+    }
+  },
+  {
+    "id": "ls-ls-ui-empty-to-live-16",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Describe a small UI behavior that improves the first 2 seconds before meaningful progress exists.",
+    "expect": {
+      "any_contains": [
+        "initial",
+        "first",
+        "placeholder",
+        "queued",
+        "warming",
+        "preparing"
+      ],
+      "min_chars": 85
+    }
+  },
+  {
+    "id": "ls-ls-ui-cta-distance-17",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Propose spacing/alignment guidance between progress indicator and Start control to reduce accidental clicks.",
+    "expect": {
+      "any_contains": [
+        "spacing",
+        "alignment",
+        "distance",
+        "Start",
+        "start",
+        "control"
+      ],
+      "min_chars": 90
+    }
+  },
+  {
+    "id": "ls-ls-ui-iconography-18",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Suggest one icon or glyph treatment for loading states that matches a medieval strategy aesthetic.",
+    "expect": {
+      "any_contains": [
+        "icon",
+        "glyph",
+        "sigil",
+        "banner",
+        "crest",
+        "marker"
+      ],
+      "min_chars": 80
+    }
+  },
+  {
+    "id": "ls-ls-ui-phase-labels-19",
+    "category": "loading_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write four short phase labels for a segmented loading bar and explain in one sentence how they should be revealed.",
+    "expect": {
+      "any_contains": [
+        "phase",
+        "segment",
+        "reveal",
+        "step"
+      ],
+      "none_contains": [
+        "python",
+        "def "
+      ],
+      "min_chars": 95
+    }
+  },
+  {
+    "id": "ls-ls-constraint-no-code-20",
+    "category": "loading_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Return plain text only: one loading title and one subtitle. No code, no markdown fences.",
+    "expect": {
+      "none_contains": [
+        "```",
+        "function ",
+        "const ",
+        "<div"
+      ],
+      "any_contains": [
+        "loading",
+        "ready",
+        "realm",
+        "campaign",
+        "orders"
+      ],
+      "min_chars": 35
+    }
+  },
+  {
+    "id": "ls-ls-constraint-comma-line-21",
+    "category": "loading_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Output one comma-separated line with exactly four loading status snippets.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "ready",
+        "preparing",
+        "queued",
+        "march",
+        "supply"
+      ],
+      "min_chars": 35
+    }
+  },
+  {
+    "id": "ls-ls-constraint-compact-22",
+    "category": "loading_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Provide exactly 3 compact loading chips with values, e.g., Supply Stable. Keep each chip under four words.",
+    "expect": {
+      "any_contains": [
+        "Supply",
+        "Morale",
+        "Risk",
+        "Ready",
+        "Queue",
+        "Status"
+      ],
+      "none_contains": [
+        "```",
+        "import ",
+        "export "
+      ],
+      "min_chars": 40
+    }
+  },
+  {
+    "id": "ls-ls-constraint-one-sentence-23",
+    "category": "loading_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "One sentence only: explain why loading takes time in this strategy game.",
+    "expect": {
+      "any_contains": [
+        "simulation",
+        "state",
+        "map",
+        "units",
+        "turn",
+        "prepare"
+      ],
+      "min_chars": 55
+    }
+  },
+  {
+    "id": "ls-ls-constraint-no-extra-24",
+    "category": "loading_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Give two lines only. First line should feel ceremonial; second line should feel practical. No extra explanation.",
+    "expect": {
+      "any_contains": [
+        "banner",
+        "crown",
+        "orders",
+        "supply",
+        "ready",
+        "march"
+      ],
+      "min_chars": 50
+    }
+  },
+  {
+    "id": "ls-ls-constraint-terminology-lock-25",
+    "category": "loading_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write a loading subtitle that includes the words morale and supply, plus one readiness phrase.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "ready",
+        "readiness",
+        "awaiting command",
+        "set"
+      ],
+      "min_chars": 45
+    }
+  },
+  {
+    "id": "ls-ls-transfer-hud-on-loading-26",
+    "category": "loading_transfer_ui",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "For a loading screen, propose one way to preview future HUD signals (morale/supply/risk) without clutter.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "preview",
+        "chip",
+        "compact",
+        "tooltip"
+      ],
+      "min_chars": 90
+    }
+  },
+  {
+    "id": "ls-ls-transfer-economy-hint-27",
+    "category": "loading_transfer_ui",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Add one loading hint line that foreshadows economy pressure using upkeep or markets.",
+    "expect": {
+      "any_contains": [
+        "upkeep",
+        "market",
+        "markets",
+        "income",
+        "gold"
+      ],
+      "min_chars": 45
+    }
+  },
+  {
+    "id": "ls-ls-transfer-combat-readiness-28",
+    "category": "loading_transfer_ui",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write two loading lines that prepare the player for upcoming combat risk context (morale, terrain, walls).",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "terrain"
+      ],
+      "any_contains": [
+        "wall",
+        "walls",
+        "fortification",
+        "risk"
+      ],
+      "min_chars": 65
+    }
+  },
+  {
+    "id": "ls-ls-transfer-ai-brief-29",
+    "category": "loading_transfer_ui",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Draft a one-line council brief for loading that hints at AI intent (defend, expand, scout, reinforce).",
+    "expect": {
+      "any_contains": [
+        "defend",
+        "expand",
+        "scout",
+        "reinforce"
+      ],
+      "min_chars": 40
+    }
+  },
+  {
+    "id": "ls-ls-transfer-save-safety-30",
+    "category": "loading_transfer_ui",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write a compact loading reassurance line that references save-state safety or version checks.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "state",
+        "version",
+        "verified",
+        "integrity"
+      ],
+      "min_chars": 40
+    }
+  },
+  {
+    "id": "hud-hud-mass-chips-core-01",
+    "category": "hud_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "List exactly four compact HUD chips including morale and supply plus two risk signals.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "pressure",
+        "territory",
+        "upkeep"
+      ],
+      "min_chars": 35
+    }
+  },
+  {
+    "id": "hud-hud-mass-terse-values-02",
+    "category": "hud_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write three terse HUD labels with values for observer mode.",
+    "expect": {
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure",
+        "Territory"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "const "
+      ],
+      "min_chars": 35
+    }
+  },
+  {
+    "id": "hud-hud-mass-visibility-note-03",
+    "category": "hud_core",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "In 2-3 sentences, suggest one HUD visibility improvement for a dark medieval panel.",
+    "expect": {
+      "any_contains": [
+        "visibility",
+        "contrast",
+        "readable",
+        "hierarchy"
+      ],
+      "min_chars": 95
+    }
+  },
+  {
+    "id": "hud-hud-mass-priority-order-04",
+    "category": "hud_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Propose ordering for morale, supply, and risk in a compact HUD block and explain why.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "priority",
+        "scan"
+      ],
+      "min_chars": 90
+    }
+  },
+  {
+    "id": "hud-hud-mass-no-clutter-05",
+    "category": "hud_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Describe one change that reduces HUD clutter while keeping strategic signal quality.",
+    "expect": {
+      "any_contains": [
+        "clutter",
+        "compact",
+        "signal",
+        "density"
+      ],
+      "min_chars": 85
+    }
+  },
+  {
+    "id": "hud-hud-mass-alert-tone-06",
+    "category": "hud_ui_change",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write one warning-style HUD line and one stable-state line with terse tactical wording.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "stable",
+        "ready",
+        "risk"
+      ],
+      "min_chars": 55
+    }
+  },
+  {
+    "id": "hud-hud-mass-constraints-07",
+    "category": "hud_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Plain text only: output one comma-separated line of four HUD chips.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 35
+    }
+  },
+  {
+    "id": "hud-hud-mass-constraints-08",
+    "category": "hud_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Exactly two lines: first for morale status, second for supply status.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "min_chars": 30
+    }
+  },
+  {
+    "id": "hud-hud-mass-constraints-09",
+    "category": "hud_constraints",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "One sentence only: explain why HUD should keep morale and supply always visible.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "min_chars": 55
+    }
+  },
+  {
+    "id": "hud-hud-mass-transfer-load-10",
+    "category": "hud_transfer",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Write a loading-screen hint that previews upcoming HUD morale/supply pressure.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "pressure",
+        "preview",
+        "status"
+      ],
+      "min_chars": 60
+    }
+  },
+  {
+    "id": "hud-hud-mass-transfer-econ-11",
+    "category": "hud_transfer",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Provide one HUD tooltip line connecting supply pressure to net income.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "income",
+        "gold",
+        "upkeep"
+      ],
+      "min_chars": 55
+    }
+  },
+  {
+    "id": "hud-hud-mass-transfer-combat-12",
+    "category": "hud_transfer",
+    "specialists": [
+      "ui_merge_dual"
+    ],
+    "prompt": "Give one HUD combat-prep line that includes morale and terrain awareness.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "combat",
+        "preview"
+      ],
+      "min_chars": 55
+    }
+  }
+]

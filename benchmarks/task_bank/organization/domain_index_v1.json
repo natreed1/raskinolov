@@ -1,0 +1,1025 @@
+{
+  "schema_version": "task_domain_index_v1",
+  "domains": {
+    "hud_status": {
+      "task_refs": [
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-001"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-002"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-003"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-004"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-hud-lobby-session-panel-10"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-combat-hud-density-refactor-23"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "patch-map-box-select-input-08"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "patch-combat-hud-density-refactor-23"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "swev-gm-009"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "swev-gm-014"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-hud-royal-theme-restyle-001"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-hud-isometric-image-integration-002"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-hud-unit-overlay-replacement-003"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-hud-army-stack-graphic-004"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-field-command-hud-25"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-hud-economy-mixed-panel-26"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-farm-production-workforce-leveling-29"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-starvation-diagnosis-population-stability-30"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-worker-elasticity-nonlinear-recovery-31"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-university-research-focus-hud-32"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-ui-direct-move-orders-33"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-mine-hud-production-chart-34"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-supply-network-chart-drawdown-35"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-home-screen-multiplayer-entry-36"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-production-cost-material-balance-41"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-new-unit-combat-stats-economic-cost-42"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-special-unit-building-dragon-nest-43"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-population-food-steady-state-dynamics-45"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fish-yield-double-vs-grain-46"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-worker-wage-productivity-balance-47"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-fishing-task-production-48"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-archer-max-range-auto-positioning-49"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-academy-general-production-assignment-51"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-capture-payout-52"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-builder-automation-university-task-queue-53"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-health-gates-54"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-formation-fallback-placement-validity-66"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-map-controller-box-select-pan-lock-67"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-tactical-batch-stack-order-dispatch-70"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-stack-split-adjacent-flow-71"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-market-price-elasticity-stock-pressure-74"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-warehouse-spoilage-food-decay-balance-75"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fisher-farm-seasonal-yield-weighting-78"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-city-food-buffer-policy-thresholds-80"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-scout-tower-vision-hud-integration-81"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-multiplayer-formation-move-parity-82"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-map-box-select-multi-stack-orders-85"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battle-preview-nearby-engagement-clusters-86"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-incorporation-army-halt-stateflow-87"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-commander-trait-economy-morale-coupling-90"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-weather-production-combat-routing-91"
+        }
+      ]
+    },
+    "economy": {
+      "task_refs": [
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-005"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-006"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-007"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-008"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-builder-automation-rebalance-15"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-university-population-loop-19"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+          "task_id": "patch-builder-automation-rebalance-15"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+          "task_id": "patch-university-population-loop-19"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+          "task_id": "swev-gm-006"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+          "task_id": "swev-gm-022"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-farm-production-workforce-leveling-29"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-starvation-diagnosis-population-stability-30"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-worker-elasticity-nonlinear-recovery-31"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-university-research-focus-hud-32"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-mine-hud-production-chart-34"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-supply-network-chart-drawdown-35"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-starvation-farm-priority-38"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-open-city-targeting-40"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-production-cost-material-balance-41"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-new-unit-combat-stats-economic-cost-42"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-special-unit-building-dragon-nest-43"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-catapult-siege-workshop-planning-44"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-population-food-steady-state-dynamics-45"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fish-yield-double-vs-grain-46"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-worker-wage-productivity-balance-47"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-fishing-task-production-48"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-aluminum-resource-chain-infantry-cost-50"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-academy-general-production-assignment-51"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-capture-payout-52"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-builder-automation-university-task-queue-53"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-health-gates-54"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-wall-ring-supply-expansion-55"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-construction-site-sim-builds-56"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-composition-tactics-scoring-57"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-food-aware-recruit-gating-58"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-incorporation-move-reservation-60"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-pending-recruit-backlog-caps-62"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-out-of-supply-movement-halt-64"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-siege-composition-recruit-gates-65"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-supply-cache-invalidation-capture-68"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-pop-birth-food-buffer-taper-73"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-market-price-elasticity-stock-pressure-74"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-warehouse-spoilage-food-decay-balance-75"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-upkeep-progressive-size-scaling-76"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-quarry-mine-output-energy-upkeep-77"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fisher-farm-seasonal-yield-weighting-78"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-wage-inflation-productivity-feedback-79"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-city-food-buffer-policy-thresholds-80"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-majority-payout-gating-83"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-tick-ordering-84"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-incorporation-army-halt-stateflow-87"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-naval-supply-convoy-protection-routing-88"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fortress-upgrade-resource-routing-89"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-commander-trait-economy-morale-coupling-90"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-weather-production-combat-routing-91"
+        }
+      ]
+    },
+    "army_operations": {
+      "task_refs": [
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-009"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-010"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-011"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-012"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-siege-workshop-build-menu-14"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-siege-recruitment-health-gates-24"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "patch-siege-workshop-build-menu-14"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "patch-siege-recruitment-health-gates-24"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "swev-gm-004"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+          "task_id": "swev-gm-012"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-army-movement-order-idempotency-005"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-army-formation-path-consistency-006"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+          "task_id": "custom-army-stack-overlay-coherence-007"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-ui-direct-move-orders-33"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-supply-network-chart-drawdown-35"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-ocean-crossing-reachability-37"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-defend-invasion-reposition-39"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-open-city-targeting-40"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-production-cost-material-balance-41"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-new-unit-combat-stats-economic-cost-42"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-special-unit-building-dragon-nest-43"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-catapult-siege-workshop-planning-44"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-fishing-task-production-48"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-archer-max-range-auto-positioning-49"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-aluminum-resource-chain-infantry-cost-50"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-academy-general-production-assignment-51"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-capture-payout-52"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-health-gates-54"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-wall-ring-supply-expansion-55"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-composition-tactics-scoring-57"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-city-defense-ring-coverage-59"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-incorporation-move-reservation-60"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-battle-flank-reinforcement-61"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-pending-recruit-backlog-caps-62"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-commander-field-stack-assignment-63"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-out-of-supply-movement-halt-64"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-siege-composition-recruit-gates-65"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-formation-fallback-placement-validity-66"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-map-controller-box-select-pan-lock-67"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-supply-cache-invalidation-capture-68"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-garrison-deploy-flag-order-parity-69"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-tactical-batch-stack-order-dispatch-70"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-stack-split-adjacent-flow-71"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-archer-line-priority-targeting-72"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-upkeep-progressive-size-scaling-76"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-scout-tower-vision-hud-integration-81"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-multiplayer-formation-move-parity-82"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-majority-payout-gating-83"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-tick-ordering-84"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-map-box-select-multi-stack-orders-85"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battle-preview-nearby-engagement-clusters-86"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-incorporation-army-halt-stateflow-87"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-naval-supply-convoy-protection-routing-88"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fortress-upgrade-resource-routing-89"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-commander-trait-economy-morale-coupling-90"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-weather-production-combat-routing-91"
+        }
+      ]
+    },
+    "state_perstitence_integrity": {
+      "task_refs": [
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-013"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-014"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-015"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-016"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-node-path-runtime-resolution-01"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-multiplayer-remap-safety-22"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-army-ui-direct-move-orders-33"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "patch-node-path-runtime-resolution-01"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "patch-railway-missing-dep-02"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "patch-multiplayer-server-bootstrap-12"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "patch-game-server-deploy-contract-21"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "patch-multiplayer-remap-safety-22"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "swev-gm-005"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "swev-gm-011"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "swev-gm-016"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "swev-gm-017"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "swev-gm-024"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+          "task_id": "swev-gm-025"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-home-screen-multiplayer-entry-36"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-ocean-crossing-reachability-37"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-defend-invasion-reposition-39"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-aluminum-resource-chain-infantry-cost-50"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-construction-site-sim-builds-56"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-multiplayer-formation-move-parity-82"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-majority-payout-gating-83"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-tick-ordering-84"
+        }
+      ]
+    },
+    "multidomain": {
+      "task_refs": [
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-test-env-dynamic-route-03"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-test-env-registry-contract-04"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-new-unit-combat-stats-economic-cost-42"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-special-unit-building-dragon-nest-43"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ship-fishing-task-production-48"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-aluminum-resource-chain-infantry-cost-50"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-academy-general-production-assignment-51"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-capture-payout-52"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-builder-automation-university-task-queue-53"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-health-gates-54"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-wall-ring-supply-expansion-55"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-quarry-mine-output-energy-upkeep-77"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-multiplayer-formation-move-parity-82"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-contested-zone-majority-payout-gating-83"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battalion-training-tick-ordering-84"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-map-box-select-multi-stack-orders-85"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-battle-preview-nearby-engagement-clusters-86"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-incorporation-army-halt-stateflow-87"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-naval-supply-convoy-protection-routing-88"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fortress-upgrade-resource-routing-89"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-commander-trait-economy-morale-coupling-90"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-weather-production-combat-routing-91"
+        }
+      ]
+    },
+    "ai_strategy_and_planning": {
+      "task_refs": [
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-017"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-018"
+        },
+        {
+          "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+          "task_id": "swe-game-v1-019"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-plan-shared-application-05"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-pending-recruit-state-06"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+          "task_id": "patch-research-system-schema-11"
+        },
+        {
+          "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+          "task_id": "swev-gm-023"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-farm-production-workforce-leveling-29"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-starvation-diagnosis-population-stability-30"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-worker-elasticity-nonlinear-recovery-31"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-university-research-focus-hud-32"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-ocean-crossing-reachability-37"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-starvation-farm-priority-38"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-defend-invasion-reposition-39"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-open-city-targeting-40"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-catapult-siege-workshop-planning-44"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-population-food-steady-state-dynamics-45"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-worker-wage-productivity-balance-47"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-archer-max-range-auto-positioning-49"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-academy-general-production-assignment-51"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-builder-automation-university-task-queue-53"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-wall-ring-supply-expansion-55"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-construction-site-sim-builds-56"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-composition-tactics-scoring-57"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-food-aware-recruit-gating-58"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-city-defense-ring-coverage-59"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-incorporation-move-reservation-60"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-battle-flank-reinforcement-61"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-pending-recruit-backlog-caps-62"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-ai-commander-field-stack-assignment-63"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-siege-composition-recruit-gates-65"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-garrison-deploy-flag-order-parity-69"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-archer-line-priority-targeting-72"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-pop-birth-food-buffer-taper-73"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-wage-inflation-productivity-feedback-79"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-city-food-buffer-policy-thresholds-80"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-scout-tower-vision-hud-integration-81"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-naval-supply-convoy-protection-routing-88"
+        },
+        {
+          "source_file": "benchmarks/patch_task_bank_v1.json",
+          "task_id": "patch-fortress-upgrade-resource-routing-89"
+        }
+      ]
+    }
+  }
+}

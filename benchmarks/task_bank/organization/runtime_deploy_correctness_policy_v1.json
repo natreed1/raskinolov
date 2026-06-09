@@ -1,0 +1,145 @@
+{
+  "schema_version": "runtime_deploy_correctness_policy_v1",
+  "domain_scope": [
+    "state_perstitence_integrity"
+  ],
+  "subskill_policy": {
+    "environment_configuration": {
+      "required_correctness_checks": [
+        "env_var_defaulting_behavior",
+        "env_setting_validation",
+        "typed_runtime_error_path"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "container_runtime_resolution": {
+      "required_correctness_checks": [
+        "container_module_import_resolution",
+        "runtime_entrypoint_consistency",
+        "typed_runtime_error_path"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "railway_deploy_dependency_contract": {
+      "required_correctness_checks": [
+        "dependency_manifest_presence",
+        "lockfile_manifest_consistency",
+        "deploy_install_reproducibility"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "deploy_bootstrap_sequence": {
+      "required_correctness_checks": [
+        "service_bootstrap_success",
+        "invalid_bootstrap_failure_signal",
+        "bridge_contract_startup_safety"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "railway_service_bootstrap_contract": {
+      "required_correctness_checks": [
+        "service_bootstrap_success",
+        "dependency_manifest_presence",
+        "invalid_bootstrap_failure_signal"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "reconnect_state_machine_idempotency": {
+      "required_correctness_checks": [
+        "reconnect_transition_single_activation",
+        "duplicate_listener_prevention",
+        "typed_reconnect_failure_signal"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "snapshot_schema_compatibility": {
+      "required_correctness_checks": [
+        "snapshot_schema_backcompat",
+        "typed_schema_error_path",
+        "cross_node_payload_mapping_safety"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "websocket_handshake_recovery": {
+      "required_correctness_checks": [
+        "handshake_retry_recovery",
+        "session_rejoin_stability",
+        "typed_handshake_error_path"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "session_lifecycle_cleanup": {
+      "required_correctness_checks": [
+        "idempotent_session_teardown",
+        "no_orphan_worker_processes",
+        "duplicate_listener_prevention"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "cross_node_state_reconciliation": {
+      "required_correctness_checks": [
+        "cross_node_payload_reconciliation",
+        "typed_conflict_error_path",
+        "state_replay_determinism"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "deploy_env_timeout_policy": {
+      "required_correctness_checks": [
+        "env_timeout_default_selection",
+        "explicit_override_precedence",
+        "timeout_failure_signal_typing"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "env_override_precedence": {
+      "required_correctness_checks": [
+        "explicit_env_override_precedence",
+        "default_fallback_precedence",
+        "typed_config_error_path"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "worker_lifecycle_teardown": {
+      "required_correctness_checks": [
+        "idempotent_worker_teardown",
+        "no_orphan_worker_processes",
+        "main_thread_fallback_stability"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    },
+    "reconnect_idempotency_and_lifecycle_cleanup": {
+      "required_correctness_checks": [
+        "reconnect_transition_single_activation",
+        "duplicate_listener_prevention",
+        "idempotent_session_teardown",
+        "typed_reconnect_failure_signal"
+      ],
+      "recommended_verifier_lane": "runtime_deploy_validation"
+    }
+  },
+  "source_contracts": {
+    "acceptance_signals_field": "acceptance.required_outcomes",
+    "verify_commands_field": "acceptance.verify_commands",
+    "excluded_task_signatures": [
+      "scripts/game_task_arena.py",
+      "scripts/run_game_benchmark.py",
+      "scripts/run_arena_acceptance_tests.py",
+      "scripts/human_eval_ui.py",
+      "scripts/landing_page_arena.py"
+    ],
+    "lane_gating_manifests": [
+      "benchmarks/task_bank/sources/fallen_empire_repo_candidates_v1.json",
+      "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+      "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+      "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+      "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+      "benchmarks/task_bank/compiled/generalist_eval_swe_verified_v1.json",
+      "benchmarks/task_bank/organization/domain_index_v1.json",
+      "benchmarks/task_bank/organization/skill_index_v1.json"
+    ]
+  },
+  "subdomain_scope": [
+    "multiplayer_runtime_deploy"
+  ]
+}

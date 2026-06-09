@@ -1,0 +1,31 @@
+{
+  "schema_version": "documentation_agent_corpus_v1",
+  "description": "Bug-fix reviewer retrieval corpus focused on common patch failures in game-task arena flows.",
+  "sources": [
+    {
+      "path": "docs/BUG_FIX_COMMON_ERRORS.md",
+      "kind": "bug_fix_checklist",
+      "weight": 2.8
+    },
+    {
+      "path": "scripts/game_task_arena.py",
+      "kind": "arena_harness",
+      "weight": 2.3
+    },
+    {
+      "path": "scripts/model_router.py",
+      "kind": "generation_backend",
+      "weight": 1.8
+    },
+    {
+      "path": "docs/PROJECT_STATE.md",
+      "kind": "current_state",
+      "weight": 1.4
+    },
+    {
+      "path": "docs/SESSION_LOG.md",
+      "kind": "historical_failures",
+      "weight": 1.2
+    }
+  ]
+}

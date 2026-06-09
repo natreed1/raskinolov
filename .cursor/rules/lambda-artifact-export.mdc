@@ -1,0 +1,50 @@
+---
+description: After any Lambda Cloud run, ensure all worker artifacts are exported to this repo locally before termination
+alwaysApply: true
+---
+
+# Lambda artifact export discipline
+
+Lambda workers are ephemeral. **Remote tarball collection alone is not enough** — every Lambda run must end with recoverable artifacts under this repo on the local machine.
+
+Canonical stack facts: `docs/PROJECT_STATE.md` § Lambda Cloud eval launchers.
+
+## Launch requirements
+
+When starting or relaunching a Lambda worker, configure artifact preservation **before** the job runs:
+
+- Prefer `scripts/lambda/watch_economist_rl_lambda_overnight.py` for long economistRL PPO chains (poll + local rsync).
+- For other launchers (`launch_lambda_parallel_ablation.py`, `launch_lambda_council_eval.py`, `launch_economist_rl_lambda_cycle.py`):
+  - Keep `--require-artifact-export-before-terminate` (default on).
+  - Do **not** pass `--allow-terminate-without-artifact-export` unless the user explicitly chooses cost over data.
+  - Keep checkpoint hooks enabled (`--artifact-upload-every-steps 5`, `--artifact-upload-every-minutes 10` unless smoke).
+  - Do **not** leave `FE_ARTIFACT_EXPORT_COMMAND` empty on multi-hour runs unless a local watcher will rsync while the instance is alive.
+
+## Mandatory post-run checklist
+
+When a Lambda run finishes, fails, is interrupted, or the instance is about to terminate:
+
+1. **Identify worker** — instance id, host/IP, name prefix, launch log under `logs/`.
+2. **Pull artifacts locally** while SSH still works (default key: `~/.ssh/lambda_cloud_cursor`):
+   - `~/cloud-eval-logs/` (cycle/ablation logs, `gpu-smi*.csv`, telemetry summaries)
+   - `~/fallen-empire-lora/benchmarks/results/` (rows, summaries, trials, economistRL outputs)
+   - `~/cloud-eval-artifacts/*.tar.gz` when NFS is not attached
+   - `/lambda/nfs/Evaluation-Runs/fallen-empire-lora-artifacts/` when the Evaluation-Runs file system is mounted
+3. **Write a labeled local recovery directory** — e.g. `benchmarks/results/lambda_recovery/<run-label>-<UTC>/` or use the economistRL watch layout at `benchmarks/results/economistRL/extracts/`.
+4. **Verify minimum contents** before terminating:
+   - At least one of: eval row JSONL, summary JSON/MD, primary remote log, or final/cleanup tarball
+   - For economistRL: rollout JSONL, cycle log tail, PPO artifacts when training ran
+   - GPU telemetry (`gpu-smi*.csv` or `gpu-telemetry-summary.json`) for GPU runs
+5. **Only then terminate** the instance (or confirm auto-terminate succeeded after export).
+6. **Append `docs/SESSION_LOG.md`** with recovery path, instance id, what was copied, and any gaps.
+
+## If the instance is already gone
+
+- Use the latest local watcher extract (`benchmarks/results/economistRL/extracts/index.jsonl`, `live_*` dirs) or NFS-staged tarballs if another worker can mount the file system.
+- Record `failure_class=instance_gone` and what is missing; do not assume remote disks are recoverable.
+
+## Agent behavior
+
+- Never report a Lambda run as "done" in chat until local artifact paths are confirmed.
+- If launch/recovery was part of your session, run the rsync/verification yourself — do not only suggest commands.
+- Cite `docs/PROJECT_STATE.md` and recovery paths in summaries instead of guessing artifact locations.

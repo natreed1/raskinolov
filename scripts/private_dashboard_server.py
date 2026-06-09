@@ -1377,6 +1377,471 @@ def _run_expanded_validation_from_dashboard() -> Dict[str, Any]:
     return result
 
 
+def _extract_json_block(text: str) -> Dict[str, Any]:
+    raw = (text or "").strip()
+    if not raw:
+        return {}
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start == -1 or end == -1 or end < start:
+        return {}
+    block = raw[start : end + 1]
+    try:
+        parsed = json.loads(block)
+        if isinstance(parsed, dict):
+            return parsed
+    except json.JSONDecodeError:
+        return {}
+    return {}
+
+
+def _rehydrate_preview_from_trial(trial_id: str, *, port: int = 5174, run_verify: bool = True) -> Dict[str, Any]:
+    payload = _trial_detail_payload(trial_id)
+    if not payload.get("ok"):
+        return {"ok": False, "error": str(payload.get("error", "trial lookup failed"))}
+
+    manifest_path = REPO_ROOT / str(payload.get("trial_manifest_path") or "")
+    if not manifest_path.is_file():
+        return {"ok": False, "error": "trial manifest path missing"}
+    try:
+        trial_manifest = json.loads(manifest_path.read_text(encoding="utf-8", errors="replace"))
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "trial manifest invalid json"}
+
+    task = trial_manifest.get("task") or {}
+    task_id = str(task.get("id") or "").strip()
+    if not task_id:
+        return {"ok": False, "error": "task id missing in trial manifest"}
+
+    source_repo = str(trial_manifest.get("source_repo") or "").strip()
+    worktree_root = str(trial_manifest.get("worktree_root") or "").strip()
+    base_ref = str(
+        trial_manifest.get("base_git_ref")
+        or trial_manifest.get("base_ref")
+        or "HEAD"
+    ).strip()
+    if not source_repo or not worktree_root:
+        return {"ok": False, "error": "source/worktree paths missing in trial manifest"}
+
+    old_model_output = (
+        REPO_ROOT
+        / "benchmarks"
+        / "results"
+        / "game_task_trials"
+        / trial_id
+        / "attempts"
+        / "local"
+        / "model_output.md"
+    )
+    if not old_model_output.is_file():
+        return {"ok": False, "error": "source model_output.md missing for trial"}
+
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    replay_trial_id = f"replay-{task_id[:24]}-{ts.lower()}"
+    replay_tasks_path = (
+        REPO_ROOT
+        / "benchmarks"
+        / "results"
+        / "game_task_reports"
+        / f"trial_replay_task_{task_id[:24]}_{ts.lower()}.json"
+    )
+    replay_tasks_path.parent.mkdir(parents=True, exist_ok=True)
+    replay_tasks_path.write_text(
+        json.dumps({"version": 1, "tasks": [task]}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    script = str(REPO_ROOT / "scripts" / "game_task_arena.py")
+    commands: List[List[str]] = [
+        [
+            sys.executable,
+            script,
+            "--tasks",
+            str(replay_tasks_path),
+            "create",
+            "--task-id",
+            task_id,
+            "--source-repo",
+            source_repo,
+            "--worktree-root",
+            worktree_root,
+            "--base-ref",
+            base_ref,
+            "--trial-id",
+            replay_trial_id,
+            "--attempts",
+            "local",
+        ],
+        [
+            sys.executable,
+            script,
+            "apply",
+            "--trial-id",
+            replay_trial_id,
+            "--attempt",
+            "local",
+            "--input",
+            str(old_model_output),
+        ],
+    ]
+    if run_verify:
+        commands.append(
+            [
+                sys.executable,
+                script,
+                "verify",
+                "--trial-id",
+                replay_trial_id,
+                "--attempt",
+                "local",
+                "--timeout",
+                "600",
+            ]
+        )
+    commands.append(
+        [
+            sys.executable,
+            script,
+            "preview",
+            "--trial-id",
+            replay_trial_id,
+            "--attempt",
+            "local",
+            "--start",
+            "--port",
+            str(max(1, int(port))),
+        ]
+    )
+
+    command_logs: List[Dict[str, Any]] = []
+    last_json: Dict[str, Any] = {}
+    for cmd in commands:
+        proc = subprocess.run(
+            cmd,
+            cwd=str(REPO_ROOT),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+        )
+        out = proc.stdout or ""
+        command_logs.append(
+            {
+                "argv": cmd,
+                "exit_code": proc.returncode,
+                "output_preview": out[-4000:],
+            }
+        )
+        parsed = _extract_json_block(out)
+        if parsed:
+            last_json = parsed
+        if proc.returncode != 0:
+            return {
+                "ok": False,
+                "error": "rehydrate command failed",
+                "failed_argv": cmd,
+                "replay_trial_id": replay_trial_id,
+                "logs": command_logs,
+            }
+
+    preview_status = str(last_json.get("preview_status") or "")
+    preview_url = str(last_json.get("preview_url") or "")
+    if preview_status != "ready":
+        last_error = str(last_json.get("last_error") or "").strip()
+        short_error = last_error[:500] if last_error else "preview did not reach ready state"
+        return {
+            "ok": False,
+            "error": f"preview_not_ready:{preview_status}",
+            "detail": short_error,
+            "replay_trial_id": replay_trial_id,
+            "preview_url": preview_url,
+            "preview_status": preview_status,
+            "verify_status": str(last_json.get("verify_status") or ""),
+            "replay_tasks_path": _safe_rel_to_repo(replay_tasks_path),
+            "logs": command_logs,
+        }
+
+    return {
+        "ok": True,
+        "replay_trial_id": replay_trial_id,
+        "preview_url": preview_url,
+        "preview_status": preview_status,
+        "verify_status": str(last_json.get("verify_status") or ""),
+        "replay_tasks_path": _safe_rel_to_repo(replay_tasks_path),
+        "logs": command_logs,
+    }
+
+
+def _ablation_rows_files(limit: int = 20) -> List[Path]:
+    root = REPO_ROOT / "benchmarks" / "results"
+    return sorted(
+        root.glob("final_system_ablation_rows_*.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )[: max(1, limit)]
+
+
+def _ablation_rows_file_stats(path: Path) -> Dict[str, Any]:
+    total_rows = 0
+    accepted_rows = 0
+    verify_passed = 0
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        total_rows += 1
+        if bool(row.get("accepted")):
+            accepted_rows += 1
+        if str(row.get("verify_status", "")) == "passed":
+            verify_passed += 1
+    return {
+        "path": _safe_rel_to_repo(path),
+        "updated_utc": datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "size_bytes": path.stat().st_size,
+        "total_rows": total_rows,
+        "accepted_rows": accepted_rows,
+        "verify_passed": verify_passed,
+    }
+
+
+def _ablation_rows_sources_payload(limit: int = 40) -> Dict[str, Any]:
+    files = _ablation_rows_files(limit=max(1, min(limit, 200)))
+    sources: List[Dict[str, Any]] = []
+    for path in files:
+        try:
+            sources.append(_ablation_rows_file_stats(path))
+        except OSError:
+            continue
+    return {"ok": True, "sources": sources}
+
+
+def _safe_rel_to_repo(path: Path) -> str:
+    return path.resolve().relative_to(REPO_ROOT.resolve()).as_posix()
+
+
+def _read_text_limited(path: Path, max_chars: int = 12000) -> str:
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "\n...[truncated]...\n"
+
+
+def _load_ablation_rows_payload(
+    *,
+    limit: int = 300,
+    variant: str = "",
+    accepted: str = "all",
+    verify: str = "all",
+    domain: str = "",
+    query: str = "",
+    source_path: str = "",
+) -> Dict[str, Any]:
+    source_file: Path
+    if source_path:
+        candidate = (REPO_ROOT / source_path).resolve()
+        try:
+            candidate.relative_to(REPO_ROOT.resolve())
+        except ValueError:
+            return {"ok": False, "error": "invalid source path"}
+        if not candidate.is_file():
+            return {"ok": False, "error": "source file not found"}
+        source_file = candidate
+    else:
+        files = _ablation_rows_files(limit=30)
+        if not files:
+            return {"ok": False, "error": "no ablation rows files found"}
+        source_file = files[0]
+        preferred_with_accepts: Path = source_file
+        preferred_nonempty: Path = source_file
+        found_accepts = False
+        found_nonempty = False
+        for candidate in files:
+            try:
+                stats = _ablation_rows_file_stats(candidate)
+            except OSError:
+                continue
+            if not found_accepts and int(stats.get("accepted_rows", 0)) > 0:
+                preferred_with_accepts = candidate
+                found_accepts = True
+            if not found_nonempty and int(stats.get("total_rows", 0)) > 0:
+                preferred_nonempty = candidate
+                found_nonempty = True
+        source_file = preferred_with_accepts if found_accepts else preferred_nonempty
+
+    try:
+        raw_lines = source_file.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError as exc:
+        return {"ok": False, "error": f"failed to read rows file: {type(exc).__name__}"}
+
+    q = query.strip().lower()
+    want_variant = variant.strip()
+    want_domain = domain.strip()
+    rows: List[Dict[str, Any]] = []
+    variants: Set[str] = set()
+    domains: Set[str] = set()
+    counts = {
+        "total_rows": 0,
+        "accepted": 0,
+        "verify_passed": 0,
+        "verify_failed": 0,
+        "verify_not_run": 0,
+        "infra_blocked": 0,
+    }
+
+    for raw in raw_lines:
+        line = raw.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        counts["total_rows"] += 1
+        if row.get("accepted"):
+            counts["accepted"] += 1
+        vstatus = str(row.get("verify_status", ""))
+        if vstatus == "passed":
+            counts["verify_passed"] += 1
+        elif vstatus == "failed":
+            counts["verify_failed"] += 1
+        elif vstatus == "not_run":
+            counts["verify_not_run"] += 1
+        if row.get("infra_blocker"):
+            counts["infra_blocked"] += 1
+        variants.add(str(row.get("variant", "")))
+        domains.add(str(row.get("domain_primary_normalized", "")))
+
+        if want_variant and str(row.get("variant", "")) != want_variant:
+            continue
+        if accepted == "true" and not bool(row.get("accepted")):
+            continue
+        if accepted == "false" and bool(row.get("accepted")):
+            continue
+        if verify and verify != "all" and vstatus != verify:
+            continue
+        if want_domain and str(row.get("domain_primary_normalized", "")) != want_domain:
+            continue
+        if q:
+            haystack = " ".join(
+                [
+                    str(row.get("task_id", "")),
+                    str(row.get("subskill", "")),
+                    str(row.get("adapter_id", "")),
+                    str(row.get("route", "")),
+                    str(row.get("backend", "")),
+                    str(row.get("failure_class", "")),
+                    str(row.get("infra_blocker", "")),
+                    str(row.get("error", "")),
+                ]
+            ).lower()
+            if q not in haystack:
+                continue
+
+        trial_id = str(row.get("trial_id", "")).strip()
+        attempt_dir_rel = ""
+        if trial_id:
+            attempt_dir_rel = f"benchmarks/results/game_task_trials/{trial_id}/attempts/local"
+        rows.append(
+            {
+                "utc": row.get("utc"),
+                "variant": row.get("variant"),
+                "task_id": row.get("task_id"),
+                "domain": row.get("domain_primary_normalized"),
+                "subskill": row.get("subskill"),
+                "backend": row.get("backend"),
+                "route": row.get("route"),
+                "adapter_id": row.get("adapter_id"),
+                "apply_status": row.get("apply_status"),
+                "verify_status": row.get("verify_status"),
+                "accepted": bool(row.get("accepted")),
+                "failure_class": row.get("failure_class", ""),
+                "infra_blocker": row.get("infra_blocker", ""),
+                "trial_id": trial_id,
+                "attempt_dir": attempt_dir_rel,
+                "generation_total_tokens": row.get("generation_total_tokens"),
+                "generation_elapsed_s": row.get("generation_elapsed_s"),
+            }
+        )
+
+    rows = rows[: max(1, min(2000, limit))]
+    return {
+        "ok": True,
+        "source_path": _safe_rel_to_repo(source_file),
+        "source_updated_utc": datetime.fromtimestamp(source_file.stat().st_mtime, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "available_variants": sorted(v for v in variants if v),
+        "available_domains": sorted(d for d in domains if d),
+        "summary": counts,
+        "rows": rows,
+    }
+
+
+def _trial_detail_payload(trial_id: str) -> Dict[str, Any]:
+    trial_id = trial_id.strip()
+    if not trial_id:
+        return {"ok": False, "error": "missing trial_id"}
+    if not re.fullmatch(r"[A-Za-z0-9._:-]+", trial_id):
+        return {"ok": False, "error": "invalid trial_id format"}
+
+    trial_root = (REPO_ROOT / "benchmarks" / "results" / "game_task_trials" / trial_id).resolve()
+    expected_prefix = (REPO_ROOT / "benchmarks" / "results" / "game_task_trials").resolve()
+    try:
+        trial_root.relative_to(expected_prefix)
+    except ValueError:
+        return {"ok": False, "error": "invalid trial path"}
+    if not trial_root.is_dir():
+        return {"ok": False, "error": "trial not found"}
+
+    manifest_path = trial_root / "trial_manifest.json"
+    if not manifest_path.is_file():
+        return {"ok": False, "error": "trial manifest missing"}
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8", errors="replace"))
+    except json.JSONDecodeError:
+        return {"ok": False, "error": "trial manifest invalid json"}
+
+    attempt = ((manifest.get("attempts") or {}).get("local")) or {}
+    attempt_dir = trial_root / "attempts" / "local"
+    files_payload: Dict[str, Any] = {}
+    for name in ("model_output.md", "diff.patch", "verify_results.json", "preview.json"):
+        path = attempt_dir / name
+        if path.is_file():
+            files_payload[name] = {
+                "path": _safe_rel_to_repo(path),
+                "size_bytes": path.stat().st_size,
+                "content_preview": _read_text_limited(path),
+            }
+        else:
+            files_payload[name] = {"missing": True}
+
+    return {
+        "ok": True,
+        "trial_id": trial_id,
+        "trial_manifest_path": _safe_rel_to_repo(manifest_path),
+        "task": manifest.get("task", {}),
+        "attempt": attempt,
+        "attempt_dir": _safe_rel_to_repo(attempt_dir),
+        "files": files_payload,
+    }
+
+
+def _read_repo_rel_file(rel_path: str) -> Tuple[bool, str]:
+    rel = str(rel_path or "").strip()
+    if not rel:
+        return False, "missing path"
+    candidate = (REPO_ROOT / rel).resolve()
+    try:
+        candidate.relative_to(REPO_ROOT.resolve())
+    except ValueError:
+        return False, "invalid path"
+    if not candidate.is_file():
+        return False, "file not found"
+    return True, candidate.read_text(encoding="utf-8", errors="replace")
+
+
 def _load_scoring_summary() -> Dict[str, Any]:
     generated_dir = REPO_ROOT / "docs" / "generated"
     if not generated_dir.is_dir():
@@ -1490,6 +1955,104 @@ def _render_doc_view(title: str, body: str, *, back_href: str = "/") -> str:
         f"<a href='{_h(back_href)}'>Back to dashboard</a>"
         "</div>"
         f"<pre>{_h(body)}</pre>"
+        "</body></html>"
+    )
+
+
+def _render_trial_view(payload: Dict[str, Any]) -> str:
+    task = payload.get("task") or {}
+    attempt = payload.get("attempt") or {}
+    files = payload.get("files") or {}
+
+    def _file_link(name: str) -> str:
+        entry = files.get(name) or {}
+        if entry.get("missing"):
+            return f"<li><code>{_h(name)}</code>: missing</li>"
+        rel = str(entry.get("path") or "")
+        href = f"/view/repo-file?path={_h(rel)}"
+        return (
+            "<li>"
+            f"<code>{_h(name)}</code>: "
+            f"<a href='{href}' target='_blank' rel='noopener'>{_h(rel)}</a>"
+            f" ({_h(entry.get('size_bytes', 0))} bytes)"
+            "</li>"
+        )
+
+    simulate = (
+        "To simulate this task state in-game:\n"
+        "1) Ensure source repo deps are installed (`cd /Users/natreed/fallen-empire && npm install`).\n"
+        f"2) Task preview command: {task.get('preview_command', '')}\n"
+        f"3) Task preview path: {task.get('preview_path', '')}\n"
+        "4) If this attempt was cleaned, rehydrate by creating a new arena trial for the same task id,\n"
+        "   apply the saved model_output.md, then run verify + preview."
+    )
+
+    info = (
+        f"trial_id={payload.get('trial_id','')}\n"
+        f"task_id={task.get('id','')}\n"
+        f"title={task.get('title','')}\n"
+        f"attempt_dir={payload.get('attempt_dir','')}\n"
+        f"cleanup_state={attempt.get('cleanup_state','')}\n"
+        f"apply_status={attempt.get('apply_status','')}\n"
+        f"verify_status={attempt.get('verify_status','')}\n"
+        f"preview_status={attempt.get('preview_status','')}\n"
+        f"preview_url={attempt.get('preview_url','')}\n"
+    )
+    trial_id = str(payload.get("trial_id") or "")
+    trial_id_json = json.dumps(trial_id)
+
+    return (
+        "<!doctype html><html><head><meta charset='utf-8'/>"
+        "<meta name='viewport' content='width=device-width, initial-scale=1'/>"
+        "<title>Arena Trial View</title>"
+        "<style>"
+        "body{font-family:Inter,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;margin:20px;background:#0b1220;color:#e6eefc}"
+        "a{color:#7cb2ff} pre{white-space:pre-wrap;border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:12px;max-width:1200px}"
+        ".top{display:flex;justify-content:space-between;align-items:center;gap:10px}"
+        ".panel{border:1px solid #2a3f62;background:#0f1a2f;border-radius:10px;padding:12px;margin-top:12px;max-width:1200px}"
+        "ul{margin:8px 0 0 20px}"
+        "</style></head><body>"
+        "<div class='top'><h2>Arena Trial View</h2><a href='/'>Back to dashboard</a></div>"
+        f"<div class='panel'><pre>{_h(info)}</pre></div>"
+        "<div class='panel'><strong>Artifacts</strong><ul>"
+        f"{_file_link('model_output.md')}{_file_link('diff.patch')}{_file_link('verify_results.json')}{_file_link('preview.json')}"
+        "</ul></div>"
+        "<div class='panel'>"
+        "<strong>One-click replay preview</strong>"
+        "<p>Rebuilds a fresh disposable trial from this task spec, reapplies saved model output, runs verify, then starts preview.</p>"
+        "<button id='rehydrateBtn' type='button' style='border:1px solid #335d92;border-radius:8px;background:#1e60d6;color:#fff;padding:8px 12px;cursor:pointer;font-weight:600;'>Rehydrate + Start Preview</button> "
+        "<span id='rehydrateStatus' style='color:#9bc2ff;'></span>"
+        "</div>"
+        f"<div class='panel'><strong>Mock game conditions / replay guidance</strong><pre>{_h(simulate)}</pre></div>"
+        "<script>"
+        f"const trialId = {trial_id_json};"
+        "const btn = document.getElementById('rehydrateBtn');"
+        "const status = document.getElementById('rehydrateStatus');"
+        "btn?.addEventListener('click', async () => {"
+        "  if (!trialId) return;"
+        "  btn.disabled = true;"
+        "  status.textContent = 'Running create/apply/verify/preview...';"
+        "  try {"
+        "    const res = await fetch('/api/arena/trials/rehydrate-preview', {"
+        "      method: 'POST',"
+        "      headers: {'Content-Type': 'application/json'},"
+        "      body: JSON.stringify({ trial_id: trialId, port: 5174, run_verify: true }),"
+        "    });"
+        "    const payload = await res.json();"
+        "    if (!res.ok || !payload.ok) {"
+        "      const detail = payload?.detail ? (' — ' + payload.detail) : '';"
+        "      throw new Error((payload.error || ('HTTP ' + res.status)) + detail);"
+        "    }"
+        "    const url = String(payload.preview_url || '');"
+        "    status.textContent = 'Replay ready: ' + (payload.replay_trial_id || '');"
+        "    if (url) { window.open(url, '_blank', 'noopener'); }"
+        "  } catch (err) {"
+        "    status.textContent = 'Replay failed: ' + err;"
+        "  } finally {"
+        "    btn.disabled = false;"
+        "  }"
+        "});"
+        "</script>"
         "</body></html>"
     )
 
@@ -2723,6 +3286,7 @@ def _render_dashboard(
     <button class="tab" data-panel="docs">Docs Snapshot</button>
     <button class="tab" data-panel="capability-map">Capability Map</button>
     <button class="tab" data-panel="arena-validation">Arena Validation</button>
+    <button class="tab" data-panel="trial-explorer">Trial Explorer</button>
     <button class="tab" data-panel="training">Training Data</button>
   </div>
 
@@ -2847,6 +3411,56 @@ def _render_dashboard(
     <pre id="validationSummary">(select an artifact)</pre>
     <h3>Raw JSON</h3>
     <pre id="validationRaw" class="mono-view">(select an artifact)</pre>
+  </section>
+
+  <section id="panel-trial-explorer" class="panel">
+    <h2>Trial Explorer</h2>
+    <p class="muted">Load ablation rows, filter by outcome/domain, and inspect trial artifacts for accepted/non-accepted tasks.</p>
+    <div class="compare-controls">
+      <button id="trialRefresh" type="button">Refresh rows</button>
+      <span id="trialMeta" class="muted"></span>
+    </div>
+    <div class="compare-controls">
+      <label for="trialSource">Source</label>
+      <select id="trialSource" style="min-width:540px;"><option value="">Auto (latest non-empty)</option></select>
+      <label for="trialVariant">Variant</label>
+      <select id="trialVariant"><option value="">All variants</option></select>
+      <label for="trialAccepted">Accepted</label>
+      <select id="trialAccepted">
+        <option value="all">All</option>
+        <option value="true">Accepted only</option>
+        <option value="false">Not accepted only</option>
+      </select>
+      <label for="trialVerify">Verify</label>
+      <select id="trialVerify">
+        <option value="all">All</option>
+        <option value="passed">passed</option>
+        <option value="failed">failed</option>
+        <option value="not_run">not_run</option>
+      </select>
+      <label for="trialDomain">Domain</label>
+      <select id="trialDomain"><option value="">All domains</option></select>
+      <label for="trialSort">Sort</label>
+      <select id="trialSort">
+        <option value="recent">Most recent first</option>
+        <option value="accepted_first">Accepted first</option>
+        <option value="verify_first">Verify passed first</option>
+        <option value="specialist_asc">Specialist A-Z</option>
+        <option value="task_asc">Task A-Z</option>
+      </select>
+      <label for="trialQuery">Search</label>
+      <input id="trialQuery" type="text" placeholder="task_id, subskill, failure..." style="min-width:260px;" />
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Task</th><th>Specialist</th><th>Accepted</th><th>Verify</th><th>Apply</th><th>Domain</th><th>Backend</th><th>Failure</th><th>Inspect</th>
+        </tr>
+      </thead>
+      <tbody id="trialRowsBody"><tr><td colspan="10">(loading rows...)</td></tr></tbody>
+    </table>
+    <h3 style="margin-top:14px;">Selected Trial Details</h3>
+    <pre id="trialDetail" class="mono-view">(select a row with a trial id)</pre>
   </section>
 
   <section id="panel-training" class="panel">
@@ -3153,6 +3767,205 @@ def _render_dashboard(
     }});
     refreshValidationList(false);
     setInterval(() => refreshValidationList(true), 30000);
+
+    let trialRows = [];
+    let trialSources = [];
+    const trialRefresh = document.getElementById('trialRefresh');
+    const trialMeta = document.getElementById('trialMeta');
+    const trialRowsBody = document.getElementById('trialRowsBody');
+    const trialDetail = document.getElementById('trialDetail');
+    const trialSource = document.getElementById('trialSource');
+    const trialVariant = document.getElementById('trialVariant');
+    const trialAccepted = document.getElementById('trialAccepted');
+    const trialVerify = document.getElementById('trialVerify');
+    const trialDomain = document.getElementById('trialDomain');
+    const trialSort = document.getElementById('trialSort');
+    const trialQuery = document.getElementById('trialQuery');
+
+    function renderTrialSourceSelect(preferredPath) {{
+      if (!trialSource) return;
+      const current = preferredPath || trialSource.value || '';
+      trialSource.innerHTML = '';
+      const autoOpt = document.createElement('option');
+      autoOpt.value = '';
+      autoOpt.textContent = 'Auto (latest non-empty)';
+      trialSource.appendChild(autoOpt);
+      for (const row of trialSources) {{
+        const opt = document.createElement('option');
+        opt.value = String(row.path || '');
+        opt.textContent = `${{String(row.path || '')}} • rows=${{Number(row.total_rows || 0)}} • accepted=${{Number(row.accepted_rows || 0)}} • updated=${{String(row.updated_utc || '')}}`;
+        trialSource.appendChild(opt);
+      }}
+      if ([...trialSource.options].some((o) => o.value === current)) {{
+        trialSource.value = current;
+      }}
+    }}
+
+    function sortTrialRows(rows) {{
+      const mode = trialSort?.value || 'recent';
+      if (mode === 'accepted_first') {{
+        rows.sort((a, b) => Number(Boolean(b.accepted)) - Number(Boolean(a.accepted)));
+      }} else if (mode === 'verify_first') {{
+        const score = (v) => (v === 'passed' ? 2 : (v === 'failed' ? 1 : 0));
+        rows.sort((a, b) => score(String(b.verify_status || '')) - score(String(a.verify_status || '')));
+      }} else if (mode === 'specialist_asc') {{
+        rows.sort((a, b) => String(a.adapter_id || '').localeCompare(String(b.adapter_id || '')) || String(a.task_id || '').localeCompare(String(b.task_id || '')));
+      }} else if (mode === 'task_asc') {{
+        rows.sort((a, b) => String(a.task_id || '').localeCompare(String(b.task_id || '')));
+      }} else {{
+        rows.sort((a, b) => String(b.utc || '').localeCompare(String(a.utc || '')));
+      }}
+      return rows;
+    }}
+
+    async function refreshTrialSources(preserveSelection=true) {{
+      const prev = trialSource?.value || '';
+      try {{
+        const res = await fetch('/api/arena/trials/sources?limit=40');
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        trialSources = payload.sources || [];
+        renderTrialSourceSelect(preserveSelection ? prev : '');
+      }} catch (_err) {{
+        // Keep existing dropdown state; rows endpoint can still work with auto mode.
+      }}
+    }}
+
+    function renderTrialRows() {{
+      if (!trialRowsBody) return;
+      trialRowsBody.innerHTML = '';
+      if (!trialRows.length) {{
+        trialRowsBody.innerHTML = "<tr><td colspan='10'>(no rows match current filters)</td></tr>";
+        return;
+      }}
+      for (const [idx, row] of trialRows.entries()) {{
+        const tr = document.createElement('tr');
+        const accepted = row.accepted ? 'yes' : 'no';
+        const failure = row.infra_blocker || row.failure_class || '';
+        const inspectBtn = row.trial_id
+          ? `<button type='button' class='trial-open-btn' data-trial-id='${{String(row.trial_id)}}'>details</button> <a href='/view/trial?trial_id=${{encodeURIComponent(String(row.trial_id))}}' target='_blank' rel='noopener'>open trial</a>`
+          : "<span class='muted'>n/a</span>";
+        tr.innerHTML =
+          `<td>${{idx + 1}}</td>` +
+          `<td><code>${{String(row.task_id || '')}}</code></td>` +
+          `<td><code>${{String(row.adapter_id || '')}}</code></td>` +
+          `<td>${{accepted}}</td>` +
+          `<td>${{String(row.verify_status || '')}}</td>` +
+          `<td>${{String(row.apply_status || '')}}</td>` +
+          `<td>${{String(row.domain || '')}}</td>` +
+          `<td>${{String(row.backend || '')}} / ${{String(row.route || '')}}</td>` +
+          `<td><code>${{String(failure)}}</code></td>` +
+          `<td>${{inspectBtn}}</td>`;
+        trialRowsBody.appendChild(tr);
+      }}
+      for (const btn of trialRowsBody.querySelectorAll('.trial-open-btn')) {{
+        btn.addEventListener('click', () => {{
+          const tid = btn.getAttribute('data-trial-id') || '';
+          if (tid) loadTrialDetail(tid);
+        }});
+      }}
+    }}
+
+    async function loadTrialDetail(trialId) {{
+      if (!trialDetail) return;
+      trialDetail.textContent = 'Loading trial details...';
+      try {{
+        const res = await fetch('/api/arena/trials/detail?trial_id=' + encodeURIComponent(trialId));
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        const lines = [];
+        lines.push('trial_id=' + (payload.trial_id || ''));
+        lines.push('task_id=' + String(payload?.task?.id || ''));
+        lines.push('title=' + String(payload?.task?.title || ''));
+        lines.push('attempt_dir=' + String(payload.attempt_dir || ''));
+        lines.push('apply_status=' + String(payload?.attempt?.apply_status || ''));
+        lines.push('verify_status=' + String(payload?.attempt?.verify_status || ''));
+        lines.push('preview_status=' + String(payload?.attempt?.preview_status || ''));
+        lines.push('cleanup_state=' + String(payload?.attempt?.cleanup_state || ''));
+        lines.push('');
+        lines.push('files:');
+        for (const name of ['model_output.md', 'diff.patch', 'verify_results.json', 'preview.json']) {{
+          const f = payload?.files?.[name];
+          if (!f || f.missing) {{
+            lines.push('- ' + name + ': missing');
+            continue;
+          }}
+          lines.push('- ' + name + ': ' + String(f.path || '') + ' (' + String(f.size_bytes || 0) + ' bytes)');
+          lines.push(String(f.content_preview || ''));
+          lines.push('');
+        }}
+        trialDetail.textContent = lines.join('\\n');
+      }} catch (err) {{
+        trialDetail.textContent = 'Failed to load trial detail: ' + err;
+      }}
+    }}
+
+    function updateTrialSelectOptions(selectEl, values, allLabel) {{
+      if (!selectEl) return;
+      const current = selectEl.value || '';
+      selectEl.innerHTML = '';
+      const optAll = document.createElement('option');
+      optAll.value = '';
+      optAll.textContent = allLabel;
+      selectEl.appendChild(optAll);
+      for (const value of values || []) {{
+        const opt = document.createElement('option');
+        opt.value = String(value);
+        opt.textContent = String(value);
+        selectEl.appendChild(opt);
+      }}
+      if ([...selectEl.options].some((o) => o.value === current)) {{
+        selectEl.value = current;
+      }}
+    }}
+
+    async function refreshTrials() {{
+      const params = new URLSearchParams();
+      params.set('limit', '600');
+      if (trialSource?.value) params.set('source_path', trialSource.value);
+      if (trialVariant?.value) params.set('variant', trialVariant.value);
+      if (trialAccepted?.value) params.set('accepted', trialAccepted.value);
+      if (trialVerify?.value) params.set('verify', trialVerify.value);
+      if (trialDomain?.value) params.set('domain', trialDomain.value);
+      if ((trialQuery?.value || '').trim()) params.set('q', (trialQuery.value || '').trim());
+      if (trialRowsBody) trialRowsBody.innerHTML = "<tr><td colspan='10'>Loading...</td></tr>";
+      try {{
+        const res = await fetch('/api/arena/trials/list?' + params.toString());
+        const payload = await res.json();
+        if (!res.ok || !payload.ok) throw new Error(payload.error || ('HTTP ' + res.status));
+        trialRows = sortTrialRows(payload.rows || []);
+        updateTrialSelectOptions(trialVariant, payload.available_variants || [], 'All variants');
+        updateTrialSelectOptions(trialDomain, payload.available_domains || [], 'All domains');
+        if (trialSource && !trialSource.value && payload.source_path) {{
+          trialSource.value = payload.source_path;
+        }}
+        renderTrialRows();
+        const summary = payload.summary || {{}};
+        if (trialMeta) {{
+          trialMeta.textContent =
+            `${{trialRows.length}} shown • source=${{payload.source_path || ''}} • updated=${{payload.source_updated_utc || ''}} • ` +
+            `accepted=${{summary.accepted || 0}}/${{summary.total_rows || 0}} • verify_pass=${{summary.verify_passed || 0}} • infra=${{summary.infra_blocked || 0}}`;
+        }}
+      }} catch (err) {{
+        if (trialRowsBody) trialRowsBody.innerHTML = "<tr><td colspan='10'>Failed to load rows</td></tr>";
+        if (trialMeta) trialMeta.textContent = 'Load failed: ' + err;
+      }}
+    }}
+
+    trialRefresh?.addEventListener('click', async () => {{
+      await refreshTrialSources(true);
+      await refreshTrials();
+    }});
+    trialSource?.addEventListener('change', refreshTrials);
+    trialVariant?.addEventListener('change', refreshTrials);
+    trialAccepted?.addEventListener('change', refreshTrials);
+    trialVerify?.addEventListener('change', refreshTrials);
+    trialDomain?.addEventListener('change', refreshTrials);
+    trialSort?.addEventListener('change', refreshTrials);
+    trialQuery?.addEventListener('keydown', (ev) => {{
+      if (ev.key === 'Enter') refreshTrials();
+    }});
+    refreshTrialSources(false).then(() => refreshTrials());
 
     let trainingCatalog = [];
     let selectedDatasetId = '';
@@ -3504,6 +4317,66 @@ def app(environ: Dict[str, Any], start_response):
         start_response(status, headers)
         return [body]
 
+    if path == "/api/arena/trials/sources":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        try:
+            limit = int((qs.get("limit") or ["40"])[0])
+        except (TypeError, ValueError):
+            limit = 40
+        payload = _ablation_rows_sources_payload(limit=limit)
+        status, headers, body = _json("200 OK", payload)
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/arena/trials/list":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        try:
+            limit = int((qs.get("limit") or ["300"])[0])
+        except (TypeError, ValueError):
+            limit = 300
+        limit = max(1, min(2000, limit))
+        payload = _load_ablation_rows_payload(
+            limit=limit,
+            variant=str((qs.get("variant") or [""])[0]),
+            accepted=str((qs.get("accepted") or ["all"])[0]).lower(),
+            verify=str((qs.get("verify") or ["all"])[0]).lower(),
+            domain=str((qs.get("domain") or [""])[0]),
+            query=str((qs.get("q") or [""])[0]),
+            source_path=str((qs.get("source_path") or [""])[0]),
+        )
+        status_code = "200 OK" if payload.get("ok") else "400 Bad Request"
+        status, headers, body = _json(status_code, payload)
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/arena/trials/detail":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        payload = _trial_detail_payload(str((qs.get("trial_id") or [""])[0]))
+        status_code = "200 OK" if payload.get("ok") else "400 Bad Request"
+        status, headers, body = _json(status_code, payload)
+        start_response(status, headers)
+        return [body]
+
+    if path == "/api/arena/trials/rehydrate-preview" and method == "POST":
+        raw = _read_body(environ)
+        try:
+            req = json.loads(raw.decode("utf-8") if raw else "{}")
+        except json.JSONDecodeError:
+            status, headers, body = _json("400 Bad Request", {"ok": False, "error": "invalid json"})
+            start_response(status, headers)
+            return [body]
+        trial_id = str(req.get("trial_id") or "").strip()
+        try:
+            port = int(req.get("port", 5174))
+        except (TypeError, ValueError):
+            port = 5174
+        run_verify = bool(req.get("run_verify", True))
+        payload = _rehydrate_preview_from_trial(trial_id, port=port, run_verify=run_verify)
+        status_code = "200 OK" if payload.get("ok") else "400 Bad Request"
+        status, headers, body = _json(status_code, payload)
+        start_response(status, headers)
+        return [body]
+
     if path == "/api/training/catalog":
         payload = _training_data_catalog(limit=1200)
         status, headers, body = _json("200 OK", {"ok": True, **payload})
@@ -3772,6 +4645,30 @@ def app(environ: Dict[str, Any], start_response):
             "specialized": "Specialized Adapter Full Documentation",
         }
         status, headers, body = _html("200 OK", _render_doc_view(title_map.get(track, track), content))
+        start_response(status, headers)
+        return [body]
+
+    if path == "/view/repo-file":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        rel = str((qs.get("path") or [""])[0]).strip()
+        ok, content = _read_repo_rel_file(rel)
+        if not ok:
+            status, headers, body = _html("404 Not Found", _render_doc_view("Missing file", content))
+            start_response(status, headers)
+            return [body]
+        status, headers, body = _html("200 OK", _render_doc_view(rel, content))
+        start_response(status, headers)
+        return [body]
+
+    if path == "/view/trial":
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        trial_id = str((qs.get("trial_id") or [""])[0]).strip()
+        payload = _trial_detail_payload(trial_id)
+        if not payload.get("ok"):
+            status, headers, body = _html("404 Not Found", _render_doc_view("Missing trial", str(payload.get("error", "not found"))))
+            start_response(status, headers)
+            return [body]
+        status, headers, body = _html("200 OK", _render_trial_view(payload))
         start_response(status, headers)
         return [body]
 

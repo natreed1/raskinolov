@@ -1,0 +1,875 @@
+{
+  "schema_version": "task_skill_index_v1",
+  "skill_families": {
+    "academy_general_production_assignment_pipeline": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-academy-general-production-assignment-51"
+      }
+    ],
+    "ai_battle_flank_reinforcement_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-battle-flank-reinforcement-61"
+      }
+    ],
+    "ai_city_defense_ring_coverage_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-city-defense-ring-coverage-59"
+      }
+    ],
+    "ai_commander_field_assignment_thresholds": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-commander-field-stack-assignment-63"
+      }
+    ],
+    "ai_composition_tactics_mix_scoring": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-composition-tactics-scoring-57"
+      }
+    ],
+    "ai_construction_site_build_planning": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-construction-site-sim-builds-56"
+      }
+    ],
+    "ai_food_surplus_recruit_gating": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-food-aware-recruit-gating-58"
+      }
+    ],
+    "ai_incorporation_move_reservation_guard": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-incorporation-move-reservation-60"
+      }
+    ],
+    "ai_invasion_defense_repositioning": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-defend-invasion-reposition-39"
+      }
+    ],
+    "ai_move_target_eligibility_rules": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-move-target-eligibility-28"
+      }
+    ],
+    "ai_naval_reachability_pathing": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-ocean-crossing-reachability-37"
+      }
+    ],
+    "ai_open_city_target_selection": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-open-city-targeting-40"
+      }
+    ],
+    "ai_pending_recruit_backlog_cap_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-pending-recruit-backlog-caps-62"
+      }
+    ],
+    "ai_siege_production_routing_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-catapult-siege-workshop-planning-44"
+      }
+    ],
+    "ai_starvation_farm_priority_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-starvation-farm-priority-38"
+      }
+    ],
+    "ai_wall_ring_supply_expansion_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-wall-ring-supply-expansion-55"
+      }
+    ],
+    "archer_line_priority_targeting_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-archer-line-priority-targeting-72"
+      }
+    ],
+    "archer_max_range_auto_positioning_logic": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-archer-max-range-auto-positioning-49"
+      }
+    ],
+    "army_stack_split_adjacent_flow": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-army-stack-split-adjacent-flow-71"
+      }
+    ],
+    "army_stack_sprite_aggregation_contract": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-hud-army-stack-graphic-004"
+      }
+    ],
+    "army_ui_direct_order_dispatch": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-army-ui-direct-move-orders-33"
+      }
+    ],
+    "army_upkeep_progressive_size_scaling": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-army-upkeep-progressive-size-scaling-76"
+      }
+    ],
+    "atomicity_and_failure_modes": [
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-015"
+      }
+    ],
+    "battalion_training_health_gate_progression": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-battalion-training-health-gates-54"
+      }
+    ],
+    "battalion_training_tick_ordering_integrity": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-battalion-training-tick-ordering-84"
+      }
+    ],
+    "binary_response_handling": [
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-020"
+      }
+    ],
+    "boundary_conditions": [
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-001"
+      },
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-009"
+      }
+    ],
+    "box_select_pan_zoom_lock_lifecycle": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-map-controller-box-select-pan-lock-67"
+      }
+    ],
+    "builder_university_task_queue_progression": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-builder-automation-university-task-queue-53"
+      }
+    ],
+    "city_food_buffer_policy_thresholds": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-city-food-buffer-policy-thresholds-80"
+      }
+    ],
+    "combat_modifier_consistency": [
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "swev-gm-004"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "swev-gm-012"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-004"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-012"
+      }
+    ],
+    "commander_trait_economy_morale_coupling": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-commander-trait-economy-morale-coupling-90"
+      }
+    ],
+    "container_runtime_resolution": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-node-path-runtime-resolution-01"
+      }
+    ],
+    "contested_zone_capture_reward_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-contested-zone-capture-payout-52"
+      }
+    ],
+    "contested_zone_majority_payout_gating": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-contested-zone-majority-payout-gating-83"
+      }
+    ],
+    "cross_node_state_reconciliation": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "swev-gm-005"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "swev-gm-017"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-005"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-017"
+      }
+    ],
+    "cross_platform_stability": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-macos-dev-stability-16"
+      }
+    ],
+    "deploy_env_timeout_policy": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "swev-gm-016"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-016"
+      }
+    ],
+    "deterministic_preview_state_isolation": [
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "patch-combat-hud-density-refactor-23"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "swev-gm-009"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-combat-hud-density-refactor-23"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-009"
+      }
+    ],
+    "farm_level_scaling_and_workforce_accounting": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-farm-production-workforce-leveling-29"
+      }
+    ],
+    "field_command_ui_signal_clarity": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-field-command-hud-25"
+      }
+    ],
+    "food_supported_population_steady_state_dynamics": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-population-food-steady-state-dynamics-45"
+      }
+    ],
+    "food_value_weighting_fish_vs_grain": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-fish-yield-double-vs-grain-46"
+      }
+    ],
+    "formation_fallback_placement_validity": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-formation-fallback-placement-validity-66"
+      }
+    ],
+    "formation_path_consistency": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-army-formation-path-consistency-006"
+      }
+    ],
+    "fortress_upgrade_resource_routing_policy": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-fortress-upgrade-resource-routing-89"
+      }
+    ],
+    "garrison_deploy_flag_order_parity": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-garrison-deploy-flag-order-parity-69"
+      }
+    ],
+    "home_screen_multiplayer_entry_flow": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-home-screen-multiplayer-entry-36"
+      }
+    ],
+    "hud_economy_signal_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-hud-economy-mixed-panel-26"
+      }
+    ],
+    "hud_theme_royal_restyling": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-hud-royal-theme-restyle-001"
+      }
+    ],
+    "identity_integrity_guards": [
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-013"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-018"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-021"
+      }
+    ],
+    "incorporation_army_halt_stateflow": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-incorporation-army-halt-stateflow-87"
+      }
+    ],
+    "input_controller_event_ordering": [
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "patch-map-box-select-input-08"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "swev-gm-014"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-map-box-select-input-08"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-014"
+      }
+    ],
+    "isometric_sprite_integration_contract": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-hud-isometric-image-integration-002"
+      }
+    ],
+    "map_box_select_multi_stack_order_dispatch": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-map-box-select-multi-stack-orders-85"
+      }
+    ],
+    "market_price_elasticity_stock_pressure": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-market-price-elasticity-stock-pressure-74"
+      }
+    ],
+    "mine_production_timeseries_visualization": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-mine-hud-production-chart-34"
+      }
+    ],
+    "mine_quarry_output_upkeep_budget_coupling": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-quarry-mine-output-energy-upkeep-77"
+      }
+    ],
+    "movement_order_idempotency": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-army-movement-order-idempotency-005"
+      }
+    ],
+    "movement_supply_gating_consistency": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-movement-supply-gating-27"
+      }
+    ],
+    "multiplayer_formation_move_parity_contract": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-multiplayer-formation-move-parity-82"
+      }
+    ],
+    "naval_convoy_supply_protection_routing": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-naval-supply-convoy-protection-routing-88"
+      }
+    ],
+    "nearby_engagement_cluster_preview_signal": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-battle-preview-nearby-engagement-clusters-86"
+      }
+    ],
+    "new_resource_chain_infantry_cost_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-aluminum-resource-chain-infantry-cost-50"
+      }
+    ],
+    "null_comparator_safety": [
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-010"
+      }
+    ],
+    "out_of_supply_movement_halt_enforcement": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-out-of-supply-movement-halt-64"
+      }
+    ],
+    "planner_expression_safety": [
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-015"
+      }
+    ],
+    "planner_strategy_separability": [
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-001"
+      }
+    ],
+    "population_birth_food_buffer_taper": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-pop-birth-food-buffer-taper-73"
+      }
+    ],
+    "progression_tick_ordering": [
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "patch-university-population-loop-19"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-university-population-loop-19"
+      }
+    ],
+    "race_and_lifecycle": [
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-004"
+      }
+    ],
+    "railway_deployment_contract": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-railway-missing-dep-02"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-multiplayer-server-bootstrap-12"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-game-server-deploy-contract-21"
+      }
+    ],
+    "railway_service_bootstrap_contract": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-multiplayer-server-bootstrap-12"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-game-server-deploy-contract-21"
+      }
+    ],
+    "reconnect_idempotency_and_lifecycle_cleanup": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "swev-gm-025"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-025"
+      }
+    ],
+    "request_validation_guardrails": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-site-auth-middleware-07"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-multiplayer-auth-route-hardening-17"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-002"
+      }
+    ],
+    "research_schema_migration_compatibility": [
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "patch-research-system-schema-11"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "swev-gm-023"
+      }
+    ],
+    "resource_projection_cache_invalidation": [
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "patch-builder-automation-rebalance-15"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "patch-research-hud-surface-18"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "swev-gm-007"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-builder-automation-rebalance-15"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-research-hud-surface-18"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-007"
+      }
+    ],
+    "runtime_and_deploy": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-node-path-runtime-resolution-01"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-railway-missing-dep-02"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-multiplayer-server-bootstrap-12"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-game-server-deploy-contract-21"
+      }
+    ],
+    "schema_and_contracts": [
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-013"
+      },
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-014"
+      },
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-018"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-multiplayer-snapshot-types-09"
+      }
+    ],
+    "schema_migration_compatibility": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-research-system-schema-11"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-023"
+      }
+    ],
+    "scout_tower_vision_signal_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-scout-tower-vision-hud-integration-81"
+      }
+    ],
+    "seasonal_fish_farm_yield_weighting": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-fisher-farm-seasonal-yield-weighting-78"
+      }
+    ],
+    "shared_logic_deduplication": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ai-plan-shared-application-05"
+      }
+    ],
+    "ship_build_cost_material_balance_enforcement": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ship-production-cost-material-balance-41"
+      }
+    ],
+    "ship_task_fishing_production_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-ship-fishing-task-production-48"
+      }
+    ],
+    "siege_composition_recruit_gate_consistency": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-siege-composition-recruit-gates-65"
+      }
+    ],
+    "signed_delta_semantics": [
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "swev-gm-006"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "swev-gm-022"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-006"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-022"
+      }
+    ],
+    "snapshot_schema_compatibility": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "patch-multiplayer-remap-safety-22"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "swev-gm-011"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-multiplayer-snapshot-types-09"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-multiplayer-remap-safety-22"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-011"
+      }
+    ],
+    "special_unit_building_progression_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-special-unit-building-dragon-nest-43"
+      }
+    ],
+    "stack_overlay_movement_coherence": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-army-stack-overlay-coherence-007"
+      }
+    ],
+    "stale_state_and_cache": [
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-002"
+      },
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-007"
+      },
+      {
+        "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+        "task_id": "swe-game-v1-012"
+      }
+    ],
+    "starvation_recovery_rate_tuning": [
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "patch-starvation-diagnosis-population-stability-30"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-starvation-diagnosis-population-stability-30"
+      }
+    ],
+    "state_machine_transition_integrity": [
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "patch-siege-workshop-build-menu-14"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+        "task_id": "patch-siege-recruitment-health-gates-24"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-pending-recruit-state-06"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-siege-workshop-build-menu-14"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-siege-recruitment-health-gates-24"
+      }
+    ],
+    "supply_cache_invalidation_on_capture": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-supply-cache-invalidation-capture-68"
+      }
+    ],
+    "supply_network_production_drawdown_visualization": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-supply-network-chart-drawdown-35"
+      }
+    ],
+    "tactical_batch_stack_order_dispatch": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-tactical-batch-stack-order-dispatch-70"
+      }
+    ],
+    "test_env_dynamic_route_resolution_contract": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-test-env-dynamic-route-03"
+      }
+    ],
+    "test_env_registry_type_lookup_contract": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-test-env-registry-contract-04"
+      }
+    ],
+    "tiered_worker_elasticity_nonlinear_recovery": [
+      {
+        "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+        "task_id": "patch-worker-elasticity-nonlinear-recovery-31"
+      },
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-worker-elasticity-nonlinear-recovery-31"
+      }
+    ],
+    "ui_rendering_contract_integrity": [
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-003"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-008"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-019"
+      }
+    ],
+    "ui_state_signal_exposure": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-hud-lobby-session-panel-10"
+      }
+    ],
+    "unit_definition_combat_economy_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-new-unit-combat-stats-economic-cost-42"
+      }
+    ],
+    "unit_overlay_sprite_replacement_contract": [
+      {
+        "source_file": "benchmarks/task_bank/sources/custom_author_tasks_v1.json",
+        "task_id": "custom-hud-unit-overlay-replacement-003"
+      }
+    ],
+    "university_research_focus_ui_integration": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-university-research-focus-hud-32"
+      }
+    ],
+    "wage_inflation_productivity_feedback_control": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-wage-inflation-productivity-feedback-79"
+      }
+    ],
+    "warehouse_spoilage_food_decay_balance": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-warehouse-spoilage-food-decay-balance-75"
+      }
+    ],
+    "weather_production_combat_routing_consistency": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-weather-production-combat-routing-91"
+      }
+    ],
+    "websocket_handshake_recovery": [
+      {
+        "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+        "task_id": "swev-gm-024"
+      },
+      {
+        "source_file": "benchmarks/task_bank/sources/swebench_verified_game_mapped_tasks_v1.json",
+        "task_id": "swev-gm-024"
+      }
+    ],
+    "worker_wage_productivity_tradeoff_balancing": [
+      {
+        "source_file": "benchmarks/patch_task_bank_v1.json",
+        "task_id": "patch-worker-wage-productivity-balance-47"
+      }
+    ]
+  }
+}

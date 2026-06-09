@@ -1,0 +1,358 @@
+[
+  {
+    "id": "hud-mass-chips-core-01",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "List exactly four compact HUD chips including morale and supply plus two risk signals.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "pressure",
+        "territory",
+        "upkeep"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-values-02",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write three terse HUD labels with values for observer mode.",
+    "expect": {
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure",
+        "Territory"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "const "
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-visibility-note-03",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "In 2-3 sentences, suggest one HUD visibility improvement for a dark medieval panel.",
+    "expect": {
+      "any_contains": [
+        "visibility",
+        "contrast",
+        "readable",
+        "hierarchy"
+      ],
+      "min_chars": 95
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-priority-order-04",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Propose ordering for morale, supply, and risk in a compact HUD block and explain why.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "priority",
+        "scan"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-no-clutter-05",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Describe one change that reduces HUD clutter while keeping strategic signal quality.",
+    "expect": {
+      "any_contains": [
+        "clutter",
+        "compact",
+        "signal",
+        "density"
+      ],
+      "min_chars": 85
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-alert-tone-06",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write one warning-style HUD line and one stable-state line with terse tactical wording.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "stable",
+        "ready",
+        "risk"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-constraints-07",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Plain text only: output one comma-separated line of four HUD chips.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-constraints-08",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Exactly two lines: first for morale status, second for supply status.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "min_chars": 30
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-constraints-09",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "One sentence only: explain why HUD should keep morale and supply always visible.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-casing-13",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write exactly three short HUD lines with numeric values, and each line must start with one of: Morale, Supply, Risk.",
+    "expect": {
+      "all_contains": [
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "%"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-observer-14",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Observer mode is paused. Provide three compact HUD labels with values and keep each label to three words or fewer.",
+    "expect": {
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure",
+        "Territory",
+        "Upkeep"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-snapshot-15",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Return one comma-separated HUD snapshot line with four chips. Include Morale and Supply and at least one risk-style chip.",
+    "expect": {
+      "all_contains": [
+        ",",
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "Territory"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-ready-16",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write three HUD status labels for a ready-check panel. Include Morale and Supply with values, plus one urgency indicator.",
+    "expect": {
+      "all_contains": [
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "Ready"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-contrast-17",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "In two short lines, show one low-risk HUD state and one high-risk HUD state using compact labels and values.",
+    "expect": {
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "Morale",
+        "Supply"
+      ],
+      "min_chars": 50
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-colon-format-20",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Output exactly three lines in Label: Value format, using Morale, Supply, and Risk.",
+    "expect": {
+      "all_contains": [
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        ":"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  }
+]

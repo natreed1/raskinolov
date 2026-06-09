@@ -1,0 +1,6269 @@
+[
+  {
+    "id": "ma-dual-0001",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0002",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0003",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0004",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0005",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0006",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0007",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0008",
+    "category": "dual-loading-screen-hud-status",
+    "specialists": [
+      "loading_screen",
+      "hud_status"
+    ],
+    "domains": [
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and hud status. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0009",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0010",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0011",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0012",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0013",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0014",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0015",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0016",
+    "category": "dual-loading-screen-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "loading",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0017",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0018",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0019",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0020",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0021",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0022",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0023",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0024",
+    "category": "dual-loading-screen-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0025",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0026",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0027",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0028",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0029",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0030",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0031",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0032",
+    "category": "dual-loading-screen-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "loading",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0033",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0034",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0035",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0036",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0037",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0038",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0039",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0040",
+    "category": "dual-loading-screen-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning loading screen and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0041",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0042",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0043",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0044",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0045",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0046",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0047",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0048",
+    "category": "dual-hud-status-economy-tooltip",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and economy tooltip. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0049",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0050",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0051",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0052",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0053",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0054",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0055",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0056",
+    "category": "dual-hud-status-combat-risk",
+    "specialists": [
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0057",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0058",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0059",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0060",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0061",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0062",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0063",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0064",
+    "category": "dual-hud-status-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0065",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0066",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0067",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0068",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0069",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0070",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0071",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0072",
+    "category": "dual-hud-status-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning hud status and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0073",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0074",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0075",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0076",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0077",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0078",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0079",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0080",
+    "category": "dual-economy-tooltip-combat-risk",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and combat risk. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0081",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0082",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0083",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0084",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0085",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0086",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0087",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0088",
+    "category": "dual-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0089",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0090",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0091",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0092",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0093",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0094",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0095",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0096",
+    "category": "dual-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "planning",
+      "rationale",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Design one cohesive update spanning economy tooltip and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0097",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0098",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0099",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0100",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0101",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0102",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0103",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0104",
+    "category": "dual-combat-risk-save-load-api-guard",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "preview",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and save load api guard. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0105",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0106",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0107",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0108",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0109",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0110",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0111",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0112",
+    "category": "dual-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk"
+    ],
+    "prompt": "Design one cohesive update spanning combat risk and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0113",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0114",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0115",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0116",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0117",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0118",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0119",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-dual-0120",
+    "category": "dual-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "planning",
+      "rationale",
+      "serialization"
+    ],
+    "prompt": "Design one cohesive update spanning save load api guard and ai planning explanation. Keep it implementable in existing surfaces, include split responsibilities, and maintain concise tactical wording. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "medium",
+      "edge_case": "cross_specialist_dual"
+    }
+  },
+  {
+    "id": "ma-tri-0121",
+    "category": "tri-loading-screen-hud-status-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and economy tooltip. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0122",
+    "category": "tri-loading-screen-hud-status-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and economy tooltip. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0123",
+    "category": "tri-loading-screen-hud-status-economy-tooltip",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "hud",
+      "loading",
+      "readability",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and economy tooltip. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0124",
+    "category": "tri-loading-screen-hud-status-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0125",
+    "category": "tri-loading-screen-hud-status-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0126",
+    "category": "tri-loading-screen-hud-status-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "hud",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0127",
+    "category": "tri-loading-screen-hud-status-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "loading",
+      "readability",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0128",
+    "category": "tri-loading-screen-hud-status-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "loading",
+      "readability",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0129",
+    "category": "tri-loading-screen-hud-status-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "hud",
+      "loading",
+      "readability",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0130",
+    "category": "tri-loading-screen-hud-status-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0131",
+    "category": "tri-loading-screen-hud-status-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0132",
+    "category": "tri-loading-screen-hud-status-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "hud_status",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "hud",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, hud status, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0133",
+    "category": "tri-loading-screen-economy-tooltip-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0134",
+    "category": "tri-loading-screen-economy-tooltip-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0135",
+    "category": "tri-loading-screen-economy-tooltip-combat-risk",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0136",
+    "category": "tri-loading-screen-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "loading",
+      "readability",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0137",
+    "category": "tri-loading-screen-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "loading",
+      "readability",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0138",
+    "category": "tri-loading-screen-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "loading",
+      "readability",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0139",
+    "category": "tri-loading-screen-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0140",
+    "category": "tri-loading-screen-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0141",
+    "category": "tri-loading-screen-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, economy tooltip, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0142",
+    "category": "tri-loading-screen-combat-risk-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0143",
+    "category": "tri-loading-screen-combat-risk-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0144",
+    "category": "tri-loading-screen-combat-risk-save-load-api-guard",
+    "specialists": [
+      "loading_screen",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "loading",
+      "preview",
+      "readability",
+      "risk",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0145",
+    "category": "tri-loading-screen-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "loading",
+      "planning",
+      "preview",
+      "rationale",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0146",
+    "category": "tri-loading-screen-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "loading",
+      "planning",
+      "preview",
+      "rationale",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0147",
+    "category": "tri-loading-screen-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "loading",
+      "planning",
+      "preview",
+      "rationale",
+      "readability",
+      "risk",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0148",
+    "category": "tri-loading-screen-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0149",
+    "category": "tri-loading-screen-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0150",
+    "category": "tri-loading-screen-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "loading_screen",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "loading",
+      "planning",
+      "rationale",
+      "readability",
+      "serialization",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across loading screen, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0151",
+    "category": "tri-hud-status-economy-tooltip-combat-risk",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0152",
+    "category": "tri-hud-status-economy-tooltip-combat-risk",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0153",
+    "category": "tri-hud-status-economy-tooltip-combat-risk",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "economy",
+      "hud",
+      "preview",
+      "risk",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and combat risk. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0154",
+    "category": "tri-hud-status-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "hud",
+      "serialization",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0155",
+    "category": "tri-hud-status-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "hud",
+      "serialization",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0156",
+    "category": "tri-hud-status-economy-tooltip-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "economy",
+      "hud",
+      "serialization",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0157",
+    "category": "tri-hud-status-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0158",
+    "category": "tri-hud-status-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0159",
+    "category": "tri-hud-status-economy-tooltip-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "economy_tooltip",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "economy",
+      "hud",
+      "planning",
+      "rationale",
+      "status",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, economy tooltip, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0160",
+    "category": "tri-hud-status-combat-risk-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0161",
+    "category": "tri-hud-status-combat-risk-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0162",
+    "category": "tri-hud-status-combat-risk-save-load-api-guard",
+    "specialists": [
+      "hud_status",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "hud",
+      "preview",
+      "risk",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0163",
+    "category": "tri-hud-status-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "hud",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0164",
+    "category": "tri-hud-status-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "hud",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0165",
+    "category": "tri-hud-status-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "hud",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0166",
+    "category": "tri-hud-status-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "hud",
+      "planning",
+      "rationale",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0167",
+    "category": "tri-hud-status-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "hud",
+      "planning",
+      "rationale",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0168",
+    "category": "tri-hud-status-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "hud_status",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "hud",
+      "planning",
+      "rationale",
+      "serialization",
+      "status",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across hud status, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0169",
+    "category": "tri-economy-tooltip-combat-risk-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0170",
+    "category": "tri-economy-tooltip-combat-risk-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0171",
+    "category": "tri-economy-tooltip-combat-risk-save-load-api-guard",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk",
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "combat",
+      "economy",
+      "preview",
+      "risk",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, combat risk, and save load api guard. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0172",
+    "category": "tri-economy-tooltip-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "economy",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0173",
+    "category": "tri-economy-tooltip-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "economy",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0174",
+    "category": "tri-economy-tooltip-combat-risk-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "combat_risk",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "combat",
+      "economy",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, combat risk, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0175",
+    "category": "tri-economy-tooltip-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "economy",
+      "planning",
+      "rationale",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0176",
+    "category": "tri-economy-tooltip-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "economy",
+      "planning",
+      "rationale",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0177",
+    "category": "tri-economy-tooltip-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "economy_tooltip",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "economy",
+      "planning",
+      "rationale",
+      "serialization",
+      "tooltip",
+      "ui"
+    ],
+    "prompt": "Propose a coordinated response across economy tooltip, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0178",
+    "category": "tri-combat-risk-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Propose a coordinated response across combat risk, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0179",
+    "category": "tri-combat-risk-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Propose a coordinated response across combat risk, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-tri-0180",
+    "category": "tri-combat-risk-save-load-api-guard-ai-planning-explanation",
+    "specialists": [
+      "combat_risk",
+      "save_load_api_guard",
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "api",
+      "auth",
+      "combat",
+      "planning",
+      "preview",
+      "rationale",
+      "risk",
+      "serialization"
+    ],
+    "prompt": "Propose a coordinated response across combat risk, save load api guard, and ai planning explanation. Keep one primary lane and at least one supporting lane with clear merge notes. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": true,
+      "complexity": "high",
+      "edge_case": "cross_specialist_tri"
+    }
+  },
+  {
+    "id": "ma-single-0181",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0182",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0183",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0184",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0185",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0186",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0187",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0188",
+    "category": "single-loading-screen",
+    "specialists": [
+      "loading_screen"
+    ],
+    "domains": [
+      "ui",
+      "loading",
+      "readability"
+    ],
+    "prompt": "Focus only on loading screen and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0189",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0190",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0191",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0192",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0193",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0194",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0195",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0196",
+    "category": "single-hud-status",
+    "specialists": [
+      "hud_status"
+    ],
+    "domains": [
+      "ui",
+      "hud",
+      "status"
+    ],
+    "prompt": "Focus only on hud status and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0197",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0198",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0199",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0200",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0201",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0202",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0203",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0204",
+    "category": "single-economy-tooltip",
+    "specialists": [
+      "economy_tooltip"
+    ],
+    "domains": [
+      "economy",
+      "ui",
+      "tooltip"
+    ],
+    "prompt": "Focus only on economy tooltip and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0205",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0206",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0207",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0208",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0209",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0210",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0211",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0212",
+    "category": "single-combat-risk",
+    "specialists": [
+      "combat_risk"
+    ],
+    "domains": [
+      "combat",
+      "risk",
+      "preview"
+    ],
+    "prompt": "Focus only on combat risk and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0213",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0214",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0215",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0216",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0217",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0218",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0219",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0220",
+    "category": "single-save-load-api-guard",
+    "specialists": [
+      "save_load_api_guard"
+    ],
+    "domains": [
+      "api",
+      "auth",
+      "serialization"
+    ],
+    "prompt": "Focus only on save load api guard and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0221",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0222",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0223",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0224",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0225",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0226",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0227",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-single-0228",
+    "category": "single-ai-planning-explanation",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "domains": [
+      "ai",
+      "planning",
+      "rationale"
+    ],
+    "prompt": "Focus only on ai planning explanation and produce a direct, single-lane refinement. Avoid cross-domain expansion. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "single_lane_control"
+    }
+  },
+  {
+    "id": "ma-frontier-0229",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Design payment migration rollback strategy with strict privacy constraints. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0230",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Contain a distributed data-loss incident with immediate recovery steps. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0231",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Review legal/compliance implications of save telemetry retention policy. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0232",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Audit production authentication and cryptography risks before rollout. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0233",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Design payment migration rollback strategy with strict privacy constraints. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0234",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Contain a distributed data-loss incident with immediate recovery steps. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0235",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Review legal/compliance implications of save telemetry retention policy. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0236",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Audit production authentication and cryptography risks before rollout. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0237",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Design payment migration rollback strategy with strict privacy constraints. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0238",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Contain a distributed data-loss incident with immediate recovery steps. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0239",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Review legal/compliance implications of save telemetry retention policy. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0240",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Audit production authentication and cryptography risks before rollout. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0241",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Design payment migration rollback strategy with strict privacy constraints. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0242",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Contain a distributed data-loss incident with immediate recovery steps. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0243",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Review legal/compliance implications of save telemetry retention policy. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0244",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Audit production authentication and cryptography risks before rollout. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0245",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Design payment migration rollback strategy with strict privacy constraints. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0246",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Contain a distributed data-loss incident with immediate recovery steps. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0247",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Review legal/compliance implications of save telemetry retention policy. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0248",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Audit production authentication and cryptography risks before rollout. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0249",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Design payment migration rollback strategy with strict privacy constraints. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0250",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Contain a distributed data-loss incident with immediate recovery steps. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0251",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Review legal/compliance implications of save telemetry retention policy. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-frontier-0252",
+    "category": "frontier_high_risk_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "security",
+      "risk",
+      "incident"
+    ],
+    "prompt": "Audit production authentication and cryptography risks before rollout. Include concise action sequencing.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "high",
+      "edge_case": "high_risk_frontier"
+    }
+  },
+  {
+    "id": "ma-edge-0253",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 1.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0254",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 2.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0255",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 3.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0256",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 4.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0257",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 5.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0258",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 6.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0259",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 7.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0260",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 8.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0261",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 9.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0262",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 10.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0263",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 11.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0264",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 12.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0265",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 13.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0266",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 14.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0267",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 15.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0268",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 16.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0269",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 17.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0270",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 18.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0271",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 19.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0272",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 20.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0273",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 21.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0274",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 22.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0275",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 23.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0276",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 24.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0277",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 25.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0278",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 26.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0279",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 27.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0280",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 28.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0281",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Generate a tiny boilerplate script and exit cleanly. Variant 29.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0282",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rewrite one sentence for clarity with no architecture changes. Variant 30.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0283",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Compare two short phrasings and pick one with rationale. Variant 31.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  },
+  {
+    "id": "ma-edge-0284",
+    "category": "edge_mechanical_control",
+    "specialists": [
+      "general_fallback"
+    ],
+    "domains": [
+      "mechanical",
+      "editorial"
+    ],
+    "prompt": "Rename a helper and update references only. Variant 32.",
+    "metadata": {
+      "suite": "multi_agent_orchestration_mass_v1",
+      "expected_multi_agent": false,
+      "complexity": "low",
+      "edge_case": "mechanical_or_ambiguous"
+    }
+  }
+]

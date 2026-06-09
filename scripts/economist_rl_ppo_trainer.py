@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 REPO = Path(__file__).resolve().parents[1]
+PPO_TRAINED_MARKER = ".economist_rl_ppo_trained"
 
 
 @dataclass(frozen=True)
@@ -82,6 +83,49 @@ def proxy_old_logprob(completion: str) -> float:
     """Fallback mean log-prob per token (same scale as `_mean_completion_logprob_*`)."""
     _ = completion
     return -0.35
+
+
+def candidate_staging_dir(candidate_adapter: Path) -> Path:
+    return candidate_adapter.with_name(f"{candidate_adapter.name}.staging")
+
+
+def discard_candidate_staging(staging: Path) -> None:
+    if staging.exists():
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def promote_candidate_staging(staging: Path, candidate_adapter: Path) -> None:
+    discard_candidate_staging(candidate_adapter)
+    if not staging.exists():
+        raise RuntimeError(f"PPO staging adapter missing: {staging}")
+    staging.rename(candidate_adapter)
+
+
+def mark_candidate_ppo_trained(candidate_adapter: Path, *, manifest: dict[str, Any] | None = None) -> None:
+    payload = {"status": "trained", "candidate_adapter": str(candidate_adapter.resolve())}
+    if manifest:
+        payload["train_backend"] = manifest.get("train_backend")
+        payload["source_adapter"] = manifest.get("source_adapter")
+    marker = candidate_adapter / PPO_TRAINED_MARKER
+    marker.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def candidate_has_ppo_training_marker(adapter_dir: Path) -> bool:
+    return (adapter_dir / PPO_TRAINED_MARKER).is_file()
+
+
+def collect_old_logprob_proxy_errors(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    errors: list[dict[str, str]] = []
+    for row in rows:
+        if row.get("old_logprob_source") != "proxy_error":
+            continue
+        errors.append(
+            {
+                "task_id": str(row.get("task_id") or ""),
+                "error": str(row.get("old_logprob_error") or "unknown"),
+            }
+        )
+    return errors
 
 
 def _encode_prompt_and_completion(
@@ -596,12 +640,14 @@ def attach_old_logprob_to_rollout(
     tokenizer: Any | None = None,
     backend_kind: str = "",
     max_window_tokens: int | None = None,
+    strict: bool = False,
 ) -> dict[str, Any]:
     row = dict(rollout_row)
     output = str(row.get("output") or "")
     prompt = str(row.get("generation_prompt") or row.get("prompt") or "")
     if dry_run or not output.strip():
         row["old_logprob"] = proxy_old_logprob(output)
+        row["old_logprob_source"] = "proxy_dry_run" if dry_run else "proxy_empty"
         return row
     try:
         row["old_logprob"] = compute_sequence_logprob(
@@ -616,8 +662,15 @@ def attach_old_logprob_to_rollout(
             backend_kind=backend_kind,
             max_window_tokens=max_window_tokens,
         )
-    except Exception:
+        row["old_logprob_source"] = "computed"
+    except Exception as exc:
         row["old_logprob"] = proxy_old_logprob(output)
+        row["old_logprob_source"] = "proxy_error"
+        row["old_logprob_error"] = f"{type(exc).__name__}: {exc}"
+        if strict:
+            raise RuntimeError(
+                f"old_logprob attach failed for task {row.get('task_id')!r}: {row['old_logprob_error']}"
+            ) from exc
     return row
 
 
@@ -702,6 +755,11 @@ def _transformers_model_id(model_id: str) -> str:
     return model
 
 
+def _should_load_transformers_4bit(model_id: str, device: Any) -> bool:
+    model = (model_id or "").strip()
+    return str(device).startswith("cuda") and model.startswith("mlx-community/") and model.endswith("-4bit")
+
+
 def _read_mlx_adapter_scale_rank(adapter_dir: Path) -> tuple[float, int]:
     cfg_path = adapter_dir / "adapter_config.json"
     if not cfg_path.is_file():
@@ -742,14 +800,14 @@ def _resolve_linear_module(model: Any, base_key: str) -> tuple[str, Any] | tuple
     return None, None
 
 
-def _prepare_candidate_adapter_dir(source_adapter: Path, candidate_adapter: Path) -> None:
-    candidate_adapter.parent.mkdir(parents=True, exist_ok=True)
-    if candidate_adapter.exists():
-        shutil.rmtree(candidate_adapter)
-    if source_adapter.exists():
-        shutil.copytree(source_adapter, candidate_adapter)
-    else:
-        candidate_adapter.mkdir(parents=True, exist_ok=True)
+def _finalize_trained_candidate(
+    *,
+    staging_adapter: Path,
+    candidate_adapter: Path,
+    manifest: dict[str, Any],
+) -> None:
+    promote_candidate_staging(staging_adapter, candidate_adapter)
+    mark_candidate_ppo_trained(candidate_adapter, manifest=manifest)
 
 
 def _attach_trainable_mlx_lora(model: Any, adapter_dir: Path, torch_mod: Any) -> list[TrainableLoRALayer]:
@@ -846,6 +904,132 @@ def _completion_logprob_tensor(
         torch_mod=torch_mod,
         max_window_tokens=max_window_tokens,
     )
+
+
+def _windowed_completion_logprob_windows_for_sample(
+    tokenizer: Any,
+    *,
+    sample: PPOSample,
+    system_prompt: str,
+    max_window_tokens: int | None,
+) -> list[CompletionLogprobWindow]:
+    if not max_window_tokens:
+        return []
+    prompt_ids, completion_ids = _encode_prompt_and_completion(
+        tokenizer,
+        prompt=sample.prompt,
+        completion=sample.completion,
+        system_prompt=system_prompt,
+    )
+    if not completion_ids or len(prompt_ids) + len(completion_ids) <= max_window_tokens:
+        return []
+    return _build_completion_logprob_windows(
+        prompt_ids=prompt_ids,
+        completion_ids=completion_ids,
+        max_window_tokens=max_window_tokens,
+    )
+
+
+def _iter_windowed_completion_logprob_tensors(
+    *,
+    model: Any,
+    tokenizer: Any,
+    sample: PPOSample,
+    system_prompt: str,
+    torch_mod: Any,
+    max_window_tokens: int,
+):
+    windows = _windowed_completion_logprob_windows_for_sample(
+        tokenizer,
+        sample=sample,
+        system_prompt=system_prompt,
+        max_window_tokens=max_window_tokens,
+    )
+    device = next(model.parameters()).device
+    for window in windows:
+        input_ids = torch_mod.tensor([window.input_ids], device=device)
+        logits = model(input_ids).logits[0]
+        log_probs = torch_mod.nn.functional.log_softmax(logits[window.target_pos], dim=-1)
+        yield log_probs[window.target_token_id]
+
+
+def _ppo_loss_tensor_torch(
+    *,
+    new_logprob: Any,
+    old_logprob: float,
+    advantage: float,
+    clip_epsilon: float,
+    torch_mod: Any,
+    device: Any,
+) -> Any:
+    old_lp = torch_mod.tensor(old_logprob, device=device, dtype=new_logprob.dtype)
+    adv = torch_mod.tensor(advantage, device=device, dtype=new_logprob.dtype)
+    ratio = torch_mod.exp(torch_mod.clamp(new_logprob - old_lp, -20.0, 20.0))
+    clipped = torch_mod.clamp(ratio, 1.0 - clip_epsilon, 1.0 + clip_epsilon)
+    return -torch_mod.min(ratio * adv, clipped * adv)
+
+
+def _backward_ppo_sample_transformers(
+    *,
+    model: Any,
+    tokenizer: Any,
+    sample: PPOSample,
+    system_prompt: str,
+    torch_mod: Any,
+    cfg: PPOConfig,
+    device: Any,
+    use_windowed_backward: bool | None = None,
+) -> float:
+    windows = _windowed_completion_logprob_windows_for_sample(
+        tokenizer,
+        sample=sample,
+        system_prompt=system_prompt,
+        max_window_tokens=cfg.max_logprob_window_tokens,
+    )
+    if use_windowed_backward is False or (use_windowed_backward is None and not windows):
+        new_logprob = _completion_logprob_tensor(
+            model=model,
+            tokenizer=tokenizer,
+            sample=sample,
+            system_prompt=system_prompt,
+            torch_mod=torch_mod,
+            max_window_tokens=cfg.max_logprob_window_tokens,
+        )
+        loss = _ppo_loss_tensor_torch(
+            new_logprob=new_logprob,
+            old_logprob=sample.old_logprob,
+            advantage=sample.advantage,
+            clip_epsilon=cfg.clip_epsilon,
+            torch_mod=torch_mod,
+            device=device,
+        )
+        loss.backward()
+        return float(loss.detach().cpu())
+
+    window_count = len(windows)
+    if window_count == 0:
+        return 0.0
+    loss_total = 0.0
+    for new_logprob in _iter_windowed_completion_logprob_tensors(
+        model=model,
+        tokenizer=tokenizer,
+        sample=sample,
+        system_prompt=system_prompt,
+        torch_mod=torch_mod,
+        max_window_tokens=cfg.max_logprob_window_tokens,
+    ):
+        loss = _ppo_loss_tensor_torch(
+            new_logprob=new_logprob,
+            old_logprob=sample.old_logprob,
+            advantage=sample.advantage,
+            clip_epsilon=cfg.clip_epsilon,
+            torch_mod=torch_mod,
+            device=device,
+        )
+        scaled_loss = loss * (1.0 / window_count)
+        scaled_loss.backward()
+        loss_total += float(loss.detach().cpu()) / window_count
+    return loss_total
 
 
 def _sequence_logprob_mlx(
@@ -965,75 +1149,84 @@ def train_ppo_batch_transformers(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     dtype = torch.float16 if device.type == "cuda" else torch.float32
 
-    _prepare_candidate_adapter_dir(source_adapter, candidate_adapter)
+    staging_adapter = candidate_staging_dir(candidate_adapter)
+    discard_candidate_staging(staging_adapter)
+    staging_adapter.mkdir(parents=True, exist_ok=True)
 
     model_id = _transformers_model_id(base_model)
-    model, tokenizer = load_peft_causal_lm(
-        model_id,
-        source_adapter,
-        device=device,
-        dtype=dtype,
-        trainable=True,
-    )
-    train_params = peft_trainable_parameters(model)
-    if not train_params:
-        raise SystemExit(f"No trainable PEFT parameters found for adapter: {source_adapter}")
-    optimizer = AdamW(train_params, lr=cfg.learning_rate)
-    model.eval()
-    if cfg.refresh_old_logprobs:
-        samples = refresh_ppo_old_logprobs_torch(
-            samples=samples,
-            model=model,
-            tokenizer=tokenizer,
-            system_prompt=system_prompt,
-            torch_mod=torch,
-            max_window_tokens=cfg.max_logprob_window_tokens,
+    load_in_4bit = _should_load_transformers_4bit(base_model, device)
+    try:
+        model, tokenizer = load_peft_causal_lm(
+            model_id,
+            source_adapter,
+            device=device,
+            dtype=dtype,
+            trainable=True,
+            load_in_4bit=load_in_4bit,
         )
-
-    step_rows: list[dict[str, Any]] = []
-    model.train()
-    for epoch in range(cfg.ppo_epochs):
-        for start in range(0, len(samples), cfg.mini_batch_size):
-            batch = samples[start : start + cfg.mini_batch_size]
-            batch_loss = 0.0
-            optimizer.zero_grad(set_to_none=True)
-            for sample in batch:
-                new_logprob = _completion_logprob_tensor(
-                    model=model,
-                    tokenizer=tokenizer,
-                    sample=sample,
-                    system_prompt=system_prompt,
-                    torch_mod=torch,
-                    max_window_tokens=cfg.max_logprob_window_tokens,
-                )
-                old_logprob = torch.tensor(sample.old_logprob, device=device, dtype=new_logprob.dtype)
-                advantage = torch.tensor(sample.advantage, device=device, dtype=new_logprob.dtype)
-                ratio = torch.exp(torch.clamp(new_logprob - old_logprob, -20.0, 20.0))
-                clipped = torch.clamp(ratio, 1.0 - cfg.clip_epsilon, 1.0 + cfg.clip_epsilon)
-                loss = -torch.min(ratio * advantage, clipped * advantage)
-                loss.backward()
-                batch_loss += float(loss.detach().cpu())
-            torch.nn.utils.clip_grad_norm_(train_params, cfg.max_grad_norm)
-            optimizer.step()
-            step_rows.append(
-                {
-                    "epoch": epoch + 1,
-                    "batch_start": start,
-                    "batch_size": len(batch),
-                    "loss": round(batch_loss / max(1, len(batch)), 6),
-                    "device": str(device),
-                }
+        train_params = peft_trainable_parameters(model)
+        if not train_params:
+            raise SystemExit(f"No trainable PEFT parameters found for adapter: {source_adapter}")
+        optimizer = AdamW(train_params, lr=cfg.learning_rate)
+        model.eval()
+        if cfg.refresh_old_logprobs:
+            samples = refresh_ppo_old_logprobs_torch(
+                samples=samples,
+                model=model,
+                tokenizer=tokenizer,
+                system_prompt=system_prompt,
+                torch_mod=torch,
+                max_window_tokens=cfg.max_logprob_window_tokens,
             )
 
-    save_peft_adapter(model, candidate_adapter)
+        step_rows: list[dict[str, Any]] = []
+        model.train()
+        for epoch in range(cfg.ppo_epochs):
+            for start in range(0, len(samples), cfg.mini_batch_size):
+                batch = samples[start : start + cfg.mini_batch_size]
+                batch_loss = 0.0
+                optimizer.zero_grad(set_to_none=True)
+                for sample in batch:
+                    batch_loss += _backward_ppo_sample_transformers(
+                        model=model,
+                        tokenizer=tokenizer,
+                        sample=sample,
+                        system_prompt=system_prompt,
+                        torch_mod=torch,
+                        cfg=cfg,
+                        device=device,
+                    )
+                torch.nn.utils.clip_grad_norm_(train_params, cfg.max_grad_norm)
+                optimizer.step()
+                step_rows.append(
+                    {
+                        "epoch": epoch + 1,
+                        "batch_start": start,
+                        "batch_size": len(batch),
+                        "loss": round(batch_loss / max(1, len(batch)), 6),
+                        "device": str(device),
+                    }
+                )
 
-    manifest["status"] = "trained"
-    manifest["adapter_format"] = "peft"
-    manifest["steps"] = step_rows
-    manifest["source_adapter"] = str(source_adapter)
-    manifest["candidate_adapter"] = str(candidate_adapter)
-    manifest["device"] = str(device)
-    return manifest
+        save_peft_adapter(model, staging_adapter)
+        manifest["status"] = "trained"
+        manifest["adapter_format"] = "peft"
+        manifest["steps"] = step_rows
+        manifest["source_adapter"] = str(source_adapter)
+        manifest["candidate_adapter"] = str(candidate_adapter)
+        manifest["staging_adapter"] = str(staging_adapter)
+        manifest["device"] = str(device)
+        manifest["load_in_4bit"] = bool(load_in_4bit)
+        _finalize_trained_candidate(
+            staging_adapter=staging_adapter,
+            candidate_adapter=candidate_adapter,
+            manifest=manifest,
+        )
+        return manifest
+    except Exception:
+        discard_candidate_staging(staging_adapter)
+        discard_candidate_staging(candidate_adapter)
+        raise
 
 
 def train_ppo_batch_mlx(
@@ -1062,89 +1255,102 @@ def train_ppo_batch_mlx(
     except ImportError as exc:
         raise SystemExit("PPO MLX training requires mlx and mlx_lm to be installed.") from exc
 
-    _prepare_candidate_adapter_dir(source_adapter, candidate_adapter)
-    train_adapter = candidate_adapter if (candidate_adapter / "adapters.safetensors").is_file() else source_adapter
-    model, tokenizer = load(base_model, adapter_path=str(train_adapter if train_adapter.exists() else None))
-    lora_param_count = len(_mlx_extract_lora_flat(model, tree_flatten))
-    if lora_param_count == 0:
-        raise SystemExit("PPO MLX training found no LoRA parameters in model.trainable_parameters().")
-    optimizer = optim.AdamW(learning_rate=cfg.learning_rate)
-    if cfg.refresh_old_logprobs:
-        samples = refresh_ppo_old_logprobs_mlx(
-            samples=samples,
-            model=model,
-            tokenizer=tokenizer,
-            system_prompt=system_prompt,
-            max_window_tokens=cfg.max_logprob_window_tokens,
-        )
+    staging_adapter = candidate_staging_dir(candidate_adapter)
+    discard_candidate_staging(staging_adapter)
+    staging_adapter.mkdir(parents=True, exist_ok=True)
+    train_adapter = source_adapter if source_adapter.exists() else candidate_adapter
+    try:
+        model, tokenizer = load(base_model, adapter_path=str(train_adapter if train_adapter.exists() else None))
+        lora_param_count = len(_mlx_extract_lora_flat(model, tree_flatten))
+        if lora_param_count == 0:
+            raise SystemExit("PPO MLX training found no LoRA parameters in model.trainable_parameters().")
+        optimizer = optim.AdamW(learning_rate=cfg.learning_rate)
+        if cfg.refresh_old_logprobs:
+            samples = refresh_ppo_old_logprobs_mlx(
+                samples=samples,
+                model=model,
+                tokenizer=tokenizer,
+                system_prompt=system_prompt,
+                max_window_tokens=cfg.max_logprob_window_tokens,
+            )
 
-    step_rows: list[dict[str, Any]] = []
-    for epoch in range(cfg.ppo_epochs):
-        for start in range(0, len(samples), cfg.mini_batch_size):
-            batch = samples[start : start + cfg.mini_batch_size]
-            batch_loss = 0.0
-            for sample in batch:
-                lora_params = _mlx_extract_lora_flat(model, tree_flatten)
+        step_rows: list[dict[str, Any]] = []
+        for epoch in range(cfg.ppo_epochs):
+            for start in range(0, len(samples), cfg.mini_batch_size):
+                batch = samples[start : start + cfg.mini_batch_size]
+                batch_loss = 0.0
+                for sample in batch:
+                    lora_params = _mlx_extract_lora_flat(model, tree_flatten)
 
-                def ppo_loss_fn(lora_params_flat: dict[str, Any]) -> Any:
+                    def ppo_loss_fn(lora_params_flat: dict[str, Any]) -> Any:
+                        _mlx_apply_flat_trainable(
+                            model,
+                            lora_params_flat,
+                            tree_flatten=tree_flatten,
+                            tree_unflatten=tree_unflatten,
+                        )
+                        new_logprob = _mean_completion_logprob_mlx_from_model(
+                            model,
+                            tokenizer,
+                            prompt=sample.prompt,
+                            completion=sample.completion,
+                            system_prompt=system_prompt,
+                            mx_mod=mx,
+                            max_window_tokens=cfg.max_logprob_window_tokens,
+                        )
+                        return ppo_clip_loss_mlx(
+                            new_logprob=new_logprob,
+                            old_logprob=sample.old_logprob,
+                            advantage=sample.advantage,
+                            clip_epsilon=cfg.clip_epsilon,
+                            mx_mod=mx,
+                        )
+
+                    loss, lora_grads = mx.value_and_grad(ppo_loss_fn)(lora_params)
+                    # Update LoRA tensors only; zero-grad updates on layernorms/biases corrupt MLX state.
+                    optimizer.update(lora_params, lora_grads)
                     _mlx_apply_flat_trainable(
                         model,
-                        lora_params_flat,
+                        lora_params,
                         tree_flatten=tree_flatten,
                         tree_unflatten=tree_unflatten,
                     )
-                    new_logprob = _mean_completion_logprob_mlx_from_model(
-                        model,
-                        tokenizer,
-                        prompt=sample.prompt,
-                        completion=sample.completion,
-                        system_prompt=system_prompt,
-                        mx_mod=mx,
-                        max_window_tokens=cfg.max_logprob_window_tokens,
-                    )
-                    return ppo_clip_loss_mlx(
-                        new_logprob=new_logprob,
-                        old_logprob=sample.old_logprob,
-                        advantage=sample.advantage,
-                        clip_epsilon=cfg.clip_epsilon,
-                        mx_mod=mx,
-                    )
-
-                loss, lora_grads = mx.value_and_grad(ppo_loss_fn)(lora_params)
-                # Update LoRA tensors only; zero-grad updates on layernorms/biases corrupt MLX state.
-                optimizer.update(lora_params, lora_grads)
-                _mlx_apply_flat_trainable(
-                    model,
-                    lora_params,
-                    tree_flatten=tree_flatten,
-                    tree_unflatten=tree_unflatten,
+                    mx.eval(model.parameters(), optimizer.state)
+                    batch_loss += float(loss)
+                step_rows.append(
+                    {
+                        "epoch": epoch + 1,
+                        "batch_start": start,
+                        "batch_size": len(batch),
+                        "loss": round(batch_loss / max(1, len(batch)), 6),
+                    }
                 )
-                mx.eval(model.parameters(), optimizer.state)
-                batch_loss += float(loss)
-            step_rows.append(
-                {
-                    "epoch": epoch + 1,
-                    "batch_start": start,
-                    "batch_size": len(batch),
-                    "loss": round(batch_loss / max(1, len(batch)), 6),
-                }
-            )
 
-    adapter_out = candidate_adapter / "adapters.safetensors"
-    saved_tensors = _mlx_save_lora_adapter_weights(
-        candidate_adapter,
-        model,
-        tree_flatten=tree_flatten,
-        mx_mod=mx,
-    )
-    manifest["status"] = "trained"
-    manifest["steps"] = step_rows
-    manifest["source_adapter"] = str(source_adapter)
-    manifest["ppo_load_adapter"] = str(train_adapter)
-    manifest["candidate_adapter"] = str(candidate_adapter)
-    manifest["adapter_file"] = str(adapter_out)
-    manifest["saved_lora_tensors"] = saved_tensors
-    return manifest
+        adapter_out = staging_adapter / "adapters.safetensors"
+        saved_tensors = _mlx_save_lora_adapter_weights(
+            staging_adapter,
+            model,
+            tree_flatten=tree_flatten,
+            mx_mod=mx,
+        )
+        manifest["status"] = "trained"
+        manifest["steps"] = step_rows
+        manifest["source_adapter"] = str(source_adapter)
+        manifest["ppo_load_adapter"] = str(train_adapter)
+        manifest["candidate_adapter"] = str(candidate_adapter)
+        manifest["staging_adapter"] = str(staging_adapter)
+        manifest["adapter_file"] = str(adapter_out)
+        manifest["saved_lora_tensors"] = saved_tensors
+        _finalize_trained_candidate(
+            staging_adapter=staging_adapter,
+            candidate_adapter=candidate_adapter,
+            manifest=manifest,
+        )
+        return manifest
+    except Exception:
+        discard_candidate_staging(staging_adapter)
+        discard_candidate_staging(candidate_adapter)
+        raise
 
 
 def write_ppo_manifest(path: Path, manifest: dict[str, Any]) -> None:

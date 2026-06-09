@@ -1,0 +1,94 @@
+[2026-06-08T04:57:21Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T04:57:21Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T05:09:13Z] launch_ok attempt=1 instance_id=f1845906a06a4507bf383bf3f0401d84 host=155.248.213.6
+[2026-06-08T05:09:13Z] launch_ok attempt=1 instance_id=f1845906a06a4507bf383bf3f0401d84 host=155.248.213.6
+[2026-06-08T05:09:13Z] watch_start poll_minutes=10.0 max_restarts=8 max_hours=14.0
+[2026-06-08T05:09:13Z] watch_start poll_minutes=10.0 max_restarts=8 max_hours=14.0
+[2026-06-08T05:09:15Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 2, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T05:09:15Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 2, "ppo_tail": [], "trained_hint": false}
+AGENT_LOOP_TICK_economist_rl {"prompt": "Read logs/economist_rl_overnight_watch.json and logs/economist_rl_overnight_watch.log. If the economistRL Lambda overnight watch failed, is stuck with no log progress for 2+ polls, or needs a code fix, diagnose and relaunch or patch the watcher."}
+[2026-06-08T05:19:17Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "2/10", "log_lines": 21, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T05:19:17Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "2/10", "log_lines": 21, "ppo_tail": [], "trained_hint": false}
+AGENT_LOOP_TICK_economist_rl {"prompt": "Read logs/economist_rl_overnight_watch.json and logs/economist_rl_overnight_watch.log. If the economistRL Lambda overnight watch failed, is stuck with no log progress for 2+ polls, or needs a code fix, diagnose and relaunch or patch the watcher."}
+[2026-06-08T05:29:19Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T05:29:19Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+AGENT_LOOP_TICK_economist_rl {"prompt": "Read logs/economist_rl_overnight_watch.json and logs/economist_rl_overnight_watch.log. If the economistRL Lambda overnight watch failed, is stuck with no log progress for 2+ polls, or needs a code fix, diagnose and relaunch or patch the watcher."}
+[2026-06-08T05:39:19Z] poll status=instance_gone tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T05:39:19Z] poll status=instance_gone tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T05:39:19Z] terminate_start id=f1845906a06a4507bf383bf3f0401d84 reason=watch_instance_gone
+[2026-06-08T05:39:19Z] terminate_start id=f1845906a06a4507bf383bf3f0401d84 reason=watch_instance_gone
+setup_cleanup_terminate_start reason=watch_instance_gone instance_count=1 ids=f1845906a06a4507bf383bf3f0401d84
+setup_cleanup_terminate_done reason=watch_instance_gone terminated_count=1
+setup_cleanup_terminated id=f1845906a06a4507bf383bf3f0401d84 name=fe-economist-rl-1780894641 status=terminating
+[2026-06-08T05:39:22Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T05:39:22Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 480, in <module>
+    raise SystemExit(main())
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 476, in main
+    return _run_watch(_parse_args(argv))
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 408, in _run_watch
+    meta = _launch_worker(cycle_argv, attempt=attempt)
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 224, in _launch_worker
+    raise RuntimeError(f"launch failed rc={proc.returncode}; see {launch_log}")
+RuntimeError: launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T20:54:58Z] watch_start poll_minutes=10.0 max_restarts=8 max_hours=14.0
+[2026-06-08T20:54:58Z] watch_start poll_minutes=10.0 max_restarts=8 max_hours=14.0
+[2026-06-08T20:54:59Z] poll status=instance_gone tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T20:54:59Z] poll status=instance_gone tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T21:11:31Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Network is unreachable
+rsync(68490): error: unexpected end of file
+[2026-06-08T21:11:31Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Network is unreachable
+rsync(68490): error: unexpected end of file
+[2026-06-08T21:11:31Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Network is unreachable
+rsync(68492): error: unexpected end of file
+[2026-06-08T21:11:31Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Network is unreachable
+rsync(68492): error: unexpected end of file
+[2026-06-08T21:11:31Z] terminate_start id=f1845906a06a4507bf383bf3f0401d84 reason=watch_instance_gone
+[2026-06-08T21:11:31Z] terminate_start id=f1845906a06a4507bf383bf3f0401d84 reason=watch_instance_gone
+setup_cleanup_terminate_start reason=watch_instance_gone instance_count=1 ids=f1845906a06a4507bf383bf3f0401d84
+setup_cleanup_terminate_failed reason=watch_instance_gone error=<urlopen error [Errno 8] nodename nor servname provided, or not known>
+[2026-06-08T21:11:31Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T21:11:31Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T21:11:31Z] relaunch_failed attempt=2 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T21:11:31Z] relaunch_failed attempt=2 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T21:41:32Z] poll status=instance_gone tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T21:41:32Z] poll status=instance_gone tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "6/10", "log_lines": 25, "ppo_tail": [], "trained_hint": false}
+[2026-06-08T21:43:17Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Operation timed out
+rsync(69009): error: unexpected end of file
+[2026-06-08T21:43:17Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Operation timed out
+rsync(69009): error: unexpected end of file
+[2026-06-08T21:51:31Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Operation timed out
+rsync(69184): error: unexpected end of file
+[2026-06-08T21:51:31Z] rsync_partial label=f1845906a06a4507bf383bf3f0401d84 src=ubuntu@155.248.213.6:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 155.248.213.6 port 22: Operation timed out
+rsync(69184): error: unexpected end of file
+[2026-06-08T21:51:31Z] terminate_start id=f1845906a06a4507bf383bf3f0401d84 reason=watch_instance_gone
+[2026-06-08T21:51:31Z] terminate_start id=f1845906a06a4507bf383bf3f0401d84 reason=watch_instance_gone
+setup_cleanup_terminate_start reason=watch_instance_gone instance_count=1 ids=f1845906a06a4507bf383bf3f0401d84
+setup_cleanup_terminate_done reason=watch_instance_gone terminated_count=1
+setup_cleanup_terminated id=f1845906a06a4507bf383bf3f0401d84 name=fe-economist-rl-1780894641 status=terminated
+[2026-06-08T21:51:35Z] launch_start attempt=3 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_03.log
+[2026-06-08T21:51:35Z] launch_start attempt=3 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_03.log
+[2026-06-08T21:56:06Z] watch_state_reset
+[2026-06-08T21:56:06Z] watch_state_reset
+[2026-06-08T21:56:06Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T21:56:06Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 764, in <module>
+    raise SystemExit(main())
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 760, in main
+    return _run_watch(_parse_args(argv))
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 526, in _run_watch
+    meta = _launch_worker(cycle_argv, attempt=attempt)
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 388, in _launch_worker
+    raise RuntimeError(f"launch failed rc={proc.returncode}; see {launch_log}")
+RuntimeError: launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:05:25Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:05:25Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:10:59Z] launch_failed attempt=1 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:10:59Z] launch_failed attempt=1 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:12:59Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T22:12:59Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-08T22:21:59Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:22:17Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-08T22:22:17Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log

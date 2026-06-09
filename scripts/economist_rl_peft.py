@@ -205,16 +205,44 @@ def load_peft_causal_lm(
     device: Any,
     dtype: Any,
     trainable: bool = False,
+    load_in_4bit: bool = False,
 ) -> tuple[Any, Any]:
     """Load base causal LM + optional PEFT adapter (converting MLX layout if needed)."""
-    import torch
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     model_id = str(model_id or "").strip()
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    base = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=dtype)
-    base.to(device)
+    model_kwargs: dict[str, Any] = {}
+    if load_in_4bit:
+        try:
+            from peft import prepare_model_for_kbit_training
+            from transformers import BitsAndBytesConfig
+        except ImportError as exc:
+            raise RuntimeError(
+                "4-bit PEFT loading requires bitsandbytes-capable Transformers/PEFT dependencies. "
+                "Install bitsandbytes in the CUDA environment."
+            ) from exc
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=dtype,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        )
+        model_kwargs.update(
+            {
+                "quantization_config": quantization_config,
+                "device_map": {"": str(device)},
+            }
+        )
+    else:
+        model_kwargs["torch_dtype"] = dtype
+    base = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs)
+    if load_in_4bit:
+        if trainable:
+            base = prepare_model_for_kbit_training(base)
+    else:
+        base.to(device)
 
     if adapter_dir is None:
         if trainable:
@@ -227,7 +255,8 @@ def load_peft_causal_lm(
         str(resolved),
         is_trainable=bool(trainable),
     )
-    model.to(device)
+    if not load_in_4bit:
+        model.to(device)
     if trainable:
         model.train()
     else:

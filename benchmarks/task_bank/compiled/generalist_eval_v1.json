@@ -1,0 +1,127 @@
+{
+  "schema_version": "generalist_eval_manifest_v1",
+  "name": "generalist_eval_v1",
+  "description": "Mixed-source generalist benchmark compiled from SWE-style candidates and fallen-empire patch tasks.",
+  "selection_policy": {
+    "goals": [
+      "domain coverage",
+      "subskill diversity",
+      "high-risk representation",
+      "multidomain pressure"
+    ],
+    "notes": [
+      "SWE candidate tasks are referenced from raw source and should use normalized domain file hints.",
+      "Patch tasks preserve source commit lineage for traceable regressions."
+    ]
+  },
+  "supplemental_source_files": [
+    "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+    "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+    "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json"
+  ],
+  "task_refs": [
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-001",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-002",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-006",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-009",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-010",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-013",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-015",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/swebench_game_applicable_tasks_v1.json",
+      "task_id": "swe-game-v1-017",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+      "task_id": "patch-node-path-runtime-resolution-01",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+      "task_id": "patch-railway-missing-dep-02",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-test-env-dynamic-route-03",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-ai-plan-shared-application-05",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-site-auth-middleware-07",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-multiplayer-snapshot-types-09",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/economy_research_progression_tasks_v1.json",
+      "task_id": "patch-research-system-schema-11",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+      "task_id": "patch-siege-workshop-build-menu-14",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/patch_task_bank_v1.json",
+      "task_id": "patch-macos-dev-stability-16",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+      "task_id": "patch-game-server-deploy-contract-21",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/multiplayer_runtime_tasks_v1.json",
+      "task_id": "patch-multiplayer-remap-safety-22",
+      "lane": "generalist"
+    },
+    {
+      "source_file": "benchmarks/task_bank/sources/core_gameplay_tasks_v1.json",
+      "task_id": "patch-combat-hud-density-refactor-23",
+      "lane": "generalist"
+    }
+  ],
+  "status": "outdated",
+  "superseded_by": "benchmarks/task_bank/compiled/final_mass_testing_system_v1.json",
+  "lifecycle_note": "Use final_mass_testing_system_v1 for broad testing."
+}

@@ -1382,6 +1382,11 @@ def main() -> None:
     p_ui.add_argument("--host", default="127.0.0.1")
     p_ui.add_argument("--port", type=int, default=7863)
     p_ui.add_argument("--share", action="store_true")
+    p_ui.add_argument(
+        "--allow-legacy-ui",
+        action="store_true",
+        help="Run this deprecated UI anyway (not a supported site).",
+    )
 
     sub.add_parser("list", help="List landing-page trials")
 
@@ -1405,6 +1410,15 @@ def main() -> None:
     elif args.command == "rate":
         print(rate_attempt(args))
     elif args.command == "ui":
+        if not args.allow_legacy_ui:
+            raise SystemExit(
+                "scripts/landing_page_arena.py ui is a legacy site and is no longer supported by default.\n"
+                "Supported sites are:\n"
+                "  1) Documentation site: python scripts/private_dashboard_server.py\n"
+                "  2) Arena training supervision site: python scripts/game_task_arena.py ui\n"
+                "  3) Router prompt site: python scripts/router_chat_gradio.py\n"
+                "To run this legacy UI anyway, pass --allow-legacy-ui."
+            )
         app = build_app()
         app.launch(server_name=args.host, server_port=args.port, share=args.share)
     elif args.command == "list":

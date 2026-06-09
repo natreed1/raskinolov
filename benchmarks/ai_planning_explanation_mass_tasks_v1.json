@@ -1,0 +1,691 @@
+[
+  {
+    "id": "ai-mass-rationale-01",
+    "category": "ai_core",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write a short AI council rationale choosing defense over expansion this turn.",
+    "expect": {
+      "any_contains": [
+        "defense",
+        "expansion",
+        "risk",
+        "supply",
+        "morale"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "planning"
+    ]
+  },
+  {
+    "id": "ai-mass-intents-02",
+    "category": "ai_core",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Provide three concise AI intent labels and one-line explanations.",
+    "expect": {
+      "any_contains": [
+        "expansion",
+        "scout",
+        "reinforce",
+        "attack",
+        "defend"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "planning"
+    ]
+  },
+  {
+    "id": "ai-mass-followup-03",
+    "category": "ai_core",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "In 2-3 sentences, explain one AI choice and one concrete follow-up action.",
+    "expect": {
+      "any_contains": [
+        "choice",
+        "follow-up",
+        "reinforce",
+        "fortify",
+        "scout"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "planning"
+    ]
+  },
+  {
+    "id": "ai-mass-ui-clarity-04",
+    "category": "ai_ui_change",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Suggest one UI wording improvement to make AI rationale easier to inspect.",
+    "expect": {
+      "any_contains": [
+        "rationale",
+        "inspect",
+        "clarity",
+        "signal"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "planning",
+      "ui"
+    ]
+  },
+  {
+    "id": "ai-mass-compact-line-05",
+    "category": "ai_ui_change",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write one compact planning line for a war-room panel.",
+    "expect": {
+      "any_contains": [
+        "plan",
+        "risk",
+        "reinforce",
+        "defend",
+        "expand"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning",
+      "ui"
+    ]
+  },
+  {
+    "id": "ai-mass-branching-06",
+    "category": "ai_ui_change",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Describe one branching condition where AI swaps from expansion to defense.",
+    "expect": {
+      "all_contains": [
+        "expansion",
+        "defense"
+      ],
+      "any_contains": [
+        "risk",
+        "morale",
+        "supply"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "planning",
+      "ui"
+    ]
+  },
+  {
+    "id": "ai-mass-constraints-07",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Plain text only: one sentence containing defend, expand, and reinforce.",
+    "expect": {
+      "all_contains": [
+        "defend",
+        "expand",
+        "reinforce"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-constraints-08",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Output one comma-separated line with four AI intent verbs.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "defend",
+        "expand",
+        "scout",
+        "reinforce",
+        "attack"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-constraints-09",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Exactly two lines: line one intent, line two reason.",
+    "expect": {
+      "any_contains": [
+        "intent",
+        "reason",
+        "risk",
+        "supply",
+        "morale"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-transfer-loading-10",
+    "category": "ai_transfer",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write one loading line hinting at current AI council intent.",
+    "expect": {
+      "any_contains": [
+        "council",
+        "intent",
+        "defend",
+        "expand",
+        "reinforce"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "ai-mass-transfer-combat-11",
+    "category": "ai_transfer",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Provide one combat-preview note that references AI risk assessment.",
+    "expect": {
+      "any_contains": [
+        "combat",
+        "risk",
+        "assessment",
+        "defend"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning",
+      "combat"
+    ]
+  },
+  {
+    "id": "ai-mass-transfer-economy-12",
+    "category": "ai_transfer",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Give one AI rationale line that postpones expansion for economy stabilization.",
+    "expect": {
+      "all_contains": [
+        "expansion"
+      ],
+      "any_contains": [
+        "economy",
+        "stabilization",
+        "income",
+        "upkeep"
+      ],
+      "min_chars": 50
+    },
+    "domains": [
+      "planning",
+      "economy"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-lexical-13",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write exactly three intent labels and keep the literal verbs defend, expand, and reinforce.",
+    "expect": {
+      "all_contains": [
+        "defend",
+        "expand",
+        "reinforce"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-lines-14",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Output exactly three lines in the form intent - reason, and include scout and attack at least once.",
+    "expect": {
+      "any_contains": [
+        "scout",
+        "attack",
+        "defend",
+        "expand",
+        "reinforce"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-comma-15",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Return one comma-separated line with four intent verbs using this token style: defend, expand, scout, reinforce, attack.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "defend",
+        "expand",
+        "scout",
+        "reinforce",
+        "attack"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-followup-16",
+    "category": "ai_core",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Provide three concise AI intent labels with one short follow-up action each. Use defend or expansion language explicitly.",
+    "expect": {
+      "any_contains": [
+        "defend",
+        "expansion",
+        "reinforce",
+        "scout",
+        "attack"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "planning"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-branch-17",
+    "category": "ai_ui_change",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "In two short lines, show an expansion intent line and then a defend intent line when risk spikes.",
+    "expect": {
+      "all_contains": [
+        "expansion",
+        "defend"
+      ],
+      "any_contains": [
+        "risk",
+        "morale",
+        "supply"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "planning",
+      "ui"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-council-18",
+    "category": "ai_transfer",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write one council line that names current intent and one next intent using verbs from defend, expand, scout, reinforce, attack.",
+    "expect": {
+      "all_contains": [
+        "intent"
+      ],
+      "any_contains": [
+        "defend",
+        "expand",
+        "scout",
+        "reinforce",
+        "attack"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "planning",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-war-room-19",
+    "category": "ai_core",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "War-room snapshot: list three intent labels and keep each label under three words.",
+    "expect": {
+      "any_contains": [
+        "defend",
+        "expand",
+        "scout",
+        "reinforce",
+        "attack"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning"
+    ]
+  },
+  {
+    "id": "ai-mass-intent-plain-20",
+    "category": "ai_constraints",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Plain text only. Include literal tokens defend and expansion in a short intent explanation.",
+    "expect": {
+      "all_contains": [
+        "defend",
+        "expansion"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "planning",
+      "constraints"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-hud-21",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write a compact HUD rationale linking AI intent to morale and supply status.",
+    "expect": {
+      "any_contains": [
+        "intent",
+        "morale",
+        "supply",
+        "defend",
+        "expand"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "hud"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-combat-22",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Explain in 2 sentences why AI delays attack based on combat preview and terrain risk.",
+    "expect": {
+      "any_contains": [
+        "attack",
+        "combat",
+        "terrain",
+        "risk",
+        "delay"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "planning",
+      "combat"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-econ-23",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Provide one rationale that trades expansion speed for economy stabilization and save safety.",
+    "expect": {
+      "any_contains": [
+        "expansion",
+        "economy",
+        "stabil",
+        "save",
+        "safety"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "planning",
+      "economy",
+      "save_load"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-loading-24",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Draft two loading lines that communicate current AI intent and fallback plan.",
+    "expect": {
+      "any_contains": [
+        "loading",
+        "intent",
+        "fallback",
+        "plan",
+        "council"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-save-25",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write one guard note for persisted AI plans when schema version mismatches.",
+    "expect": {
+      "any_contains": [
+        "schema",
+        "version",
+        "plan",
+        "persist",
+        "mismatch"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "save_load"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-compact-26",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "One comma-separated line with intent, economy pressure, combat risk, and save confidence.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "intent",
+        "economy",
+        "combat",
+        "risk",
+        "save"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "economy",
+      "combat",
+      "save_load"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-threat-27",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Provide one sentence on how low supply shifts AI from expansion to reinforcement.",
+    "expect": {
+      "any_contains": [
+        "supply",
+        "expansion",
+        "reinforcement",
+        "intent"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "economy"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-hud-combat-28",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Write one war-room line connecting HUD threat chips to combat decision thresholds.",
+    "expect": {
+      "any_contains": [
+        "HUD",
+        "threat",
+        "combat",
+        "decision",
+        "threshold"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "hud",
+      "combat"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-ops-29",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "Plain text only: summarize AI intent, risk posture, and persistence fallback in two lines.",
+    "expect": {
+      "any_contains": [
+        "intent",
+        "risk",
+        "fallback",
+        "persist"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "planning",
+      "save_load",
+      "combat"
+    ]
+  },
+  {
+    "id": "ai-mass-domain-aci-30",
+    "category": "ai_multidomain",
+    "specialists": [
+      "ai_planning_explanation"
+    ],
+    "prompt": "One sentence on why AI rationale quality should be scored across multiple gameplay domains.",
+    "expect": {
+      "any_contains": [
+        "AI",
+        "rationale",
+        "multiple",
+        "domains",
+        "score"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "planning",
+      "economy",
+      "combat"
+    ]
+  }
+]

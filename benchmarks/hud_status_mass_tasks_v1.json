@@ -1,0 +1,728 @@
+[
+  {
+    "id": "hud-mass-chips-core-01",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "List exactly four compact HUD chips including morale and supply plus two risk signals.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "pressure",
+        "territory",
+        "upkeep"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-values-02",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write three terse HUD labels with values for observer mode.",
+    "expect": {
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure",
+        "Territory"
+      ],
+      "none_contains": [
+        "```",
+        "function ",
+        "const "
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-visibility-note-03",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "In 2-3 sentences, suggest one HUD visibility improvement for a dark medieval panel.",
+    "expect": {
+      "any_contains": [
+        "visibility",
+        "contrast",
+        "readable",
+        "hierarchy"
+      ],
+      "min_chars": 95
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-priority-order-04",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Propose ordering for morale, supply, and risk in a compact HUD block and explain why.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "risk",
+        "priority",
+        "scan"
+      ],
+      "min_chars": 90
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-no-clutter-05",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Describe one change that reduces HUD clutter while keeping strategic signal quality.",
+    "expect": {
+      "any_contains": [
+        "clutter",
+        "compact",
+        "signal",
+        "density"
+      ],
+      "min_chars": 85
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-alert-tone-06",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write one warning-style HUD line and one stable-state line with terse tactical wording.",
+    "expect": {
+      "any_contains": [
+        "warning",
+        "stable",
+        "ready",
+        "risk"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-constraints-07",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Plain text only: output one comma-separated line of four HUD chips.",
+    "expect": {
+      "all_contains": [
+        ","
+      ],
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 35
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-constraints-08",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Exactly two lines: first for morale status, second for supply status.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "min_chars": 30
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-constraints-09",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "One sentence only: explain why HUD should keep morale and supply always visible.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-transfer-load-10",
+    "category": "hud_transfer",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write a loading-screen hint that previews upcoming HUD morale/supply pressure.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "pressure",
+        "preview",
+        "status"
+      ],
+      "min_chars": 60
+    },
+    "domains": [
+      "hud",
+      "loading_screen"
+    ]
+  },
+  {
+    "id": "hud-mass-transfer-econ-11",
+    "category": "hud_transfer",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Provide one HUD tooltip line connecting supply pressure to net income.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "income",
+        "gold",
+        "upkeep"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "economy"
+    ]
+  },
+  {
+    "id": "hud-mass-transfer-combat-12",
+    "category": "hud_transfer",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Give one HUD combat-prep line that includes morale and terrain awareness.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "terrain"
+      ],
+      "any_contains": [
+        "risk",
+        "combat",
+        "preview"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-casing-13",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write exactly three short HUD lines with numeric values, and each line must start with one of: Morale, Supply, Risk.",
+    "expect": {
+      "all_contains": [
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "%"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-observer-14",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Observer mode is paused. Provide three compact HUD labels with values and keep each label to three words or fewer.",
+    "expect": {
+      "any_contains": [
+        "Morale",
+        "Supply",
+        "Risk",
+        "Pressure",
+        "Territory",
+        "Upkeep"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 40
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-snapshot-15",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Return one comma-separated HUD snapshot line with four chips. Include Morale and Supply and at least one risk-style chip.",
+    "expect": {
+      "all_contains": [
+        ",",
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "Territory"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-ready-16",
+    "category": "hud_core",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write three HUD status labels for a ready-check panel. Include Morale and Supply with values, plus one urgency indicator.",
+    "expect": {
+      "all_contains": [
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "Ready"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "status"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-contrast-17",
+    "category": "hud_ui_change",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "In two short lines, show one low-risk HUD state and one high-risk HUD state using compact labels and values.",
+    "expect": {
+      "any_contains": [
+        "Risk",
+        "Pressure",
+        "Morale",
+        "Supply"
+      ],
+      "min_chars": 50
+    },
+    "domains": [
+      "hud",
+      "ui"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-economy-link-18",
+    "category": "hud_transfer",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Provide two compact HUD chips that connect Supply pressure to Income trend.",
+    "expect": {
+      "all_contains": [
+        "Supply"
+      ],
+      "any_contains": [
+        "Income",
+        "gold",
+        "upkeep",
+        "Pressure"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "economy"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-combat-link-19",
+    "category": "hud_transfer",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write two terse HUD chips for combat preview that include Morale and one terrain/risk indicator.",
+    "expect": {
+      "all_contains": [
+        "Morale"
+      ],
+      "any_contains": [
+        "terrain",
+        "Risk",
+        "Pressure",
+        "combat"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-terse-colon-format-20",
+    "category": "hud_constraints",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Output exactly three lines in Label: Value format, using Morale, Supply, and Risk.",
+    "expect": {
+      "all_contains": [
+        "Morale",
+        "Supply"
+      ],
+      "any_contains": [
+        "Risk",
+        ":"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 45
+    },
+    "domains": [
+      "hud",
+      "constraints"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-balance-21",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Design a compact HUD strip that shows morale, supply, economy pressure, and combat readiness in one row.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "economy",
+        "income",
+        "combat",
+        "risk"
+      ],
+      "min_chars": 85
+    },
+    "domains": [
+      "hud",
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-tooltip-22",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write one tooltip that links HUD risk level to both net gold trend and expected battle posture.",
+    "expect": {
+      "any_contains": [
+        "risk",
+        "gold",
+        "income",
+        "battle",
+        "posture"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "hud",
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-loading-23",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Draft two loading-to-HUD transition lines that mention morale, supply, and AI intent.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "intent",
+        "defend",
+        "expand",
+        "reinforce"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "hud",
+      "loading_screen",
+      "planning"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-save-24",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Provide a HUD system line confirming save-state compatibility plus current morale/supply snapshot.",
+    "expect": {
+      "any_contains": [
+        "save",
+        "compatibility",
+        "morale",
+        "supply"
+      ],
+      "min_chars": 65
+    },
+    "domains": [
+      "hud",
+      "save_load"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-compact-25",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "One comma-separated line with four chips: morale, supply, economy pressure, combat risk.",
+    "expect": {
+      "all_contains": [
+        ",",
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "economy",
+        "income",
+        "combat",
+        "risk"
+      ],
+      "min_chars": 55
+    },
+    "domains": [
+      "hud",
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-why-26",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "In 2 sentences explain why HUD should expose morale/supply alongside economy and combat pressure.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "economy",
+        "combat",
+        "risk"
+      ],
+      "min_chars": 85
+    },
+    "domains": [
+      "hud",
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-ai-27",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Write a war-room HUD note that ties AI intent to morale, supply, and frontline risk.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "intent",
+        "risk",
+        "frontline"
+      ],
+      "min_chars": 75
+    },
+    "domains": [
+      "hud",
+      "planning",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-recovery-28",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Create one warning line and one recovery line connecting low supply to economy drag and combat risk.",
+    "expect": {
+      "all_contains": [
+        "supply"
+      ],
+      "any_contains": [
+        "economy",
+        "income",
+        "combat",
+        "risk",
+        "recover"
+      ],
+      "min_chars": 80
+    },
+    "domains": [
+      "hud",
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-minimal-29",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Plain text only: summarize morale, supply, economy trend, and battle readiness in two lines.",
+    "expect": {
+      "all_contains": [
+        "morale",
+        "supply"
+      ],
+      "any_contains": [
+        "economy",
+        "income",
+        "battle",
+        "readiness"
+      ],
+      "none_contains": [
+        "```"
+      ],
+      "min_chars": 70
+    },
+    "domains": [
+      "hud",
+      "economy",
+      "combat"
+    ]
+  },
+  {
+    "id": "hud-mass-domain-ops-30",
+    "category": "hud_multidomain",
+    "specialists": [
+      "hud_status"
+    ],
+    "prompt": "Propose a compact command-center HUD block that merges status chips, save integrity, and AI intent tags.",
+    "expect": {
+      "any_contains": [
+        "status",
+        "save",
+        "integrity",
+        "intent",
+        "chips"
+      ],
+      "min_chars": 85
+    },
+    "domains": [
+      "hud",
+      "save_load",
+      "planning"
+    ]
+  }
+]

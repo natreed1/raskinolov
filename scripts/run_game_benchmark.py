@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
 """
-Run a fixed JSON task suite against an mlx-lm model and score outputs with simple string rules.
-
-**Game profile** (default) uses Fallen Empire–flavored tasks and a matching system prompt.
-**General profile** uses `benchmarks/general_coding_tasks.json` and a neutral coding-assistant
-system prompt (portable “how well does the base vs adapter do on generic Q&A?”).
+Run specialist-focused benchmark tasks against an mlx-lm model and score outputs
+with simple string rules.
 
 Usage:
   source .venv/bin/activate
   python scripts/run_game_benchmark.py
-  python scripts/run_game_benchmark.py --profile general
-  python scripts/run_game_benchmark.py --tier A --tasks benchmarks/fallen_empire_tasks.json
+  python scripts/run_game_benchmark.py --specialist combat_risk --specialist economy_tooltip
+  python scripts/run_game_benchmark.py --tier A --tasks benchmarks/specialist_benchmark_tasks.json
   python scripts/run_game_benchmark.py --tasks benchmarks/custom_tasks.json --output-jsonl benchmarks/results/run.jsonl
 """
 
@@ -30,21 +27,18 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 import benchmark_evolution_lib as bel
+import fe_lineage as _fe
 
 from mlx_lm import generate, load
 from mlx_lm.sample_utils import make_sampler
+from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
 
-DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-1.5B-Instruct-4bit"
+DEFAULT_MODEL = _fe.HF_MODEL_ID
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_TASKS_GAME = REPO_ROOT / "benchmarks" / "fallen_empire_tasks.json"
-DEFAULT_TASKS_GENERAL = REPO_ROOT / "benchmarks" / "general_coding_tasks.json"
-SYSTEM_GAME = (
+DEFAULT_TASKS_SPECIALIST = REPO_ROOT / "benchmarks" / "specialist_benchmark_tasks.json"
+SYSTEM_SPECIALIST = (
     "You are Albert, assisting with the Fallen Empire strategy game (TypeScript / React / Zustand). "
     "Follow each user instruction literally. Prefer correct game terminology when relevant."
-)
-SYSTEM_GENERAL = (
-    "You are a careful programming assistant. Follow each user instruction literally. "
-    "Answer clearly; prefer exact terminology for standards (HTTP, SQL, regex, encodings, complexity)."
 )
 
 
@@ -62,6 +56,9 @@ class TaskResult:
     instruction_score: float
     concision_score: float
     speed_score: float
+    task_weight: float
+    domains: List[str]
+    multi_domain: bool
 
 
 def _clamp01(value: float) -> float:
@@ -158,22 +155,116 @@ def capability_scores(
     }
 
 
+def infer_domains(task: Dict[str, Any]) -> List[str]:
+    declared = [str(d).strip().lower() for d in (task.get("domains") or []) if str(d).strip()]
+    if declared:
+        return list(dict.fromkeys(declared))
+    category = str(task.get("category") or "").lower()
+    domains: List[str] = []
+    mapping = [
+        ("hud", "hud"),
+        ("eco", "economy"),
+        ("economy", "economy"),
+        ("combat", "combat"),
+        ("save", "save_load"),
+        ("load", "save_load"),
+        ("ai", "planning"),
+        ("planning", "planning"),
+        ("loading", "loading_screen"),
+        ("ui", "ui"),
+    ]
+    for token, domain in mapping:
+        if token in category:
+            domains.append(domain)
+    if not domains:
+        domains.append("general")
+    return list(dict.fromkeys(domains))
+
+
+def task_weight(task: Dict[str, Any], domains: List[str]) -> float:
+    expect = task.get("expect") or {}
+    category = str(task.get("category") or "").lower()
+    # Difficulty proxy from rubric complexity.
+    min_chars = int(expect.get("min_chars") or 0)
+    n_all = len(expect.get("all_contains") or [])
+    n_any = len(expect.get("any_contains") or [])
+    n_none = len(expect.get("none_contains") or [])
+    complexity = 1.0 + min(0.35, (min_chars / 1200.0) + (n_all * 0.03) + (n_any * 0.01) + (n_none * 0.02))
+
+    category_boost = 1.0
+    if "multidomain" in category or "multi_domain" in category:
+        category_boost += 0.20
+    elif "transfer" in category:
+        category_boost += 0.12
+    elif "ui_change" in category:
+        category_boost += 0.05
+    elif "constraints" in category:
+        category_boost -= 0.04
+
+    # Reward tasks that truly span multiple domains.
+    multi_domain_bonus = 1.0 + (0.08 * max(0, len(domains) - 1))
+    return round(complexity * category_boost * multi_domain_bonus, 4)
+
+
+def advanced_aci(results: List[TaskResult]) -> Dict[str, float]:
+    if not results:
+        return {
+            "weighted_capability": 0.0,
+            "domain_balance": 0.0,
+            "multi_domain_mastery": 0.0,
+            "advanced_aci": 0.0,
+        }
+
+    total_weight = sum(max(0.0001, r.task_weight) for r in results)
+    weighted_cap = sum(r.capability_score * max(0.0001, r.task_weight) for r in results) / total_weight
+
+    domain_scores: Dict[str, List[float]] = {}
+    for r in results:
+        score = 100.0 if r.passed else 0.0
+        for d in r.domains:
+            domain_scores.setdefault(d, []).append(score)
+    domain_balance = (
+        sum(sum(vals) / len(vals) for vals in domain_scores.values()) / len(domain_scores)
+        if domain_scores
+        else 0.0
+    )
+
+    md = [r for r in results if r.multi_domain]
+    multi_domain_mastery = (
+        100.0 * (sum(1 for r in md if r.passed) / len(md))
+        if md
+        else (100.0 * sum(1 for r in results if r.passed) / len(results))
+    )
+
+    # Advanced ACI: weighted capability + domain spread + multi-domain success.
+    aci = (0.65 * weighted_cap) + (0.20 * domain_balance) + (0.15 * multi_domain_mastery)
+    return {
+        "weighted_capability": round(weighted_cap, 2),
+        "domain_balance": round(domain_balance, 2),
+        "multi_domain_mastery": round(multi_domain_mastery, 2),
+        "advanced_aci": round(aci, 2),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="MLX benchmark runner (game or general string-rubric tasks)"
+        description="MLX benchmark runner for specialist string-rubric tasks"
     )
     parser.add_argument("--model", default=os.environ.get("MODEL", DEFAULT_MODEL))
     parser.add_argument(
-        "--profile",
-        choices=["game", "general"],
-        default="game",
-        help="Default tasks + system: game=Fallen Empire suite; general=generic coding rubrics.",
-    )
-    parser.add_argument(
         "--tasks",
         type=Path,
-        default=None,
-        help="Task JSON (array). Default depends on --profile if omitted.",
+        default=DEFAULT_TASKS_SPECIALIST,
+        help="Task JSON (array). Default: specialist benchmark task set.",
+    )
+    parser.add_argument(
+        "--specialist",
+        action="append",
+        default=[],
+        help=(
+            "Filter to benchmark tasks mapped to one or more specialists. "
+            "Repeat for multiple specialists, e.g. --specialist combat_risk --specialist economy_tooltip."
+        ),
     )
     parser.add_argument("--adapter-path", default=os.environ.get("ADAPTER_PATH"))
     parser.add_argument("--max-tokens", type=int, default=None, help="Override decode cap (default: tier or 512)")
@@ -187,29 +278,39 @@ def main() -> None:
     parser.add_argument("--output-jsonl", type=Path, default=None, help="Append one JSON line per task")
     args = parser.parse_args()
 
-    if args.tasks is None:
-        tasks_path = (
-            DEFAULT_TASKS_GENERAL if args.profile == "general" else DEFAULT_TASKS_GAME
-        )
-    else:
-        tasks_path = args.tasks
-    system = SYSTEM_GENERAL if args.profile == "general" else SYSTEM_GAME
-
-    tasks_path = tasks_path.resolve()
+    tasks_path = args.tasks.resolve()
+    system = SYSTEM_SPECIALIST
     if not tasks_path.is_file():
         raise SystemExit(f"Tasks file not found: {tasks_path}")
 
     tasks = bel.load_tasks(tasks_path)
+    requested_specialists = [s.strip() for s in args.specialist if s.strip()]
+    if requested_specialists:
+        requested_set = set(requested_specialists)
+        filtered = []
+        for task in tasks:
+            task_specialists = set(task.get("specialists") or [])
+            if task_specialists & requested_set:
+                filtered.append(task)
+        tasks = filtered
+        if not tasks:
+            raise SystemExit(
+                "No benchmark tasks matched requested specialists: "
+                + ", ".join(sorted(requested_set))
+            )
+
     load_kw: dict = {}
     if args.adapter_path:
         load_kw["adapter_path"] = args.adapter_path
 
+    specialist_label = ",".join(requested_specialists) if requested_specialists else "all"
     print(
-        f"Loading {args.model!r} (profile={args.profile!r}, tasks={tasks_path.name}) …",
+        f"Loading {args.model!r} (specialists={specialist_label!r}, tasks={tasks_path.name}) …",
         file=sys.stderr,
     )
     t_load = time.perf_counter()
     model, tokenizer = load(args.model, **load_kw)
+    register_qwen_coder_instruct_extra_stops(tokenizer)
     print(f"Loaded in {time.perf_counter() - t_load:.1f}s", file=sys.stderr)
 
     if args.max_tokens is not None:
@@ -245,6 +346,8 @@ def main() -> None:
         elapsed = time.perf_counter() - t0
         ok, fails = bel.check_expect(out, expect_use)
         scores = capability_scores(out, user, expect_use, ok, fails, elapsed)
+        domains = infer_domains(task)
+        weight = task_weight(task, domains)
         preview = (out[:400] + "…") if len(out) > 400 else out
         tr = TaskResult(
             tid,
@@ -259,6 +362,9 @@ def main() -> None:
             scores["instruction"],
             scores["concision"],
             scores["speed"],
+            weight,
+            domains,
+            len(domains) > 1,
         )
         results.append(tr)
 
@@ -274,8 +380,11 @@ def main() -> None:
             "instruction_score": scores["instruction"],
             "concision_score": scores["concision"],
             "speed_score": scores["speed"],
+            "task_weight": weight,
+            "domains": domains,
+            "multi_domain": len(domains) > 1,
             "model": args.model,
-            "profile": args.profile,
+            "specialists": requested_specialists,
             "tasks_file": str(tasks_path),
             "tier": args.tier,
         }
@@ -304,12 +413,20 @@ def main() -> None:
     avg_instruction = sum(r.instruction_score for r in results) / total if total else 0.0
     avg_concision = sum(r.concision_score for r in results) / total if total else 0.0
     avg_speed = sum(r.speed_score for r in results) / total if total else 0.0
+    adv = advanced_aci(results)
     print(f"=== Summary: {passed}/{total} ({rate:.0%}) ===")
     print(
         "=== Capability Index: "
         f"{avg_cap:.1f}/100 "
         f"(correctness {avg_correct:.1f}, instruction {avg_instruction:.1f}, "
         f"concision {avg_concision:.1f}, speed {avg_speed:.1f}) ==="
+    )
+    print(
+        "=== Advanced ACI: "
+        f"{adv['advanced_aci']:.1f}/100 "
+        f"(weighted {adv['weighted_capability']:.1f}, "
+        f"domain-balance {adv['domain_balance']:.1f}, "
+        f"multi-domain {adv['multi_domain_mastery']:.1f}) ==="
     )
     if passed < total:
         sys.exit(1)

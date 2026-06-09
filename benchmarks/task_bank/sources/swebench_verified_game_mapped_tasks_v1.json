@@ -1,0 +1,799 @@
+{
+  "schema_version": "swebench_verified_game_mapped_tasks_v1",
+  "source_dataset": "SWE-bench/SWE-bench_Verified",
+  "selection_method": "manual curation from sampled Verified instances; mapped to Fallen Empire domains/subskills",
+  "tasks": [
+    {
+      "id": "swev-gm-001",
+      "swe_instance_id": "astropy__astropy-12907",
+      "swe_repo": "astropy/astropy",
+      "source_family": "nested_composition_logic_bug",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "army_operations"
+      ],
+      "subskill": "planner_strategy_separability",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "prompt": "Patch a planner bug where nested intent composition marks a mixed expansion+defense strategy as fully independent and emits conflicting rationale. Correct the separability logic for nested strategy nodes and keep single-layer plans unchanged.",
+      "canonical_file_hints": [
+        "src/lib/ai.ts",
+        "src/lib/aiTactics.ts",
+        "src/lib/applyAiPlan.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-002",
+      "swe_instance_id": "astropy__astropy-13033",
+      "swe_repo": "astropy/astropy",
+      "source_family": "misleading_exception_path",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "request_validation_guardrails",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "prompt": "Fix load validation so missing required fields return a precise typed error instead of a generic misleading exception message. Preserve existing success path and include missing-field names in the failure payload.",
+      "canonical_file_hints": [
+        "src/lib/simStateSerialization.ts",
+        "src/core/gameCore.ts",
+        "src/app/api/**/*.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-003",
+      "swe_instance_id": "astropy__astropy-13453",
+      "swe_repo": "astropy/astropy",
+      "source_family": "format-argument-ignored",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "ui_rendering_contract_integrity",
+      "complexity": "low_medium",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "prompt": "Patch HUD summary rendering so caller-specified number formats are honored in output chips instead of silently using defaults. Keep default rendering behavior when no explicit format is passed.",
+      "canonical_file_hints": [
+        "src/components/ui/GameHUD.tsx",
+        "src/store/useGameStore.ts"
+      ],
+      "acceptance_signals": [
+        "Formatted HUD chips respect explicit caller format inputs.",
+        "Default formatting remains unchanged when no format is provided.",
+        "Rendered chip text remains readable with no overlap or truncation artifacts."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/components/ui/",
+          "src/app/",
+          "src/styles/",
+          "src/store/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/combat.ts",
+          "src/lib/battlePreview.ts"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "train"
+    },
+    {
+      "id": "swev-gm-004",
+      "swe_instance_id": "astropy__astropy-13579",
+      "swe_repo": "astropy/astropy",
+      "source_family": "sliced-view-coordinate-inconsistency",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "combat_modifier_consistency",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "prompt": "Fix inconsistency between full-map and sliced-map combat targeting conversion so the same tile selection yields identical risk preview values in both views.",
+      "canonical_file_hints": [
+        "src/components/game/HexGrid.tsx",
+        "src/lib/battlePreview.ts",
+        "src/lib/combat.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-005",
+      "swe_instance_id": "astropy__astropy-13977",
+      "swe_repo": "astropy/astropy",
+      "source_family": "wrong-fallback-signaling",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "cross_node_state_reconciliation",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "safety_guard",
+      "prompt": "Patch an overloaded merge path so unsupported payload types return the fallback signal and let upstream handlers continue, instead of raising a hard error that aborts reconciliation.",
+      "canonical_file_hints": [
+        "src/lib/multiplayerRemap.ts",
+        "src/lib/multiplayerBridge.ts",
+        "src/core/gameCore.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-006",
+      "swe_instance_id": "astropy__astropy-14309",
+      "swe_repo": "astropy/astropy",
+      "source_family": "index-boundary-crash",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "state_perstitence_integrity"
+      ],
+      "subskill": "signed_delta_semantics",
+      "complexity": "low_medium",
+      "risk": "medium",
+      "task_type": "safety_guard",
+      "prompt": "Fix an index out-of-range crash in economy factor identification when sparse snapshots omit optional arrays. Add safe bounds checks and deterministic fallback labels.",
+      "canonical_file_hints": [
+        "src/lib/empireEconomy.ts",
+        "src/store/useGameStore.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-007",
+      "swe_instance_id": "astropy__astropy-14539",
+      "swe_repo": "astropy/astropy",
+      "source_family": "false-positive-diffing",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multidomain"
+      ],
+      "subskill": "resource_projection_cache_invalidation",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "api_schema",
+      "prompt": "Patch save/load comparison logic that reports differences between semantically identical states due to ordering noise. Normalize comparison inputs so equivalent states compare equal.",
+      "canonical_file_hints": [
+        "src/lib/simStateSerialization.ts",
+        "src/core/gameCore.ts",
+        "src/types/game.ts"
+      ],
+      "split": "holdout",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-008",
+      "swe_instance_id": "astropy__astropy-14598",
+      "swe_repo": "astropy/astropy",
+      "source_family": "escaping-consistency-bug",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "ui_rendering_contract_integrity",
+      "complexity": "low",
+      "risk": "low",
+      "task_type": "single_file",
+      "prompt": "Fix inconsistent quote-escaping in status text normalization so repeated encode/decode cycles preserve exactly one escaped representation.",
+      "canonical_file_hints": [
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "acceptance_signals": [
+        "Repeated encode/decode cycles preserve one stable escaped representation.",
+        "Status text remains human-readable in HUD labels after normalization.",
+        "No double-escaping appears in rendered status strings."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/components/ui/",
+          "src/app/",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/",
+          "src/store/"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "train"
+    },
+    {
+      "id": "swev-gm-009",
+      "swe_instance_id": "astropy__astropy-14995",
+      "swe_repo": "astropy/astropy",
+      "source_family": "mask-propagation-gap",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "deterministic_preview_state_isolation",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "state_logic",
+      "prompt": "Patch mixed-data merge so when one operand has a visibility mask and the other does not, mask propagation stays consistent and does not drop status indicators unexpectedly.",
+      "canonical_file_hints": [
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-010",
+      "swe_instance_id": "astropy__astropy-7606",
+      "swe_repo": "astropy/astropy",
+      "source_family": "none-comparison-typeerror",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "null_comparator_safety",
+      "complexity": "low_medium",
+      "risk": "medium",
+      "task_type": "safety_guard",
+      "prompt": "Fix comparator utilities so checking value equality against null does not throw type errors in guard code paths during load-time normalization.",
+      "canonical_file_hints": [
+        "src/lib/simStateSerialization.ts",
+        "src/lib/multiplayerRemap.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-011",
+      "swe_instance_id": "astropy__astropy-8707",
+      "swe_repo": "astropy/astropy",
+      "source_family": "bytes-vs-string-input-support",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "snapshot_schema_compatibility",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "prompt": "Patch import parser so binary payload input from wire format is accepted and decoded safely where string input is currently assumed.",
+      "canonical_file_hints": [
+        "src/lib/simStateSerialization.ts",
+        "src/app/api/**/*.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-012",
+      "swe_instance_id": "astropy__astropy-8872",
+      "swe_repo": "astropy/astropy",
+      "source_family": "silent-type-upcast",
+      "domain_primary": "army_operations",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "combat_modifier_consistency",
+      "complexity": "low_medium",
+      "risk": "medium",
+      "task_type": "state_logic",
+      "prompt": "Fix precision drift where low-precision combat modifier inputs are implicitly upcast and produce unstable rounding behavior in risk labels.",
+      "canonical_file_hints": [
+        "src/lib/combat.ts",
+        "src/lib/battlePreview.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-013",
+      "swe_instance_id": "django__django-10097",
+      "swe_repo": "django/django",
+      "source_family": "validator-character-filter-gap",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "identity_integrity_guards",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "prompt": "Patch auth validators to reject invalid credential characters currently accepted in username/password-like fields used by service connectors.",
+      "canonical_file_hints": [
+        "src/lib/siteAuth.ts",
+        "src/app/api/auth/route.ts",
+        "src/middleware.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-014",
+      "swe_instance_id": "django__django-10554",
+      "swe_repo": "django/django",
+      "source_family": "ordering-with-derived-query-breakage",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "economy"
+      ],
+      "subskill": "input_controller_event_ordering",
+      "complexity": "medium_high",
+      "risk": "medium",
+      "task_type": "state_logic",
+      "prompt": "Fix ordering logic for derived HUD rows so sorting by computed fields does not break when selector composition introduces nested projections.",
+      "canonical_file_hints": [
+        "src/store/useGameStore.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "acceptance_signals": [
+        "Derived HUD rows maintain deterministic ordering with nested projections.",
+        "Sorted output remains visually consistent between equivalent state snapshots.",
+        "Row alignment/readability is preserved after ordering logic changes."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/store/",
+          "src/components/ui/",
+          "src/app/",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/combat.ts",
+          "src/lib/battlePreview.ts"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "train"
+    },
+    {
+      "id": "swev-gm-015",
+      "swe_instance_id": "django__django-10880",
+      "swe_repo": "django/django",
+      "source_family": "query-syntax-edge-case",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "state_perstitence_integrity"
+      ],
+      "subskill": "planner_expression_safety",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "state_logic",
+      "prompt": "Patch compound planner filtering where combining conditional expressions with deduplication causes invalid expression assembly and dropped candidates.",
+      "canonical_file_hints": [
+        "src/lib/ai.ts",
+        "src/lib/aiTactics.ts",
+        "src/lib/applyAiPlan.ts"
+      ],
+      "split": "holdout",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-016",
+      "swe_instance_id": "django__django-10999",
+      "swe_repo": "django/django",
+      "source_family": "negative-duration-parse-bug",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "hud_status",
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "deploy_env_timeout_policy",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "single_file",
+      "prompt": "Fix duration parsing so negative timeout and cooldown values are interpreted correctly rather than treated as malformed positives.",
+      "canonical_file_hints": [
+        "game-server/src/index.ts",
+        "src/hooks/useMultiplayerSession.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-017",
+      "swe_instance_id": "django__django-11066",
+      "swe_repo": "django/django",
+      "source_family": "wrong-database-target",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "cross_node_state_reconciliation",
+      "complexity": "medium_high",
+      "risk": "high",
+      "task_type": "api_schema",
+      "prompt": "Patch migration/update helper so metadata renames are saved to the correct persistence target in multi-context deployments.",
+      "canonical_file_hints": [
+        "src/app/api/**/*.ts",
+        "src/lib/multiplayerBridge.ts",
+        "src/lib/multiplayerRemap.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-018",
+      "swe_instance_id": "django__django-11099",
+      "swe_repo": "django/django",
+      "source_family": "trailing-newline-validation-bypass",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "identity_integrity_guards",
+      "complexity": "low_medium",
+      "risk": "medium",
+      "task_type": "safety_guard",
+      "prompt": "Fix newline and trailing-whitespace bypass in player/display-name validation so invalid identities are rejected before state write.",
+      "canonical_file_hints": [
+        "src/lib/siteAuth.ts",
+        "src/app/api/auth/route.ts",
+        "src/types/game.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-019",
+      "swe_instance_id": "django__django-11119",
+      "swe_repo": "django/django",
+      "source_family": "render-context-flag-ignored",
+      "domain_primary": "hud_status",
+      "domains_secondary": [
+        "ai_strategy_and_planning"
+      ],
+      "subskill": "ui_rendering_contract_integrity",
+      "complexity": "medium",
+      "risk": "medium",
+      "task_type": "ui_behavior",
+      "prompt": "Patch render helper so explicit escape mode in context is honored when building HUD/briefing text; prevent accidental raw rendering.",
+      "canonical_file_hints": [
+        "src/components/ui/GameHUD.tsx",
+        "src/components/ui/panelThemes/MapRoomPanel.tsx"
+      ],
+      "acceptance_signals": [
+        "Explicit escape mode is honored in HUD/briefing render output.",
+        "Rendered text remains styled and readable with no raw-template leakage.",
+        "Unsafe raw rendering paths are not used when escape mode is enabled."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/components/ui/",
+          "src/app/",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/",
+          "src/store/"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "train"
+    },
+    {
+      "id": "swev-gm-020",
+      "swe_instance_id": "django__django-11133",
+      "swe_repo": "django/django",
+      "source_family": "binary-buffer-response-support",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "binary_response_handling",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "api_schema",
+      "prompt": "Fix response handling for binary-like memory buffers in export/download endpoints so state snapshots can be returned without type errors.",
+      "canonical_file_hints": [
+        "src/app/api/**/*.ts",
+        "src/lib/simStateSerialization.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-021",
+      "swe_instance_id": "django__django-11179",
+      "swe_repo": "django/django",
+      "source_family": "post-delete-identity-stale-state",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "multidomain"
+      ],
+      "subskill": "identity_integrity_guards",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "state_logic",
+      "prompt": "Patch entity-delete flow so identity fields are cleared after deletion in no-dependency paths, preventing stale references in follow-up operations.",
+      "canonical_file_hints": [
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts",
+        "src/types/game.ts"
+      ],
+      "split": "train",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-022",
+      "swe_instance_id": "django__django-11206",
+      "swe_repo": "django/django",
+      "source_family": "number-formatting-small-decimal",
+      "domain_primary": "economy",
+      "domains_secondary": [
+        "hud_status"
+      ],
+      "subskill": "signed_delta_semantics",
+      "complexity": "low",
+      "risk": "low",
+      "task_type": "single_file",
+      "prompt": "Fix number formatting so very small economy deltas are shown in fixed-point style for UI readability instead of unexpected exponential notation.",
+      "canonical_file_hints": [
+        "src/lib/empireEconomy.ts",
+        "src/components/ui/GameHUD.tsx"
+      ],
+      "acceptance_signals": [
+        "Very small economy deltas render in fixed-point style, not exponential notation.",
+        "Tooltip and HUD number formatting remain readable and consistent.",
+        "Sign semantics for positive/negative deltas are preserved."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/lib/empireEconomy.ts",
+          "src/components/ui/",
+          "src/app/",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": [
+          "src/core/",
+          "src/lib/combat.ts",
+          "src/lib/battlePreview.ts"
+        ]
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "train"
+    },
+    {
+      "id": "swev-gm-023",
+      "swe_instance_id": "django__django-11292",
+      "swe_repo": "django/django",
+      "source_family": "lookup-parse-regression",
+      "domain_primary": "ai_strategy_and_planning",
+      "domains_secondary": [
+        "routing"
+      ],
+      "subskill": "schema_migration_compatibility",
+      "complexity": "medium_high",
+      "risk": "medium",
+      "task_type": "state_logic",
+      "prompt": "Patch nested lookup parsing used by planner diagnostics so keys with suffix operators are parsed correctly and do not collapse to wrong base fields.",
+      "canonical_file_hints": [
+        "src/lib/ai.ts",
+        "src/lib/aiTactics.ts",
+        "scripts/router/policy.py"
+      ],
+      "split": "holdout",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-024",
+      "swe_instance_id": "django__django-11880",
+      "swe_repo": "django/django",
+      "source_family": "timezone-awareness-mismatch",
+      "domain_primary": "state_perstitence_integrity",
+      "domains_secondary": [
+        "state_perstitence_integrity",
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "websocket_handshake_recovery",
+      "complexity": "medium",
+      "risk": "high",
+      "task_type": "multi_file",
+      "prompt": "Fix timestamp hydration so configured timezone settings are consistently applied across persistence backends during load and replay flows.",
+      "canonical_file_hints": [
+        "src/app/api/**/*.ts",
+        "src/core/gameCore.ts",
+        "game-server/src/index.ts"
+      ],
+      "split": "eval",
+      "acceptance_signals": [
+        "Patch behavior matches task prompt intent across relevant code paths.",
+        "No obvious regressions are introduced in adjacent gameplay flows.",
+        "Output remains deterministic under repeated scenario execution."
+      ],
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ]
+    },
+    {
+      "id": "swev-gm-025",
+      "swe_instance_id": "django__django-12155",
+      "swe_repo": "django/django",
+      "source_family": "incomplete-state-update",
+      "domain_primary": "multidomain",
+      "domains_secondary": [
+        "hud_status",
+        "state_perstitence_integrity",
+        "multiplayer_runtime_deploy"
+      ],
+      "subskill": "reconnect_idempotency_and_lifecycle_cleanup",
+      "complexity": "high",
+      "risk": "high",
+      "task_type": "multi_file",
+      "prompt": "Patch grouped state updates so partial failures do not leave half-applied world state visible in HUD and multiplayer sync. Enforce atomic commit or explicit rollback.",
+      "canonical_file_hints": [
+        "src/core/gameCore.ts",
+        "src/store/useGameStore.ts",
+        "src/lib/multiplayerBridge.ts",
+        "src/lib/simStateSerialization.ts"
+      ],
+      "acceptance_signals": [
+        "Partial failures cannot leave half-applied state visible in HUD.",
+        "State update path enforces atomic commit or explicit rollback.",
+        "Degraded-state warning text is readable and aligned in user-facing HUD surfaces."
+      ],
+      "hard_constraints": {
+        "allowed_path_prefixes": [
+          "src/core/",
+          "src/store/",
+          "src/lib/multiplayerBridge.ts",
+          "src/lib/simStateSerialization.ts",
+          "src/components/ui/",
+          "src/app/",
+          "src/styles/"
+        ],
+        "forbidden_path_prefixes": []
+      },
+      "compile_commands": [
+        "npm run test:ml-cohort"
+      ],
+      "split": "train"
+    }
+  ]
+}
