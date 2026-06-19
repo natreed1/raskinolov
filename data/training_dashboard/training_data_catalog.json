@@ -1,7 +1,7 @@
 {
-  "generated_utc": "2026-05-17T21:44:07Z",
+  "generated_utc": "2026-06-13T22:38:13Z",
   "adapters_root": "data/lora/adapters",
-  "dataset_count": 20,
+  "dataset_count": 22,
   "datasets": [
     {
       "dataset_id": "ai_planning_explanation",
@@ -39,25 +39,25 @@
       "manifest_path": "data/lora/adapters/ai_planning_explanation_specialist/manifest.json",
       "task_family": "",
       "source": "",
-      "total_rows": 122,
+      "total_rows": 144,
       "splits": {
         "train": {
           "path": "data/lora/adapters/ai_planning_explanation_specialist/train.jsonl",
-          "rows": 120,
-          "size_bytes": 289574,
-          "updated_utc": "2026-05-17T03:10:43Z"
+          "rows": 140,
+          "size_bytes": 306895,
+          "updated_utc": "2026-05-18T00:09:44Z"
         },
         "valid": {
           "path": "data/lora/adapters/ai_planning_explanation_specialist/valid.jsonl",
-          "rows": 1,
-          "size_bytes": 9671,
-          "updated_utc": "2026-05-17T03:10:43Z"
+          "rows": 2,
+          "size_bytes": 1518,
+          "updated_utc": "2026-05-18T00:09:44Z"
         },
         "test": {
           "path": "data/lora/adapters/ai_planning_explanation_specialist/test.jsonl",
-          "rows": 1,
-          "size_bytes": 772,
-          "updated_utc": "2026-05-17T03:10:43Z"
+          "rows": 2,
+          "size_bytes": 6984,
+          "updated_utc": "2026-05-18T00:09:44Z"
         }
       }
     },
@@ -87,6 +87,35 @@
           "rows": 15,
           "size_bytes": 13282,
           "updated_utc": "2026-05-17T07:35:03Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "ai_planning_explanation_specialist_mock_aug_v2",
+      "label": "Ai Planning Explanation Specialist Mock Aug V2",
+      "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v2",
+      "manifest_path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v2/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 256,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v2/train.jsonl",
+          "rows": 220,
+          "size_bytes": 193819,
+          "updated_utc": "2026-05-17T22:25:32Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v2/valid.jsonl",
+          "rows": 18,
+          "size_bytes": 15798,
+          "updated_utc": "2026-05-17T22:25:32Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/ai_planning_explanation_specialist_mock_aug_v2/test.jsonl",
+          "rows": 18,
+          "size_bytes": 15522,
+          "updated_utc": "2026-05-17T22:25:32Z"
         }
       }
     },
@@ -189,20 +218,20 @@
         "train": {
           "path": "data/lora/adapters/documentation_specialist/train.jsonl",
           "rows": 120,
-          "size_bytes": 138907,
-          "updated_utc": "2026-05-17T21:44:07Z"
+          "size_bytes": 141543,
+          "updated_utc": "2026-06-09T01:43:31Z"
         },
         "valid": {
           "path": "data/lora/adapters/documentation_specialist/valid.jsonl",
           "rows": 3,
-          "size_bytes": 3715,
-          "updated_utc": "2026-05-17T21:44:07Z"
+          "size_bytes": 3534,
+          "updated_utc": "2026-06-09T01:43:31Z"
         },
         "test": {
           "path": "data/lora/adapters/documentation_specialist/test.jsonl",
           "rows": 1,
-          "size_bytes": 1220,
-          "updated_utc": "2026-05-17T21:44:07Z"
+          "size_bytes": 1056,
+          "updated_utc": "2026-06-09T01:43:31Z"
         }
       }
     },
@@ -247,20 +276,20 @@
         "train": {
           "path": "data/lora/adapters/economy_tooltip_specialist/train.jsonl",
           "rows": 120,
-          "size_bytes": 289118,
-          "updated_utc": "2026-05-17T03:10:42Z"
+          "size_bytes": 147828,
+          "updated_utc": "2026-05-18T22:44:14Z"
         },
         "valid": {
           "path": "data/lora/adapters/economy_tooltip_specialist/valid.jsonl",
           "rows": 1,
-          "size_bytes": 9660,
-          "updated_utc": "2026-05-17T03:10:42Z"
+          "size_bytes": 699,
+          "updated_utc": "2026-05-18T22:44:14Z"
         },
         "test": {
           "path": "data/lora/adapters/economy_tooltip_specialist/test.jsonl",
           "rows": 1,
-          "size_bytes": 757,
-          "updated_utc": "2026-05-17T03:10:42Z"
+          "size_bytes": 742,
+          "updated_utc": "2026-05-18T22:44:14Z"
         }
       }
     },
@@ -329,25 +358,54 @@
       "manifest_path": "data/lora/adapters/hud_status_specialist/manifest.json",
       "task_family": "",
       "source": "",
-      "total_rows": 122,
+      "total_rows": 142,
       "splits": {
         "train": {
           "path": "data/lora/adapters/hud_status_specialist/train.jsonl",
-          "rows": 120,
-          "size_bytes": 250078,
-          "updated_utc": "2026-05-17T03:10:42Z"
+          "rows": 140,
+          "size_bytes": 105082,
+          "updated_utc": "2026-05-18T22:42:25Z"
         },
         "valid": {
           "path": "data/lora/adapters/hud_status_specialist/valid.jsonl",
           "rows": 1,
-          "size_bytes": 9707,
-          "updated_utc": "2026-05-17T03:10:42Z"
+          "size_bytes": 729,
+          "updated_utc": "2026-05-18T22:42:25Z"
         },
         "test": {
           "path": "data/lora/adapters/hud_status_specialist/test.jsonl",
           "rows": 1,
-          "size_bytes": 9662,
-          "updated_utc": "2026-05-17T03:10:42Z"
+          "size_bytes": 773,
+          "updated_utc": "2026-05-18T22:42:25Z"
+        }
+      }
+    },
+    {
+      "dataset_id": "hud_status_specialist_cycle4_pure",
+      "label": "Hud Status Specialist Cycle4 Pure",
+      "path": "data/lora/adapters/hud_status_specialist_cycle4_pure",
+      "manifest_path": "data/lora/adapters/hud_status_specialist_cycle4_pure/manifest.json",
+      "task_family": "",
+      "source": "",
+      "total_rows": 242,
+      "splits": {
+        "train": {
+          "path": "data/lora/adapters/hud_status_specialist_cycle4_pure/train.jsonl",
+          "rows": 240,
+          "size_bytes": 179858,
+          "updated_utc": "2026-05-18T06:33:06Z"
+        },
+        "valid": {
+          "path": "data/lora/adapters/hud_status_specialist_cycle4_pure/valid.jsonl",
+          "rows": 1,
+          "size_bytes": 729,
+          "updated_utc": "2026-05-18T06:33:06Z"
+        },
+        "test": {
+          "path": "data/lora/adapters/hud_status_specialist_cycle4_pure/test.jsonl",
+          "rows": 1,
+          "size_bytes": 773,
+          "updated_utc": "2026-05-18T06:33:06Z"
         }
       }
     },
@@ -509,19 +567,19 @@
           "path": "data/lora/adapters/save_load_api_guard_specialist/train.jsonl",
           "rows": 120,
           "size_bytes": 291384,
-          "updated_utc": "2026-05-17T03:10:43Z"
+          "updated_utc": "2026-05-18T00:00:21Z"
         },
         "valid": {
           "path": "data/lora/adapters/save_load_api_guard_specialist/valid.jsonl",
           "rows": 1,
           "size_bytes": 9676,
-          "updated_utc": "2026-05-17T03:10:43Z"
+          "updated_utc": "2026-05-18T00:00:21Z"
         },
         "test": {
           "path": "data/lora/adapters/save_load_api_guard_specialist/test.jsonl",
           "rows": 1,
           "size_bytes": 770,
-          "updated_utc": "2026-05-17T03:10:43Z"
+          "updated_utc": "2026-05-18T00:00:21Z"
         }
       }
     },

@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+import math
 import sys
 import unittest
+from dataclasses import asdict
+from unittest import mock
 from pathlib import Path
 from typing import Any
 
@@ -184,6 +187,90 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
         self.assertEqual(windows[0].input_ids[0], 3000 - 2047)
         self.assertEqual(windows[-1].target_token_id, completion_ids[-1])
 
+    def test_grouped_completion_logprob_windows_cover_tokens_once(self) -> None:
+        from economist_rl_ppo_trainer import _build_grouped_completion_logprob_windows
+
+        completion_ids = list(range(3000, 3010))
+        windows = _build_grouped_completion_logprob_windows(
+            prompt_ids=list(range(3000)),
+            completion_ids=completion_ids,
+            max_window_tokens=8,
+            target_chunk_tokens=3,
+        )
+
+        flattened_targets = [token for window in windows for token in window.target_token_ids]
+        self.assertEqual(flattened_targets, completion_ids)
+        self.assertTrue(all(len(window.input_ids) <= 8 for window in windows))
+        self.assertEqual([window.completion_start for window in windows], [0, 3, 6, 9])
+        for window in windows:
+            first_target_pos = len(window.input_ids) - len(window.target_token_ids) - 1
+            self.assertEqual(window.target_positions, list(range(first_target_pos, first_target_pos + len(window.target_token_ids))))
+
+    def test_grouped_runtime_shape_is_far_smaller_than_per_token(self) -> None:
+        from economist_rl_ppo_trainer import _build_completion_logprob_windows, _build_grouped_completion_logprob_windows
+
+        prompt_ids = list(range(3000))
+        completion_ids = list(range(3000, 6000))
+        per_token = _build_completion_logprob_windows(
+            prompt_ids=prompt_ids,
+            completion_ids=completion_ids,
+            max_window_tokens=1536,
+        )
+        grouped = _build_grouped_completion_logprob_windows(
+            prompt_ids=prompt_ids,
+            completion_ids=completion_ids,
+            max_window_tokens=1536,
+            target_chunk_tokens=512,
+        )
+
+        self.assertEqual(len(per_token), 3000)
+        self.assertLessEqual(len(grouped), 6)
+        self.assertTrue(all(len(window.input_ids) <= 1536 for window in grouped))
+
+    def test_grouped_torch_mean_uses_shifted_positions_and_token_weighting(self) -> None:
+        try:
+            import torch
+        except ImportError:
+            self.skipTest("torch not installed")
+
+        from types import SimpleNamespace
+
+        from economist_rl_ppo_trainer import GroupedCompletionLogprobWindow, _mean_grouped_completion_logprob_torch
+
+        log_probs = [
+            [math.log(0.1), math.log(0.7), math.log(0.1), math.log(0.05), math.log(0.05)],
+            [math.log(0.2), math.log(0.2), math.log(0.2), math.log(0.2), math.log(0.2)],
+            [math.log(0.025), math.log(0.025), math.log(0.025), math.log(0.9), math.log(0.025)],
+        ]
+
+        class Model:
+            def __call__(self, input_ids):
+                if input_ids.shape[-1] == 3:
+                    return SimpleNamespace(logits=torch.tensor([[log_probs[0], log_probs[1], log_probs[1]]]))
+                return SimpleNamespace(logits=torch.tensor([[log_probs[2], log_probs[1]]]))
+
+        windows = [
+            GroupedCompletionLogprobWindow(
+                input_ids=[10, 11, 12],
+                target_positions=[0, 1],
+                target_token_ids=[1, 2],
+                completion_start=0,
+            ),
+            GroupedCompletionLogprobWindow(
+                input_ids=[12, 13],
+                target_positions=[0],
+                target_token_ids=[3],
+                completion_start=2,
+            ),
+        ]
+
+        actual = float(_mean_grouped_completion_logprob_torch(model=Model(), windows=windows, torch_mod=torch, device="cpu"))
+        token_weighted = (math.log(0.7) + math.log(0.2) + math.log(0.9)) / 3.0
+        equal_chunk_weighted = (((math.log(0.7) + math.log(0.2)) / 2.0) + math.log(0.9)) / 2.0
+
+        self.assertAlmostEqual(actual, token_weighted, places=6)
+        self.assertNotAlmostEqual(actual, equal_chunk_weighted, places=3)
+
     def test_transformers_windowed_ppo_backprops_each_window(self) -> None:
         from types import SimpleNamespace
         from unittest.mock import patch
@@ -263,7 +350,7 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
                 sample=sample,
                 system_prompt="system",
                 torch_mod=FakeTorch,
-                cfg=PPOConfig(),
+                cfg=PPOConfig(logprob_window_strategy="per_token"),
                 device="cpu",
                 use_windowed_backward=True,
             )
@@ -351,7 +438,7 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
                 sample=sample,
                 system_prompt="system",
                 torch_mod=FakeTorch,
-                cfg=PPOConfig(),
+                cfg=PPOConfig(logprob_window_strategy="per_token"),
                 device="cpu",
                 use_windowed_backward=None,
             )
@@ -360,6 +447,106 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
         self.assertAlmostEqual(loss_value, -1.0, places=6)
         full_logprob.assert_called_once()
         windowed_logprobs.assert_not_called()
+
+    def test_transformers_grouped_ppo_backprops_once_for_grouped_sample(self) -> None:
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from economist_rl_ppo_trainer import (
+            GroupedCompletionLogprobWindow,
+            PPOConfig,
+            PPOSample,
+            _backward_ppo_sample_transformers,
+        )
+
+        class FakeTensor:
+            def __init__(self, value: float) -> None:
+                self.value = float(value)
+                self.dtype = "float32"
+                self.device = "cpu"
+
+            def __sub__(self, other):
+                other_value = other.value if isinstance(other, FakeTensor) else other
+                return FakeTensor(self.value - float(other_value))
+
+            def __mul__(self, other):
+                other_value = other.value if isinstance(other, FakeTensor) else other
+                return FakeTensor(self.value * float(other_value))
+
+            def __neg__(self):
+                return FakeTensor(-self.value)
+
+            def detach(self):
+                return self
+
+            def cpu(self):
+                return self
+
+            def backward(self) -> None:
+                backward_calls.append(self.value)
+
+            def __float__(self) -> float:
+                return self.value
+
+        class FakeTorch:
+            @staticmethod
+            def tensor(value, device=None, dtype=None):
+                return FakeTensor(value)
+
+            @staticmethod
+            def exp(value):
+                return FakeTensor(1.0)
+
+            @staticmethod
+            def clamp(value, lo, hi):
+                return value
+
+            @staticmethod
+            def min(a, b):
+                return a if float(a) <= float(b) else b
+
+        backward_calls: list[float] = []
+        sample = PPOSample(
+            task_id="t1",
+            prompt="prompt",
+            completion="completion",
+            reward=1.0,
+            advantage=1.0,
+            old_logprob=-1.0,
+        )
+        grouped_windows = [
+            GroupedCompletionLogprobWindow(
+                input_ids=[1, 2, 3],
+                target_positions=[1],
+                target_token_ids=[3],
+                completion_start=0,
+            )
+        ]
+
+        with patch(
+            "economist_rl_ppo_trainer._grouped_completion_logprob_windows_for_sample",
+            return_value=grouped_windows,
+        ), patch(
+            "economist_rl_ppo_trainer._mean_grouped_completion_logprob_torch",
+            return_value=FakeTensor(-1.0),
+        ) as grouped_mean, patch(
+            "economist_rl_ppo_trainer._iter_windowed_completion_logprob_tensors"
+        ) as per_token_iter:
+            loss_value = _backward_ppo_sample_transformers(
+                model=object(),
+                tokenizer=object(),
+                sample=sample,
+                system_prompt="system",
+                torch_mod=FakeTorch,
+                cfg=PPOConfig(logprob_window_strategy="grouped", target_logprob_chunk_tokens=512),
+                device="cpu",
+                use_windowed_backward=True,
+            )
+
+        self.assertEqual(len(backward_calls), 1)
+        self.assertAlmostEqual(loss_value, -1.0, places=6)
+        grouped_mean.assert_called_once()
+        per_token_iter.assert_not_called()
 
     def test_transformers_4bit_requested_for_mlx_4bit_cuda_model(self) -> None:
         from economist_rl_ppo_trainer import _should_load_transformers_4bit
@@ -400,6 +587,7 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
         ]
         samples = build_ppo_samples(scored_rows=scored_rows, system_prompt="system")
         self.assertEqual(len(samples), 2)
+        progress_events: list[dict[str, Any]] = []
         manifest = train_ppo_batch(
             scored_rows=scored_rows,
             system_prompt="system",
@@ -409,9 +597,66 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
             cfg=PPOConfig(min_samples=2),
             dry_run=True,
             train_backend="mlx",
+            progress_callback=progress_events.append,
         )
         self.assertEqual(manifest["status"], "dry_run_no_weight_update")
         self.assertEqual(manifest["train_backend"], "mlx")
+        self.assertEqual([event["phase"] for event in progress_events], ["start", "complete"])
+
+    def test_build_ppo_samples_caps_completion_outliers_by_batch_ratio(self) -> None:
+        from economist_rl_ppo_trainer import PPOConfig, build_ppo_samples
+
+        scored_rows = [
+            {
+                "task_id": "short-good",
+                "rollout": {"prompt": "prompt", "output": "a" * 100, "old_logprob": -1.0},
+                "score": {"reward": 0.8, "training_usable": True},
+            },
+            {
+                "task_id": "short-bad",
+                "rollout": {"prompt": "prompt", "output": "b" * 110, "old_logprob": -1.0},
+                "score": {"reward": 0.1, "training_usable": True},
+            },
+            {
+                "task_id": "long-zero",
+                "rollout": {"prompt": "prompt", "output": "c" * 1000, "old_logprob": -1.0},
+                "score": {"reward": 0.0, "training_usable": True},
+            },
+        ]
+
+        samples = build_ppo_samples(
+            scored_rows=scored_rows,
+            system_prompt="system",
+            cfg=PPOConfig(completion_outlier_cap_ratio=2.0),
+        )
+
+        self.assertEqual([sample.task_id for sample in samples], ["short-good", "short-bad", "long-zero"])
+        long = samples[-1]
+        self.assertEqual(long.reward, 0.0)
+        self.assertTrue(long.completion_capped)
+        self.assertEqual(long.original_completion_chars, 1000)
+        self.assertEqual(len(long.completion), 220)
+
+    def test_build_ppo_samples_can_disable_completion_outlier_cap(self) -> None:
+        from economist_rl_ppo_trainer import PPOConfig, build_ppo_samples
+
+        scored_rows = [
+            {
+                "task_id": f"t{i}",
+                "rollout": {"prompt": "prompt", "output": "x" * length, "old_logprob": -1.0},
+                "score": {"reward": 0.5, "training_usable": True},
+            }
+            for i, length in enumerate([100, 110, 1000])
+        ]
+
+        samples = build_ppo_samples(
+            scored_rows=scored_rows,
+            system_prompt="system",
+            cfg=PPOConfig(completion_outlier_cap_ratio=0.0),
+        )
+
+        self.assertEqual(len(samples[-1].completion), 1000)
+        self.assertFalse(samples[-1].completion_capped)
 
     def test_train_ppo_batch_uses_transformers_backend_when_forced(self) -> None:
         from economist_rl_ppo_trainer import PPOConfig, train_ppo_batch
@@ -440,6 +685,55 @@ class EconomistRLPPOPipelineTests(unittest.TestCase):
         )
         self.assertEqual(manifest["train_backend"], "transformers")
         self.assertEqual(manifest["status"], "dry_run_no_weight_update")
+
+    def test_ppo_subprocess_writes_progress_sidecar(self) -> None:
+        import tempfile
+
+        from economist_rl_ppo_trainer import PPOConfig
+
+        sys.path.insert(0, str(REPO / "scripts" / "lambda"))
+        from run_economist_rl_ppo_train import run_ppo_train_from_request
+
+        scored_rows = [
+            {
+                "task_id": "t1",
+                "rollout": {"prompt": "prompt one", "output": "answer one", "old_logprob": -3.0},
+                "score": {"reward": 0.8, "score": 80.0},
+            },
+            {
+                "task_id": "t2",
+                "rollout": {"prompt": "prompt two", "output": "answer two", "old_logprob": -2.5},
+                "score": {"reward": 0.2, "score": 20.0},
+            },
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            scored_file = root / "scored.jsonl"
+            manifest_file = root / "ppo" / "ppo_train_001.json"
+            progress_file = root / "ppo" / "ppo_train_001.progress.json"
+            scored_file.write_text("\n".join(json.dumps(row) for row in scored_rows) + "\n", encoding="utf-8")
+
+            manifest = run_ppo_train_from_request(
+                {
+                    "scored_file": str(scored_file),
+                    "ppo_manifest_file": str(manifest_file),
+                    "progress_file": str(progress_file),
+                    "source_adapter": str(root / "source"),
+                    "candidate_adapter": str(root / "candidate"),
+                    "base_model": "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit",
+                    "system_prompt": "system",
+                    "ppo_config": asdict(PPOConfig(min_samples=2)),
+                    "train_backend": "transformers",
+                    "dry_run": True,
+                }
+            )
+
+            progress = json.loads(progress_file.read_text(encoding="utf-8"))
+            self.assertEqual(manifest["status"], "dry_run_no_weight_update")
+            self.assertEqual(manifest["progress_file"], str(progress_file.resolve()))
+            self.assertEqual(progress["schema_version"], "economist_rl_ppo_progress_v1")
+            self.assertEqual(progress["phase"], "manifest_written")
+            self.assertEqual(progress["status"], "dry_run_no_weight_update")
 
 
 class EconomistRLAdapterChainTests(unittest.TestCase):
@@ -775,6 +1069,77 @@ class EconomistRLSubprocessPPOTests(unittest.TestCase):
 
 
 class EconomistRLLambdaCycleDryRunTests(unittest.TestCase):
+    def test_default_ppo_config_prefers_worker_split_batch_sizes(self) -> None:
+        import argparse
+        import importlib.util
+        import sys
+
+        module_path = REPO / "scripts" / "lambda" / "run_economist_rl_lambda_cycle.py"
+        spec = importlib.util.spec_from_file_location("run_economist_rl_lambda_cycle", module_path)
+        cycle = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        sys.modules["run_economist_rl_lambda_cycle"] = cycle
+        spec.loader.exec_module(cycle)
+
+        args = argparse.Namespace(
+            ppo_epochs=None,
+            ppo_min_samples=None,
+            ppo_max_samples=None,
+            ppo_logprob_window_tokens=None,
+            ppo_mini_batch_size=None,
+            dry_run=False,
+        )
+        cfg = cycle._resolve_ppo_config(cycle.SPECIALIZATIONS["economist_rl"], args)
+        self.assertEqual(cfg.min_samples, 25)
+        self.assertEqual(cfg.max_samples, 64)
+
+        args.ppo_mini_batch_size = 16
+        cfg = cycle._resolve_ppo_config(cycle.SPECIALIZATIONS["economist_rl"], args)
+        self.assertEqual(cfg.mini_batch_size, 16)
+
+    def test_rollout_limit_uses_bootstrap_only_for_first_worker_cycle(self) -> None:
+        import argparse
+        import importlib.util
+        import sys
+
+        module_path = REPO / "scripts" / "lambda" / "run_economist_rl_lambda_cycle.py"
+        spec = importlib.util.spec_from_file_location("run_economist_rl_lambda_cycle", module_path)
+        cycle = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        sys.modules["run_economist_rl_lambda_cycle"] = cycle
+        spec.loader.exec_module(cycle)
+
+        args = argparse.Namespace(rollouts_per_cycle=25, bootstrap_rollouts_per_cycle=50)
+        self.assertEqual(cycle._rollout_limit_for_cycle(args, bootstrap_cycle=True), 50)
+        self.assertEqual(cycle._rollout_limit_for_cycle(args, bootstrap_cycle=False), 25)
+
+    def test_watcher_oom_backoff_keeps_ppo_max_at_or_above_min(self) -> None:
+        import importlib.util
+        import sys
+
+        module_path = REPO / "scripts" / "lambda" / "watch_economist_rl_lambda_overnight.py"
+        spec = importlib.util.spec_from_file_location("watch_economist_rl_lambda_overnight", module_path)
+        watcher = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        sys.modules["watch_economist_rl_lambda_overnight"] = watcher
+        spec.loader.exec_module(watcher)
+
+        argv = [
+            "--ppo-min-samples",
+            "25",
+            "--ppo-max-samples",
+            "25",
+            "--ppo-logprob-window-tokens",
+            "1536",
+        ]
+        with mock.patch.object(watcher, "_log"):
+            adapted = watcher._adapt_cycle_argv_after_failure(
+                argv,
+                progress={"failure_hits": ["training_failed"]},
+                remote_log="cuda out of memory",
+            )
+        self.assertEqual(adapted[adapted.index("--ppo-max-samples") + 1], "25")
+
     def test_dry_run_cycle_manifest_uses_ppo_path(self) -> None:
         import argparse
         import importlib.util
@@ -798,6 +1163,7 @@ class EconomistRLLambdaCycleDryRunTests(unittest.TestCase):
             registry=REPO / "training" / "adapter_registry_v1.json",
             base_model=cycle.DEFAULT_BASE_MODEL,
             rollouts_per_cycle=2,
+            bootstrap_rollouts_per_cycle=None,
             ppo_epochs=None,
             ppo_min_samples=1,
             max_tokens=64,

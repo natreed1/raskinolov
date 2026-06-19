@@ -12,13 +12,20 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from council_runtime.executor import (
+    CouncilGeneration,
+    CouncilTurn,
+    build_eval_participant_prompt,
+    run_council,
+)
+from council_runtime.traces import JsonlTraceWriter, TraceSink
 from model_router import ChatMessage, GenerationRequest, LocalMlxBackend, RoutingPolicy, messages_from_prompt
-from router.council import adjudicate_council_outputs, shape_prompt_for_profile
 from run_final_mass_testing_system import DEFAULT_MANIFEST, _compile_manifest_tasks, _load_json
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ROWS_JSONL = ROOT / "benchmarks" / "results" / "council_conversation_eval_rows_v1.jsonl"
 DEFAULT_SUMMARY_JSON = ROOT / "benchmarks" / "results" / "council_conversation_eval_summary_v1.json"
+DEFAULT_TRACES_JSONL = ROOT / "benchmarks" / "results" / "council_eq" / "traces" / "council_traces_v1.jsonl"
 DEFAULT_LOCAL_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 
 
@@ -54,41 +61,6 @@ def _maybe_run_artifact_checkpoint(completed_steps: int, last_checkpoint_at: flo
     if result.returncode != 0:
         print(f"artifact_checkpoint_failed exit={result.returncode}", flush=True)
     return now
-
-
-def _participant_prompt(*, prompt: str, participant: dict[str, Any], round_idx: int, debate_max_rounds: int, peer_digest: str) -> str:
-    participant_id = str(participant.get("participant_id") or "").strip()
-    participant_type = str(participant.get("participant_type") or "").strip()
-    role = str(participant.get("role") or "agent").strip()
-    strategy = str(participant.get("strategy") or "").strip()
-    variant = str(participant.get("variant") or "baseline").strip()
-    assertiveness = float(participant.get("assertiveness", 0.5) or 0.5)
-    traits = dict(participant.get("traits") or {})
-
-    shaped_prompt = prompt
-    if participant_type == "generalist_profile":
-        shaped_prompt = shape_prompt_for_profile(prompt=prompt, profile=participant_id)
-
-    debate_instructions = ""
-    if round_idx > 1:
-        debate_instructions = (
-            f"Round {round_idx}/{debate_max_rounds} council debate.\n"
-            "Critique weak points in peer ideas, then revise your recommendation.\n"
-            f"Peer summaries:\n{peer_digest or '- no peer drafts yet'}\n\n"
-        )
-
-    return (
-        f"{shaped_prompt}\n\n"
-        f"{debate_instructions}"
-        f"Council participant: {participant_id}\n"
-        f"Role: {role}\n"
-        f"Strategy: {strategy}\n"
-        f"Variant: {variant}\n"
-        f"Assertiveness: {assertiveness:.2f}\n"
-        f"Traits: {json.dumps(traits, sort_keys=True)}\n\n"
-        "Return a directly useful recommendation for solving the task. "
-        "Be explicit about risks, needed files, and whether another expert should override you."
-    )
 
 
 def _mock_generate(*, participant_id: str, task_id: str, round_idx: int) -> tuple[str, dict[str, Any]]:
@@ -143,101 +115,65 @@ def _run_task(
     debate_max_rounds: int,
     participant_max_tokens: int,
     mock_generation: bool,
+    trace_sink: TraceSink | None = None,
+    season_id: str = "",
 ) -> dict[str, Any]:
     prompt = str(task.get("prompt") or "").strip()
     decision = policy.decide(GenerationRequest(messages=messages_from_prompt(prompt), max_tokens=4096))
     council_plan = dict(getattr(decision, "council_plan", {}) or {})
     participants = list(council_plan.get("participants") or [])
-    policy_rounds = max(1, int(council_plan.get("debate_max_rounds", debate_max_rounds) or debate_max_rounds))
-    rounds_to_run = max(1, min(policy_rounds, int(debate_max_rounds)))
-    round_traces: list[dict[str, Any]] = []
-    current_outputs: list[dict[str, Any]] = []
 
-    for round_idx in range(1, rounds_to_run + 1):
-        prior_outputs = current_outputs
-        current_outputs = []
-        peer_digest = "\n".join(
-            f"- {row.get('participant_id')}: {str(row.get('text') or '')[:260]}" for row in prior_outputs[:4]
+    def generate_participant(turn: CouncilTurn) -> CouncilGeneration:
+        participant = turn.participant
+        participant_id = str(participant.get("participant_id") or "").strip()
+        output_text, usage = _generate_once(
+            backend_cache=backend_cache,
+            model_id=model_id,
+            prompt=turn.participant_prompt,
+            max_tokens=participant_max_tokens,
+            mock_generation=mock_generation,
+            participant_id=participant_id,
+            task_id=str(task.get("id") or ""),
+            round_idx=turn.round_idx,
         )
-        for participant in participants:
-            participant_id = str(participant.get("participant_id") or "").strip()
-            if not participant_id:
-                continue
-            participant_prompt = _participant_prompt(
-                prompt=prompt,
-                participant=participant,
-                round_idx=round_idx,
-                debate_max_rounds=rounds_to_run,
-                peer_digest=peer_digest,
-            )
-            output_text, usage = _generate_once(
-                backend_cache=backend_cache,
-                model_id=model_id,
-                prompt=participant_prompt,
-                max_tokens=participant_max_tokens,
-                mock_generation=mock_generation,
-                participant_id=participant_id,
-                task_id=str(task.get("id") or ""),
-                round_idx=round_idx,
-            )
-            confidence, task_outcome_score = _neutral_scoring_metadata()
-            base_expert_id = str(participant.get("base_expert_id") or participant_id)
-            participant_type = str(participant.get("participant_type") or "")
-            adapter_requested = base_expert_id if participant_type == "specialist_adapter" else None
-            current_outputs.append(
-                {
-                    "round_idx": round_idx,
-                    "participant_id": participant_id,
-                    "base_expert_id": base_expert_id,
-                    "participant_type": participant_type,
-                    "role": str(participant.get("role") or ""),
-                    "strategy": str(participant.get("strategy") or ""),
-                    "variant": str(participant.get("variant") or "baseline"),
-                    "assertiveness": participant.get("assertiveness"),
-                    "traits": dict(participant.get("traits") or {}),
-                    "text": output_text,
-                    "confidence": confidence,
-                    "task_outcome_score": task_outcome_score,
-                    "adapter_requested": adapter_requested,
-                    "resolved_mlx_adapter": None,
-                    "adapter_loaded": False,
-                    "adapter_load_note": (
-                        "council_conversation_eval uses one shared base model; per-specialist adapters are not loaded"
-                        if adapter_requested
-                        else "generalist_profile_uses_base_model"
-                    ),
-                    "usage": usage,
-                }
-            )
-        provisional = adjudicate_council_outputs(
-            outputs=current_outputs,
-            prompt=prompt,
-            disagreement=float(getattr(decision, "council_disagreement", 0.0) or 0.0),
-            low_confidence_threshold=float(council_plan.get("low_confidence_threshold", 0.58) or 0.58),
-            disagreement_threshold=float(council_plan.get("disagreement_threshold", 0.45) or 0.45),
-            escalation_rule=str(council_plan.get("escalation_rule", "either_trigger") or "either_trigger"),
-        ).to_dict()
-        round_traces.append(
-            {
-                "round_idx": round_idx,
-                "participants": current_outputs,
-                "adjudication_preview": {
-                    "winner_ids": list(provisional.get("winner_ids") or []),
-                    "confidence": provisional.get("confidence"),
-                    "disagreement": provisional.get("disagreement"),
-                    "escalation_recommended": provisional.get("escalation_recommended"),
-                },
-            }
+        confidence, task_outcome_score = _neutral_scoring_metadata()
+        base_expert_id = str(participant.get("base_expert_id") or participant_id)
+        participant_type = str(participant.get("participant_type") or "")
+        adapter_requested = base_expert_id if participant_type == "specialist_adapter" else None
+        return CouncilGeneration(
+            text=output_text,
+            metadata={
+                "confidence": confidence,
+                "task_outcome_score": task_outcome_score,
+                "adapter_requested": adapter_requested,
+                "resolved_mlx_adapter": None,
+                "adapter_loaded": False,
+                "adapter_load_note": (
+                    "council_conversation_eval uses one shared base model; per-specialist adapters are not loaded"
+                    if adapter_requested
+                    else "generalist_profile_uses_base_model"
+                ),
+                "usage": usage,
+            },
         )
 
-    adjudication = adjudicate_council_outputs(
-        outputs=current_outputs,
+    final_output, council_meta = run_council(
         prompt=prompt,
         disagreement=float(getattr(decision, "council_disagreement", 0.0) or 0.0),
-        low_confidence_threshold=float(council_plan.get("low_confidence_threshold", 0.58) or 0.58),
-        disagreement_threshold=float(council_plan.get("disagreement_threshold", 0.45) or 0.45),
-        escalation_rule=str(council_plan.get("escalation_rule", "either_trigger") or "either_trigger"),
-    ).to_dict()
+        council_plan=council_plan,
+        generate_participant=generate_participant,
+        prompt_builder=build_eval_participant_prompt,
+        max_rounds=max(1, int(debate_max_rounds)),
+        stop_on_convergence=False,
+        trace_sink=trace_sink,
+        trace_context={
+            "task_id": str(task.get("id") or ""),
+            "season_id": season_id,
+            "routing_quality": float(getattr(decision, "confidence", 0.5) or 0.5),
+        },
+    )
+    adjudication = dict(council_meta.get("adjudication") or {})
+    round_traces = list(council_meta.get("rounds") or [])
 
     return {
         "schema_version": "council_conversation_eval_row_v1",
@@ -269,10 +205,11 @@ def _run_task(
             "mock_generation": bool(mock_generation),
             "debate_rounds_run": len(round_traces),
             "participant_count": len(participants),
+            "trace_ids": list(council_meta.get("trace_ids") or []),
         },
         "rounds": round_traces,
         "adjudication": adjudication,
-        "final_output": str(adjudication.get("final_text") or ""),
+        "final_output": final_output,
         "accepted_for_training": True,
     }
 
@@ -307,6 +244,8 @@ def main() -> int:
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--rows-jsonl", type=Path, default=DEFAULT_ROWS_JSONL)
     parser.add_argument("--summary-json", type=Path, default=DEFAULT_SUMMARY_JSON)
+    parser.add_argument("--traces-jsonl", type=Path, default=None)
+    parser.add_argument("--season-id", default="")
     parser.add_argument("--adapter-registry", type=Path, default=ROOT / "training" / "adapter_registry_v1.json")
     parser.add_argument("--local-model", default=os.environ.get("MODEL", DEFAULT_LOCAL_MODEL))
     parser.add_argument("--max-tasks", type=int, default=0)
@@ -359,6 +298,14 @@ def main() -> int:
     if not args.no_rows_reset:
         rows_path.parent.mkdir(parents=True, exist_ok=True)
         rows_path.write_text("", encoding="utf-8")
+    trace_sink = None
+    traces_path = None
+    if args.traces_jsonl:
+        traces_path = args.traces_jsonl.expanduser().resolve()
+        if not args.no_rows_reset:
+            traces_path.parent.mkdir(parents=True, exist_ok=True)
+            traces_path.write_text("", encoding="utf-8")
+        trace_sink = JsonlTraceWriter(traces_path)
 
     backend_cache: dict[str, LocalMlxBackend] = {}
     rows: list[dict[str, Any]] = []
@@ -374,6 +321,8 @@ def main() -> int:
             debate_max_rounds=max(1, int(args.debate_max_rounds)),
             participant_max_tokens=max(32, int(args.participant_max_tokens)),
             mock_generation=bool(args.mock_generation),
+            trace_sink=trace_sink,
+            season_id=str(args.season_id or ""),
         )
         rows.append(row)
         _append_jsonl(rows_path, row)
@@ -387,6 +336,7 @@ def main() -> int:
 
     summary = _summarize(rows, manifest_path=manifest_path)
     summary["rows_jsonl"] = str(rows_path)
+    summary["traces_jsonl"] = str(traces_path or "")
     summary["local_model"] = str(args.local_model)
     summary["mock_generation"] = bool(args.mock_generation)
     args.summary_json.expanduser().resolve().parent.mkdir(parents=True, exist_ok=True)

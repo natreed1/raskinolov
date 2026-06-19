@@ -18,7 +18,7 @@ Subcommands
   adapter-datasets  Build per-adapter datasets with shared anti-overfit anchor rows.
   loading-screen-dataset  Build richer loading-screen specialist dataset (core + UI transfer).
   economy-tooltip-dataset Build richer economy-tooltip specialist dataset (TSC-focused curator shards).
-  economist-rl-dataset Build economistRL seed dataset for economy RL experiments.
+  economist-rl-dataset Deprecated retired economistRL seed-SFT builder (exits non-zero).
   combat-risk-dataset Build combat-risk specialist dataset (mirrors economy TSC recipe).
   hud-status-dataset    Build HUD specialist dataset (baseline shards, guardrails, filtered pairwise; v2 alignment).
   documentation-dataset Build documentation-steward specialist JSONL (canonical paths, SESSION_LOG/run_history discipline).
@@ -976,7 +976,7 @@ def main() -> None:
 
     p_economist_rl_ds = sub.add_parser(
         "economist-rl-dataset",
-        help="Build economistRL seed bootstrap dataset for economy RL experiments.",
+        help="Deprecated: retired economistRL seed-SFT builder; current RL uses rollout/evidence/PPO paths.",
     )
     p_economist_rl_ds.add_argument(
         "--tasks",

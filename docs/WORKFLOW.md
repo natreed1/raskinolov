@@ -37,7 +37,7 @@ Activate the venv first (`source .venv/bin/activate`).
 | `python scripts/ml_workflow.py adapter-datasets` | Build per-adapter datasets with shared anti-overfit corpus and per-adapter manifests. |
 | `python scripts/ml_workflow.py loading-screen-dataset` | Build a richer `loading_screen` specialist dataset from pairwise winners + UI transfer rows + shared anchors + loading benchmark prompt synthesis. |
 | `python scripts/ml_workflow.py economy-tooltip-dataset` | Build a richer `economy_tooltip` specialist dataset (core `economy-tooltip` + transfer from loading/HUD samples + shared anchors). |
-| `python scripts/ml_workflow.py economist-rl-dataset` | Build `economistRL` seed bootstrap rows from `benchmarks/economistRL_tasks_v1.json` before RL rollout/reward optimization. |
+| `python scripts/ml_workflow.py economist-rl-dataset` | Deprecated. The retired stub-SFT seed builder exits non-zero; economistRL now uses rollout/evidence/PPO paths instead. |
 | `python scripts/ml_workflow.py save-load-dataset` | Build `save_load_api_guard` specialist dataset from pairwise winners + save/load mass benchmark prompts + shared anchors. |
 | `python scripts/ml_workflow.py ai-planning-dataset` | Build `ai_planning_explanation` specialist dataset from pairwise winners + AI-planning mass benchmark prompts + shared anchors. |
 | `python scripts/ml_workflow.py hud-status-dataset` | Build **HUD specialist** JSONL (`hud_status_specialist`): default **baseline shards** + store/API **guardrails**, **HUD pairwise capped at `--max-core-rows` (default 0)** + substring filter on winners; overrides via `--baseline-shards`, `--no-hud-guardrails`, `--no-filter-pairwise-hud`, `--max-transfer-rows`. |
@@ -272,9 +272,8 @@ python scripts/ml_workflow.py economy-tooltip-dataset \
   --transfer-task-id hud-status-summary \
   --min-train-core-rows 100
 
-# Build economistRL seed rows before RL rollout scoring
+# Validate economistRL task-bank shape before rollout/evidence/PPO runs
 python scripts/economist_rl_reward_engine.py validate
-python scripts/ml_workflow.py economist-rl-dataset
 
 # Build save/load and AI-planning specialist datasets from mass benchmark prompts
 python scripts/ml_workflow.py save-load-dataset \

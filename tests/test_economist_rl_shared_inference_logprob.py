@@ -109,6 +109,12 @@ def test_attach_old_logprob_forwards_logprob_window(monkeypatch) -> None:
         adapter_path=None,
         inference_backend=backend,
         max_window_tokens=1024,
+        logprob_window_strategy="grouped",
+        target_logprob_chunk_tokens=256,
     )
     assert row["old_logprob"] == -0.75
     assert seen["max_window_tokens"] == 1024
+    assert seen["logprob_window_strategy"] == "grouped"
+    assert seen["target_logprob_chunk_tokens"] == 256
+    assert row["old_logprob_window_strategy"] == "grouped"
+    assert row["old_logprob_target_chunk_tokens"] == 256

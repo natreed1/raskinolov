@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local overnight watcher for economistRL Lambda PPO cycles.
+"""Local overnight watcher for economistRL Lambda split-worker PPO runs.
 
 Launches a fresh gpu_1x_a10 worker (or attaches to one), polls remote progress,
 rsyncs failure artifacts, adapts PPO memory knobs after OOM (-9), and relaunches
@@ -21,7 +21,6 @@ import argparse
 import json
 import os
 import re
-import shlex
 import subprocess
 import sys
 import time
@@ -31,31 +30,35 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / "scripts"
+LAMBDA_SCRIPTS = ROOT / "scripts" / "lambda"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
+if str(LAMBDA_SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(LAMBDA_SCRIPTS))
 
 import launch_lambda_parallel_ablation as lab  # noqa: E402
+from lambda_run_extraction import LambdaRunExtractor, RemoteRsyncSpec  # noqa: E402
 
 DEFAULT_SSH_KEY = Path.home() / ".ssh" / "lambda_cloud_cursor"
 STATE_PATH = ROOT / "logs" / "economist_rl_overnight_watch.json"
 LOG_PATH = ROOT / "logs" / "economist_rl_overnight_watch.log"
 LAUNCH_LOG_DIR = ROOT / "logs"
 EXTRACTS_ROOT = ROOT / "benchmarks" / "results" / "economistRL" / "extracts"
-EXTRACT_INDEX_PATH = EXTRACTS_ROOT / "index.jsonl"
-REMOTE_CYCLE_LOG = "/home/ubuntu/cloud-eval-logs/fe-economist-rl-cycle.log"
-NAME_PREFIX = "fe-economist-rl"
+REMOTE_CYCLE_LOG = "/home/ubuntu/cloud-eval-logs/fe-economist-rl-split-workers.log"
+NAME_PREFIX = "fe-economist-rl-split"
 
 DEFAULT_CYCLE_ARGV = [
     "--lambda-mode",
-    "--cycles",
+    "--max-ppo-updates",
     "4",
-    "--rollouts-per-cycle",
-    "10",
-    "--skip-eval",
+    "--rollout-batch-size",
+    "25",
+    "--bootstrap-rollout-batch-size",
+    "50",
     "--ppo-min-samples",
-    "4",
+    "25",
     "--ppo-max-samples",
-    "8",
+    "64",
     "--ppo-epochs",
     "1",
     "--ppo-logprob-window-tokens",
@@ -77,6 +80,46 @@ DEFAULT_CYCLE_ARGV = [
 
 def _utc_now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _utc_stamp() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _next_watch_run_number() -> int:
+    index = EXTRACTS_ROOT / "index.jsonl"
+    highest = 0
+    if index.is_file():
+        for line in index.read_text(encoding="utf-8", errors="replace").splitlines():
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            try:
+                highest = max(highest, int(row.get("run_number") or 0))
+            except (TypeError, ValueError):
+                continue
+    return highest + 1
+
+
+def _ensure_run_identity_args(cycle_argv: list[str], *, run_id: str, run_number: int) -> list[str]:
+    argv = list(cycle_argv)
+    if "--run-id" not in argv:
+        argv.extend(["--run-id", run_id])
+    if "--run-number" not in argv:
+        argv.extend(["--run-number", str(run_number)])
+    return argv
+
+
+def _run_identity_from_state(state: dict[str, Any]) -> dict[str, Any]:
+    started = str(state.get("started_utc") or state.get("last_failure_utc") or _utc_now())
+    return {
+        "run_id": str(state.get("run_id") or ""),
+        "run_number": int(state.get("run_number") or 0) or None,
+        "run_date_utc": str(state.get("run_date_utc") or started.split("T", 1)[0]),
+    }
 
 
 def _log(msg: str) -> None:
@@ -116,12 +159,6 @@ def _write_state(state: dict[str, Any]) -> None:
     STATE_PATH.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
 
 
-def _append_extract_index(record: dict[str, Any]) -> None:
-    EXTRACTS_ROOT.mkdir(parents=True, exist_ok=True)
-    with EXTRACT_INDEX_PATH.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(record, sort_keys=True) + "\n")
-
-
 def _classify_failure(
     *,
     status: str,
@@ -147,156 +184,20 @@ def _classify_failure(
     return status or "unknown"
 
 
-def _extract_dir(*, attempt: int, instance_id: str, label: str) -> Path:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    short = instance_id[:8] if instance_id else "unknown"
-    dest = EXTRACTS_ROOT / f"attempt_{attempt:03d}_{short}_{label}_{stamp}"
-    dest.mkdir(parents=True, exist_ok=True)
-    return dest
-
-
-def _write_extract_manifest(
-    dest: Path,
-    *,
-    attempt: int,
-    instance_id: str,
-    host: str,
-    failure_class: str,
-    status: str,
-    progress: dict[str, Any],
-    remote_tail: str,
-    launch_log: Path | None,
-    rsync_paths: list[str],
-) -> None:
-    manifest = {
-        "extracted_at_utc": _utc_now(),
-        "attempt": attempt,
-        "instance_id": instance_id,
-        "host": host,
-        "status": status,
-        "failure_class": failure_class,
-        "progress": progress,
-        "dest": str(dest.relative_to(ROOT)),
-        "rsync_paths": rsync_paths,
-        "launch_log": str(launch_log.relative_to(ROOT)) if launch_log and launch_log.is_file() else "",
-        "docs": "benchmarks/results/economistRL/extracts/README.md",
-    }
-    (dest / "EXTRACT_MANIFEST.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    readme = [
-        f"# economistRL extract — attempt {attempt:03d}",
-        "",
-        f"- **Instance:** `{instance_id}` @ `{host}`",
-        f"- **Status:** `{status}`",
-        f"- **Failure class:** `{failure_class}`",
-        f"- **Last rollout:** `{progress.get('last_rollout', '')}`",
-        f"- **Last cycle:** `{progress.get('last_cycle', '')}`",
-        "",
-        "## What to read",
-        "",
-        "1. `cycle_log_tail.txt` — remote runner log tail",
-        "2. `cloud-eval-logs/fe-economist-rl-cycle.log` — full remote log if rsync succeeded",
-        "3. `economistRL/ppo/` — PPO stderr/stdout/manifest if present",
-        "4. `launch_log.txt` — local Lambda bootstrap log",
-        "",
-        "## Likely cause",
-        "",
-    ]
-    if failure_class == "instance_gone":
-        readme.append(
-            "Worker disappeared from Lambda API mid-run (no clean `training_failed` in log). "
-            "Check Lambda console / billing; compare GPU telemetry CSV if extracted."
-        )
-    elif failure_class == "training_failed_oom":
-        readme.append("PPO subprocess OOM (often exit -9). Lower `--ppo-max-samples` and window tokens.")
-    elif failure_class == "launch_failed":
-        readme.append("Local launcher failed before remote cycle started (bootstrap rsync/SSH).")
-    else:
-        readme.append(f"See failure_class `{failure_class}` and cycle log tail.")
-    (dest / "README.md").write_text("\n".join(readme) + "\n", encoding="utf-8")
-    if remote_tail.strip():
-        (dest / "cycle_log_tail.txt").write_text(remote_tail, encoding="utf-8")
-    if launch_log and launch_log.is_file():
-        (dest / "launch_log.txt").write_text(
-            launch_log.read_text(encoding="utf-8", errors="replace"),
-            encoding="utf-8",
-        )
-    _append_extract_index(
-        {
-            "extracted_at_utc": manifest["extracted_at_utc"],
-            "attempt": attempt,
-            "instance_id": instance_id,
-            "failure_class": failure_class,
-            "status": status,
-            "dest": manifest["dest"],
-            "last_rollout": progress.get("last_rollout", ""),
-        }
+def _extractor() -> LambdaRunExtractor:
+    return LambdaRunExtractor(
+        repo_root=ROOT,
+        extracts_root=EXTRACTS_ROOT,
+        ssh_key_path=DEFAULT_SSH_KEY,
+        log=_log,
     )
 
 
-def _rsync_artifacts(
-    host: str,
-    *,
-    attempt: int,
-    instance_id: str,
-    failure_class: str,
-    status: str,
-    progress: dict[str, Any],
-    remote_tail: str,
-    launch_log: Path | None,
-) -> Path:
-    dest = _extract_dir(attempt=attempt, instance_id=instance_id, label=failure_class)
-    ssh_cmd = f"ssh -i {shlex.quote(str(DEFAULT_SSH_KEY))} -o StrictHostKeyChecking=no -o ConnectTimeout=20"
-    specs = [
-        (f"ubuntu@{host}:~/cloud-eval-logs/", dest / "cloud-eval-logs"),
-        (
-            f"ubuntu@{host}:~/fallen-empire-lora/benchmarks/results/economistRL/",
-            dest / "economistRL",
-        ),
+def _economist_rl_rsync_specs() -> list[RemoteRsyncSpec]:
+    return [
+        RemoteRsyncSpec("~/cloud-eval-logs/", "cloud-eval-logs"),
+        RemoteRsyncSpec("~/fallen-empire-lora/benchmarks/results/economistRL/", "economistRL"),
     ]
-    rsync_ok: list[str] = []
-    for src, target in specs:
-        target.mkdir(parents=True, exist_ok=True)
-        proc = subprocess.run(
-            ["rsync", "-az", "--timeout=120", "-e", ssh_cmd, src, str(target) + "/"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        if proc.returncode == 0:
-            rsync_ok.append(str(target.relative_to(dest)))
-        else:
-            _log(
-                f"rsync_partial attempt={attempt} dest={dest.name} src={src} "
-                f"rc={proc.returncode} err={proc.stderr.strip()[:160]}"
-            )
-    _write_extract_manifest(
-        dest,
-        attempt=attempt,
-        instance_id=instance_id,
-        host=host,
-        failure_class=failure_class,
-        status=status,
-        progress=progress,
-        remote_tail=remote_tail,
-        launch_log=launch_log,
-        rsync_paths=rsync_ok,
-    )
-    _log(f"extract_written dest={dest.relative_to(ROOT)} failure_class={failure_class}")
-    return dest
-
-
-def _live_snapshot(
-    *,
-    host: str,
-    instance_id: str,
-    progress: dict[str, Any],
-    remote_log: str,
-) -> None:
-    live = EXTRACTS_ROOT / f"live_{instance_id[:12]}"
-    live.mkdir(parents=True, exist_ok=True)
-    (live / "progress.json").write_text(json.dumps(progress, indent=2) + "\n", encoding="utf-8")
-    (live / "cycle_log_tail.txt").write_text(remote_log, encoding="utf-8")
-    (live / "LAST_UPDATED_UTC.txt").write_text(_utc_now() + "\n", encoding="utf-8")
 
 
 def _fetch_remote_log_tail(host: str, *, lines: int = 500) -> str:
@@ -366,16 +267,21 @@ def _parse_remote_progress(text: str) -> dict[str, Any]:
     }
 
 
-def _launch_worker(cycle_argv: list[str], *, attempt: int) -> dict[str, Any]:
+def _launch_worker(cycle_argv: list[str], *, attempt: int, watchdog_max_runtime_minutes: float) -> dict[str, Any]:
     launch_log = LAUNCH_LOG_DIR / f"launch_economist_rl_overnight_attempt_{attempt:02d}.log"
     cmd = [
         str(ROOT / ".venv" / "bin" / "python"),
-        str(ROOT / "scripts" / "launch_economist_rl_lambda_cycle.py"),
+        str(ROOT / "scripts" / "launch_economist_rl_lambda_split_workers.py"),
         "--launch-instances",
         "--region",
         "us-west-1",
         "--watchdog-idle-minutes",
         "360",
+        "--watchdog-max-runtime-minutes",
+        str(watchdog_max_runtime_minutes),
+        "--setup-command-retries",
+        "3",
+        "--skip-registry-adapter-sync",
         "--game-repo",
         str(Path.home() / "fallen-empire"),
         "--",
@@ -431,12 +337,15 @@ def _adapt_cycle_argv_after_failure(
             argv.extend([flag, value])
 
     max_samples = 8
+    min_samples = 4
     window = 1536
+    if "--ppo-min-samples" in argv:
+        min_samples = int(argv[argv.index("--ppo-min-samples") + 1])
     if "--ppo-max-samples" in argv:
         max_samples = int(argv[argv.index("--ppo-max-samples") + 1])
     if "--ppo-logprob-window-tokens" in argv:
         window = int(argv[argv.index("--ppo-logprob-window-tokens") + 1])
-    new_samples = max(4, max_samples - 2)
+    new_samples = max(min_samples, max_samples - 2)
     new_window = max(1024, window - 256)
     _set_flag("--ppo-max-samples", str(new_samples))
     _set_flag("--ppo-logprob-window-tokens", str(new_window))
@@ -446,6 +355,8 @@ def _adapt_cycle_argv_after_failure(
 
 def _cycle_complete(remote_log: str) -> bool:
     text = remote_log
+    if '"status": "complete"' in text or "'status': 'complete'" in text:
+        return True
     if "cycle_status" in text and "completed" in text:
         return True
     if re.search(r"stopping multi-cycle run after training_failed", text):
@@ -492,11 +403,11 @@ def _poll_once(state: dict[str, Any]) -> dict[str, Any]:
         }
     )
 
-    tmux = _ssh(host, "tmux has-session -t fe-economist-rl 2>/dev/null && echo up || echo down")
+    tmux = _ssh(host, "tmux has-session -t fe-economist-rl-split 2>/dev/null && echo up || echo down")
     state["tmux"] = (tmux.stdout or "").strip()
 
     if ssh_ok:
-        _live_snapshot(host=host, instance_id=instance_id, progress=progress, remote_log=remote_log)
+        _extractor().write_live_snapshot(instance_id=instance_id, progress=progress, remote_log=remote_log)
 
     if _cycle_complete(remote_log):
         state["status"] = "completed"
@@ -518,7 +429,10 @@ def _run_watch(args: argparse.Namespace) -> int:
     cycle_argv = list(args.cycle_argv or DEFAULT_CYCLE_ARGV)
     attempt = int(state.get("attempt") or 0)
     restarts = int(state.get("restarts") or 0)
-    run_id = args.run_id or datetime.now(timezone.utc).strftime("run_%Y%m%d_%H%M%S")
+    run_number = int(state.get("run_number") or args.run_number or _next_watch_run_number())
+    run_id = args.run_id or str(state.get("run_id") or f"run_{run_number:04d}_{_utc_stamp()}")
+    run_date_utc = str(state.get("run_date_utc") or datetime.now(timezone.utc).strftime("%Y-%m-%d"))
+    cycle_argv = _ensure_run_identity_args(cycle_argv, run_id=run_id, run_number=run_number)
 
     poll_s = max(60, int(float(args.poll_minutes) * 60))
     deadline = time.time() + float(args.max_hours) * 3600.0
@@ -528,13 +442,21 @@ def _run_watch(args: argparse.Namespace) -> int:
         while not launched and time.time() < deadline and restarts <= int(args.max_restarts):
             attempt += 1
             try:
-                meta = _launch_worker(cycle_argv, attempt=attempt)
+                meta = _launch_worker(
+                    cycle_argv,
+                    attempt=attempt,
+                    watchdog_max_runtime_minutes=float(args.watchdog_max_runtime_minutes),
+                )
             except RuntimeError as exc:
                 launch_log = LAUNCH_LOG_DIR / f"launch_economist_rl_overnight_attempt_{attempt:02d}.log"
                 try:
-                    dest = _extract_dir(attempt=attempt, instance_id="launch_failed", label="launch_failed")
-                    _write_extract_manifest(
+                    extractor = _extractor()
+                    dest = extractor.extract_dir(attempt=attempt, instance_id="launch_failed", label="launch_failed")
+                    extractor.write_extract_manifest(
                         dest,
+                        run_id=run_id,
+                        run_number=run_number,
+                        run_date_utc=run_date_utc,
                         attempt=attempt,
                         instance_id="",
                         host="",
@@ -553,6 +475,8 @@ def _run_watch(args: argparse.Namespace) -> int:
                 if restarts > int(args.max_restarts):
                     state = {
                         "run_id": run_id,
+                        "run_number": run_number,
+                        "run_date_utc": run_date_utc,
                         "status": "gave_up",
                         "attempt": attempt,
                         "restarts": restarts,
@@ -565,6 +489,8 @@ def _run_watch(args: argparse.Namespace) -> int:
                 continue
             state = {
                 "run_id": run_id,
+                "run_number": run_number,
+                "run_date_utc": run_date_utc,
                 "attempt": attempt,
                 "restarts": restarts,
                 "instance_id": meta.get("instance_id"),
@@ -597,8 +523,9 @@ def _run_watch(args: argparse.Namespace) -> int:
             instance_id = str(state.get("instance_id") or "")
             remote_tail = _fetch_remote_log_tail(host) if host else ""
             if host and instance_id:
-                _rsync_artifacts(
+                _extractor().rsync_artifacts(
                     host,
+                    **_run_identity_from_state(state),
                     attempt=int(state.get("attempt") or 0),
                     instance_id=instance_id,
                     failure_class="completed",
@@ -606,6 +533,7 @@ def _run_watch(args: argparse.Namespace) -> int:
                     progress=state.get("progress") or {},
                     remote_tail=remote_tail,
                     launch_log=LAUNCH_LOG_DIR / f"launch_economist_rl_overnight_attempt_{int(state.get('attempt') or 0):02d}.log",
+                    specs=_economist_rl_rsync_specs(),
                 )
             _log("watch_done success")
             state["finished_utc"] = _utc_now()
@@ -625,8 +553,9 @@ def _run_watch(args: argparse.Namespace) -> int:
             launch_log = LAUNCH_LOG_DIR / f"launch_economist_rl_overnight_attempt_{int(state.get('attempt') or 0):02d}.log"
 
             if host and instance_id:
-                _rsync_artifacts(
+                _extractor().rsync_artifacts(
                     host,
+                    **_run_identity_from_state(state),
                     attempt=int(state.get("attempt") or 0),
                     instance_id=instance_id,
                     failure_class=failure_class,
@@ -634,15 +563,18 @@ def _run_watch(args: argparse.Namespace) -> int:
                     progress=progress,
                     remote_tail=remote_tail,
                     launch_log=launch_log if launch_log.is_file() else None,
+                    specs=_economist_rl_rsync_specs(),
                 )
             else:
-                dest = _extract_dir(
+                extractor = _extractor()
+                dest = extractor.extract_dir(
                     attempt=int(state.get("attempt") or 0),
                     instance_id=instance_id or "unknown",
                     label=failure_class,
                 )
-                _write_extract_manifest(
+                extractor.write_extract_manifest(
                     dest,
+                    **_run_identity_from_state(state),
                     attempt=int(state.get("attempt") or 0),
                     instance_id=instance_id,
                     host=host,
@@ -672,13 +604,21 @@ def _run_watch(args: argparse.Namespace) -> int:
             )
             attempt += 1
             try:
-                meta = _launch_worker(cycle_argv, attempt=attempt)
+                meta = _launch_worker(
+                    cycle_argv,
+                    attempt=attempt,
+                    watchdog_max_runtime_minutes=float(args.watchdog_max_runtime_minutes),
+                )
             except RuntimeError as exc:
                 _log(f"relaunch_failed attempt={attempt} error={exc}")
                 launch_log = LAUNCH_LOG_DIR / f"launch_economist_rl_overnight_attempt_{attempt:02d}.log"
-                dest = _extract_dir(attempt=attempt, instance_id="launch_failed", label="launch_failed")
-                _write_extract_manifest(
+                extractor = _extractor()
+                dest = extractor.extract_dir(attempt=attempt, instance_id="launch_failed", label="launch_failed")
+                extractor.write_extract_manifest(
                     dest,
+                    run_id=run_id,
+                    run_number=run_number,
+                    run_date_utc=run_date_utc,
                     attempt=attempt,
                     instance_id="",
                     host="",
@@ -691,6 +631,8 @@ def _run_watch(args: argparse.Namespace) -> int:
                 )
                 state = {
                     "run_id": run_id,
+                    "run_number": run_number,
+                    "run_date_utc": run_date_utc,
                     "status": "relaunch_failed",
                     "last_failure_utc": _utc_now(),
                     "restarts": restarts,
@@ -703,6 +645,8 @@ def _run_watch(args: argparse.Namespace) -> int:
                 continue
             state = {
                 "run_id": run_id,
+                "run_number": run_number,
+                "run_date_utc": run_date_utc,
                 "attempt": attempt,
                 "restarts": restarts,
                 "instance_id": meta.get("instance_id"),
@@ -756,11 +700,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--run-id",
         default="",
-        help="Label for this watch session (default run_YYYYMMDD_HHMMSS).",
+        help="Stable logical run id across relaunches (default run_NNNN_YYYYMMDDTHHMMSSZ).",
     )
+    parser.add_argument("--run-number", type=int, default=None, help="Human run number stamped into manifests.")
     parser.add_argument("--poll-minutes", type=float, default=10.0)
     parser.add_argument("--max-restarts", type=int, default=8)
     parser.add_argument("--max-hours", type=float, default=14.0)
+    parser.add_argument(
+        "--watchdog-max-runtime-minutes",
+        type=float,
+        default=2400.0,
+        help="Remote lifecycle watchdog max runtime; separate from local watcher --max-hours.",
+    )
     parser.add_argument("--once", action="store_true", help="Single poll then exit.")
     parser.add_argument(
         "--agent-notify",

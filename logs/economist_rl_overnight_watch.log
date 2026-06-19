@@ -92,3 +92,69 @@ RuntimeError: launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/lau
 [2026-06-08T22:21:59Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
 [2026-06-08T22:22:17Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
 [2026-06-08T22:22:17Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-09T05:52:15Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-09T06:15:55Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-09T06:27:47Z] launch_failed attempt=1 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-09T06:52:08Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-09T06:52:08Z] launch_failed attempt=2 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-09T08:17:33Z] launch_start attempt=3 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_03.log
+[2026-06-09T08:21:16Z] launch_failed attempt=3 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_03.log
+[2026-06-09T08:23:16Z] launch_start attempt=4 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_04.log
+[2026-06-09T08:36:54Z] launch_ok attempt=4 instance_id=21752b7b950644638de9e18e2c773a09 host=163.192.11.188
+[2026-06-09T08:36:54Z] watch_start poll_minutes=5.0 max_restarts=8 max_hours=14.0
+[2026-06-09T08:36:54Z] worker_replaced old=21752b7b950644638de9e18e2c773a09 new=1952f81c6648419697dd5b966372b858
+[2026-06-09T08:36:56Z] poll status=ssh_failed tmux=down progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 1, "ppo_tail": [], "trained_hint": false}
+[2026-06-09T08:36:58Z] rsync_partial attempt=4 dest=attempt_004_1952f81c_ssh_failed_20260609T083656Z src=ubuntu@146.235.222.23:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=23 err=rsync: [sender] change_dir "/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL" failed: No such file or directory (2)
+rsync(13679): warning: receive
+[2026-06-09T08:36:58Z] extract_written dest=benchmarks/results/economistRL/extracts/attempt_004_1952f81c_ssh_failed_20260609T083656Z failure_class=ssh_failed
+[2026-06-09T08:36:58Z] terminate_start id=1952f81c6648419697dd5b966372b858 reason=watch_ssh_failed
+[2026-06-09T08:37:02Z] launch_start attempt=5 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_05.log
+[2026-06-09T08:48:42Z] launch_ok attempt=5 instance_id=2780efdb799f488ea5537f13eb474767 host=64.181.243.75
+[2026-06-09T08:49:12Z] worker_replaced old=2780efdb799f488ea5537f13eb474767 new=b60f5f7941a54566b83b3867993382a4
+[2026-06-09T08:49:13Z] poll status=ssh_failed tmux= progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 0, "ppo_tail": [], "trained_hint": false}
+[2026-06-09T08:49:13Z] rsync_partial attempt=5 dest=attempt_005_b60f5f79_ssh_failed_20260609T084913Z src=ubuntu@150.136.217.44:~/cloud-eval-logs/ rc=255 err=Connection closed by 150.136.217.44 port 22
+rsync(13907): error: unexpected end of file
+[2026-06-09T08:49:13Z] rsync_partial attempt=5 dest=attempt_005_b60f5f79_ssh_failed_20260609T084913Z src=ubuntu@150.136.217.44:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=Connection closed by 150.136.217.44 port 22
+rsync(13909): error: unexpected end of file
+[2026-06-09T08:49:13Z] extract_written dest=benchmarks/results/economistRL/extracts/attempt_005_b60f5f79_ssh_failed_20260609T084913Z failure_class=ssh_failed
+[2026-06-09T08:49:14Z] terminate_start id=b60f5f7941a54566b83b3867993382a4 reason=watch_ssh_failed
+[2026-06-09T08:49:17Z] launch_start attempt=6 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_06.log
+[2026-06-09T09:02:25Z] launch_ok attempt=6 instance_id=4eebe674d3b544e4b171f390b15deeda host=192.9.157.102
+[2026-06-09T09:02:55Z] worker_replaced old=4eebe674d3b544e4b171f390b15deeda new=21752b7b950644638de9e18e2c773a09
+[2026-06-09T09:02:56Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "8/10", "log_lines": 28, "ppo_tail": [], "trained_hint": false}
+[2026-06-09T09:07:58Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "9/10", "log_lines": 29, "ppo_tail": [], "trained_hint": false}
+[2026-06-09T09:13:00Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "10/10", "log_lines": 30, "ppo_tail": [], "trained_hint": false}
+[2026-06-09T09:18:02Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "10/10", "log_lines": 30, "ppo_tail": [], "trained_hint": false}
+[2026-06-09T11:18:12Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "002", "last_rollout": "3/10", "log_lines": 43, "ppo_tail": [], "trained_hint": false}
+[2026-06-10T23:22:15Z] watch_state_reset
+[2026-06-10T23:22:15Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-10T23:30:29Z] launch_ok attempt=1 instance_id=9b9940561fb84c4caa03fec7f2dcf899 host=165.1.75.66
+[2026-06-10T23:30:29Z] watch_start poll_minutes=5.0 max_restarts=0 max_hours=20.0
+[2026-06-10T23:30:30Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 2, "ppo_tail": [], "trained_hint": false}
+[2026-06-10T23:35:32Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "1/50", "log_lines": 20, "ppo_tail": [], "trained_hint": false}
+[2026-06-10T23:40:33Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "001", "last_rollout": "2/50", "log_lines": 21, "ppo_tail": [], "trained_hint": false}
+[2026-06-17T20:53:23Z] watch_state_reset
+[2026-06-17T20:53:23Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-17T21:46:22Z] launch_failed attempt=1 error=launch failed rc=1; see /Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-17T22:10:30Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-17T22:29:02Z] launch_ok attempt=1 instance_id=23a1035de2144e69b754de00e1fb2db2 host=152.67.228.128
+[2026-06-17T22:29:02Z] watch_start poll_minutes=10.0 max_restarts=3 max_hours=40.0
+[2026-06-17T22:29:03Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 8, "ppo_tail": [], "trained_hint": false}
+[2026-06-17T22:43:57Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "002", "last_rollout": "50/50", "log_lines": 100, "ppo_tail": [], "trained_hint": false}
+[2026-06-17T23:23:59Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "43/50", "log_lines": 527, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T00:27:26Z] poll status=instance_gone tmux=gone progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "43/50", "log_lines": 527, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T00:31:11Z] rsync_partial attempt=1 dest=attempt_001_23a1035d_instance_gone_20260618T002751Z src=ubuntu@152.67.228.128:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 152.67.228.128 port 22: Operation timed out
+rsync(61029): error: unexpected end of file
+[2026-06-18T00:31:31Z] rsync_partial attempt=1 dest=attempt_001_23a1035d_instance_gone_20260618T002751Z src=ubuntu@152.67.228.128:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 152.67.228.128 port 22: Operation timed out
+rsync(61087): error: unexpected end of file
+[2026-06-18T00:31:31Z] extract_written dest=benchmarks/results/economistRL/extracts/attempt_001_23a1035d_instance_gone_20260618T002751Z failure_class=instance_gone
+[2026-06-18T00:31:32Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-18T00:54:14Z] launch_ok attempt=2 instance_id=0e61cf2e9a68480fb8a4e3d13ccc8162 host=146.235.207.103
+[2026-06-18T00:54:52Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "002", "last_rollout": "", "log_lines": 23, "ppo_tail": [], "trained_hint": false}
+[2026-06-18T02:24:45Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "42/50", "log_lines": 530, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T03:48:37Z] poll status=instance_gone tmux=gone progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "42/50", "log_lines": 530, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T04:02:07Z] rsync_partial attempt=2 dest=attempt_002_0e61cf2e_instance_gone_20260618T040147Z src=ubuntu@146.235.207.103:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 146.235.207.103 port 22: Operation timed out
+rsync(61771): error: unexpected end of file
+[2026-06-18T04:02:27Z] rsync_partial attempt=2 dest=attempt_002_0e61cf2e_instance_gone_20260618T040147Z src=ubuntu@146.235.207.103:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 146.235.207.103 port 22: Operation timed out
+rsync(61828): error: unexpected end of file
+[2026-06-18T04:02:27Z] extract_written dest=benchmarks/results/economistRL/extracts/attempt_002_0e61cf2e_instance_gone_20260618T040147Z failure_class=instance_gone

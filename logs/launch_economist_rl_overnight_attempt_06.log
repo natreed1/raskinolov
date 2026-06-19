@@ -1,0 +1,715 @@
+lambda_capacity_preflight_loaded cpu_4x_general=- cpu_4x_generalx=- gpu_1x_a10=us-east-1,us-west-1 gpu_1x_a100=- gpu_1x_a100_sxm4=asia-south-1,us-east-1,us-west-2 gpu_1x_a6000=- gpu_1x_b200_sxm6=- gpu_1x_gh200=- gpu_1x_h100_pcie=us-west-3 gpu_1x_h100_sxm5=us-south-2,us-south-3,us-southeast-1 gpu_1x_rtx6000=- gpu_2x_a100=- gpu_2x_a6000=- gpu_2x_b200_sxm6=- gpu_2x_h100_sxm5=us-southeast-1 gpu_4x_a100=- gpu_4x_a6000=- gpu_4x_b200_sxm6=- gpu_4x_h100_sxm5=- gpu_8x_a100=asia-northeast-2 gpu_8x_a100_80gb_sxm4=- gpu_8x_b200_sxm6=- gpu_8x_h100_sxm5=- gpu_8x_v100=- gpu_8x_v100_n=us-south-2
+lambda_capacity_candidate_added instance_type=gpu_1x_a10 region=us-west-1 reason=requested_pair
+lambda_capacity_candidate_added instance_type=gpu_1x_a10 region=us-east-1 reason=requested_type_available_region
+lambda_capacity_candidate_order 1:gpu_1x_a10@us-west-1 2:gpu_1x_a10@us-east-1
+lambda_launch_candidate_try index=1/2 instance_type=gpu_1x_a10 region=us-west-1 quantity=1
+lambda_launch_candidate_selected instance_type=gpu_1x_a10 region=us-west-1 instance_count=1
+Ign:1 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ InRelease
+Hit:2 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ Release
+Get:3 https://download.docker.com/linux/ubuntu jammy InRelease [48.5 kB]
+Get:4 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease [1477 B]
+Get:5 https://packages.microsoft.com/repos/azure-cli jammy InRelease [3596 B]
+Get:7 https://download.docker.com/linux/ubuntu jammy/stable amd64 Packages [79.7 kB]
+Get:8 http://archive.lambdalabs.com/ubuntu jammy InRelease [3911 B]
+Get:9 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Get:10 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  Packages [26.1 kB]
+Get:11 https://packages.microsoft.com/repos/azure-cli jammy/main amd64 Packages [3325 B]
+Get:12 https://pkg.cloudflare.com/cloudflared jammy InRelease [5043 B]
+Hit:13 http://archive.ubuntu.com/ubuntu jammy InRelease
+Get:14 http://archive.lambdalabs.com/ubuntu jammy/main amd64 Packages [120 kB]
+Get:15 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [3292 kB]
+Get:16 http://security.ubuntu.com/ubuntu jammy-security/main Translation-en [463 kB]
+Get:17 http://security.ubuntu.com/ubuntu jammy-security/main amd64 c-n-f Metadata [14.4 kB]
+Get:18 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [5862 kB]
+Get:19 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:20 http://security.ubuntu.com/ubuntu jammy-security/restricted Translation-en [1121 kB]
+Get:21 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 c-n-f Metadata [600 B]
+Get:22 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1036 kB]
+Get:23 http://security.ubuntu.com/ubuntu jammy-security/universe Translation-en [229 kB]
+Get:24 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 c-n-f Metadata [23.0 kB]
+Get:25 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [64.3 kB]
+Get:26 http://security.ubuntu.com/ubuntu jammy-security/multiverse Translation-en [12.6 kB]
+Get:27 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 c-n-f Metadata [544 B]
+Get:28 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease [18.1 kB]
+Get:29 https://pkg.cloudflare.com/cloudflared jammy/main amd64 Packages [376 B]
+Hit:30 https://ppa.launchpadcontent.net/flexiondotorg/nvtop/ubuntu jammy InRelease
+Get:31 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+Get:32 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main amd64 Packages [32.7 kB]
+Get:33 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [3574 kB]
+Get:34 http://archive.ubuntu.com/ubuntu jammy-updates/main Translation-en [535 kB]
+Get:35 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 c-n-f Metadata [19.9 kB]
+Get:36 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [6114 kB]
+Get:37 http://archive.ubuntu.com/ubuntu jammy-updates/restricted Translation-en [1164 kB]
+Get:38 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 c-n-f Metadata [584 B]
+Get:39 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1273 kB]
+Get:40 http://archive.ubuntu.com/ubuntu jammy-updates/universe Translation-en [318 kB]
+Get:41 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 c-n-f Metadata [30.6 kB]
+Get:42 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [71.6 kB]
+Get:43 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse Translation-en [15.5 kB]
+Get:44 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 c-n-f Metadata [756 B]
+Get:45 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [70.2 kB]
+Get:46 http://archive.ubuntu.com/ubuntu jammy-backports/main Translation-en [11.4 kB]
+Get:47 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 c-n-f Metadata [412 B]
+Get:48 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [30.8 kB]
+Get:49 http://archive.ubuntu.com/ubuntu jammy-backports/universe Translation-en [16.9 kB]
+Get:50 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 c-n-f Metadata [676 B]
+Get:51 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main Translation-en [5680 B]
+Fetched 26.1 MB in 3s (7568 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+ca-certificates is already the newest version (20240203~22.04.1).
+ca-certificates set to manually installed.
+tmux is already the newest version (3.2a-4ubuntu0.2).
+The following additional packages will be installed:
+  dirmngr gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client gpg-wks-server
+  gpgconf gpgsm gpgv libcurl4
+Suggested packages:
+  pinentry-gnome3 tor parcimonie xloadimage scdaemon python3-braceexpand
+The following packages will be upgraded:
+  curl dirmngr gnupg gnupg-l10n gnupg-utils gpg gpg-agent gpg-wks-client
+  gpg-wks-server gpgconf gpgsm gpgv libcurl4 rsync
+14 upgraded, 0 newly installed, 0 to remove and 237 not upgraded.
+Need to get 3177 kB of archives.
+After this operation, 18.4 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 rsync amd64 3.2.7-0ubuntu0.22.04.7 [445 kB]
+Get:2 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg-wks-client amd64 2.2.27-3ubuntu2.5 [62.7 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 dirmngr amd64 2.2.27-3ubuntu2.5 [293 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg-wks-server amd64 2.2.27-3ubuntu2.5 [57.6 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gnupg-utils amd64 2.2.27-3ubuntu2.5 [309 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg-agent amd64 2.2.27-3ubuntu2.5 [209 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpg amd64 2.2.27-3ubuntu2.5 [519 kB]
+Get:8 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpgconf amd64 2.2.27-3ubuntu2.5 [94.3 kB]
+Get:9 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gnupg-l10n all 2.2.27-3ubuntu2.5 [54.5 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gnupg all 2.2.27-3ubuntu2.5 [315 kB]
+Get:11 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpgsm amd64 2.2.27-3ubuntu2.5 [197 kB]
+Get:12 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 gpgv amd64 2.2.27-3ubuntu2.5 [137 kB]
+Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 curl amd64 7.81.0-1ubuntu1.24 [194 kB]
+Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcurl4 amd64 7.81.0-1ubuntu1.24 [291 kB]
+Fetched 3177 kB in 0s (19.8 MB/s)
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 214077 files and directories currently installed.)
+Preparing to unpack .../00-rsync_3.2.7-0ubuntu0.22.04.7_amd64.deb ...
+Unpacking rsync (3.2.7-0ubuntu0.22.04.7) over (3.2.7-0ubuntu0.22.04.4) ...
+Preparing to unpack .../01-gpg-wks-client_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpg-wks-client (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../02-dirmngr_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking dirmngr (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../03-gpg-wks-server_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpg-wks-server (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../04-gnupg-utils_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gnupg-utils (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../05-gpg-agent_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpg-agent (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../06-gpg_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpg (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../07-gpgconf_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpgconf (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../08-gnupg-l10n_2.2.27-3ubuntu2.5_all.deb ...
+Unpacking gnupg-l10n (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../09-gnupg_2.2.27-3ubuntu2.5_all.deb ...
+Unpacking gnupg (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../10-gpgsm_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpgsm (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Preparing to unpack .../11-gpgv_2.2.27-3ubuntu2.5_amd64.deb ...
+Unpacking gpgv (2.2.27-3ubuntu2.5) over (2.2.27-3ubuntu2.3) ...
+Setting up gpgv (2.2.27-3ubuntu2.5) ...
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 214077 files and directories currently installed.)
+Preparing to unpack .../curl_7.81.0-1ubuntu1.24_amd64.deb ...
+Unpacking curl (7.81.0-1ubuntu1.24) over (7.81.0-1ubuntu1.20) ...
+Preparing to unpack .../libcurl4_7.81.0-1ubuntu1.24_amd64.deb ...
+Unpacking libcurl4:amd64 (7.81.0-1ubuntu1.24) over (7.81.0-1ubuntu1.20) ...
+Setting up gnupg-l10n (2.2.27-3ubuntu2.5) ...
+Setting up gpgconf (2.2.27-3ubuntu2.5) ...
+Setting up libcurl4:amd64 (7.81.0-1ubuntu1.24) ...
+Setting up curl (7.81.0-1ubuntu1.24) ...
+Setting up gpg (2.2.27-3ubuntu2.5) ...
+Setting up rsync (3.2.7-0ubuntu0.22.04.7) ...
+rsync.service is a disabled or a static unit not running, not starting it.
+Setting up gnupg-utils (2.2.27-3ubuntu2.5) ...
+Setting up gpg-agent (2.2.27-3ubuntu2.5) ...
+Setting up gpgsm (2.2.27-3ubuntu2.5) ...
+Setting up dirmngr (2.2.27-3ubuntu2.5) ...
+Setting up gpg-wks-server (2.2.27-3ubuntu2.5) ...
+Setting up gpg-wks-client (2.2.27-3ubuntu2.5) ...
+Setting up gnupg (2.2.27-3ubuntu2.5) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.10) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for install-info (6.8-4build1) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+[38;5;79m2026-06-09 08:55:49 - Installing pre-requisites[0m
+Ign:1 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ InRelease
+Hit:2 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ Release
+Hit:3 https://download.docker.com/linux/ubuntu jammy InRelease
+Hit:4 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease
+Hit:5 https://packages.microsoft.com/repos/azure-cli jammy InRelease
+Hit:7 http://archive.lambdalabs.com/ubuntu jammy InRelease
+Hit:8 https://pkg.cloudflare.com/cloudflared jammy InRelease
+Hit:9 http://security.ubuntu.com/ubuntu jammy-security InRelease
+Hit:10 http://archive.ubuntu.com/ubuntu jammy InRelease
+Hit:11 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease
+Hit:12 http://archive.ubuntu.com/ubuntu jammy-updates InRelease
+Hit:13 http://archive.ubuntu.com/ubuntu jammy-backports InRelease
+Hit:14 https://ppa.launchpadcontent.net/flexiondotorg/nvtop/ubuntu jammy InRelease
+Reading package lists...
+Building dependency tree...
+Reading state information...
+237 packages can be upgraded. Run 'apt list --upgradable' to see them.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+ca-certificates is already the newest version (20240203~22.04.1).
+curl is already the newest version (7.81.0-1ubuntu1.24).
+gnupg is already the newest version (2.2.27-3ubuntu2.5).
+The following NEW packages will be installed:
+  apt-transport-https
+0 upgraded, 1 newly installed, 0 to remove and 237 not upgraded.
+Need to get 1510 B of archives.
+After this operation, 170 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 apt-transport-https all 2.4.14 [1510 B]
+Fetched 1510 B in 0s (66.8 kB/s)
+Selecting previously unselected package apt-transport-https.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 214077 files and directories currently installed.)
+Preparing to unpack .../apt-transport-https_2.4.14_all.deb ...
+Unpacking apt-transport-https (2.4.14) ...
+Setting up apt-transport-https (2.4.14) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Ign:1 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ InRelease
+Hit:2 https://download.docker.com/linux/ubuntu jammy InRelease
+Hit:3 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease
+Hit:4 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ Release
+Hit:5 https://packages.microsoft.com/repos/azure-cli jammy InRelease
+Get:6 https://deb.nodesource.com/node_20.x nodistro InRelease [12.1 kB]
+Hit:7 http://archive.lambdalabs.com/ubuntu jammy InRelease
+Hit:9 http://archive.ubuntu.com/ubuntu jammy InRelease
+Hit:10 http://security.ubuntu.com/ubuntu jammy-security InRelease
+Get:11 https://deb.nodesource.com/node_20.x nodistro/main amd64 Packages [14.4 kB]
+Hit:12 https://pkg.cloudflare.com/cloudflared jammy InRelease
+Hit:13 http://archive.ubuntu.com/ubuntu jammy-updates InRelease
+Hit:14 http://archive.ubuntu.com/ubuntu jammy-backports InRelease
+Hit:15 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease
+Hit:16 https://ppa.launchpadcontent.net/flexiondotorg/nvtop/ubuntu jammy InRelease
+Fetched 26.6 kB in 1s (33.1 kB/s)
+Reading package lists...
+Building dependency tree...
+Reading state information...
+237 packages can be upgraded. Run 'apt list --upgradable' to see them.
+[1;34m2026-06-09 08:55:56 - Repository configured successfully.[0m
+[38;5;79m2026-06-09 08:55:56 - To install Node.js, run: apt install nodejs -y[0m
+[38;5;79m2026-06-09 08:55:56 - You can use N|solid Runtime as a node.js alternative[0m
+[1;32m2026-06-09 08:55:56 - To install N|solid Runtime, run: apt install nsolid -y 
+[0m
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following NEW packages will be installed:
+  nodejs
+0 upgraded, 1 newly installed, 0 to remove and 237 not upgraded.
+Need to get 32.2 MB of archives.
+After this operation, 196 MB of additional disk space will be used.
+Get:1 https://deb.nodesource.com/node_20.x nodistro/main amd64 nodejs amd64 20.20.2-1nodesource1 [32.2 MB]
+Fetched 32.2 MB in 0s (103 MB/s)
+Selecting previously unselected package nodejs.
+(Reading database ... 
+(Reading database ... 5%
+(Reading database ... 10%
+(Reading database ... 15%
+(Reading database ... 20%
+(Reading database ... 25%
+(Reading database ... 30%
+(Reading database ... 35%
+(Reading database ... 40%
+(Reading database ... 45%
+(Reading database ... 50%
+(Reading database ... 55%
+(Reading database ... 60%
+(Reading database ... 65%
+(Reading database ... 70%
+(Reading database ... 75%
+(Reading database ... 80%
+(Reading database ... 85%
+(Reading database ... 90%
+(Reading database ... 95%
+(Reading database ... 100%
+(Reading database ... 214081 files and directories currently installed.)
+Preparing to unpack .../nodejs_20.20.2-1nodesource1_amd64.deb ...
+Unpacking nodejs (20.20.2-1nodesource1) ...
+Setting up nodejs (20.20.2-1nodesource1) ...
+Processing triggers for man-db (2.10.2-1) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+bootstrap_ok host=192.9.157.102
+
+added 607 packages, and audited 608 packages in 21s
+
+254 packages are looking for funding
+  run `npm fund` for details
+
+10 vulnerabilities (3 moderate, 7 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+added 24 packages in 2s
+
+1 package is looking for funding
+  run `npm fund` for details
+Requirement already satisfied: pip in ./.venv-linux-port/lib/python3.10/site-packages (22.0.2)
+Collecting pip
+  Downloading pip-26.1.2-py3-none-any.whl (1.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 22.6 MB/s eta 0:00:00
+Installing collected packages: pip
+  Attempting uninstall: pip
+    Found existing installation: pip 22.0.2
+    Uninstalling pip-22.0.2:
+      Successfully uninstalled pip-22.0.2
+Successfully installed pip-26.1.2
+Looking in indexes: https://download.pytorch.org/whl/cu121
+Collecting torch
+  Downloading torch-2.5.1%2Bcu121-cp310-cp310-linux_x86_64.whl (780.4 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 780.4/780.4 MB 118.9 MB/s  0:00:03
+Collecting filelock (from torch)
+  Downloading filelock-3.29.0-py3-none-any.whl.metadata (2.0 kB)
+Collecting typing-extensions>=4.8.0 (from torch)
+  Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+Collecting networkx (from torch)
+  Downloading networkx-3.4.2-py3-none-any.whl.metadata (6.3 kB)
+Collecting jinja2 (from torch)
+  Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+Collecting fsspec (from torch)
+  Downloading fsspec-2026.4.0-py3-none-any.whl.metadata (10 kB)
+Collecting nvidia-cuda-nvrtc-cu12==12.1.105 (from torch)
+  Downloading nvidia_cuda_nvrtc_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (23.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 23.7/23.7 MB 192.5 MB/s  0:00:00
+Collecting nvidia-cuda-runtime-cu12==12.1.105 (from torch)
+  Downloading nvidia_cuda_runtime_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (823 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 823.6/823.6 kB 113.7 MB/s  0:00:00
+Collecting nvidia-cuda-cupti-cu12==12.1.105 (from torch)
+  Downloading nvidia_cuda_cupti_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (14.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.1/14.1 MB 208.6 MB/s  0:00:00
+Collecting nvidia-cudnn-cu12==9.1.0.70 (from torch)
+  Downloading nvidia_cudnn_cu12-9.1.0.70-py3-none-manylinux2014_x86_64.whl (664.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 664.8/664.8 MB 156.4 MB/s  0:00:02
+Collecting nvidia-cublas-cu12==12.1.3.1 (from torch)
+  Downloading nvidia_cublas_cu12-12.1.3.1-py3-none-manylinux1_x86_64.whl (410.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 410.6/410.6 MB 191.6 MB/s  0:00:01
+Collecting nvidia-cufft-cu12==11.0.2.54 (from torch)
+  Downloading nvidia_cufft_cu12-11.0.2.54-py3-none-manylinux1_x86_64.whl (121.6 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 121.6/121.6 MB 219.2 MB/s  0:00:00
+Collecting nvidia-curand-cu12==10.3.2.106 (from torch)
+  Downloading nvidia_curand_cu12-10.3.2.106-py3-none-manylinux1_x86_64.whl (56.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 56.5/56.5 MB 223.3 MB/s  0:00:00
+Collecting nvidia-cusolver-cu12==11.4.5.107 (from torch)
+  Downloading nvidia_cusolver_cu12-11.4.5.107-py3-none-manylinux1_x86_64.whl (124.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 124.2/124.2 MB 233.3 MB/s  0:00:00
+Collecting nvidia-cusparse-cu12==12.1.0.106 (from torch)
+  Downloading nvidia_cusparse_cu12-12.1.0.106-py3-none-manylinux1_x86_64.whl (196.0 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 196.0/196.0 MB 231.9 MB/s  0:00:00
+Collecting nvidia-nccl-cu12==2.21.5 (from torch)
+  Downloading nvidia_nccl_cu12-2.21.5-py3-none-manylinux2014_x86_64.whl (188.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.7/188.7 MB 213.1 MB/s  0:00:00
+Collecting nvidia-nvtx-cu12==12.1.105 (from torch)
+  Downloading nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl (99 kB)
+Collecting triton==3.1.0 (from torch)
+  Downloading triton-3.1.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (209.5 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 209.5/209.5 MB 233.6 MB/s  0:00:00
+Collecting sympy==1.13.1 (from torch)
+  Downloading sympy-1.13.1-py3-none-any.whl.metadata (12 kB)
+Collecting nvidia-nvjitlink-cu12 (from nvidia-cusolver-cu12==11.4.5.107->torch)
+  Downloading nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl.metadata (1.7 kB)
+Collecting mpmath<1.4,>=1.1.0 (from sympy==1.13.1->torch)
+  Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+Collecting MarkupSafe>=2.0 (from jinja2->torch)
+  Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+Downloading sympy-1.13.1-py3-none-any.whl (6.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.2/6.2 MB 31.8 MB/s  0:00:00
+Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 69.4 MB/s  0:00:00
+Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+Downloading filelock-3.29.0-py3-none-any.whl (39 kB)
+Downloading fsspec-2026.4.0-py3-none-any.whl (203 kB)
+Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+Downloading markupsafe-3.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (20 kB)
+Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 156.3 MB/s  0:00:00
+Downloading nvidia_nvjitlink_cu12-12.9.86-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl (39.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 39.7/39.7 MB 215.0 MB/s  0:00:00
+Installing collected packages: mpmath, typing-extensions, sympy, nvidia-nvtx-cu12, nvidia-nvjitlink-cu12, nvidia-nccl-cu12, nvidia-curand-cu12, nvidia-cufft-cu12, nvidia-cuda-runtime-cu12, nvidia-cuda-nvrtc-cu12, nvidia-cuda-cupti-cu12, nvidia-cublas-cu12, networkx, MarkupSafe, fsspec, filelock, triton, nvidia-cusparse-cu12, nvidia-cudnn-cu12, jinja2, nvidia-cusolver-cu12, torch
+
+Successfully installed MarkupSafe-3.0.3 filelock-3.29.0 fsspec-2026.4.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.4.2 nvidia-cublas-cu12-12.1.3.1 nvidia-cuda-cupti-cu12-12.1.105 nvidia-cuda-nvrtc-cu12-12.1.105 nvidia-cuda-runtime-cu12-12.1.105 nvidia-cudnn-cu12-9.1.0.70 nvidia-cufft-cu12-11.0.2.54 nvidia-curand-cu12-10.3.2.106 nvidia-cusolver-cu12-11.4.5.107 nvidia-cusparse-cu12-12.1.0.106 nvidia-nccl-cu12-2.21.5 nvidia-nvjitlink-cu12-12.9.86 nvidia-nvtx-cu12-12.1.105 sympy-1.13.1 torch-2.5.1+cu121 triton-3.1.0 typing-extensions-4.15.0
+Collecting transformers
+  Downloading transformers-5.10.2-py3-none-any.whl.metadata (33 kB)
+Collecting accelerate
+  Downloading accelerate-1.13.0-py3-none-any.whl.metadata (19 kB)
+Collecting sentencepiece
+  Downloading sentencepiece-0.2.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+Collecting numpy
+  Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (62 kB)
+Collecting peft
+  Downloading peft-0.19.1-py3-none-any.whl.metadata (15 kB)
+Collecting huggingface-hub<2.0,>=1.5.0 (from transformers)
+  Downloading huggingface_hub-1.18.0-py3-none-any.whl.metadata (14 kB)
+Collecting packaging>=20.0 (from transformers)
+  Downloading packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+Collecting pyyaml>=5.1 (from transformers)
+  Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+Collecting regex>=2025.10.22 (from transformers)
+  Downloading regex-2026.5.9-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Collecting tokenizers<=0.23.0,>=0.22.0 (from transformers)
+  Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+Collecting typer (from transformers)
+  Downloading typer-0.26.7-py3-none-any.whl.metadata (16 kB)
+Collecting safetensors>=0.4.3 (from transformers)
+  Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.2 kB)
+Collecting tqdm>=4.27 (from transformers)
+  Downloading tqdm-4.68.1-py3-none-any.whl.metadata (57 kB)
+Collecting click>=8.4.0 (from huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+Requirement already satisfied: filelock>=3.10.0 in ./.venv-linux-port/lib/python3.10/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers) (3.29.0)
+Requirement already satisfied: fsspec>=2023.5.0 in ./.venv-linux-port/lib/python3.10/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers) (2026.4.0)
+Collecting hf-xet<2.0.0,>=1.4.3 (from huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading hf_xet-1.5.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (4.9 kB)
+Collecting httpx<1,>=0.23.0 (from huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+Collecting typer (from transformers)
+  Downloading typer-0.25.1-py3-none-any.whl.metadata (15 kB)
+Requirement already satisfied: typing-extensions>=4.1.0 in ./.venv-linux-port/lib/python3.10/site-packages (from huggingface-hub<2.0,>=1.5.0->transformers) (4.15.0)
+Collecting anyio (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+Collecting certifi (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+Collecting httpcore==1.* (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+Collecting idna (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading idna-3.18-py3-none-any.whl.metadata (6.1 kB)
+Collecting h11>=0.16 (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+Collecting shellingham>=1.3.0 (from typer->transformers)
+  Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+Collecting rich>=13.8.0 (from typer->transformers)
+  Downloading rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+Collecting annotated-doc>=0.0.2 (from typer->transformers)
+  Downloading annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+Collecting psutil (from accelerate)
+  Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+Requirement already satisfied: torch>=2.0.0 in ./.venv-linux-port/lib/python3.10/site-packages (from accelerate) (2.5.1+cu121)
+Collecting markdown-it-py>=2.2.0 (from rich>=13.8.0->typer->transformers)
+  Downloading markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+Collecting pygments<3.0.0,>=2.13.0 (from rich>=13.8.0->typer->transformers)
+  Downloading pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.8.0->typer->transformers)
+  Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+Requirement already satisfied: networkx in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (3.4.2)
+Requirement already satisfied: jinja2 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (3.1.6)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (12.1.105)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (12.1.105)
+Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (9.1.0.70)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (12.1.3.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (11.0.2.54)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (10.3.2.106)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (11.4.5.107)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (12.1.0.106)
+Requirement already satisfied: nvidia-nccl-cu12==2.21.5 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (2.21.5)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (12.1.105)
+Requirement already satisfied: triton==3.1.0 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (3.1.0)
+Requirement already satisfied: sympy==1.13.1 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=2.0.0->accelerate) (1.13.1)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in ./.venv-linux-port/lib/python3.10/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch>=2.0.0->accelerate) (12.9.86)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in ./.venv-linux-port/lib/python3.10/site-packages (from sympy==1.13.1->torch>=2.0.0->accelerate) (1.3.0)
+Collecting exceptiongroup>=1.0.2 (from anyio->httpx<1,>=0.23.0->huggingface-hub<2.0,>=1.5.0->transformers)
+  Downloading exceptiongroup-1.3.1-py3-none-any.whl.metadata (6.7 kB)
+Requirement already satisfied: MarkupSafe>=2.0 in ./.venv-linux-port/lib/python3.10/site-packages (from jinja2->torch>=2.0.0->accelerate) (3.0.3)
+Downloading transformers-5.10.2-py3-none-any.whl (11.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.0/11.0 MB 183.8 MB/s  0:00:00
+Downloading huggingface_hub-1.18.0-py3-none-any.whl (684 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 684.4/684.4 kB 86.6 MB/s  0:00:00
+Downloading hf_xet-1.5.1-cp37-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (4.5 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 206.7 MB/s  0:00:00
+Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 194.1 MB/s  0:00:00
+Downloading typer-0.25.1-py3-none-any.whl (58 kB)
+Downloading accelerate-1.13.0-py3-none-any.whl (383 kB)
+Downloading sentencepiece-0.2.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (1.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 143.7 MB/s  0:00:00
+Downloading numpy-2.2.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (16.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.8/16.8 MB 214.7 MB/s  0:00:00
+Downloading peft-0.19.1-py3-none-any.whl (680 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 680.7/680.7 kB 89.7 MB/s  0:00:00
+Downloading annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+Downloading click-8.4.1-py3-none-any.whl (116 kB)
+Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+Downloading packaging-26.2-py3-none-any.whl (100 kB)
+Downloading pyyaml-6.0.3-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (770 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 770.3/770.3 kB 105.9 MB/s  0:00:00
+Downloading regex-2026.5.9-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (794 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 794.1/794.1 kB 112.6 MB/s  0:00:00
+Downloading rich-15.0.0-py3-none-any.whl (310 kB)
+Downloading pygments-2.20.0-py3-none-any.whl (1.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 158.6 MB/s  0:00:00
+Downloading markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Downloading safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (516 kB)
+Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+Downloading tqdm-4.68.1-py3-none-any.whl (78 kB)
+Downloading anyio-4.13.0-py3-none-any.whl (114 kB)
+Downloading exceptiongroup-1.3.1-py3-none-any.whl (16 kB)
+Downloading idna-3.18-py3-none-any.whl (65 kB)
+Downloading certifi-2026.5.20-py3-none-any.whl (134 kB)
+Downloading psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+Installing collected packages: tqdm, shellingham, sentencepiece, safetensors, regex, pyyaml, pygments, psutil, packaging, numpy, mdurl, idna, hf-xet, h11, exceptiongroup, click, certifi, annotated-doc, markdown-it-py, httpcore, anyio, rich, httpx, typer, huggingface-hub, tokenizers, accelerate, transformers, peft
+
+Successfully installed accelerate-1.13.0 annotated-doc-0.0.4 anyio-4.13.0 certifi-2026.5.20 click-8.4.1 exceptiongroup-1.3.1 h11-0.16.0 hf-xet-1.5.1 httpcore-1.0.9 httpx-0.28.1 huggingface-hub-1.18.0 idna-3.18 markdown-it-py-4.2.0 mdurl-0.1.2 numpy-2.2.6 packaging-26.2 peft-0.19.1 psutil-7.2.2 pygments-2.20.0 pyyaml-6.0.3 regex-2026.5.9 rich-15.0.0 safetensors-0.8.0 sentencepiece-0.2.1 shellingham-1.5.4 tokenizers-0.22.2 tqdm-4.68.1 transformers-5.10.2 typer-0.25.1
+sync_ok host=192.9.157.102
+Requirement already satisfied: pip in ./.venv-linux-port/lib/python3.10/site-packages (26.1.2)
+Collecting transformers==4.57.6
+  Downloading transformers-4.57.6-py3-none-any.whl.metadata (43 kB)
+Requirement already satisfied: peft<0.20,>=0.13.0 in ./.venv-linux-port/lib/python3.10/site-packages (0.19.1)
+Collecting bitsandbytes
+  Downloading bitsandbytes-0.49.2-py3-none-manylinux_2_24_x86_64.whl.metadata (10 kB)
+Requirement already satisfied: safetensors in ./.venv-linux-port/lib/python3.10/site-packages (0.8.0)
+Requirement already satisfied: huggingface_hub in ./.venv-linux-port/lib/python3.10/site-packages (1.18.0)
+Requirement already satisfied: accelerate in ./.venv-linux-port/lib/python3.10/site-packages (1.13.0)
+Requirement already satisfied: sentencepiece in ./.venv-linux-port/lib/python3.10/site-packages (0.2.1)
+Requirement already satisfied: filelock in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (3.29.0)
+Collecting huggingface_hub
+  Downloading huggingface_hub-0.36.2-py3-none-any.whl.metadata (15 kB)
+Requirement already satisfied: numpy>=1.17 in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (2.2.6)
+Requirement already satisfied: packaging>=20.0 in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (26.2)
+Requirement already satisfied: pyyaml>=5.1 in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (6.0.3)
+Requirement already satisfied: regex!=2019.12.17 in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (2026.5.9)
+Collecting requests (from transformers==4.57.6)
+  Downloading requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+Requirement already satisfied: tokenizers<=0.23.0,>=0.22.0 in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (0.22.2)
+Requirement already satisfied: tqdm>=4.27 in ./.venv-linux-port/lib/python3.10/site-packages (from transformers==4.57.6) (4.68.1)
+Requirement already satisfied: psutil in ./.venv-linux-port/lib/python3.10/site-packages (from peft<0.20,>=0.13.0) (7.2.2)
+Requirement already satisfied: torch>=1.13.0 in ./.venv-linux-port/lib/python3.10/site-packages (from peft<0.20,>=0.13.0) (2.5.1+cu121)
+Requirement already satisfied: fsspec>=2023.5.0 in ./.venv-linux-port/lib/python3.10/site-packages (from huggingface_hub) (2026.4.0)
+Requirement already satisfied: hf-xet<2.0.0,>=1.1.3 in ./.venv-linux-port/lib/python3.10/site-packages (from huggingface_hub) (1.5.1)
+Requirement already satisfied: typing-extensions>=3.7.4.3 in ./.venv-linux-port/lib/python3.10/site-packages (from huggingface_hub) (4.15.0)
+Requirement already satisfied: networkx in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (3.4.2)
+Requirement already satisfied: jinja2 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (3.1.6)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (12.1.105)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (12.1.105)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (12.1.105)
+Requirement already satisfied: nvidia-cudnn-cu12==9.1.0.70 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (9.1.0.70)
+Requirement already satisfied: nvidia-cublas-cu12==12.1.3.1 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (12.1.3.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.0.2.54 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (11.0.2.54)
+Requirement already satisfied: nvidia-curand-cu12==10.3.2.106 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (10.3.2.106)
+Requirement already satisfied: nvidia-cusolver-cu12==11.4.5.107 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (11.4.5.107)
+Requirement already satisfied: nvidia-cusparse-cu12==12.1.0.106 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (12.1.0.106)
+Requirement already satisfied: nvidia-nccl-cu12==2.21.5 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (2.21.5)
+Requirement already satisfied: nvidia-nvtx-cu12==12.1.105 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (12.1.105)
+Requirement already satisfied: triton==3.1.0 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (3.1.0)
+Requirement already satisfied: sympy==1.13.1 in ./.venv-linux-port/lib/python3.10/site-packages (from torch>=1.13.0->peft<0.20,>=0.13.0) (1.13.1)
+Requirement already satisfied: nvidia-nvjitlink-cu12 in ./.venv-linux-port/lib/python3.10/site-packages (from nvidia-cusolver-cu12==11.4.5.107->torch>=1.13.0->peft<0.20,>=0.13.0) (12.9.86)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in ./.venv-linux-port/lib/python3.10/site-packages (from sympy==1.13.1->torch>=1.13.0->peft<0.20,>=0.13.0) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in ./.venv-linux-port/lib/python3.10/site-packages (from jinja2->torch>=1.13.0->peft<0.20,>=0.13.0) (3.0.3)
+Collecting charset_normalizer<4,>=2 (from requests->transformers==4.57.6)
+  Downloading charset_normalizer-3.4.7-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+Requirement already satisfied: idna<4,>=2.5 in ./.venv-linux-port/lib/python3.10/site-packages (from requests->transformers==4.57.6) (3.18)
+Collecting urllib3<3,>=1.26 (from requests->transformers==4.57.6)
+  Downloading urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+Requirement already satisfied: certifi>=2023.5.7 in ./.venv-linux-port/lib/python3.10/site-packages (from requests->transformers==4.57.6) (2026.5.20)
+Downloading transformers-4.57.6-py3-none-any.whl (12.0 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.0/12.0 MB 220.2 MB/s  0:00:00
+Downloading huggingface_hub-0.36.2-py3-none-any.whl (566 kB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 566.4/566.4 kB 71.7 MB/s  0:00:00
+Downloading bitsandbytes-0.49.2-py3-none-manylinux_2_24_x86_64.whl (60.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.7/60.7 MB 45.8 MB/s  0:00:01
+Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+Downloading charset_normalizer-3.4.7-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+Downloading urllib3-2.7.0-py3-none-any.whl (131 kB)
+Installing collected packages: urllib3, charset_normalizer, requests, huggingface_hub, bitsandbytes, transformers
+  Attempting uninstall: huggingface_hub
+    Found existing installation: huggingface_hub 1.18.0
+    Uninstalling huggingface_hub-1.18.0:
+      Successfully uninstalled huggingface_hub-1.18.0
+  Attempting uninstall: transformers
+    Found existing installation: transformers 5.10.2
+    Uninstalling transformers-5.10.2:
+      Successfully uninstalled transformers-5.10.2
+
+Successfully installed bitsandbytes-0.49.2 charset_normalizer-3.4.7 huggingface_hub-0.36.2 requests-2.34.2 transformers-4.57.6 urllib3-2.7.0
+deps_ok host=192.9.157.102
+
+added 607 packages, and audited 608 packages in 9s
+
+254 packages are looking for funding
+  run `npm fund` for details
+
+10 vulnerabilities (3 moderate, 7 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+game_deps_ok host=192.9.157.102
+adapter_sync_ok host=192.9.157.102
+economist_rl_lambda_cycle_started
+instance_id=4eebe674d3b544e4b171f390b15deeda
+host=192.9.157.102
+tmux_session=fe-economist-rl
+remote_log=/home/ubuntu/cloud-eval-logs/fe-economist-rl-cycle.log
+auto_terminate=1
+watchdog_enabled=1
+watchdog_idle_minutes=360.0
+selected_launch_region=us-west-1
+selected_launch_instance_type=gpu_1x_a10
+cycle_command=python scripts/lambda/run_economist_rl_lambda_cycle.py --lambda-mode --cycles 4 --rollouts-per-cycle 10 --skip-eval --ppo-min-samples 4 --ppo-max-samples 8 --ppo-epochs 1 --ppo-logprob-window-tokens 1536 --temperature 0.2 --max-tokens 4000 --init-adapter-path checkpoints/fe-lora-arena-apply-sft --task-db benchmarks/economistRL_tasks_v3_execution.json --execution-source-repo /home/ubuntu/fallen-empire --specialization economist_rl
+
+Warning: Permanently added '192.9.157.102' (ED25519) to the list of known hosts.
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated three-mesh-bvh@0.7.8: Deprecated due to three.js version incompatibility. Please use v0.8.0, instead.
+npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.16.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.16.0
+npm notice To update run: npm install -g npm@11.16.0
+npm notice
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.16.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.16.0
+npm notice To update run: npm install -g npm@11.16.0
+npm notice
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@10.3.10: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated three-mesh-bvh@0.7.8: Deprecated due to three.js version incompatibility. Please use v0.8.0, instead.
+npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.

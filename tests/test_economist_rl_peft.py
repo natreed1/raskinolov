@@ -202,6 +202,81 @@ class EconomistRLPeftHelperTests(unittest.TestCase):
         self.assertEqual(calls["peft_kwargs"], {"is_trainable": True})
         self.assertEqual(calls["base"].to_calls, [])
 
+    def test_loader_can_require_local_hf_cache_without_network_lookups(self) -> None:
+        from types import ModuleType
+        from unittest.mock import patch
+
+        calls: dict[str, object] = {}
+
+        class FakeTokenizer:
+            @staticmethod
+            def from_pretrained(model_id: str, **kwargs):
+                calls["tokenizer_model_id"] = model_id
+                calls["tokenizer_kwargs"] = kwargs
+                return object()
+
+        class FakeBase:
+            def __init__(self) -> None:
+                self.to_calls: list[object] = []
+
+            def to(self, device):
+                self.to_calls.append(device)
+                return self
+
+            def eval(self):
+                calls["eval_called"] = True
+                return self
+
+        class FakeAutoModel:
+            @staticmethod
+            def from_pretrained(model_id: str, **kwargs):
+                base = FakeBase()
+                calls["model_id"] = model_id
+                calls["model_kwargs"] = kwargs
+                return base
+
+        class FakePeftModel:
+            @staticmethod
+            def from_pretrained(base, adapter_path: str, **kwargs):
+                calls["peft_kwargs"] = kwargs
+                return base
+
+        fake_transformers = ModuleType("transformers")
+        fake_transformers.AutoModelForCausalLM = FakeAutoModel
+        fake_transformers.AutoTokenizer = FakeTokenizer
+
+        fake_peft = ModuleType("peft")
+        fake_peft.PeftModel = FakePeftModel
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "adapter_model.safetensors").write_bytes(b"")
+            (root / "adapter_config.json").write_text(
+                json.dumps(
+                    build_peft_adapter_config(
+                        base_model_name_or_path="Qwen/Qwen2.5-Coder-7B-Instruct",
+                        target_modules=["q_proj"],
+                        rank=16,
+                        lora_alpha=20.0,
+                        lora_dropout=0.05,
+                    )
+                ),
+                encoding="utf-8",
+            )
+
+            with patch.dict(sys.modules, {"transformers": fake_transformers, "peft": fake_peft}):
+                load_peft_causal_lm(
+                    "Qwen/Qwen2.5-Coder-7B-Instruct",
+                    root,
+                    device="cpu",
+                    dtype="float32",
+                    require_local_files=True,
+                )
+
+        self.assertEqual(calls["tokenizer_kwargs"], {"local_files_only": True})
+        self.assertEqual(calls["model_kwargs"], {"torch_dtype": "float32", "local_files_only": True})
+        self.assertEqual(calls["peft_kwargs"], {"is_trainable": False, "local_files_only": True})
+
 
 if __name__ == "__main__":
     unittest.main()

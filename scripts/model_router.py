@@ -962,6 +962,7 @@ class LocalMlxBackend:
                 device=device,
                 dtype=dtype,
                 trainable=False,
+                require_local_files=(os.environ.get("FE_REQUIRE_LOCAL_HF_CACHE", "") == "1"),
             )
             self._backend_kind = "transformers"
         return self._model, self._tokenizer

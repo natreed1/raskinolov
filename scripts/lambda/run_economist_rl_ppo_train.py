@@ -10,7 +10,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import time
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -37,9 +39,21 @@ def _ppo_config_from_dict(data: dict[str, Any] | None) -> PPOConfig:
     return PPOConfig(**{k: v for k, v in data.items() if k in allowed})
 
 
+def _utc_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _write_progress(path: Path, payload: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
 def run_ppo_train_from_request(request: dict[str, Any]) -> dict[str, Any]:
     scored_file = Path(str(request["scored_file"])).expanduser().resolve()
     ppo_manifest_file = Path(str(request["ppo_manifest_file"])).expanduser().resolve()
+    progress_file = Path(
+        str(request.get("progress_file") or ppo_manifest_file.with_suffix(".progress.json"))
+    ).expanduser().resolve()
     source_adapter = Path(str(request["source_adapter"])).expanduser().resolve()
     candidate_adapter = Path(str(request["candidate_adapter"])).expanduser().resolve()
     if not scored_file.is_file():
@@ -49,6 +63,28 @@ def run_ppo_train_from_request(request: dict[str, Any]) -> dict[str, Any]:
     cfg = _ppo_config_from_dict(request.get("ppo_config"))
     train_backend = request.get("train_backend")
     dry_run = bool(request.get("dry_run", False))
+    started = time.time()
+
+    def progress_callback(event: dict[str, Any]) -> None:
+        payload = {
+            "schema_version": "economist_rl_ppo_progress_v1",
+            "updated_at_utc": _utc_iso(),
+            "elapsed_seconds": round(time.time() - started, 3),
+            "scored_file": str(scored_file),
+            "ppo_manifest_file": str(ppo_manifest_file),
+            "progress_file": str(progress_file),
+            "source_adapter": str(source_adapter),
+            "candidate_adapter": str(candidate_adapter),
+            **event,
+        }
+        _write_progress(progress_file, payload)
+        print(
+            "[ppo-progress] "
+            f"phase={payload.get('phase')} status={payload.get('status')} "
+            f"minibatches={payload.get('completed_minibatches', 0)}/{payload.get('total_minibatches', '?')} "
+            f"elapsed={payload['elapsed_seconds']}",
+            flush=True,
+        )
 
     manifest = train_ppo_batch(
         scored_rows=scored_rows,
@@ -59,10 +95,13 @@ def run_ppo_train_from_request(request: dict[str, Any]) -> dict[str, Any]:
         cfg=cfg,
         dry_run=dry_run,
         train_backend=str(train_backend) if train_backend else None,
+        progress_callback=progress_callback,
     )
     manifest["scored_file"] = str(scored_file)
+    manifest["progress_file"] = str(progress_file)
     manifest["subprocess_isolated"] = True
     write_ppo_manifest(ppo_manifest_file, manifest)
+    progress_callback({"phase": "manifest_written", "status": manifest.get("status")})
     return manifest
 
 

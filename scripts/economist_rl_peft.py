@@ -206,13 +206,15 @@ def load_peft_causal_lm(
     dtype: Any,
     trainable: bool = False,
     load_in_4bit: bool = False,
+    require_local_files: bool = False,
 ) -> tuple[Any, Any]:
     """Load base causal LM + optional PEFT adapter (converting MLX layout if needed)."""
     from peft import PeftModel
     from transformers import AutoModelForCausalLM, AutoTokenizer
 
     model_id = str(model_id or "").strip()
-    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    local_kw = {"local_files_only": True} if require_local_files else {}
+    tokenizer = AutoTokenizer.from_pretrained(model_id, **local_kw)
     model_kwargs: dict[str, Any] = {}
     if load_in_4bit:
         try:
@@ -237,6 +239,7 @@ def load_peft_causal_lm(
         )
     else:
         model_kwargs["torch_dtype"] = dtype
+    model_kwargs.update(local_kw)
     base = AutoModelForCausalLM.from_pretrained(model_id, **model_kwargs)
     if load_in_4bit:
         if trainable:
@@ -254,6 +257,7 @@ def load_peft_causal_lm(
         base,
         str(resolved),
         is_trainable=bool(trainable),
+        **local_kw,
     )
     if not load_in_4bit:
         model.to(device)

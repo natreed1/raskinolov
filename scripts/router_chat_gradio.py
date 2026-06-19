@@ -45,6 +45,12 @@ from model_router import (
     RoutingPolicy,
     messages_from_prompt,
 )
+from council_runtime.executor import (
+    CouncilGeneration,
+    CouncilTurn,
+    build_detailed_participant_prompt,
+    run_council,
+)
 from mlx_qwen_stop_tokens import register_qwen_coder_instruct_extra_stops
 from router.multi_agent import (
     AdapterSubtask,
@@ -52,7 +58,6 @@ from router.multi_agent import (
     merge_multi_agent_outputs,
     summarize_subtask_ids,
 )
-from router.council import adjudicate_council_outputs, shape_prompt_for_profile
 
 
 DEFAULT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
@@ -559,151 +564,46 @@ def main() -> None:
             return "", {"mode": "council", "error": "empty_council_participants"}
         policy_rounds = max(1, int(council_plan.get("debate_max_rounds", 2) or 2))
         debate_max_rounds = max(1, min(policy_rounds, int(args.council_debate_max_rounds)))
-        round_traces: List[Dict[str, Any]] = []
-        current_outputs: List[Dict[str, Any]] = []
-        for round_idx in range(1, debate_max_rounds + 1):
-            prior_outputs = current_outputs
-            current_outputs = []
-            peer_summaries: List[str] = []
-            for prev in prior_outputs:
-                pid = str(prev.get("participant_id") or "")
-                text = str(prev.get("text") or "").strip()
-                if pid and text:
-                    peer_summaries.append(f"- {pid}: {text[:260]}")
-            peer_digest = "\n".join(peer_summaries[:4])
-            for row in participants:
-                participant_id = str((row or {}).get("participant_id") or "").strip()
-                base_expert_id = str((row or {}).get("base_expert_id") or participant_id).strip()
-                participant_type = str((row or {}).get("participant_type") or "").strip()
-                role = str((row or {}).get("role") or "").strip() or "agent"
-                strategy = str((row or {}).get("strategy") or "").strip()
-                variant = str((row or {}).get("variant") or "baseline").strip() or "baseline"
-                assertiveness = max(0.0, min(1.0, float((row or {}).get("assertiveness", 0.5) or 0.5)))
-                traits = dict((row or {}).get("traits") or {})
-                verbosity = max(0.0, min(1.0, float(traits.get("verbosity", 0.5) or 0.5)))
-                risk_tolerance = max(0.0, min(1.0, float(traits.get("risk_tolerance", 0.5) or 0.5)))
-                creativity = max(0.0, min(1.0, float(traits.get("creativity", 0.45) or 0.45)))
-                skepticism = max(0.0, min(1.0, float(traits.get("skepticism", 0.55) or 0.55)))
-                decisiveness = max(0.0, min(1.0, float(traits.get("decisiveness", 0.6) or 0.6)))
-                if not participant_id:
-                    continue
-                adapter_abs: Optional[str] = None
-                if participant_type == "specialist_adapter":
-                    adapter_abs = _resolve_adapter_abs(REPO, base_expert_id, reg)
-                model, tokenizer = ensure_mlx_loaded(adapter_abs)
-                participant_prompt = prompt
-                if participant_type == "generalist_profile":
-                    participant_prompt = shape_prompt_for_profile(prompt=prompt, profile=participant_id)
-                debate_instructions = ""
-                if round_idx > 1:
-                    debate_instructions = (
-                        f"Round {round_idx}/{debate_max_rounds} debate mode.\n"
-                        "Critique weak points in peer ideas, then revise your recommendation.\n"
-                        f"Peer summaries:\n{peer_digest or '- no peer drafts yet'}\n"
-                    )
-                participant_messages = _history_to_messages(
-                    [],
-                    (
-                        f"{participant_prompt}\n\n"
-                        f"{debate_instructions}"
-                        f"Council role: {role}\n"
-                        f"Council strategy: {strategy}\n"
-                        f"Council variant: {variant}\n"
-                        f"Assertiveness level: {assertiveness:.2f} (0.0 cautious, 1.0 strongly opinionated).\n"
-                        f"Verbosity level: {verbosity:.2f} (0.0 concise, 1.0 expansive).\n"
-                        f"Risk tolerance: {risk_tolerance:.2f} (0.0 conservative, 1.0 aggressive).\n"
-                        f"Creativity: {creativity:.2f} (0.0 conventional, 1.0 novel).\n"
-                        f"Skepticism: {skepticism:.2f} (0.0 trusting, 1.0 challenge assumptions).\n"
-                        f"Decisiveness: {decisiveness:.2f} (0.0 hedged, 1.0 direct decisions).\n"
-                        "Express your recommendation in proportion to assertiveness and decisiveness.\n"
-                        "Return a directly useful answer draft."
-                    ),
-                )
-                output_text, output_last = _generate_local_once(
-                    model=model,
-                    tokenizer=tokenizer,
-                    messages=participant_messages,
-                )
-                conf = 0.5
-                task_outcome = 0.5
-                adapter_requested = base_expert_id if participant_type == "specialist_adapter" else None
-                current_outputs.append(
-                    {
-                        "round_idx": round_idx,
-                        "participant_id": participant_id,
-                        "base_expert_id": base_expert_id,
-                        "participant_type": participant_type,
-                        "role": role,
-                        "strategy": strategy,
-                        "variant": variant,
-                        "assertiveness": assertiveness,
-                        "traits": {
-                            "verbosity": verbosity,
-                            "risk_tolerance": risk_tolerance,
-                            "creativity": creativity,
-                            "skepticism": skepticism,
-                            "decisiveness": decisiveness,
-                        },
-                        "text": output_text.strip(),
-                        "confidence": conf,
-                        "task_outcome_score": task_outcome,
-                        "adapter_requested": adapter_requested,
-                        "resolved_mlx_adapter": adapter_abs,
-                        "adapter_loaded": bool(adapter_abs) if participant_type == "specialist_adapter" else False,
-                        "finish_reason": getattr(output_last, "finish_reason", None) if output_last is not None else None,
-                        "generation_tokens": getattr(output_last, "generation_tokens", None) if output_last is not None else None,
-                        "prompt_tokens": getattr(output_last, "prompt_tokens", None) if output_last is not None else None,
-                    }
-                )
-            provisional = adjudicate_council_outputs(
-                outputs=current_outputs,
-                prompt=prompt,
-                disagreement=float(getattr(decision, "council_disagreement", 0.0) or 0.0),
-                low_confidence_threshold=float(council_plan.get("low_confidence_threshold", 0.58) or 0.58),
-                disagreement_threshold=float(council_plan.get("disagreement_threshold", 0.45) or 0.45),
-                escalation_rule=str(council_plan.get("escalation_rule", "either_trigger") or "either_trigger"),
-            ).to_dict()
-            round_traces.append(
-                {
-                    "round_idx": round_idx,
-                    "participants": current_outputs,
-                    "adjudication_preview": {
-                        "winner_ids": list(provisional.get("winner_ids") or []),
-                        "confidence": provisional.get("confidence"),
-                        "disagreement": provisional.get("disagreement"),
-                        "escalation_recommended": provisional.get("escalation_recommended"),
-                    },
-                }
-            )
-            if (
-                round_idx >= 2
-                and float(provisional.get("confidence", 0.0) or 0.0)
-                >= (float(council_plan.get("low_confidence_threshold", 0.58) or 0.58) + 0.08)
-                and float(provisional.get("disagreement", 1.0) or 1.0)
-                <= (float(council_plan.get("disagreement_threshold", 0.45) or 0.45) * 0.8)
-            ):
-                break
 
-        adjudication = adjudicate_council_outputs(
-            outputs=current_outputs,
+        def generate_participant(turn: CouncilTurn) -> CouncilGeneration:
+            row = turn.participant
+            participant_id = str((row or {}).get("participant_id") or "").strip()
+            base_expert_id = str((row or {}).get("base_expert_id") or participant_id).strip()
+            participant_type = str((row or {}).get("participant_type") or "").strip()
+            adapter_abs: Optional[str] = None
+            if participant_type == "specialist_adapter":
+                adapter_abs = _resolve_adapter_abs(REPO, base_expert_id, reg)
+            model, tokenizer = ensure_mlx_loaded(adapter_abs)
+            participant_messages = _history_to_messages([], turn.participant_prompt)
+            output_text, output_last = _generate_local_once(
+                model=model,
+                tokenizer=tokenizer,
+                messages=participant_messages,
+            )
+            adapter_requested = base_expert_id if participant_type == "specialist_adapter" else None
+            return CouncilGeneration(
+                text=output_text,
+                metadata={
+                    "confidence": 0.5,
+                    "task_outcome_score": 0.5,
+                    "adapter_requested": adapter_requested,
+                    "resolved_mlx_adapter": adapter_abs,
+                    "adapter_loaded": bool(adapter_abs) if participant_type == "specialist_adapter" else False,
+                    "finish_reason": getattr(output_last, "finish_reason", None) if output_last is not None else None,
+                    "generation_tokens": getattr(output_last, "generation_tokens", None) if output_last is not None else None,
+                    "prompt_tokens": getattr(output_last, "prompt_tokens", None) if output_last is not None else None,
+                },
+            )
+
+        return run_council(
             prompt=prompt,
+            council_plan=council_plan,
             disagreement=float(getattr(decision, "council_disagreement", 0.0) or 0.0),
-            low_confidence_threshold=float(council_plan.get("low_confidence_threshold", 0.58) or 0.58),
-            disagreement_threshold=float(council_plan.get("disagreement_threshold", 0.45) or 0.45),
-            escalation_rule=str(council_plan.get("escalation_rule", "either_trigger") or "either_trigger"),
-        ).to_dict()
-        final_text = str(adjudication.get("final_text") or "").strip()
-        if not final_text and current_outputs:
-            final_text = str(current_outputs[0].get("text") or "").strip()
-        return final_text, {
-            "mode": "council",
-            "participants": current_outputs,
-            "rounds": round_traces,
-            "debate_max_rounds": debate_max_rounds,
-            "debate_rounds_run": len(round_traces),
-            "adjudication": adjudication,
-            "transparency": str(council_plan.get("transparency", "detailed") or "detailed"),
-        }
+            generate_participant=generate_participant,
+            prompt_builder=build_detailed_participant_prompt,
+            max_rounds=debate_max_rounds,
+            stop_on_convergence=True,
+        )
 
     def _history_to_messages(
         history: List[Tuple[Optional[str], Optional[str]]], user_message: str

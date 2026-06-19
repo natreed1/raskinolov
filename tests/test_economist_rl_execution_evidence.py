@@ -23,6 +23,7 @@ class EconomistRLExecutionEvidenceTests(unittest.TestCase):
         subprocess.run(["git", "config", "user.name", "test"], cwd=cwd, check=True, capture_output=True)
         (root / "src" / "lib").mkdir(parents=True)
         (root / "src" / "lib" / "economy.ts").write_text("export const foodStock = 1;\n", encoding="utf-8")
+        (root / "src" / "lib" / "empireEconomy.ts").write_text("export const foodStock = 1;\n", encoding="utf-8")
         subprocess.run(["git", "add", "."], cwd=cwd, check=True, capture_output=True)
         subprocess.run(["git", "commit", "-m", "init"], cwd=cwd, check=True, capture_output=True)
 
@@ -53,19 +54,20 @@ class EconomistRLExecutionEvidenceTests(unittest.TestCase):
                     {
                         "id": "economistRL-exec-test-01",
                         "curriculum_track": "economy",
-                        "codebase_requirements": {"relevant_files": ["src/lib/economy.ts"]},
+                        "codebase_requirements": {"relevant_files": ["src/lib/empireEconomy.ts"]},
                         "targeted_tests": {"outcome_checks": ["food stock updates"]},
                         "subsection": "food_population_feedback",
                         "simulation_spec": {"tick_count": 20, "goals": []},
-                    }
+                    },
+                    source_repo=source,
                 )
-                task["execution"]["allowed_paths"] = ["src/lib/economy.ts", "src/**/*.ts"]
+                task["execution"]["allowed_paths"] = ["src/lib/empireEconomy.ts", "src/**/*.ts"]
                 task["execution"]["starter_files"] = []
                 task["execution"]["verify_commands"] = ["true"]
-                task["allowed_paths"] = ["src/lib/economy.ts", "src/**/*.ts"]
+                task["allowed_paths"] = ["src/lib/empireEconomy.ts", "src/**/*.ts"]
                 task["verify_commands"] = ["true"]
                 task["compile_commands"] = ["true"]
-                output = """```ts path=src/lib/economy.ts
+                output = """```ts path=src/lib/empireEconomy.ts
 export const foodStock = 2;
 export function clampFood(n: number) { return Math.max(0, Math.min(n, 999)); }
 ```

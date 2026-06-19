@@ -783,6 +783,21 @@ def _variant_plan(
             "secondary_adapter_id": None,
             "secondary_confidence": 0.0,
         }
+    if variant == "custom_local_adapter":
+        adapter_path = _resolve_adapter_path(fallback_adapter_path)
+        reason = "forced custom local adapter lane"
+        if not adapter_path:
+            reason = f"{reason}; adapter_missing_fallback=base_local"
+        return {
+            "backend": "local",
+            "route": "local",
+            "adapter_id": str(single_specialist_adapter_id or "custom_local_adapter").strip(),
+            "adapter_path": adapter_path,
+            "model": local_model,
+            "reason": reason,
+            "secondary_adapter_id": None,
+            "secondary_confidence": 0.0,
+        }
     if variant == "gpt_5_5_only":
         return {
             "backend": "frontier",
@@ -1071,6 +1086,16 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--custom-local-adapter-path",
+        default="",
+        help="Adapter path to force when running --variants custom_local_adapter.",
+    )
+    parser.add_argument(
+        "--custom-local-adapter-id",
+        default="custom_local_adapter",
+        help="Adapter id label to record for --variants custom_local_adapter.",
+    )
+    parser.add_argument(
         "--abort-on-frontier-quota",
         action="store_true",
         help="Stop issuing frontier requests after first quota error; mark later frontier tasks as infra-blocked skips.",
@@ -1193,12 +1218,15 @@ def main() -> int:
         "gpt_5_5_only",
         "hud_status_only",
         "single_specialist_local",
+        "custom_local_adapter",
     }
     bad = [v for v in variants if v not in allowed]
     if bad:
         raise SystemExit(f"Unsupported variants: {bad}")
     if "single_specialist_local" in variants and not str(args.single_specialist_adapter_id).strip():
         raise SystemExit("--single-specialist-adapter-id is required with --variants single_specialist_local")
+    if "custom_local_adapter" in variants and not str(args.custom_local_adapter_path).strip():
+        raise SystemExit("--custom-local-adapter-path is required with --variants custom_local_adapter")
 
     adapter_paths = _load_adapter_paths(args.adapter_registry.expanduser().resolve())
     fallback_adapter_path = adapter_paths.get("general_fallback", "checkpoints/adapters/general_fallback/champion")
@@ -1227,9 +1255,17 @@ def main() -> int:
                 adapter_paths=adapter_paths,
                 local_model=args.local_model,
                 frontier_model=args.frontier_model,
-                fallback_adapter_path=fallback_adapter_path,
+                fallback_adapter_path=(
+                    str(args.custom_local_adapter_path or "").strip()
+                    if variant == "custom_local_adapter"
+                    else fallback_adapter_path
+                ),
                 disable_frontier_routing=bool(args.disable_frontier_routing),
-                single_specialist_adapter_id=str(args.single_specialist_adapter_id or "").strip(),
+                single_specialist_adapter_id=(
+                    str(args.custom_local_adapter_id or "").strip()
+                    if variant == "custom_local_adapter"
+                    else str(args.single_specialist_adapter_id or "").strip()
+                ),
             )
             if (
                 args.abort_on_frontier_quota

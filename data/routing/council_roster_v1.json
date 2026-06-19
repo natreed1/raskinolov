@@ -67,26 +67,7 @@
       "offline_score": 0.0,
       "online_task_outcome": 0.0,
       "online_sample_count": 0,
-      "updated_at": "2026-05-30T22:02:00Z",
-      "display_name": "crossdomain_state_patch",
-      "measured_role": "Crossdomain state-patch specialist for generic state logic, schema updates, shared logic, and repair-candidate patches; not a proven AI-policy specialist.",
-      "routing_tags": [
-        "general_patch",
-        "state_logic",
-        "crossdomain",
-        "schema_update",
-        "shared_logic",
-        "repair_candidate",
-        "fallback_specialist"
-      ],
-      "demoted_tags": [
-        "ai_strategy",
-        "planner_policy",
-        "combat_math",
-        "targeting_policy",
-        "market_dynamics"
-      ],
-      "legacy_expert_id": "ai_planning_explanation"
+      "updated_at": "2026-05-30T22:02:00Z"
     },
     {
       "expert_id": "combat_risk",
@@ -154,26 +135,7 @@
       "offline_score": 0.0,
       "online_task_outcome": 0.0,
       "online_sample_count": 0,
-      "updated_at": "2026-05-30T22:02:00Z",
-      "display_name": "army_ui_flow",
-      "measured_role": "Army UI/order-flow specialist for formation flow, selection, order dispatch, tactical controls, and combat-preview presentation.",
-      "routing_tags": [
-        "army_ui",
-        "formation_flow",
-        "order_dispatch",
-        "movement_ui",
-        "combat_preview",
-        "tactical_controls",
-        "selection_flow"
-      ],
-      "demoted_tags": [
-        "combat_math",
-        "targeting_policy",
-        "economy_simulation",
-        "ai_strategy",
-        "multidomain_systems"
-      ],
-      "legacy_expert_id": "combat_risk"
+      "updated_at": "2026-05-30T22:02:00Z"
     },
     {
       "expert_id": "documentation",
@@ -244,6 +206,74 @@
       "updated_at": "2026-05-26T06:45:01Z"
     },
     {
+      "expert_id": "economistRL",
+      "expert_type": "specialist_adapter",
+      "state": "candidate",
+      "assertiveness": 0.6,
+      "traits": {
+        "assertiveness": 0.6,
+        "verbosity": 0.5,
+        "risk_tolerance": 0.5,
+        "creativity": 0.45,
+        "skepticism": 0.6,
+        "decisiveness": 0.65
+      },
+      "personalities": [
+        {
+          "name": "risk_auditor",
+          "state": "candidate",
+          "traits": {
+            "assertiveness": 0.42,
+            "creativity": 0.35,
+            "decisiveness": 0.66,
+            "risk_tolerance": 0.24,
+            "skepticism": 0.82,
+            "verbosity": 0.44
+          },
+          "offline_score": 0.0,
+          "offline_sample_count": 0,
+          "online_task_outcome": 0.0,
+          "online_sample_count": 0
+        },
+        {
+          "name": "balanced_operator",
+          "state": "candidate",
+          "traits": {
+            "assertiveness": 0.6,
+            "creativity": 0.45,
+            "decisiveness": 0.65,
+            "risk_tolerance": 0.5,
+            "skepticism": 0.6,
+            "verbosity": 0.5
+          },
+          "offline_score": 0.0,
+          "offline_sample_count": 0,
+          "online_task_outcome": 0.0,
+          "online_sample_count": 0
+        },
+        {
+          "name": "direct_builder",
+          "state": "candidate",
+          "traits": {
+            "assertiveness": 0.78,
+            "creativity": 0.56,
+            "decisiveness": 0.82,
+            "risk_tolerance": 0.64,
+            "skepticism": 0.48,
+            "verbosity": 0.55
+          },
+          "offline_score": 0.0,
+          "offline_sample_count": 0,
+          "online_task_outcome": 0.0,
+          "online_sample_count": 0
+        }
+      ],
+      "offline_score": 0.0,
+      "online_task_outcome": 0.0,
+      "online_sample_count": 0,
+      "updated_at": "2026-06-17T00:52:30Z"
+    },
+    {
       "expert_id": "economy_tooltip",
       "expert_type": "specialist_adapter",
       "state": "candidate",
@@ -309,26 +339,7 @@
       "offline_score": 0.0,
       "online_task_outcome": 0.0,
       "online_sample_count": 0,
-      "updated_at": "2026-05-30T22:02:00Z",
-      "display_name": "resource_ui_projection",
-      "measured_role": "Resource projection/UI helper for economy-facing signals, tooltips, signed deltas, production display, and resource cache surfaces.",
-      "routing_tags": [
-        "resource_projection",
-        "economy_ui",
-        "tooltip",
-        "cost_display",
-        "production_signal",
-        "resource_cache",
-        "signed_delta"
-      ],
-      "demoted_tags": [
-        "economy_simulation",
-        "market_dynamics",
-        "ai_strategy",
-        "combat_math",
-        "multidomain_systems"
-      ],
-      "legacy_expert_id": "economy_tooltip"
+      "updated_at": "2026-05-30T22:02:00Z"
     },
     {
       "expert_id": "hud_status",
@@ -396,27 +407,7 @@
       "offline_score": 0.0,
       "online_task_outcome": 0.0,
       "online_sample_count": 0,
-      "updated_at": "2026-05-30T22:02:00Z",
-      "display_name": "ui_state_signals",
-      "measured_role": "HUD state-signal specialist for compact status readouts, resource/status indicators, UI contracts, and input flow.",
-      "routing_tags": [
-        "ui",
-        "hud",
-        "status_signal",
-        "resource_signal",
-        "state_exposure",
-        "indicator_logic",
-        "ui_contract",
-        "input_flow"
-      ],
-      "demoted_tags": [
-        "economy_simulation",
-        "ai_strategy",
-        "combat_math",
-        "targeting_policy",
-        "multidomain_systems"
-      ],
-      "legacy_expert_id": "hud_status"
+      "updated_at": "2026-05-30T22:02:00Z"
     },
     {
       "expert_id": "loading_screen",
@@ -484,27 +475,7 @@
       "offline_score": 0.0,
       "online_task_outcome": 0.0,
       "online_sample_count": 0,
-      "updated_at": "2026-05-30T22:02:00Z",
-      "display_name": "ui_surface_composer",
-      "measured_role": "UI surface composition specialist for HUD/loading visual hierarchy, panels, sprites, overlays, and theme integration.",
-      "routing_tags": [
-        "ui",
-        "hud",
-        "visual_surface",
-        "panel_theme",
-        "sprite_overlay",
-        "isometric_display",
-        "loading_screen",
-        "render_contract"
-      ],
-      "demoted_tags": [
-        "economy_simulation",
-        "ai_strategy",
-        "combat_math",
-        "targeting_policy",
-        "multidomain_systems"
-      ],
-      "legacy_expert_id": "loading_screen"
+      "updated_at": "2026-05-30T22:02:00Z"
     },
     {
       "expert_id": "precise_short",
@@ -608,27 +579,7 @@
       "offline_score": 0.0,
       "online_task_outcome": 0.0,
       "online_sample_count": 0,
-      "updated_at": "2026-05-30T22:02:00Z",
-      "display_name": "state_contract_guard",
-      "measured_role": "State/API contract guard for persistence, serialization, request validation, identity integrity, snapshots, and deployment contracts.",
-      "routing_tags": [
-        "state_persistence",
-        "serialization",
-        "snapshot_schema",
-        "request_validation",
-        "identity_integrity",
-        "api_guard",
-        "cross_node_state",
-        "deploy_contract"
-      ],
-      "demoted_tags": [
-        "ai_strategy",
-        "combat_math",
-        "targeting_policy",
-        "market_dynamics",
-        "multidomain_systems"
-      ],
-      "legacy_expert_id": "save_load_api_guard"
+      "updated_at": "2026-05-30T22:02:00Z"
     },
     {
       "expert_id": "sliding_window",
@@ -702,6 +653,5 @@
       "online_sample_count": 0,
       "updated_at": "2026-05-26T06:45:01Z"
     }
-  ],
-  "measured_role_source": "full_crossdomain_121_task_baseline_20260530"
+  ]
 }

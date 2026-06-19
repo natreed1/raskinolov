@@ -38,12 +38,50 @@ from typing import Any, Dict, List
 from urllib import error, request
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_DOTENV = ROOT / ".env"
 DEFAULT_LAMBDA_CLOUD_BASE_URL = "https://cloud.lambdalabs.com/api/v1"
 DEFAULT_LAMBDA_API_BASE = DEFAULT_LAMBDA_CLOUD_BASE_URL
 DEFAULT_LAMBDA_FILE_SYSTEM_ID = "5795235886dd4e45a5adcdb5637de9d6"
 DEFAULT_RAG_CURRENT_CORPUS = "data/rag/current_rag_dataset.json"
 DEFAULT_RSYNC_CONNECT_TIMEOUT_SECONDS = 30
 DEFAULT_RSYNC_IDLE_TIMEOUT_SECONDS = 120
+
+
+def _load_repo_dotenv(path: Path = DEFAULT_DOTENV) -> None:
+    if not path.is_file():
+        return
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+    def normalize_lambda_api_base(url: str) -> str:
+        base = str(url or "").strip().rstrip("/")
+        if base.endswith("/instances"):
+            base = base[: -len("/instances")]
+        if base and ("cloud.lambda.ai" in base or "api.lambda.ai" in base):
+            return DEFAULT_LAMBDA_CLOUD_BASE_URL
+        return base
+
+    for key in ("LAMBDA_CLOUD_BASE_URL", "LAMBDA_API_BASE", "LAMBDA_API_BASE_URL", "LAMBDA_URL"):
+        raw = (os.environ.get(key) or "").strip()
+        if not raw:
+            continue
+        normalized = normalize_lambda_api_base(raw)
+        if normalized:
+            os.environ[key] = normalized
+    if not (os.environ.get("LAMBDA_CLOUD_BASE_URL") or os.environ.get("LAMBDA_API_BASE")):
+        fallback = normalize_lambda_api_base(os.environ.get("LAMBDA_URL") or "")
+        if fallback:
+            os.environ.setdefault("LAMBDA_CLOUD_BASE_URL", fallback)
+
+
+_load_repo_dotenv()
 
 
 @dataclass
@@ -681,12 +719,14 @@ def _remote_lifecycle_prelude(
     require_artifact_export_before_terminate: bool,
     artifact_staging_dir: str,
     artifact_staging_is_durable: bool,
+    watchdog_max_runtime_minutes: float = 0.0,
 ) -> List[str]:
     lines = [
         f"export FE_AUTO_TERMINATE={'1' if auto_terminate else '0'}",
         f"export FE_WATCHDOG_ENABLED={'1' if watchdog_enabled else '0'}",
         f"export FE_WATCHDOG_IDLE_SECONDS={max(1, int(float(watchdog_idle_minutes) * 60))}",
         f"export FE_WATCHDOG_CHECK_SECONDS={max(1, int(float(watchdog_check_minutes) * 60))}",
+        f"export FE_WATCHDOG_MAX_RUNTIME_SECONDS={max(0, int(float(watchdog_max_runtime_minutes) * 60))}",
         f"export FE_WATCHDOG_LOG_PATH={shlex.quote(watchdog_log_path)}",
         f"export FE_GPU_MONITOR_LOG_PATH={shlex.quote(gpu_monitor_log_path)}",
         f"export FE_ARTIFACT_EXPORT_COMMAND={shlex.quote(artifact_export_command)}",
@@ -732,6 +772,8 @@ def _remote_lifecycle_prelude(
         "add_path fallen-empire-lora/benchmarks/results/economistRL",
         "add_path fallen-empire-lora/scripts/lambda/run_economist_rl_lambda_cycle.py",
         "add_path fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py",
+        "add_path fallen-empire-lora/scripts/lambda/run_economist_rl_split_workers.py",
+        "add_path fallen-empire-lora/scripts/launch_economist_rl_lambda_split_workers.py",
         "add_path fallen-empire-lora/scripts/economist_rl_ppo_trainer.py",
         "add_path fallen-empire-lora/benchmarks/economistRL_tasks_v1.json",
         "export FE_ARTIFACT_LABEL=\"${label}\"",
@@ -765,6 +807,27 @@ def _remote_lifecycle_prelude(
         "collect_lambda_artifacts() {",
         "  /tmp/fe_collect_lambda_artifacts.sh \"${1:-checkpoint}\"",
         "}",
+        "verify_lambda_terminated() {",
+        "  python3 - <<'PY'",
+        "import base64, json, os, sys, time, urllib.request",
+        "api_base = os.environ['FE_LAMBDA_CLOUD_BASE_URL'].rstrip('/')",
+        "api_key = os.environ['FE_LAMBDA_API_KEY']",
+        "instance_id = os.environ['FE_LAMBDA_INSTANCE_ID']",
+        "token = base64.b64encode(f'{api_key}:'.encode('utf-8')).decode('utf-8')",
+        "headers = {'Authorization': f'Basic {token}', 'Accept': 'application/json', 'User-Agent': 'fe-lambda-remote-cleanup/1.0'}",
+        "for _ in range(24):",
+        "    req = urllib.request.Request(api_base + '/instances', method='GET', headers=headers)",
+        "    with urllib.request.urlopen(req, timeout=30) as resp:",
+        "        rows = (json.loads(resp.read().decode('utf-8')).get('data') or [])",
+        "    match = next((row for row in rows if row.get('id') == instance_id), None)",
+        "    if match is None or str(match.get('status') or '').lower() in {'terminating', 'terminated'}:",
+        "        print('[lambda-terminate] verified termination')",
+        "        sys.exit(0)",
+        "    time.sleep(10)",
+        "print('[lambda-terminate] termination not verified', file=sys.stderr)",
+        "sys.exit(1)",
+        "PY",
+        "}",
         "terminate_lambda_instance() {",
         "  reason=${1:-cleanup}",
         "  if collect_lambda_artifacts \"${reason}\"; then",
@@ -778,7 +841,7 @@ def _remote_lifecycle_prelude(
         "    fi",
         "  fi",
         "  echo \"[lambda-terminate] ${reason}: terminating ${FE_LAMBDA_INSTANCE_ID}\"",
-        "  python3 - <<'PY' || true",
+        "  python3 - <<'PY'",
         "import base64, json, os, urllib.request",
         "api_base = os.environ['FE_LAMBDA_CLOUD_BASE_URL'].rstrip('/')",
         "api_key = os.environ['FE_LAMBDA_API_KEY']",
@@ -799,6 +862,7 @@ def _remote_lifecycle_prelude(
         "with urllib.request.urlopen(req, timeout=30) as resp:",
         "    print(resp.read().decode('utf-8', errors='replace'))",
         "PY",
+        "  verify_lambda_terminated",
         "}",
         "start_lambda_watchdog() {",
         "  if [ \"${FE_WATCHDOG_ENABLED}\" != \"1\" ]; then",
@@ -815,6 +879,13 @@ def _remote_lifecycle_prelude(
         "      if [ \"${idle}\" -ge \"${FE_WATCHDOG_IDLE_SECONDS}\" ]; then",
         "        echo \"[lambda-watchdog] log idle for ${idle}s; terminating ${FE_LAMBDA_INSTANCE_ID}\"",
         "        if terminate_lambda_instance \"watchdog_idle_${idle}s\"; then",
+        "          exit 0",
+        "        fi",
+        "      fi",
+        "      runtime=$((now - started_at))",
+        "      if [ \"${FE_WATCHDOG_MAX_RUNTIME_SECONDS}\" -gt 0 ] && [ \"${runtime}\" -ge \"${FE_WATCHDOG_MAX_RUNTIME_SECONDS}\" ]; then",
+        "        echo \"[lambda-watchdog] max runtime ${runtime}s; terminating ${FE_LAMBDA_INSTANCE_ID}\"",
+        "        if terminate_lambda_instance \"watchdog_max_runtime_${runtime}s\"; then",
         "          exit 0",
         "        fi",
         "      fi",
@@ -938,7 +1009,7 @@ def _sync_repos(ssh_key_path: Path, host: str, ml_repo: Path, game_repo: Path) -
         "source .venv-linux-port/bin/activate; "
         "pip install -U pip; "
         "pip install torch --index-url https://download.pytorch.org/whl/cu121; "
-        "pip install transformers accelerate sentencepiece numpy peft",
+        "pip install 'transformers==4.57.6' 'peft>=0.13.0,<0.20' accelerate sentencepiece numpy safetensors huggingface_hub bitsandbytes",
     )
 
 
@@ -1003,6 +1074,36 @@ def _sync_adapter_checkpoint(ssh_key_path: Path, host: str, ml_repo: Path, adapt
     )
 
 
+def _sync_custom_adapter_path(ssh_key_path: Path, host: str, ml_repo: Path, adapter_path: str) -> None:
+    rel_path = Path(str(adapter_path or "").strip())
+    if not str(rel_path):
+        raise RuntimeError("--custom-local-adapter-path is required for custom adapter sync")
+    if rel_path.is_absolute():
+        local_path = rel_path
+        try:
+            remote_rel = local_path.resolve().relative_to(ml_repo.resolve())
+        except ValueError as exc:
+            raise RuntimeError(f"Custom adapter must live under --ml-repo: {local_path}") from exc
+    else:
+        remote_rel = rel_path
+        local_path = (ml_repo / rel_path).resolve()
+    if not local_path.is_dir():
+        raise RuntimeError(f"Custom adapter path does not exist: {local_path}")
+    remote_parent = f"/home/ubuntu/fallen-empire-lora/{remote_rel.parent.as_posix()}"
+    _ssh(ssh_key_path, host, f"mkdir -p {shlex.quote(remote_parent)}")
+    _shell(
+        [
+            "rsync",
+            "-az",
+            *_rsync_timeout_args(),
+            "-e",
+            _rsync_ssh_command(ssh_key_path),
+            str(local_path),
+            f"ubuntu@{host}:{remote_parent}/",
+        ]
+    )
+
+
 def _write_and_start_cell_runner(
     ssh_key_path: Path,
     host: str,
@@ -1027,6 +1128,8 @@ def _write_and_start_cell_runner(
     max_tasks: int,
     task_domains: List[str],
     single_specialist_adapter_id: str,
+    custom_local_adapter_path: str,
+    custom_local_adapter_id: str,
     rag_current_corpus: str,
 ) -> None:
     row_path = f"benchmarks/results/cloud_ablation_rows_{cell.name}.jsonl"
@@ -1053,6 +1156,10 @@ def _write_and_start_cell_runner(
         cmd_parts.append(f"--task-domain {shlex.quote(domain)}")
     if single_specialist_adapter_id:
         cmd_parts.append(f"--single-specialist-adapter-id {shlex.quote(single_specialist_adapter_id)}")
+    if custom_local_adapter_path:
+        cmd_parts.append(f"--custom-local-adapter-path {shlex.quote(custom_local_adapter_path)}")
+    if custom_local_adapter_id:
+        cmd_parts.append(f"--custom-local-adapter-id {shlex.quote(custom_local_adapter_id)}")
     extra = []
     i = 0
     while i < len(cell.extra_args):
@@ -1248,6 +1355,11 @@ def main() -> int:
         help="Run exactly one matrix cell instead of the default ablation set.",
     )
     parser.add_argument(
+        "--cell-label",
+        default="",
+        help="Override the result/session label for --only-cell while keeping that cell's prompt settings.",
+    )
+    parser.add_argument(
         "--specialist-suite",
         action="store_true",
         help="Run one worker per game specialist, forcing each adapter against its mapped task domain.",
@@ -1275,6 +1387,16 @@ def main() -> int:
         "--single-specialist-adapter-id",
         default="",
         help="Pass forced specialist id when --variant single_specialist_local is used.",
+    )
+    parser.add_argument(
+        "--custom-local-adapter-path",
+        default="",
+        help="Pass forced adapter path when --variant custom_local_adapter is used.",
+    )
+    parser.add_argument(
+        "--custom-local-adapter-id",
+        default="custom_local_adapter",
+        help="Pass adapter id label when --variant custom_local_adapter is used.",
     )
     parser.add_argument("--source-repo-remote", default="~/fallen-empire")
     parser.add_argument("--worktree-root-base", default="~/fallen-empire-arena-ablation")
@@ -1320,7 +1442,19 @@ def main() -> int:
         ]
         run_variant = "single_specialist_local"
     elif args.only_cell:
-        cells = [cell_by_name[args.only_cell]]
+        selected_cell = cell_by_name[args.only_cell]
+        label = str(args.cell_label or "").strip()
+        if label:
+            cells = [
+                MatrixCell(
+                    name=label,
+                    extra_args=list(selected_cell.extra_args),
+                    adapter_id=selected_cell.adapter_id,
+                    task_domains=selected_cell.task_domains,
+                )
+            ]
+        else:
+            cells = [selected_cell]
         run_variant = args.variant
     else:
         cells = ([BASELINE_CELL] if args.include_baseline else []) + list(DEFAULT_CELLS)
@@ -1329,6 +1463,8 @@ def main() -> int:
         raise SystemExit("--max-tasks must be >= 0.")
     if run_variant == "single_specialist_local" and not args.specialist_suite and not str(args.single_specialist_adapter_id).strip():
         raise SystemExit("--single-specialist-adapter-id is required with --variant single_specialist_local.")
+    if run_variant == "custom_local_adapter" and not str(args.custom_local_adapter_path).strip():
+        raise SystemExit("--custom-local-adapter-path is required with --variant custom_local_adapter.")
     file_system = {}
     file_system_names: List[str] = []
     file_system_mount_point = ""
@@ -1433,6 +1569,22 @@ def main() -> int:
                 retries=args.setup_command_retries,
                 retry_sleep_s=args.setup_retry_sleep_seconds,
             )
+        custom_adapter_sync_items = []
+        if run_variant == "custom_local_adapter" and str(args.custom_local_adapter_path).strip():
+            custom_adapter_sync_items = [(host, str(args.custom_local_adapter_path).strip()) for host in ips]
+        if custom_adapter_sync_items and not args.skip_adapter_sync:
+            _run_workers_parallel(
+                "custom_adapter_sync",
+                custom_adapter_sync_items,
+                lambda item: _sync_custom_adapter_path(
+                    args.ssh_key_path,
+                    item[0],
+                    args.ml_repo,
+                    item[1],
+                ),
+                retries=args.setup_command_retries,
+                retry_sleep_s=args.setup_retry_sleep_seconds,
+            )
 
         def start_worker(item: tuple[str, str, MatrixCell]) -> None:
             _write_and_start_cell_runner(
@@ -1458,6 +1610,8 @@ def main() -> int:
                 max_tasks=args.max_tasks,
                 task_domains=list(item[2].task_domains or args.task_domain),
                 single_specialist_adapter_id=str(item[2].adapter_id or args.single_specialist_adapter_id or "").strip(),
+                custom_local_adapter_path=str(args.custom_local_adapter_path or "").strip(),
+                custom_local_adapter_id=str(args.custom_local_adapter_id or "").strip(),
                 rag_current_corpus=args.rag_current_corpus_path,
             )
             started_instance_ids.add(item[1])
@@ -1517,4 +1671,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

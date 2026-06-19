@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Run RL Lambda Runner cycles for the economistRL specialization.
+"""DEPRECATED standalone serial-cycle runner for economistRL.
+
+Do not use this module as the top-level Lambda RL entry point for new runs.
+Use ``scripts/lambda/run_economist_rl_split_workers.py`` through
+``scripts/launch_economist_rl_lambda_split_workers.py`` instead.
+
+This file remains as an internal rollout/evidence/scoring primitive and as a
+debug/historical serial PPO runner.
 
 Cycle shape (PPO):
 
@@ -71,7 +78,16 @@ DEFAULT_REGISTRY = REPO / "training" / "adapter_registry_v1.json"
 DEFAULT_BASE_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
 PPO_TRAIN_SCRIPT = REPO / "scripts" / "lambda" / "run_economist_rl_ppo_train.py"
 RUNNER_TAG = "rl_lambda_runner"
-RUNNER_DISPLAY_NAME = "RL Lambda Runner"
+RUNNER_DISPLAY_NAME = "Deprecated Serial RL Lambda Runner"
+DEPRECATION_NOTICE = (
+    "DEPRECATED: run_economist_rl_lambda_cycle.py is a standalone serial-cycle runner. "
+    "Use run_economist_rl_split_workers.py / launch_economist_rl_lambda_split_workers.py "
+    "for Lambda RL runs."
+)
+DEFAULT_STEADY_ROLLOUTS_PER_CYCLE = 25
+DEFAULT_BOOTSTRAP_ROLLOUTS_PER_CYCLE = 50
+DEFAULT_WORKER_PPO_MIN_SAMPLES = 25
+DEFAULT_WORKER_PPO_MAX_SAMPLES = 64
 
 
 @dataclass(frozen=True)
@@ -321,15 +337,33 @@ def _resolve_ppo_config(spec: SpecializationConfig, args: argparse.Namespace) ->
         overrides["ppo_epochs"] = int(args.ppo_epochs)
     if args.ppo_min_samples is not None:
         overrides["min_samples"] = int(args.ppo_min_samples)
+    elif not args.dry_run:
+        overrides["min_samples"] = DEFAULT_WORKER_PPO_MIN_SAMPLES
     if getattr(args, "ppo_max_samples", None) is not None:
         overrides["max_samples"] = int(args.ppo_max_samples)
     elif args.dry_run:
         overrides["min_samples"] = 1
+    else:
+        overrides["max_samples"] = DEFAULT_WORKER_PPO_MAX_SAMPLES
     if getattr(args, "ppo_logprob_window_tokens", None) is not None:
         overrides["max_logprob_window_tokens"] = int(args.ppo_logprob_window_tokens)
+    if getattr(args, "ppo_logprob_window_strategy", None) is not None:
+        overrides["logprob_window_strategy"] = str(args.ppo_logprob_window_strategy)
+    if getattr(args, "ppo_target_logprob_chunk_tokens", None) is not None:
+        overrides["target_logprob_chunk_tokens"] = int(args.ppo_target_logprob_chunk_tokens)
+    if getattr(args, "ppo_mini_batch_size", None) is not None:
+        overrides["mini_batch_size"] = int(args.ppo_mini_batch_size)
     if not overrides:
         return spec.ppo_config
     return PPOConfig(**{**spec.ppo_config.__dict__, **overrides})
+
+
+def _rollout_limit_for_cycle(args: argparse.Namespace, *, bootstrap_cycle: bool) -> int:
+    if bootstrap_cycle:
+        configured = getattr(args, "bootstrap_rollouts_per_cycle", None)
+        if configured is not None:
+            return int(configured)
+    return int(args.rollouts_per_cycle)
 
 
 def _resolve_path(path_text: str) -> Path:
@@ -517,6 +551,8 @@ def run_rollouts(
     source_repo: Path | None = None,
     context_log_root: Path | None = None,
     max_logprob_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
     strict_old_logprob: bool = False,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
@@ -538,6 +574,9 @@ def run_rollouts(
                 base_model=base_model,
                 adapter_path=adapter_path,
                 dry_run=True,
+                max_window_tokens=max_logprob_window_tokens,
+                logprob_window_strategy=logprob_window_strategy,
+                target_logprob_chunk_tokens=target_logprob_chunk_tokens,
             ))
     else:
         generator = CachedAdapterGenerator(
@@ -580,6 +619,8 @@ def run_rollouts(
                         dry_run=False,
                         inference_backend=generator.inference_backend(),
                         max_window_tokens=max_logprob_window_tokens,
+                        logprob_window_strategy=logprob_window_strategy,
+                        target_logprob_chunk_tokens=target_logprob_chunk_tokens,
                         strict=strict_old_logprob,
                     )
                 )
@@ -760,6 +801,8 @@ def eval_adapter(
     execution_log_root: Path | None = None,
     source_repo: Path | None = None,
     max_logprob_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
     if dry_run:
@@ -797,6 +840,8 @@ def eval_adapter(
             dry_run=False,
             inference_backend=generator.inference_backend(),
             max_window_tokens=max_logprob_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
         rollout = attach_batch_evidence(
             tasks_by_id=task_by_id,
@@ -907,6 +952,8 @@ def run_eval_and_compare(
     execution_log_root: Path | None = None,
     source_repo: Path | None = None,
     max_logprob_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> dict[str, Any]:
     eval_kwargs = {
         "tasks": eval_tasks,
@@ -921,6 +968,8 @@ def run_eval_and_compare(
         "execution_log_root": execution_log_root,
         "source_repo": source_repo,
         "max_logprob_window_tokens": max_logprob_window_tokens,
+        "logprob_window_strategy": logprob_window_strategy,
+        "target_logprob_chunk_tokens": target_logprob_chunk_tokens,
     }
     candidate_eval = eval_adapter(label="candidate", adapter_path=candidate_adapter, **eval_kwargs)
     registry_baseline_eval = eval_adapter(
@@ -1007,6 +1056,7 @@ def run_cycle(
     cycle_id: int,
     *,
     chain_from_previous: Path | None = None,
+    bootstrap_cycle: bool = False,
 ) -> dict[str, Any]:
     spec = specialization_from_args(args)
     output_root = args.output_root.expanduser().resolve()
@@ -1031,7 +1081,8 @@ def run_cycle(
     )
     task_payload, tasks = _load_task_payload(args.task_db.expanduser().resolve(), spec)
     eval_payload, eval_tasks_all = _load_task_payload(args.eval_set.expanduser().resolve(), spec)
-    rollout_tasks = select_rollout_tasks(tasks, args.rollouts_per_cycle)
+    rollout_limit = _rollout_limit_for_cycle(args, bootstrap_cycle=bootstrap_cycle)
+    rollout_tasks = select_rollout_tasks(tasks, rollout_limit)
     eval_manifest = args.eval_manifest.expanduser().resolve() if getattr(args, "eval_manifest", None) else DEFAULT_EVAL_MANIFEST
     eval_tasks = select_eval_tasks(
         eval_tasks_all,
@@ -1080,6 +1131,19 @@ def run_cycle(
         "eval_manifest": str(eval_manifest),
         "max_tokens": int(args.max_tokens),
         "context_max_chars": int(getattr(args, "context_max_chars", 12_000)),
+        "rollout_worker": {
+            "mode": "bootstrap" if bootstrap_cycle else "steady",
+            "requested_rollouts": int(rollout_limit),
+            "usable_filter": "score.training_usable != false",
+        },
+        "ppo_worker": {
+            "mode": "isolated_subprocess",
+            "min_samples": int(ppo_config.min_samples),
+            "max_samples": ppo_config.max_samples,
+            "max_logprob_window_tokens": int(ppo_config.max_logprob_window_tokens),
+            "logprob_window_strategy": str(ppo_config.logprob_window_strategy),
+            "target_logprob_chunk_tokens": int(ppo_config.target_logprob_chunk_tokens),
+        },
         "rollout_file": str(paths.rollout_file),
         "evidence_file": str(paths.evidence_file),
         "scored_file": str(paths.scored_file),
@@ -1108,6 +1172,8 @@ def run_cycle(
         source_repo=source_repo,
         context_log_root=context_log_root if source_repo else None,
         max_logprob_window_tokens=ppo_config.max_logprob_window_tokens,
+        logprob_window_strategy=ppo_config.logprob_window_strategy,
+        target_logprob_chunk_tokens=ppo_config.target_logprob_chunk_tokens,
         strict_old_logprob=bool(getattr(args, "strict_old_logprob", False)),
     )
     proxy_errors = collect_old_logprob_proxy_errors(rollouts)
@@ -1219,6 +1285,8 @@ def run_cycle(
                 execution_log_root=eval_execution_log,
                 source_repo=source_repo,
                 max_logprob_window_tokens=ppo_config.max_logprob_window_tokens,
+                logprob_window_strategy=ppo_config.logprob_window_strategy,
+                target_logprob_chunk_tokens=ppo_config.target_logprob_chunk_tokens,
             )
     finally:
         if eval_execution_pool is not None:
@@ -1239,23 +1307,57 @@ def run_cycle(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Run RL Lambda Runner rollout/train/eval research cycles.")
+    parser = argparse.ArgumentParser(description="DEPRECATED: run serial rollout/train/eval research cycles.")
     parser.add_argument("--specialization", choices=sorted(SPECIALIZATIONS), default="economist_rl")
     parser.add_argument("--cycles", type=int, default=1)
-    parser.add_argument("--rollouts-per-cycle", type=int, default=500)
+    parser.add_argument(
+        "--rollouts-per-cycle",
+        type=int,
+        default=DEFAULT_STEADY_ROLLOUTS_PER_CYCLE,
+        help="Steady-state Rollout Worker target after the bootstrap cycle.",
+    )
+    parser.add_argument(
+        "--bootstrap-rollouts-per-cycle",
+        type=int,
+        default=DEFAULT_BOOTSTRAP_ROLLOUTS_PER_CYCLE,
+        help="First-cycle Rollout Worker target before the initial PPO Worker update.",
+    )
     parser.add_argument("--ppo-epochs", type=int, default=None, help="Override specialization PPO epochs.")
-    parser.add_argument("--ppo-min-samples", type=int, default=None, help="Minimum scored rollouts required for PPO.")
+    parser.add_argument(
+        "--ppo-min-samples",
+        type=int,
+        default=None,
+        help="Minimum training_usable scored rollouts required for the PPO Worker.",
+    )
     parser.add_argument(
         "--ppo-max-samples",
         type=int,
         default=None,
-        help="Cap PPO training samples per cycle (default 16 in PPOConfig; unset uses config default).",
+        help="Cap PPO Worker training samples per cycle (worker default 64; override for legacy/smoke runs).",
     )
     parser.add_argument(
         "--ppo-logprob-window-tokens",
         type=int,
         default=None,
-        help="Max tokens per PPO logprob forward (per completion token when sequence exceeds this).",
+        help="Max tokens per PPO logprob forward window.",
+    )
+    parser.add_argument(
+        "--ppo-logprob-window-strategy",
+        choices=("grouped", "per_token"),
+        default=None,
+        help="PPO logprob window strategy; grouped is optimized, per_token is the exact fallback/reference.",
+    )
+    parser.add_argument(
+        "--ppo-target-logprob-chunk-tokens",
+        type=int,
+        default=None,
+        help="Target completion tokens scored per grouped logprob window.",
+    )
+    parser.add_argument(
+        "--ppo-mini-batch-size",
+        type=int,
+        default=None,
+        help="PPO optimizer mini-batch size; increase when VRAM headroom exists.",
     )
     parser.add_argument("--adapter-name", default=None)
     parser.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
@@ -1320,12 +1422,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-ppo",
         action="store_true",
-        help="Rollouts + scoring only; do not run PPO weight update.",
+        help="Rollouts + scoring only; do not run the PPO Worker.",
     )
     parser.add_argument(
         "--ppo-in-process",
         action="store_true",
-        help="Run PPO in the cycle parent process (debug only; risks GPU OOM after rollouts).",
+        help="Deprecated debug path: run PPO in the Rollout Worker parent process instead of the PPO Worker.",
     )
     parser.add_argument(
         "--skip-eval",
@@ -1337,10 +1439,14 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if os.environ.get("ECONOMIST_RL_CYCLE_RUNNER_INTERNAL") != "1":
+        print(DEPRECATION_NOTICE, flush=True)
     if args.cycles < 1:
         raise SystemExit("--cycles must be >= 1")
     if args.rollouts_per_cycle < 1:
         raise SystemExit("--rollouts-per-cycle must be >= 1")
+    if getattr(args, "bootstrap_rollouts_per_cycle", None) is not None and args.bootstrap_rollouts_per_cycle < 1:
+        raise SystemExit("--bootstrap-rollouts-per-cycle must be >= 1")
     if args.lambda_mode:
         if not os.environ.get("LOCAL_BACKEND"):
             os.environ["LOCAL_BACKEND"] = "transformers"
@@ -1350,7 +1456,7 @@ def main() -> int:
     previous_candidate: Path | None = None
     for offset, cycle_id in enumerate(range(start, start + int(args.cycles))):
         chain_from = previous_candidate if offset > 0 else None
-        manifest = run_cycle(args, cycle_id, chain_from_previous=chain_from)
+        manifest = run_cycle(args, cycle_id, chain_from_previous=chain_from, bootstrap_cycle=(offset == 0))
         manifests.append(manifest)
         if manifest.get("cycle_status") == "training_failed":
             print(

@@ -43,6 +43,9 @@ class PPOConfig:
     min_samples: int = 4
     max_samples: int | None = 16
     max_logprob_window_tokens: int = 2048
+    completion_outlier_cap_ratio: float = 2.5
+    logprob_window_strategy: str = "grouped"
+    target_logprob_chunk_tokens: int = 512
     # Rollouts attach windowed ``old_logprob`` via ``max_logprob_window_tokens`` so PPO
     # old/new ratios share the same scale. Recomputing at train time is off by default.
     refresh_old_logprobs: bool = False
@@ -57,6 +60,8 @@ class PPOSample:
     advantage: float
     old_logprob: float
     system_prompt: str = ""
+    original_completion_chars: int = 0
+    completion_capped: bool = False
 
 
 @dataclass
@@ -75,6 +80,14 @@ class CompletionLogprobWindow:
     target_token_id: int
 
 
+@dataclass(frozen=True)
+class GroupedCompletionLogprobWindow:
+    input_ids: list[int]
+    target_positions: list[int]
+    target_token_ids: list[int]
+    completion_start: int
+
+
 def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
@@ -83,6 +96,29 @@ def proxy_old_logprob(completion: str) -> float:
     """Fallback mean log-prob per token (same scale as `_mean_completion_logprob_*`)."""
     _ = completion
     return -0.35
+
+
+def _median_int(values: list[int]) -> int:
+    if not values:
+        return 0
+    ordered = sorted(values)
+    mid = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[mid]
+    return int((ordered[mid - 1] + ordered[mid]) / 2)
+
+
+def _completion_outlier_char_cap(completions: list[str], cfg: PPOConfig) -> int | None:
+    ratio = float(cfg.completion_outlier_cap_ratio or 0.0)
+    if ratio <= 0.0 or len(completions) < 3:
+        return None
+    lengths = [len(completion) for completion in completions if completion]
+    if len(lengths) < 3:
+        return None
+    median_len = _median_int(lengths)
+    if median_len <= 0:
+        return None
+    return max(median_len, int(math.ceil(median_len * ratio)))
 
 
 def candidate_staging_dir(candidate_adapter: Path) -> Path:
@@ -173,6 +209,60 @@ def _build_completion_logprob_windows(
     return windows
 
 
+def _normalize_logprob_window_strategy(strategy: str | None) -> str:
+    value = str(strategy or "grouped").strip().lower().replace("-", "_")
+    if value not in {"grouped", "per_token"}:
+        raise ValueError(f"Unsupported logprob_window_strategy: {strategy!r}")
+    return value
+
+
+def _build_grouped_completion_logprob_windows(
+    *,
+    prompt_ids: list[int],
+    completion_ids: list[int],
+    max_window_tokens: int,
+    target_chunk_tokens: int,
+) -> list[GroupedCompletionLogprobWindow]:
+    """Build bounded windows that score contiguous completion spans.
+
+    This is an optimized approximation when the full sequence exceeds the
+    window. It uses normal causal masking inside each grouped forward pass.
+    """
+    if max_window_tokens < 2:
+        raise ValueError("max_window_tokens must be >= 2 for grouped causal logprob windows")
+    chunk_size = max(1, min(int(target_chunk_tokens or 1), max_window_tokens - 1))
+    windows: list[GroupedCompletionLogprobWindow] = []
+    start = 0
+    while start < len(completion_ids):
+        context_ids = prompt_ids + completion_ids[:start]
+        if not context_ids:
+            start += 1
+            continue
+        remaining = len(completion_ids) - start
+        span_len = min(chunk_size, remaining)
+        max_context_tokens = max_window_tokens - span_len
+        while max_context_tokens < 1 and span_len > 1:
+            span_len -= 1
+            max_context_tokens = max_window_tokens - span_len
+        if max_context_tokens < 1:
+            break
+        context_tail = context_ids[-max_context_tokens:]
+        target_ids = completion_ids[start : start + span_len]
+        input_ids = context_tail + target_ids
+        first_target_pos = len(context_tail) - 1
+        target_positions = [first_target_pos + idx for idx in range(len(target_ids))]
+        windows.append(
+            GroupedCompletionLogprobWindow(
+                input_ids=input_ids,
+                target_positions=target_positions,
+                target_token_ids=target_ids,
+                completion_start=start,
+            )
+        )
+        start += span_len
+    return windows
+
+
 def _is_mlx_lora_param_key(key: str) -> bool:
     return key.endswith(".lora_a") or key.endswith(".lora_b")
 
@@ -250,6 +340,44 @@ def _mean_completion_logprob_torch(
     return torch_mod.stack(values).mean()
 
 
+def _mean_grouped_completion_logprob_mlx(
+    *,
+    model: Any,
+    windows: list[GroupedCompletionLogprobWindow],
+    mx_mod: Any,
+) -> Any:
+    values = []
+    for window in windows:
+        logits = model(mx_mod.array(window.input_ids)[None])[0]
+        for pos, token_id in zip(window.target_positions, window.target_token_ids):
+            row = logits[pos]
+            values.append(row[token_id] - mx_mod.logsumexp(row))
+    if values:
+        return mx_mod.sum(mx_mod.stack(values)) / len(values)
+    return mx_mod.array(proxy_old_logprob(""))
+
+
+def _mean_grouped_completion_logprob_torch(
+    *,
+    model: Any,
+    windows: list[GroupedCompletionLogprobWindow],
+    torch_mod: Any,
+    device: Any,
+) -> Any:
+    values = []
+    for window in windows:
+        input_ids = torch_mod.tensor([window.input_ids], device=device)
+        logits = model(input_ids).logits[0]
+        positions = torch_mod.tensor(window.target_positions, device=device)
+        target_ids = torch_mod.tensor(window.target_token_ids, device=device).unsqueeze(-1)
+        target_logits = logits.index_select(0, positions)
+        log_probs = torch_mod.nn.functional.log_softmax(target_logits, dim=-1)
+        values.append(log_probs.gather(-1, target_ids).squeeze(-1))
+    if values:
+        return torch_mod.cat(values).mean()
+    return torch_mod.tensor(proxy_old_logprob(""), device=device)
+
+
 def _mean_completion_logprob_mlx_from_model(
     model: Any,
     tokenizer: Any,
@@ -259,6 +387,8 @@ def _mean_completion_logprob_mlx_from_model(
     system_prompt: str,
     mx_mod: Any,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> Any:
     prompt_ids, completion_ids = _encode_prompt_and_completion(
         tokenizer,
@@ -270,18 +400,29 @@ def _mean_completion_logprob_mlx_from_model(
         return mx_mod.array(proxy_old_logprob(completion))
     all_ids = prompt_ids + completion_ids
     if max_window_tokens and len(all_ids) > max_window_tokens:
-        values = []
-        for window in _build_completion_logprob_windows(
+        strategy = _normalize_logprob_window_strategy(logprob_window_strategy)
+        if strategy == "grouped":
+            grouped = _build_grouped_completion_logprob_windows(
+                prompt_ids=prompt_ids,
+                completion_ids=completion_ids,
+                max_window_tokens=max_window_tokens,
+                target_chunk_tokens=target_logprob_chunk_tokens,
+            )
+            try:
+                return _mean_grouped_completion_logprob_mlx(model=model, windows=grouped, mx_mod=mx_mod)
+            except Exception:
+                pass
+        windows = _build_completion_logprob_windows(
             prompt_ids=prompt_ids,
             completion_ids=completion_ids,
             max_window_tokens=max_window_tokens,
-        ):
+        )
+        values = []
+        for window in windows:
             logits = model(mx_mod.array(window.input_ids)[None])[0]
             row = logits[window.target_pos]
             values.append(row[window.target_token_id] - mx_mod.logsumexp(row))
-        if values:
-            return mx_mod.sum(mx_mod.stack(values)) / len(values)
-        return mx_mod.array(proxy_old_logprob(completion))
+        return mx_mod.sum(mx_mod.stack(values)) / len(values) if values else mx_mod.array(proxy_old_logprob(completion))
     logits = model(mx_mod.array(all_ids)[None])[0]
     return _mean_completion_logprob_mlx(logits, completion_ids, len(prompt_ids), mx_mod)
 
@@ -295,6 +436,8 @@ def _mean_completion_logprob_torch_from_model(
     system_prompt: str,
     torch_mod: Any,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> Any:
     prompt_ids, completion_ids = _encode_prompt_and_completion(
         tokenizer,
@@ -308,6 +451,23 @@ def _mean_completion_logprob_torch_from_model(
     all_ids = prompt_ids + completion_ids
     device = next(model.parameters()).device
     if max_window_tokens and len(all_ids) > max_window_tokens:
+        strategy = _normalize_logprob_window_strategy(logprob_window_strategy)
+        if strategy == "grouped":
+            grouped = _build_grouped_completion_logprob_windows(
+                prompt_ids=prompt_ids,
+                completion_ids=completion_ids,
+                max_window_tokens=max_window_tokens,
+                target_chunk_tokens=target_logprob_chunk_tokens,
+            )
+            try:
+                return _mean_grouped_completion_logprob_torch(
+                    model=model,
+                    windows=grouped,
+                    torch_mod=torch_mod,
+                    device=device,
+                )
+            except Exception:
+                pass
         values = []
         for window in _build_completion_logprob_windows(
             prompt_ids=prompt_ids,
@@ -318,9 +478,7 @@ def _mean_completion_logprob_torch_from_model(
             logits = model(input_ids).logits[0]
             log_probs = torch_mod.nn.functional.log_softmax(logits[window.target_pos], dim=-1)
             values.append(log_probs[window.target_token_id])
-        if values:
-            return torch_mod.stack(values).mean()
-        return torch_mod.tensor(proxy_old_logprob(completion), device=device)
+        return torch_mod.stack(values).mean() if values else torch_mod.tensor(proxy_old_logprob(completion), device=device)
     input_ids = torch_mod.tensor([all_ids], device=device)
     logits = model(input_ids).logits[0]
     return _mean_completion_logprob_torch(logits, completion_ids, len(prompt_ids), torch_mod)
@@ -333,6 +491,8 @@ def refresh_ppo_old_logprobs_mlx(
     tokenizer: Any,
     system_prompt: str,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> list[PPOSample]:
     import mlx.core as mx  # type: ignore
 
@@ -346,6 +506,8 @@ def refresh_ppo_old_logprobs_mlx(
             system_prompt=system_prompt,
             mx_mod=mx,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
         refreshed.append(
             PPOSample(
@@ -356,6 +518,8 @@ def refresh_ppo_old_logprobs_mlx(
                 advantage=sample.advantage,
                 old_logprob=float(lp),
                 system_prompt=sample.system_prompt,
+                original_completion_chars=sample.original_completion_chars,
+                completion_capped=sample.completion_capped,
             )
         )
     return refreshed
@@ -369,6 +533,8 @@ def refresh_ppo_old_logprobs_torch(
     system_prompt: str,
     torch_mod: Any,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> list[PPOSample]:
     refreshed: list[PPOSample] = []
     with torch_mod.no_grad():
@@ -381,6 +547,8 @@ def refresh_ppo_old_logprobs_torch(
                 system_prompt=system_prompt,
                 torch_mod=torch_mod,
                 max_window_tokens=max_window_tokens,
+                logprob_window_strategy=logprob_window_strategy,
+                target_logprob_chunk_tokens=target_logprob_chunk_tokens,
             )
             refreshed.append(
                 PPOSample(
@@ -391,6 +559,8 @@ def refresh_ppo_old_logprobs_torch(
                     advantage=sample.advantage,
                     old_logprob=float(lp),
                     system_prompt=sample.system_prompt,
+                    original_completion_chars=sample.original_completion_chars,
+                    completion_capped=sample.completion_capped,
                 )
             )
     return refreshed
@@ -455,19 +625,29 @@ def build_ppo_samples(
         )
         rewards.append(reward)
         raw.append((task_id, prompt, completion, reward, old_logprob))
+    completion_cap = _completion_outlier_char_cap([item[2] for item in raw], cfg)
     advantages = normalize_rewards(rewards, cfg)
-    samples = [
-        PPOSample(
-            task_id=task_id,
-            prompt=prompt,
-            completion=completion,
-            reward=reward,
-            advantage=advantage,
-            old_logprob=old_logprob,
-            system_prompt=system_prompt,
+    samples = []
+    for (task_id, prompt, completion, reward, old_logprob), advantage in zip(raw, advantages):
+        original_completion_chars = len(completion)
+        capped_completion = completion
+        completion_capped = False
+        if completion_cap is not None and original_completion_chars > completion_cap:
+            capped_completion = completion[:completion_cap].rstrip()
+            completion_capped = capped_completion != completion
+        samples.append(
+            PPOSample(
+                task_id=task_id,
+                prompt=prompt,
+                completion=capped_completion,
+                reward=reward,
+                advantage=advantage,
+                old_logprob=old_logprob,
+                system_prompt=system_prompt,
+                original_completion_chars=original_completion_chars,
+                completion_capped=completion_capped,
+            )
         )
-        for (task_id, prompt, completion, reward, old_logprob), advantage in zip(raw, advantages)
-    ]
     cap = cfg.max_samples
     if cap is not None and len(samples) > int(cap):
         # Prefer reward spread: keep top/bottom halves for advantage signal.
@@ -525,11 +705,22 @@ def _build_manifest_prefix(
         "ppo_epochs": cfg.ppo_epochs,
         "learning_rate": cfg.learning_rate,
         "max_logprob_window_tokens": cfg.max_logprob_window_tokens,
+        "logprob_window_strategy": _normalize_logprob_window_strategy(cfg.logprob_window_strategy),
+        "target_logprob_chunk_tokens": cfg.target_logprob_chunk_tokens,
         "dry_run": dry_run,
         "sample_stats": {
             "mean_reward": round(sum(rewards) / max(1, len(rewards)), 4),
             "min_reward": round(min(rewards), 4) if rewards else 0.0,
             "max_reward": round(max(rewards), 4) if rewards else 0.0,
+            "completion_outlier_cap_ratio": cfg.completion_outlier_cap_ratio,
+            "logprob_window_strategy": _normalize_logprob_window_strategy(cfg.logprob_window_strategy),
+            "target_logprob_chunk_tokens": cfg.target_logprob_chunk_tokens,
+            "completion_capped_samples": sum(1 for sample in samples if sample.completion_capped),
+            "max_completion_chars": max((len(sample.completion) for sample in samples), default=0),
+            "max_original_completion_chars": max(
+                (sample.original_completion_chars for sample in samples),
+                default=0,
+            ),
         },
         "steps": [],
     }
@@ -577,6 +768,8 @@ def _sequence_logprob_from_loaded(
     completion: str,
     system_prompt: str,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> float:
     if backend_kind == "mlx":
         import mlx.core as mx  # type: ignore
@@ -589,6 +782,8 @@ def _sequence_logprob_from_loaded(
             system_prompt=system_prompt,
             mx_mod=mx,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
         return float(lp)
 
@@ -603,6 +798,8 @@ def _sequence_logprob_from_loaded(
             system_prompt=system_prompt,
             torch_mod=torch,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
     return float(lp)
 
@@ -614,6 +811,8 @@ def _sequence_logprob_from_backend(
     completion: str,
     system_prompt: str,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> float:
     model, tokenizer = inference_backend._ensure_loaded()
     kind = _infer_backend_kind(backend_kind="", inference_backend=inference_backend)
@@ -625,6 +824,8 @@ def _sequence_logprob_from_backend(
         completion=completion,
         system_prompt=system_prompt,
         max_window_tokens=max_window_tokens,
+        logprob_window_strategy=logprob_window_strategy,
+        target_logprob_chunk_tokens=target_logprob_chunk_tokens,
     )
 
 
@@ -640,6 +841,8 @@ def attach_old_logprob_to_rollout(
     tokenizer: Any | None = None,
     backend_kind: str = "",
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
     strict: bool = False,
 ) -> dict[str, Any]:
     row = dict(rollout_row)
@@ -648,6 +851,8 @@ def attach_old_logprob_to_rollout(
     if dry_run or not output.strip():
         row["old_logprob"] = proxy_old_logprob(output)
         row["old_logprob_source"] = "proxy_dry_run" if dry_run else "proxy_empty"
+        row["old_logprob_window_strategy"] = _normalize_logprob_window_strategy(logprob_window_strategy)
+        row["old_logprob_target_chunk_tokens"] = int(target_logprob_chunk_tokens)
         return row
     try:
         row["old_logprob"] = compute_sequence_logprob(
@@ -661,12 +866,18 @@ def attach_old_logprob_to_rollout(
             tokenizer=tokenizer,
             backend_kind=backend_kind,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
         row["old_logprob_source"] = "computed"
+        row["old_logprob_window_strategy"] = _normalize_logprob_window_strategy(logprob_window_strategy)
+        row["old_logprob_target_chunk_tokens"] = int(target_logprob_chunk_tokens)
     except Exception as exc:
         row["old_logprob"] = proxy_old_logprob(output)
         row["old_logprob_source"] = "proxy_error"
         row["old_logprob_error"] = f"{type(exc).__name__}: {exc}"
+        row["old_logprob_window_strategy"] = _normalize_logprob_window_strategy(logprob_window_strategy)
+        row["old_logprob_target_chunk_tokens"] = int(target_logprob_chunk_tokens)
         if strict:
             raise RuntimeError(
                 f"old_logprob attach failed for task {row.get('task_id')!r}: {row['old_logprob_error']}"
@@ -686,6 +897,8 @@ def compute_sequence_logprob(
     tokenizer: Any | None = None,
     backend_kind: str = "",
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> float:
     if model is not None and tokenizer is not None:
         kind = _infer_backend_kind(backend_kind=backend_kind, inference_backend=inference_backend)
@@ -697,6 +910,8 @@ def compute_sequence_logprob(
             completion=completion,
             system_prompt=system_prompt,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
     if inference_backend is not None:
         return _sequence_logprob_from_backend(
@@ -705,6 +920,8 @@ def compute_sequence_logprob(
             completion=completion,
             system_prompt=system_prompt,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
 
     force = (os.environ.get("LOCAL_BACKEND") or "").strip().lower()
@@ -716,6 +933,8 @@ def compute_sequence_logprob(
             base_model=base_model,
             adapter_path=adapter_path,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
     try:
         return _sequence_logprob_mlx(
@@ -725,6 +944,8 @@ def compute_sequence_logprob(
             base_model=base_model,
             adapter_path=adapter_path,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
     except Exception:
         return _sequence_logprob_transformers(
@@ -734,6 +955,8 @@ def compute_sequence_logprob(
             base_model=base_model,
             adapter_path=adapter_path,
             max_window_tokens=max_window_tokens,
+            logprob_window_strategy=logprob_window_strategy,
+            target_logprob_chunk_tokens=target_logprob_chunk_tokens,
         )
 
 
@@ -894,6 +1117,8 @@ def _completion_logprob_tensor(
     system_prompt: str,
     torch_mod: Any,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> Any:
     return _mean_completion_logprob_torch_from_model(
         model,
@@ -903,6 +1128,8 @@ def _completion_logprob_tensor(
         system_prompt=system_prompt,
         torch_mod=torch_mod,
         max_window_tokens=max_window_tokens,
+        logprob_window_strategy=logprob_window_strategy,
+        target_logprob_chunk_tokens=target_logprob_chunk_tokens,
     )
 
 
@@ -927,6 +1154,32 @@ def _windowed_completion_logprob_windows_for_sample(
         prompt_ids=prompt_ids,
         completion_ids=completion_ids,
         max_window_tokens=max_window_tokens,
+    )
+
+
+def _grouped_completion_logprob_windows_for_sample(
+    tokenizer: Any,
+    *,
+    sample: PPOSample,
+    system_prompt: str,
+    max_window_tokens: int | None,
+    target_chunk_tokens: int,
+) -> list[GroupedCompletionLogprobWindow]:
+    if not max_window_tokens:
+        return []
+    prompt_ids, completion_ids = _encode_prompt_and_completion(
+        tokenizer,
+        prompt=sample.prompt,
+        completion=sample.completion,
+        system_prompt=system_prompt,
+    )
+    if not completion_ids or len(prompt_ids) + len(completion_ids) <= max_window_tokens:
+        return []
+    return _build_grouped_completion_logprob_windows(
+        prompt_ids=prompt_ids,
+        completion_ids=completion_ids,
+        max_window_tokens=max_window_tokens,
+        target_chunk_tokens=target_chunk_tokens,
     )
 
 
@@ -979,12 +1232,24 @@ def _backward_ppo_sample_transformers(
     cfg: PPOConfig,
     device: Any,
     use_windowed_backward: bool | None = None,
+    diagnostics: list[dict[str, Any]] | None = None,
 ) -> float:
-    windows = _windowed_completion_logprob_windows_for_sample(
-        tokenizer,
-        sample=sample,
-        system_prompt=system_prompt,
-        max_window_tokens=cfg.max_logprob_window_tokens,
+    strategy = _normalize_logprob_window_strategy(cfg.logprob_window_strategy)
+    windows = (
+        _windowed_completion_logprob_windows_for_sample(
+            tokenizer,
+            sample=sample,
+            system_prompt=system_prompt,
+            max_window_tokens=cfg.max_logprob_window_tokens,
+        )
+        if strategy == "per_token"
+        else _grouped_completion_logprob_windows_for_sample(
+            tokenizer,
+            sample=sample,
+            system_prompt=system_prompt,
+            max_window_tokens=cfg.max_logprob_window_tokens,
+            target_chunk_tokens=cfg.target_logprob_chunk_tokens,
+        )
     )
     if use_windowed_backward is False or (use_windowed_backward is None and not windows):
         new_logprob = _completion_logprob_tensor(
@@ -994,6 +1259,8 @@ def _backward_ppo_sample_transformers(
             system_prompt=system_prompt,
             torch_mod=torch_mod,
             max_window_tokens=cfg.max_logprob_window_tokens,
+            logprob_window_strategy=cfg.logprob_window_strategy,
+            target_logprob_chunk_tokens=cfg.target_logprob_chunk_tokens,
         )
         loss = _ppo_loss_tensor_torch(
             new_logprob=new_logprob,
@@ -1009,6 +1276,43 @@ def _backward_ppo_sample_transformers(
     window_count = len(windows)
     if window_count == 0:
         return 0.0
+    if strategy == "grouped":
+        try:
+            new_logprob = _mean_grouped_completion_logprob_torch(
+                model=model,
+                windows=windows,
+                torch_mod=torch_mod,
+                device=device,
+            )
+            loss = _ppo_loss_tensor_torch(
+                new_logprob=new_logprob,
+                old_logprob=sample.old_logprob,
+                advantage=sample.advantage,
+                clip_epsilon=cfg.clip_epsilon,
+                torch_mod=torch_mod,
+                device=device,
+            )
+            loss.backward()
+            return float(loss.detach().cpu())
+        except Exception as exc:
+            if diagnostics is not None:
+                diagnostics.append(
+                    {
+                        "task_id": sample.task_id,
+                        "requested_strategy": "grouped",
+                        "fallback_strategy": "per_token",
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+            windows = _windowed_completion_logprob_windows_for_sample(
+                tokenizer,
+                sample=sample,
+                system_prompt=system_prompt,
+                max_window_tokens=cfg.max_logprob_window_tokens,
+            )
+            window_count = len(windows)
+            if window_count == 0:
+                return 0.0
     loss_total = 0.0
     for new_logprob in _iter_windowed_completion_logprob_tensors(
         model=model,
@@ -1040,6 +1344,8 @@ def _sequence_logprob_mlx(
     base_model: str,
     adapter_path: Path | None,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> float:
     from mlx_lm import load  # type: ignore
     import mlx.core as mx  # type: ignore
@@ -1053,6 +1359,8 @@ def _sequence_logprob_mlx(
         system_prompt=system_prompt,
         mx_mod=mx,
         max_window_tokens=max_window_tokens,
+        logprob_window_strategy=logprob_window_strategy,
+        target_logprob_chunk_tokens=target_logprob_chunk_tokens,
     )
     return float(lp)
 
@@ -1065,6 +1373,8 @@ def _sequence_logprob_transformers(
     base_model: str,
     adapter_path: Path | None,
     max_window_tokens: int | None = None,
+    logprob_window_strategy: str = "grouped",
+    target_logprob_chunk_tokens: int = 512,
 ) -> float:
     from model_router import LocalMlxBackend
 
@@ -1075,6 +1385,8 @@ def _sequence_logprob_transformers(
         completion=completion,
         system_prompt=system_prompt,
         max_window_tokens=max_window_tokens,
+        logprob_window_strategy=logprob_window_strategy,
+        target_logprob_chunk_tokens=target_logprob_chunk_tokens,
     )
 
 
@@ -1088,6 +1400,7 @@ def train_ppo_batch(
     cfg: PPOConfig | None = None,
     dry_run: bool = False,
     train_backend: str | None = None,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     backend = (train_backend or select_ppo_train_backend()).strip().lower()
     if backend == "transformers":
@@ -1099,6 +1412,7 @@ def train_ppo_batch(
             candidate_adapter=candidate_adapter,
             cfg=cfg,
             dry_run=dry_run,
+            progress_callback=progress_callback,
         )
     return train_ppo_batch_mlx(
         scored_rows=scored_rows,
@@ -1108,6 +1422,7 @@ def train_ppo_batch(
         candidate_adapter=candidate_adapter,
         cfg=cfg,
         dry_run=dry_run,
+        progress_callback=progress_callback,
     )
 
 
@@ -1120,13 +1435,32 @@ def train_ppo_batch_transformers(
     candidate_adapter: Path,
     cfg: PPOConfig | None = None,
     dry_run: bool = False,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     cfg = cfg or PPOConfig()
     samples = build_ppo_samples(scored_rows=scored_rows, system_prompt=system_prompt, cfg=cfg)
     manifest = _build_manifest_prefix(cfg=cfg, samples=samples, dry_run=dry_run, train_backend="transformers")
+    total_batches = math.ceil(len(samples) / max(1, cfg.mini_batch_size)) * max(1, cfg.ppo_epochs)
+    if progress_callback:
+        progress_callback(
+            {
+                "phase": "start",
+                "status": "running",
+                "train_backend": "transformers",
+                "samples": len(samples),
+                "ppo_epochs": cfg.ppo_epochs,
+                "mini_batch_size": cfg.mini_batch_size,
+                "total_minibatches": total_batches,
+                "max_logprob_window_tokens": cfg.max_logprob_window_tokens,
+                "logprob_window_strategy": _normalize_logprob_window_strategy(cfg.logprob_window_strategy),
+                "target_logprob_chunk_tokens": cfg.target_logprob_chunk_tokens,
+            }
+        )
     _validate_train_inputs(samples=samples, candidate_adapter=candidate_adapter, cfg=cfg, dry_run=dry_run)
     if dry_run:
         manifest["status"] = "dry_run_no_weight_update"
+        if progress_callback:
+            progress_callback({"phase": "complete", "status": manifest["status"], "completed_minibatches": 0})
         return manifest
 
     import torch
@@ -1163,6 +1497,7 @@ def train_ppo_batch_transformers(
             dtype=dtype,
             trainable=True,
             load_in_4bit=load_in_4bit,
+            require_local_files=(os.environ.get("FE_REQUIRE_LOCAL_HF_CACHE", "") == "1"),
         )
         train_params = peft_trainable_parameters(model)
         if not train_params:
@@ -1177,13 +1512,30 @@ def train_ppo_batch_transformers(
                 system_prompt=system_prompt,
                 torch_mod=torch,
                 max_window_tokens=cfg.max_logprob_window_tokens,
+                logprob_window_strategy=cfg.logprob_window_strategy,
+                target_logprob_chunk_tokens=cfg.target_logprob_chunk_tokens,
             )
 
         step_rows: list[dict[str, Any]] = []
+        logprob_fallbacks: list[dict[str, Any]] = []
         model.train()
+        completed_batches = 0
         for epoch in range(cfg.ppo_epochs):
             for start in range(0, len(samples), cfg.mini_batch_size):
                 batch = samples[start : start + cfg.mini_batch_size]
+                if progress_callback:
+                    progress_callback(
+                        {
+                            "phase": "minibatch_start",
+                            "status": "running",
+                            "epoch": epoch + 1,
+                            "ppo_epochs": cfg.ppo_epochs,
+                            "batch_start": start,
+                            "batch_size": len(batch),
+                            "completed_minibatches": completed_batches,
+                            "total_minibatches": total_batches,
+                        }
+                    )
                 batch_loss = 0.0
                 optimizer.zero_grad(set_to_none=True)
                 for sample in batch:
@@ -1195,19 +1547,49 @@ def train_ppo_batch_transformers(
                         torch_mod=torch,
                         cfg=cfg,
                         device=device,
+                        diagnostics=logprob_fallbacks,
                     )
                 torch.nn.utils.clip_grad_norm_(train_params, cfg.max_grad_norm)
                 optimizer.step()
+                completed_batches += 1
+                mean_loss = round(batch_loss / max(1, len(batch)), 6)
                 step_rows.append(
                     {
                         "epoch": epoch + 1,
                         "batch_start": start,
                         "batch_size": len(batch),
-                        "loss": round(batch_loss / max(1, len(batch)), 6),
+                        "loss": mean_loss,
                         "device": str(device),
+                        "logprob_window_strategy": _normalize_logprob_window_strategy(cfg.logprob_window_strategy),
+                        "target_logprob_chunk_tokens": cfg.target_logprob_chunk_tokens,
                     }
                 )
+                if progress_callback:
+                    progress_callback(
+                        {
+                            "phase": "minibatch_done",
+                            "status": "running",
+                            "epoch": epoch + 1,
+                            "ppo_epochs": cfg.ppo_epochs,
+                            "batch_start": start,
+                            "batch_size": len(batch),
+                            "completed_minibatches": completed_batches,
+                            "total_minibatches": total_batches,
+                            "loss": mean_loss,
+                        }
+                    )
 
+        if progress_callback:
+            progress_callback(
+                {
+                    "phase": "save_start",
+                    "status": "saving",
+                    "completed_minibatches": completed_batches,
+                    "total_minibatches": total_batches,
+                    "staging_adapter": str(staging_adapter),
+                    "candidate_adapter": str(candidate_adapter),
+                }
+            )
         save_peft_adapter(model, staging_adapter)
         manifest["status"] = "trained"
         manifest["adapter_format"] = "peft"
@@ -1217,11 +1599,23 @@ def train_ppo_batch_transformers(
         manifest["staging_adapter"] = str(staging_adapter)
         manifest["device"] = str(device)
         manifest["load_in_4bit"] = bool(load_in_4bit)
+        if logprob_fallbacks:
+            manifest["logprob_strategy_fallbacks"] = logprob_fallbacks
         _finalize_trained_candidate(
             staging_adapter=staging_adapter,
             candidate_adapter=candidate_adapter,
             manifest=manifest,
         )
+        if progress_callback:
+            progress_callback(
+                {
+                    "phase": "complete",
+                    "status": "trained",
+                    "completed_minibatches": completed_batches,
+                    "total_minibatches": total_batches,
+                    "candidate_adapter": str(candidate_adapter),
+                }
+            )
         return manifest
     except Exception:
         discard_candidate_staging(staging_adapter)
@@ -1238,13 +1632,32 @@ def train_ppo_batch_mlx(
     candidate_adapter: Path,
     cfg: PPOConfig | None = None,
     dry_run: bool = False,
+    progress_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     cfg = cfg or PPOConfig()
     samples = build_ppo_samples(scored_rows=scored_rows, system_prompt=system_prompt, cfg=cfg)
     manifest = _build_manifest_prefix(cfg=cfg, samples=samples, dry_run=dry_run, train_backend="mlx")
+    total_batches = math.ceil(len(samples) / max(1, cfg.mini_batch_size)) * max(1, cfg.ppo_epochs)
+    if progress_callback:
+        progress_callback(
+            {
+                "phase": "start",
+                "status": "running",
+                "train_backend": "mlx",
+                "samples": len(samples),
+                "ppo_epochs": cfg.ppo_epochs,
+                "mini_batch_size": cfg.mini_batch_size,
+                "total_minibatches": total_batches,
+                "max_logprob_window_tokens": cfg.max_logprob_window_tokens,
+                "logprob_window_strategy": _normalize_logprob_window_strategy(cfg.logprob_window_strategy),
+                "target_logprob_chunk_tokens": cfg.target_logprob_chunk_tokens,
+            }
+        )
     _validate_train_inputs(samples=samples, candidate_adapter=candidate_adapter, cfg=cfg, dry_run=dry_run)
     if dry_run:
         manifest["status"] = "dry_run_no_weight_update"
+        if progress_callback:
+            progress_callback({"phase": "complete", "status": manifest["status"], "completed_minibatches": 0})
         return manifest
 
     try:
@@ -1272,12 +1685,28 @@ def train_ppo_batch_mlx(
                 tokenizer=tokenizer,
                 system_prompt=system_prompt,
                 max_window_tokens=cfg.max_logprob_window_tokens,
+                logprob_window_strategy=cfg.logprob_window_strategy,
+                target_logprob_chunk_tokens=cfg.target_logprob_chunk_tokens,
             )
 
         step_rows: list[dict[str, Any]] = []
+        completed_batches = 0
         for epoch in range(cfg.ppo_epochs):
             for start in range(0, len(samples), cfg.mini_batch_size):
                 batch = samples[start : start + cfg.mini_batch_size]
+                if progress_callback:
+                    progress_callback(
+                        {
+                            "phase": "minibatch_start",
+                            "status": "running",
+                            "epoch": epoch + 1,
+                            "ppo_epochs": cfg.ppo_epochs,
+                            "batch_start": start,
+                            "batch_size": len(batch),
+                            "completed_minibatches": completed_batches,
+                            "total_minibatches": total_batches,
+                        }
+                    )
                 batch_loss = 0.0
                 for sample in batch:
                     lora_params = _mlx_extract_lora_flat(model, tree_flatten)
@@ -1297,6 +1726,8 @@ def train_ppo_batch_mlx(
                             system_prompt=system_prompt,
                             mx_mod=mx,
                             max_window_tokens=cfg.max_logprob_window_tokens,
+                            logprob_window_strategy=cfg.logprob_window_strategy,
+                            target_logprob_chunk_tokens=cfg.target_logprob_chunk_tokens,
                         )
                         return ppo_clip_loss_mlx(
                             new_logprob=new_logprob,
@@ -1317,15 +1748,44 @@ def train_ppo_batch_mlx(
                     )
                     mx.eval(model.parameters(), optimizer.state)
                     batch_loss += float(loss)
+                completed_batches += 1
+                mean_loss = round(batch_loss / max(1, len(batch)), 6)
                 step_rows.append(
                     {
                         "epoch": epoch + 1,
                         "batch_start": start,
                         "batch_size": len(batch),
-                        "loss": round(batch_loss / max(1, len(batch)), 6),
+                        "loss": mean_loss,
+                        "logprob_window_strategy": _normalize_logprob_window_strategy(cfg.logprob_window_strategy),
+                        "target_logprob_chunk_tokens": cfg.target_logprob_chunk_tokens,
                     }
                 )
+                if progress_callback:
+                    progress_callback(
+                        {
+                            "phase": "minibatch_done",
+                            "status": "running",
+                            "epoch": epoch + 1,
+                            "ppo_epochs": cfg.ppo_epochs,
+                            "batch_start": start,
+                            "batch_size": len(batch),
+                            "completed_minibatches": completed_batches,
+                            "total_minibatches": total_batches,
+                            "loss": mean_loss,
+                        }
+                    )
 
+        if progress_callback:
+            progress_callback(
+                {
+                    "phase": "save_start",
+                    "status": "saving",
+                    "completed_minibatches": completed_batches,
+                    "total_minibatches": total_batches,
+                    "staging_adapter": str(staging_adapter),
+                    "candidate_adapter": str(candidate_adapter),
+                }
+            )
         adapter_out = staging_adapter / "adapters.safetensors"
         saved_tensors = _mlx_save_lora_adapter_weights(
             staging_adapter,
@@ -1346,6 +1806,16 @@ def train_ppo_batch_mlx(
             candidate_adapter=candidate_adapter,
             manifest=manifest,
         )
+        if progress_callback:
+            progress_callback(
+                {
+                    "phase": "complete",
+                    "status": "trained",
+                    "completed_minibatches": completed_batches,
+                    "total_minibatches": total_batches,
+                    "candidate_adapter": str(candidate_adapter),
+                }
+            )
         return manifest
     except Exception:
         discard_candidate_staging(staging_adapter)

@@ -294,7 +294,6 @@ def attach_execution_evidence(
         "commands": compile_result.commands,
         "apply_status": apply_result.status,
     }
-    vitest_ran = any("vitest" in str(cmd.get("command") or "") for cmd in compile_result.commands)
     row["compile_checked"] = True
     row["execution_evidence"] = "ran_compile"
 
@@ -310,7 +309,7 @@ def attach_execution_evidence(
             if float(parsed.get("score") or 0.0) >= 0.999:
                 row["compile_evidence"]["passed"] = True
         else:
-            row["compiled"] = bool(vitest_ran and compile_result.ok)
+            row["compiled"] = bool(compile_result.ok)
             spec = task.get("targeted_tests") if isinstance(task.get("targeted_tests"), dict) else {}
             checks = [str(item) for item in spec.get("outcome_checks") or [] if str(item).strip()]
             cmd_ok = compile_result.ok
@@ -321,7 +320,7 @@ def attach_execution_evidence(
                 "source": "execution_compile_commands",
             }
     else:
-        row["compiled"] = bool(vitest_ran and compile_result.ok)
+        row["compiled"] = bool(compile_result.ok)
 
     row["simulation_source"] = "vitest_goals"
     return row

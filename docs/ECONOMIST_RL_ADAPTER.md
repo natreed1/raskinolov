@@ -54,22 +54,17 @@ ECONOMIST_RL_SOURCE_REPO=/path/to/fallen-empire python scripts/adapters/tag_econ
 python scripts/economist_rl_reward_engine.py validate --tasks benchmarks/economistRL_tasks_v3_execution.json
 ```
 
-**Eval manifest:** `benchmarks/economistRL_eval_manifest_v1.json` — stratified eval (arena gold + sandbox economy + generalist); used by `run_economist_rl_lambda_cycle.py --eval-manifest`.
+**Eval manifest:** `benchmarks/economistRL_eval_manifest_v1.json` — stratified eval (arena gold + sandbox economy + generalist); passed through the split-worker launcher with `--eval-manifest`.
 
 **Rollout defaults:** `--max-tokens 4000`, BM25 context pack from `ECONOMIST_RL_SOURCE_REPO` when set, sandbox starters materialized in the execution worktree before apply.
 
-After converting, rebuild seed SFT so the adapter learns fenced patches (not plan prose):
-
-```bash
-python scripts/adapters/build_economist_rl_dataset.py
-# then mlx_lm.lora per training/economistRL_lora_qwen25_coder_7b.yaml
-```
+After converting/tagging, use the execution-tagged bank for rollout/evidence/PPO runs. The retired stub seed-SFT builder is disabled; do not rebuild `data/lora/adapters/economistRL_seed` for training.
 
 Scoring/tooling: `scripts/economist_rl_reward_engine.py`
 
-Seed bootstrap builder: `scripts/adapters/build_economist_rl_dataset.py`
+Deprecated seed bootstrap builder: `scripts/adapters/build_economist_rl_dataset.py` (disabled stub-SFT path)
 
-Training config: `training/economistRL_lora_qwen25_coder_7b.yaml` (writes `checkpoints/adapters/economistRL/seed_bootstrap`)
+Deprecated seed SFT config: `training/economistRL_lora_qwen25_coder_7b.yaml` (kept for provenance; not a current training entrypoint)
 
 Registry entry: `training/adapter_registry_v1.json` (`adapter_id: economistRL`, `promotion_state: experimental`)
 
@@ -90,7 +85,7 @@ Each task contains:
 - `expect.all_contains`, `expect.any_contains`, `expect.none_contains`
 - `expect.min_chars` / `expect.max_chars`
 - `expect.mechanics`, where each mechanic has a `name` and keyword set
-- optional `reference_answer` for seed bootstrap rows
+- optional `reference_answer` for historical seed bootstrap rows; current RL scoring uses rollout output plus execution evidence
 
 Add a task:
 
@@ -209,7 +204,7 @@ Code fences / `export function` hints (`has_code_fence`, `looks_code_like`) do *
 
 ### Execution evidence (Design A)
 
-`scripts/economist_rl_execution_evidence.py` runs **after** the toy sim / text-rubric evidence step in `run_economist_rl_lambda_cycle.py`:
+`scripts/economist_rl_execution_evidence.py` runs **after** the toy sim / text-rubric evidence step during rollout generation:
 
 1. Apply rollout output (unified diff or arena-style fenced files) to a disposable worktree.
 2. Run compile/test shell commands (default `npm run test:ml-cohort`, overridable per task or CLI).
@@ -219,7 +214,7 @@ Requires a Fallen Empire checkout:
 
 ```bash
 export ECONOMIST_RL_SOURCE_REPO=/path/to/fallen-empire   # game repo root
-python scripts/lambda/run_economist_rl_lambda_cycle.py --cycles 1 --rollouts-per-cycle 4
+python scripts/lambda/run_economist_rl_split_workers.py --max-ppo-updates 1 --bootstrap-rollout-batch-size 4 --rollout-batch-size 4
 ```
 
 Flags:
@@ -267,9 +262,11 @@ Outputs:
 
 ## RL cycle pipeline
 
-Entry point: `scripts/lambda/run_economist_rl_lambda_cycle.py` (local MLX by default; `--lambda-mode` for Transformers/CUDA on Lambda).
+Lambda entry point: `scripts/lambda/run_economist_rl_split_workers.py` (constant rollout generation plus gated PPO optimization feedback).
 
-Launcher wrapper: `scripts/launch_economist_rl_lambda_cycle.py` (sync repos, rsync adapter, remote `tmux`).
+Launcher wrapper: `scripts/launch_economist_rl_lambda_split_workers.py` (sync repos, rsync adapter, remote `tmux`).
+
+Legacy local smoke/debug entry point: `scripts/lambda/run_economist_rl_lambda_cycle.py`. Do not use the non-split launcher for Lambda RL runs.
 
 ### End-to-end flow (one cycle)
 
@@ -306,17 +303,26 @@ Paths use `NNN = cycle_id` (e.g. `019`). Candidate adapter: `checkpoints/adapter
 
 Chained cycles: cycle `N+1` rollouts read from `rl_pass_NNN` when produced in the **same** process invocation. Restarting a new launcher command without chaining loses the previous candidate unless you pass `--init-adapter-path`.
 
+The split-worker entrypoint also writes a run-level descriptor:
+`benchmarks/results/economistRL/runs/run_NNNN_<UTC>/RUN_MANIFEST.json`
+(`schema_version: economist_rl_pipeline_run_v1`) plus `RUN.md`. This is the
+authoritative answer for what the run attempted, when it ran, which numbered run
+it was, which artifacts are usable, and whether the run produced PPO success or
+only rollout/scored data.
+
 ### Phase 5 — PPO optimization (detail)
 
 Triggered when `--skip-ppo` is unset and not `--dry-run`. Code path:
 
-1. **`train_candidate_ppo()`** (`run_economist_rl_lambda_cycle.py`)
+1. **`train_candidate_ppo()`** (legacy cycle module, called by the split-worker optimizer)
 2. Parent calls **`_release_accelerator_memory()`** (drop rollout model from VRAM)
 3. **`run_ppo_train_subprocess()`** spawns `scripts/lambda/run_economist_rl_ppo_train.py --request …`
 4. Child reads **`scored_batch_NNN.jsonl`**, runs **`train_ppo_batch()`** (`economist_rl_ppo_trainer.py`)
 5. Writes **`ppo_train_NNN.json`** manifest and **`rl_pass_NNN/`** PEFT adapter
 
 Request sidecar (written beside manifest): `ppo/ppo_train_NNN.request.json` — full scored path, adapters, and serialized `PPOConfig`.
+
+Progress sidecar (updated during training): `ppo/ppo_train_NNN.progress.json` — current phase, minibatch count, elapsed seconds, source adapter, and candidate adapter.
 
 #### Sample building (`build_ppo_samples`)
 
@@ -329,24 +335,31 @@ Request sidecar (written beside manifest): `ppo/ppo_train_NNN.request.json` — 
 
 #### Logprob computation (OOM guard)
 
-Both rollout attach (phase 1) and PPO train (phase 5) use **`max_logprob_window_tokens`** (default **2048**, CLI `--ppo-logprob-window-tokens`):
+Both rollout attach (phase 1) and PPO train (phase 5) use the same logprob window config:
+
+- **`max_logprob_window_tokens`**: default **2048**, CLI `--ppo-logprob-window-tokens`
+- **`logprob_window_strategy`**: default **`grouped`**, CLI `--ppo-logprob-window-strategy`
+- **`target_logprob_chunk_tokens`**: default **512**, CLI `--ppo-target-logprob-chunk-tokens`
 
 | Condition | Behavior |
 | --------- | -------- |
 | `len(prompt_ids + completion_ids) <= window` | Single full forward; exact causal logprobs |
-| `len(...) > window` | One bounded forward **per completion token** (tail context + target token); approximate when early prompt is truncated |
+| `len(...) > window`, `strategy=grouped` | Bounded grouped windows score contiguous completion spans under the model causal mask; approximate when early context is truncated |
+| `len(...) > window`, `strategy=per_token` | Exact fallback/reference: one bounded forward per completion token (tail context + target token) |
 
 Mean logprob scale: **mean log-prob per completion token** (same encoding for attach, old, and new).
 
-`refresh_old_logprobs=False` by default — rollout attach already stores window-aligned `old_logprob`; avoids redundant full forwards at train time.
+Grouped scoring computes a token-weighted mean: `sum(target_logprobs) / target_completion_token_count`.
+
+`refresh_old_logprobs=False` by default — rollout attach already stores strategy/window-aligned `old_logprob`; avoids redundant full forwards at train time.
 
 #### PPO update loop (Transformers / Lambda)
 
 Default on `--lambda-mode`: `PPO_TRAIN_BACKEND=transformers`, CUDA, PEFT LoRA only.
 
-Per epoch, mini-batches of size **`mini_batch_size`** (default 8):
+Per epoch, mini-batches of size **`mini_batch_size`** (default 8; override with `--ppo-mini-batch-size`):
 
-1. For each sample: forward with windowed logprob → **`new_logprob`**
+1. For each sample: grouped/windowed forward with causal-masked logprob → **`new_logprob`**
 2. Clipped surrogate: `ratio = exp(new - old)`, clip ε=**0.2**, multiply by advantage
 3. **`loss.backward()`** per sample, then **`clip_grad_norm_`**, **`optimizer.step()`**
 4. Save LoRA via **`save_peft_adapter()`** → `rl_pass_NNN/`
@@ -362,6 +375,8 @@ MLX path (local Mac): same objective; **`mx.value_and_grad`** per sample; LoRA-o
 | `train_backend` | `transformers` or `mlx` |
 | `samples` | Count after cap/filter |
 | `max_logprob_window_tokens` | Window used for this run |
+| `logprob_window_strategy` | `grouped` or `per_token` |
+| `target_logprob_chunk_tokens` | Target completion tokens per grouped window |
 | `sample_stats` | mean/min/max reward of PPO batch |
 | `steps[]` | per mini-batch `{epoch, batch_start, batch_size, loss, device}` |
 | `candidate_adapter` | Path to saved `rl_pass_NNN` |
@@ -369,7 +384,7 @@ MLX path (local Mac): same objective; **`mx.value_and_grad`** per sample; LoRA-o
 Inspect training health:
 
 ```bash
-jq '{status, samples, max_logprob_window_tokens, sample_stats, steps}' \
+jq '{status, samples, max_logprob_window_tokens, logprob_window_strategy, target_logprob_chunk_tokens, sample_stats, steps}' \
   benchmarks/results/economistRL/ppo/ppo_train_NNN.json
 ```
 
@@ -386,32 +401,24 @@ Mitigations now stacked:
 | Subprocess-isolated PPO | `run_ppo_train_subprocess()` | Rollout model still loaded when PPO starts |
 | `refresh_old_logprobs=False` | `PPOConfig` | Redundant full logprob refresh at train time |
 | `max_samples` cap (default 16) | `build_ppo_samples()` | Limits PPO batch width |
-| **Logprob windowing** | attach + PPO train | Full prompt+completion forwards on 4k-token rollouts |
-| Aligned attach/train window | `run_rollouts()` passes `max_logprob_window_tokens` | Prevents old/new logprob scale mismatch on long seqs |
+| **Grouped logprob windowing** | attach + PPO train | Full prompt+completion forwards and thousands of tiny per-token passes on long rollouts |
+| Aligned attach/train window config | `run_rollouts()` passes strategy/window/chunk config | Prevents old/new logprob scale mismatch on long seqs |
 
 **Will this fix the Lambda crash?** **Very likely for the known failure mode** (PPO OOM on long sequences after successful rollouts). Not a guarantee: A10 + 7B fp16 can still OOM on edge cases; if it recurs, lower `--ppo-logprob-window-tokens 1536` and/or `--ppo-max-samples 8`.
 
 Generation (phase 1) still uses full context up to `--max-tokens 4000`; only logprob attach and PPO optimization are windowed.
 
-## Seed Dataset And Bootstrap Training
+## Deprecated Seed Dataset And Bootstrap Training
 
-Build seed bootstrap data:
+The old seed-SFT lane is retained only for provenance. These commands are disabled or deprecated and should not be used for current economistRL work:
 
 ```bash
 python scripts/ml_workflow.py economist-rl-dataset
-```
-
-Direct builder:
-
-```bash
 python scripts/adapters/build_economist_rl_dataset.py
-```
-
-Train bootstrap LoRA (one-time supervised warm-start, not the RL loop):
-
-```bash
 mlx_lm.lora --train -c training/economistRL_lora_qwen25_coder_7b.yaml
 ```
+
+Current work should validate/tag task banks, run rollout evidence, score rewards, and train PPO candidates through `scripts/lambda/run_economist_rl_lambda_cycle.py` or `scripts/lambda/run_economist_rl_split_workers.py`.
 
 This is only the bootstrap phase. The RL phase should generate multiple rollouts per task, score them with `scripts/economist_rl_reward_engine.py score`, and feed high-reward trajectories or pairwise preferences into the next adapter cycle.
 
@@ -421,24 +428,31 @@ Do not promote `economistRL` into default routing until it beats `resource_ui_pr
 
 ## Lambda GPU runs (Transformers / CUDA)
 
-Local Mac smoke uses MLX (`run_economist_rl_lambda_cycle.py` without `--lambda-mode`). For NVIDIA workers, use the dedicated launcher (reuses Lambda Cloud bootstrap/rsync from `scripts/launch_lambda_parallel_ablation.py`):
+Local Mac smoke may still use the legacy serial cycle runner (`run_economist_rl_lambda_cycle.py` without `--lambda-mode`) for debugging. For NVIDIA Lambda workers, use the split-worker launcher; the old `launch_economist_rl_lambda_cycle.py` path is deprecated and should not be used for new Lambda runs.
+
+Launch policy: start from the latest trusted PPO adapter when one exists. Use a
+successfully trained and intentionally accepted/promoted `rl_pass_NNN` with
+usable LoRA weights and PPO metadata as `--init-adapter-path`. Use
+`checkpoints/fe-lora-arena-apply-sft` only for explicit baseline/SFT restarts,
+or when no trusted PPO adapter exists or the PPO adapter fails validation.
 
 ```bash
 Put `LAMBDA_API_KEY` in repo `.env` (loaded automatically by the launcher) or export it in your shell.
 
-# Launch one gpu_1x_a10 worker and run two chained cycles (50 rollouts each):
-python scripts/launch_economist_rl_lambda_cycle.py --launch-instances \
-  -- --cycles 2 --rollouts-per-cycle 50 --eval-limit 20 --ppo-min-samples 4 --temperature 0.2
+# Launch one gpu_1x_a10 worker and run two PPO updates with constant rollout feed:
+python scripts/launch_economist_rl_lambda_split_workers.py --launch-instances \
+  -- --max-ppo-updates 2 --rollout-batch-size 25 --bootstrap-rollout-batch-size 50 --ppo-min-samples 25 --ppo-mini-batch-size 16 --temperature 0.2 \
+  --init-adapter-path checkpoints/adapters/economistRL/rl_pass_004
 
 # Reattach to an existing instance:
-python scripts/launch_economist_rl_lambda_cycle.py --instance-ids <instance_id> \
-  -- --cycles 1 --rollouts-per-cycle 10 --eval-limit 5
+python scripts/launch_economist_rl_lambda_split_workers.py --instance-ids <instance_id> \
+  -- --max-ppo-updates 1 --rollout-batch-size 25
 ```
 
 The launcher:
 
 - rsyncs `fallen-empire-lora` + `~/fallen-empire`, syncs registry `economistRL` adapter (`seed_bootstrap` by default),
-- starts `scripts/lambda/run_economist_rl_lambda_cycle.py` in remote `tmux` with `--lambda-mode` (injected if omitted),
+- starts `scripts/lambda/run_economist_rl_split_workers.py` in remote `tmux` with `--lambda-mode` (injected if omitted),
 - sets `LOCAL_BACKEND=transformers` and `PPO_TRAIN_BACKEND=transformers` on the worker.
 - installs `peft` on the worker; rollouts/PPO use **Hugging Face PEFT** side adapters (`PeftModel` + `save_pretrained()`), not MLX weight merge into base layers.
 
@@ -457,12 +471,13 @@ See **Phase 5 — PPO optimization** in [RL cycle pipeline](#rl-cycle-pipeline) 
 
 Summary:
 
-- When `len(prompt_ids + completion_ids) > max_logprob_window_tokens`, logprobs use one bounded forward per completion token (tail context + target token).
-- **Rollout attach and PPO train use the same window** so `old_logprob` / `new_logprob` ratios stay on the same scale.
+- When `len(prompt_ids + completion_ids) > max_logprob_window_tokens`, default `grouped` scoring uses bounded windows that score many target completion tokens in one forward pass under causal masking.
+- `per_token` remains available as the exact fallback/reference strategy.
+- **Rollout attach and PPO train use the same strategy/window/chunk config** so `old_logprob` / `new_logprob` ratios stay on the same scale.
 - `refresh_old_logprobs` stays **false** by default; rollout attach already stores windowed `old_logprob`.
 - When context is truncated to the tail, logprobs are approximate vs a full-context forward — acceptable tradeoff for stability.
 
-CLI override: `--ppo-logprob-window-tokens 1536` (applies to rollout attach, eval attach, and PPO train in the same cycle).
+CLI override: `--ppo-logprob-window-tokens 1536 --ppo-logprob-window-strategy grouped --ppo-target-logprob-chunk-tokens 512` (applies to rollout attach, eval attach, and PPO train in the same cycle).
 
 ### Full Lambda training run (recommended)
 
@@ -476,25 +491,27 @@ PYTHONPATH=scripts python scripts/oracle_reference_sanity.py --limit 3 \
 
 Expect: all tasks `compiled`, `targeted_tests` component ≥ 50.
 
-**Launch** (single invocation for adapter chaining; `LAMBDA_API_KEY` in repo `.env`):
+**Launch** (single invocation for split rollout/PPO workers; `LAMBDA_API_KEY` in repo `.env`):
 
 ```bash
-python scripts/launch_economist_rl_lambda_cycle.py \
+python scripts/launch_economist_rl_lambda_split_workers.py \
   --launch-instances \
   --region us-west-1 \
   --watchdog-idle-minutes 720 \
   --game-repo ~/fallen-empire \
   -- --lambda-mode \
-  --cycles 3 \
-  --rollouts-per-cycle 50 \
+  --max-ppo-updates 4 \
+  --bootstrap-rollout-batch-size 50 \
+  --rollout-batch-size 25 \
   --eval-limit 20 \
   --ppo-min-samples 4 \
   --ppo-max-samples 12 \
+  --ppo-mini-batch-size 16 \
   --ppo-epochs 1 \
   --temperature 0.2 \
   --max-tokens 4000 \
   --ppo-logprob-window-tokens 2048 \
-  --init-adapter-path checkpoints/fe-lora-arena-apply-sft \
+  --init-adapter-path checkpoints/adapters/economistRL/rl_pass_004 \
   --task-db benchmarks/economistRL_tasks_v3_execution.json \
   --execution-source-repo /home/ubuntu/fallen-empire
 ```
@@ -504,23 +521,22 @@ python scripts/launch_economist_rl_lambda_cycle.py \
 | What | Where |
 | ---- | ----- |
 | Local launch log | `logs/launch_economist_rl_overnight.log` (or stdout) |
-| Remote cycle log | `~/cloud-eval-logs/fe-economist-rl-cycle.log` on worker |
-| tmux session | `fe-economist-rl` |
-| Per-cycle summary | `benchmarks/results/economistRL/manifests/cycle_NNN_manifest.json` |
-| PPO step health | `benchmarks/results/economistRL/ppo/ppo_train_NNN.json` |
+| Remote split-worker log | `~/cloud-eval-logs/fe-economist-rl-split-workers.log` on worker |
+| tmux session | `fe-economist-rl-split` |
+| Split-worker summary | `benchmarks/results/economistRL/split_workers/split_worker_summary.json` |
+| PPO step health | `benchmarks/results/economistRL/ppo/split_ppo_update_NNN.json` |
 
-**If PPO still OOMs:** add `--ppo-logprob-window-tokens 1536 --ppo-max-samples 8`. Do **not** use `--ppo-in-process` on Lambda.
+**If PPO still OOMs:** add `--ppo-logprob-window-tokens 1536 --ppo-max-samples 8 --ppo-mini-batch-size 8`. Do **not** use `--ppo-in-process` on Lambda.
 
-**If a cycle completes but you need to resume:** reattach to the same instance with `--instance-ids <id>` and a **new** `--cycles N` command only if the previous run finished; otherwise inspect partial artifacts under `benchmarks/results/economistRL/` on the worker.
+**If a split-worker run completes but you need to resume:** reattach to the same instance with `--instance-ids <id>` and a new `--max-ppo-updates N` command only if the previous run finished; otherwise inspect partial artifacts under `benchmarks/results/economistRL/` on the worker.
 
 
-Remote log: `~/cloud-eval-logs/fe-economist-rl-cycle.log` (`tmux` session `fe-economist-rl`). Artifacts land under the Evaluation-Runs file system when attached (see `docs/PROJECT_STATE.md` Lambda notes).
+Remote log: `~/cloud-eval-logs/fe-economist-rl-split-workers.log` (`tmux` session `fe-economist-rl-split`). Artifacts land under the Evaluation-Runs file system when attached (see `docs/PROJECT_STATE.md` Lambda notes).
 
 On-worker only (SSH):
 
 ```bash
 cd ~/fallen-empire-lora && source .venv-linux-port/bin/activate
 export LOCAL_BACKEND=transformers PPO_TRAIN_BACKEND=transformers PYTHONPATH=scripts
-python scripts/lambda/run_economist_rl_lambda_cycle.py --lambda-mode --cycles 2 --rollouts-per-cycle 50
+python scripts/lambda/run_economist_rl_split_workers.py --lambda-mode --max-ppo-updates 2 --bootstrap-rollout-batch-size 50 --rollout-batch-size 25
 ```
-

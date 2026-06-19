@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
-"""Launch economistRL PPO cycles on Lambda Cloud (Transformers/CUDA path).
+"""DEPRECATED: launch legacy economistRL serial PPO cycles on Lambda Cloud.
+
+Do not use this launcher for new Lambda RL runs. Use
+``scripts/launch_economist_rl_lambda_split_workers.py`` instead.
 
 Provisions (or reuses) one GPU worker, syncs this repo + game repo, rsyncs the
 registry economistRL adapter checkpoint, and runs:
 
   scripts/lambda/run_economist_rl_lambda_cycle.py --lambda-mode ...
 
-That sets ``LOCAL_BACKEND=transformers`` for rollouts/logprob attach and
-``PPO_TRAIN_BACKEND=transformers`` for CUDA PPO training.
+That sets ``LOCAL_BACKEND=transformers`` for the Rollout Worker path and
+``PPO_TRAIN_BACKEND=transformers`` for the isolated CUDA PPO Worker.
 
-Example (50 rollouts × 2 chained cycles):
+Deprecated example (debug/historical only):
 
   python scripts/launch_economist_rl_lambda_cycle.py --launch-instances \\
-    -- --cycles 2 --rollouts-per-cycle 50 --eval-limit 20 --ppo-min-samples 4 \\
-    --temperature 0.2
+    -- --cycles 2 --eval-limit 20 --temperature 0.2
 
-Example (reuse an existing instance):
+Deprecated example (reuse an existing instance for debug/historical runs):
 
   python scripts/launch_economist_rl_lambda_cycle.py \\
     --instance-ids <instance_id> \\
@@ -79,6 +81,16 @@ RUNNER_SCRIPT = "scripts/lambda/run_economist_rl_lambda_cycle.py"
 SESSION_NAME = "fe-economist-rl"
 LOG_PATH = "/home/ubuntu/cloud-eval-logs/fe-economist-rl-cycle.log"
 GPU_MONITOR_LOG_PATH = "/home/ubuntu/cloud-eval-logs/gpu-smi-economist-rl.csv"
+DEPRECATION_NOTICE = (
+    "DEPRECATED: scripts/launch_economist_rl_lambda_cycle.py is the legacy serial-cycle "
+    "launcher. For Lambda RL runs, use scripts/launch_economist_rl_lambda_split_workers.py."
+)
+WORKER_DEFAULT_FLAGS = {
+    "--rollouts-per-cycle": "25",
+    "--bootstrap-rollouts-per-cycle": "50",
+    "--ppo-min-samples": "25",
+    "--ppo-max-samples": "64",
+}
 
 
 def _ensure_cycle_argv(argv: List[str]) -> List[str]:
@@ -87,6 +99,9 @@ def _ensure_cycle_argv(argv: List[str]) -> List[str]:
         out = out[1:]
     if "--lambda-mode" not in out:
         out = ["--lambda-mode", *out]
+    for flag, value in WORKER_DEFAULT_FLAGS.items():
+        if flag not in out:
+            out.extend([flag, value])
     if "--specialization" not in out:
         out.extend(["--specialization", "economist_rl"])
     return out
@@ -195,9 +210,11 @@ def _ensure_remote_game_deps(ssh_key_path: Path, host: str) -> None:
 
 def _parse_launch_args() -> tuple[argparse.Namespace, List[str]]:
     parser = argparse.ArgumentParser(
-        description="Launch economistRL PPO cycles on Lambda (Transformers/CUDA).",
+        description="DEPRECATED: launch legacy economistRL serial PPO cycles on Lambda.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
+            "New Lambda RL runs should use:\n"
+            "  python scripts/launch_economist_rl_lambda_split_workers.py --launch-instances -- ...\n\n"
             "Pass cycle-runner flags after `--`, e.g.\n"
             "  python scripts/launch_economist_rl_lambda_cycle.py --launch-instances \\\n"
             "    -- --cycles 2 --rollouts-per-cycle 50 --eval-limit 20"
@@ -269,6 +286,7 @@ def _parse_launch_args() -> tuple[argparse.Namespace, List[str]]:
 
 def main() -> int:
     args, cycle_argv = _parse_launch_args()
+    print(DEPRECATION_NOTICE, flush=True)
     if not args.api_key:
         raise SystemExit("LAMBDA_API_KEY or --api-key is required.")
 

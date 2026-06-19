@@ -1,0 +1,44 @@
+lambda_capacity_preflight_loaded cpu_4x_general=- cpu_4x_generalx=- gpu_1x_a10=us-east-1,us-west-1 gpu_1x_a100=- gpu_1x_a100_sxm4=asia-south-1,us-east-1,us-west-2 gpu_1x_a6000=- gpu_1x_b200_sxm6=- gpu_1x_gh200=- gpu_1x_h100_pcie=us-west-3 gpu_1x_h100_sxm5=us-south-2,us-south-3,us-southeast-1 gpu_1x_rtx6000=- gpu_2x_a100=- gpu_2x_a6000=- gpu_2x_b200_sxm6=- gpu_2x_h100_sxm5=us-southeast-1 gpu_4x_a100=- gpu_4x_a6000=- gpu_4x_b200_sxm6=- gpu_4x_h100_sxm5=- gpu_8x_a100=asia-northeast-2,europe-central-1 gpu_8x_a100_80gb_sxm4=- gpu_8x_b200_sxm6=- gpu_8x_h100_sxm5=- gpu_8x_v100=- gpu_8x_v100_n=us-south-2
+lambda_capacity_candidate_added instance_type=gpu_1x_a10 region=us-west-1 reason=requested_pair
+lambda_capacity_candidate_added instance_type=gpu_1x_a10 region=us-east-1 reason=requested_type_available_region
+lambda_capacity_candidate_order 1:gpu_1x_a10@us-west-1 2:gpu_1x_a10@us-east-1
+lambda_launch_candidate_try index=1/2 instance_type=gpu_1x_a10 region=us-west-1 quantity=1
+lambda_launch_candidate_selected instance_type=gpu_1x_a10 region=us-west-1 instance_count=1
+setup_cleanup_terminate_start reason=setup_failure_before_remote_start instance_count=1 ids=75de9829ba4743bc8f241727a74aa218
+setup_cleanup_terminate_done reason=setup_failure_before_remote_start terminated_count=1
+setup_cleanup_terminated id=75de9829ba4743bc8f241727a74aa218 name=fe-economist-rl-1780993055 status=terminating
+
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py", line 428, in <module>
+    raise SystemExit(main())
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_economist_rl_lambda_cycle.py", line 337, in main
+    id_to_ip = lab._wait_for_instance_ips(args.api_base, args.api_key, instance_ids)
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 507, in _wait_for_instance_ips
+    payload = _api_call(api_base, api_key, "GET", "/instances")
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 128, in _api_call
+    with request.urlopen(req, timeout=30) as resp:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 214, in urlopen
+    return opener.open(url, data, timeout)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 517, in open
+    response = self._open(req, data)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 534, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 494, in _call_chain
+    result = func(*args)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 1389, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 1350, in do_open
+    r = h.getresponse()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/http/client.py", line 1349, in getresponse
+    response.begin()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/http/client.py", line 316, in begin
+    version, status, reason = self._read_status()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/http/client.py", line 277, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/socket.py", line 704, in readinto
+    return self._sock.recv_into(b)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+socket.timeout: The read operation timed out

@@ -1,0 +1,58 @@
+[2026-06-17T22:10:30Z] launch_start attempt=1 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_01.log
+[2026-06-17T22:29:02Z] launch_ok attempt=1 instance_id=23a1035de2144e69b754de00e1fb2db2 host=152.67.228.128
+[2026-06-17T22:29:02Z] watch_start poll_minutes=10.0 max_restarts=3 max_hours=40.0
+[2026-06-17T22:29:03Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "", "last_rollout": "", "log_lines": 8, "ppo_tail": [], "trained_hint": false}
+[2026-06-17T22:43:57Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "002", "last_rollout": "50/50", "log_lines": 100, "ppo_tail": [], "trained_hint": false}
+[2026-06-17T23:23:59Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "43/50", "log_lines": 527, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T00:27:26Z] poll status=instance_gone tmux=gone progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "43/50", "log_lines": 527, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T00:31:11Z] rsync_partial attempt=1 dest=attempt_001_23a1035d_instance_gone_20260618T002751Z src=ubuntu@152.67.228.128:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 152.67.228.128 port 22: Operation timed out
+rsync(61029): error: unexpected end of file
+[2026-06-18T00:31:31Z] rsync_partial attempt=1 dest=attempt_001_23a1035d_instance_gone_20260618T002751Z src=ubuntu@152.67.228.128:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 152.67.228.128 port 22: Operation timed out
+rsync(61087): error: unexpected end of file
+[2026-06-18T00:31:31Z] extract_written dest=benchmarks/results/economistRL/extracts/attempt_001_23a1035d_instance_gone_20260618T002751Z failure_class=instance_gone
+[2026-06-18T00:31:32Z] launch_start attempt=2 log=/Users/natreed/fallen-empire-lora/logs/launch_economist_rl_overnight_attempt_02.log
+[2026-06-18T00:54:14Z] launch_ok attempt=2 instance_id=0e61cf2e9a68480fb8a4e3d13ccc8162 host=146.235.207.103
+[2026-06-18T00:54:52Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "002", "last_rollout": "", "log_lines": 23, "ppo_tail": [], "trained_hint": false}
+[2026-06-18T02:24:45Z] poll status=running tmux=up progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "42/50", "log_lines": 530, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T03:48:37Z] poll status=instance_gone tmux=gone progress={"failure_hits": [], "last_cycle": "005", "last_rollout": "42/50", "log_lines": 530, "ppo_tail": ["    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_002.progress.json\",", "    \"schema_version\": \"economist_rl_ppo_train_v1\",", "    \"progress_file\": \"/home/ubuntu/fallen-empire-lora/benchmarks/results/economistRL/ppo/split_ppo_train_003.progress.json\","], "trained_hint": true}
+[2026-06-18T04:02:07Z] rsync_partial attempt=2 dest=attempt_002_0e61cf2e_instance_gone_20260618T040147Z src=ubuntu@146.235.207.103:~/cloud-eval-logs/ rc=255 err=ssh: connect to host 146.235.207.103 port 22: Operation timed out
+rsync(61771): error: unexpected end of file
+[2026-06-18T04:02:27Z] rsync_partial attempt=2 dest=attempt_002_0e61cf2e_instance_gone_20260618T040147Z src=ubuntu@146.235.207.103:~/fallen-empire-lora/benchmarks/results/economistRL/ rc=255 err=ssh: connect to host 146.235.207.103 port 22: Operation timed out
+rsync(61828): error: unexpected end of file
+[2026-06-18T04:02:27Z] extract_written dest=benchmarks/results/economistRL/extracts/attempt_002_0e61cf2e_instance_gone_20260618T040147Z failure_class=instance_gone
+Traceback (most recent call last):
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 739, in <module>
+    raise SystemExit(main())
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 735, in main
+    return _run_watch(_parse_args(argv))
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 589, in _run_watch
+    if instance_id and _list_active_workers():
+  File "/Users/natreed/fallen-empire-lora/scripts/lambda/watch_economist_rl_lambda_overnight.py", line 223, in _list_active_workers
+    payload = lab._api_call(api_base, api_key, "GET", "/instances")
+  File "/Users/natreed/fallen-empire-lora/scripts/launch_lambda_parallel_ablation.py", line 166, in _api_call
+    with request.urlopen(req, timeout=30) as resp:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 214, in urlopen
+    return opener.open(url, data, timeout)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 517, in open
+    response = self._open(req, data)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 534, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 494, in _call_chain
+    result = func(*args)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 1389, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/urllib/request.py", line 1350, in do_open
+    r = h.getresponse()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/http/client.py", line 1349, in getresponse
+    response.begin()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/http/client.py", line 316, in begin
+    version, status, reason = self._read_status()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/http/client.py", line 277, in _read_status
+    line = str(self.fp.readline(_MAXLINE + 1), "iso-8859-1")
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/socket.py", line 704, in readinto
+    return self._sock.recv_into(b)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ssl.py", line 1241, in recv_into
+    return self.read(nbytes, buffer)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/ssl.py", line 1099, in read
+    return self._sslobj.read(len, buffer)
+socket.timeout: The read operation timed out
