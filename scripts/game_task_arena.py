@@ -46,7 +46,7 @@ import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 REPO = SCRIPT_DIR.parent
@@ -56,6 +56,7 @@ RESULTS_ROOT = REPO / "benchmarks" / "results" / "game_task_trials"
 INDEX_PATH = REPO / "benchmarks" / "results" / "game_task_index.jsonl"
 REPORTS_DIR = REPO / "benchmarks" / "results" / "game_task_reports"
 DEFAULT_TASKS = REPO / "benchmarks" / "game_task_arena_examples.json"
+MODEL_CHAT_DEBATES_PATH = REPO / "benchmarks" / "results" / "model_chat_debates" / "debates.jsonl"
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -440,8 +441,15 @@ def create_trial(args: argparse.Namespace) -> TrialManifest:
     task = tasks[args.task_id]
     attempts: Dict[str, AttemptManifest] = {}
     for attempt in args.attempts:
-        backend = "frontier_packet" if "frontier" in attempt else "local_mlx"
-        model_label = args.frontier_model if backend == "frontier_packet" else args.local_adapter
+        if "council" in attempt:
+            backend = "council_mlx"
+            model_label = f"council({args.local_adapter})"
+        elif "frontier" in attempt:
+            backend = "frontier_packet"
+            model_label = args.frontier_model
+        else:
+            backend = "local_mlx"
+            model_label = args.local_adapter
         branch, path = make_worktree(
             source_repo=source_repo,
             worktree_root=Path(args.worktree_root).expanduser().resolve(),
@@ -990,7 +998,26 @@ def _clean_candidate_path(raw_path: str) -> str:
     path = raw_path.strip().strip('"').strip("'").strip("`")
     path = re.sub(r"^\s*(?://|#)\s*", "", path).strip()
     path = re.sub(r"^\s*(?:path|file|filename)\s*[:=]\s*", "", path).strip()
-    return path.strip().strip('"').strip("'").strip("`")
+    path = path.strip().strip('"').strip("'").strip("`")
+    # Drop git diff path prefixes (``a/src/x.tsx`` / ``b/src/x.tsx``) so a path
+    # salvaged from diff markers still matches the repo-relative allowed globs.
+    path = re.sub(r"^[ab]/", "", path)
+    return path
+
+
+def _looks_like_unified_diff(text: str) -> bool:
+    """True when a block body is a unified diff rather than a full file.
+
+    Guards the fenced-file fallback: a model (or the council's diff-first lane)
+    may emit a ```diff block that ``git apply`` rejects; without this check the
+    fallback would write the diff text *as a file*, producing broken source full
+    of ``@@``/``+``/``-`` markers. Detecting it lets us skip instead.
+    """
+    if text.lstrip().startswith("diff --git "):
+        return True
+    return bool(re.search(r"(?m)^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@", text)) and bool(
+        re.search(r"(?m)^\+\+\+ ", text)
+    )
 
 
 def candidate_path(info: str, body: str = "") -> Optional[str]:
@@ -1053,7 +1080,21 @@ def is_safe_repo_path(path: Path | str, allowed: Iterable[str]) -> bool:
     return any(fnmatch.fnmatch(text, glob) for glob in allowed)
 
 
-def apply_fenced_files(worktree: Path, text: str, allowed: List[str], log_path: Path) -> Tuple[bool, List[str]]:
+def apply_fenced_files(
+    worktree: Path,
+    text: str,
+    allowed: List[str],
+    log_path: Path,
+    overwrite_guard: Optional[Callable[[str, str, str], Optional[str]]] = None,
+) -> Tuple[bool, List[str]]:
+    """Apply fenced full-file blocks to a worktree.
+
+    ``overwrite_guard`` (opt-in) is called as ``guard(rel_posix, old_text, new_text)``
+    before overwriting an *existing* file. If it returns a non-empty reason string,
+    the write is skipped (logged as ``reject ... overwrite_guard:<reason>``). This is
+    the mass-deletion / dropped-export protection used by the integration curriculum;
+    when ``None`` the historical behavior (unconditional overwrite) is preserved.
+    """
     written: List[str] = []
     log_lines: List[str] = []
     pending_rel: Optional[str] = None
@@ -1083,12 +1124,44 @@ def apply_fenced_files(worktree: Path, text: str, allowed: List[str], log_path: 
             log_lines.append(f"reject {rel}: outside allowed paths")
             continue
         target = worktree / rel
+        new_text = strip_fenced_path_comment(body, rel)
+        if _looks_like_unified_diff(new_text):
+            log_lines.append(f"skip {rel}: body is a unified diff, not a full file")
+            continue
+        if overwrite_guard is not None and target.is_file():
+            try:
+                old_text = target.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                old_text = ""
+            reason = overwrite_guard(rel.as_posix(), old_text, new_text)
+            if reason:
+                log_lines.append(f"reject {rel}: overwrite_guard:{reason}")
+                continue
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(strip_fenced_path_comment(body, rel), encoding="utf-8")
+        target.write_text(new_text, encoding="utf-8")
         written.append(rel.as_posix())
         log_lines.append(f"wrote {rel}")
     write_text(log_path, "\n".join(log_lines) + "\n")
     return bool(written), written
+
+
+def _default_overwrite_guard() -> Optional[Callable[[str, str, str], Optional[str]]]:
+    """Brownfield mass-deletion / dropped-export guard for full-file overwrites.
+
+    Active by default so a truncated rewrite of a large existing file (the
+    split-016 ``apply_output`` exploit) is rejected instead of silently deleting
+    thousands of lines. Small seeded stubs (< ~40 non-blank lines) are unaffected,
+    so the legacy economist sandbox pipeline keeps working. Set
+    ``FE_DISABLE_OVERWRITE_GUARD=1`` to restore the historical unconditional
+    overwrite behavior.
+    """
+    if os.environ.get("FE_DISABLE_OVERWRITE_GUARD") == "1":
+        return None
+    try:
+        from integration_apply import OverwriteGuard, make_overwrite_guard
+    except Exception:
+        return None
+    return make_overwrite_guard(OverwriteGuard())
 
 
 def apply_output(args: argparse.Namespace) -> AttemptManifest:
@@ -1100,6 +1173,7 @@ def apply_output(args: argparse.Namespace) -> AttemptManifest:
     worktree = Path(attempt.worktree_path)
     diff = extract_diff(model_text)
     log = adir / "logs" / "apply.log"
+    guard_cb = _default_overwrite_guard()
     if diff:
         patch_path = adir / "model.patch"
         write_text(patch_path, diff)
@@ -1108,10 +1182,10 @@ def apply_output(args: argparse.Namespace) -> AttemptManifest:
             code, _ = run_cmd(["git", "apply", str(patch_path)], cwd=worktree, log_path=log, timeout_s=120)
             attempt.apply_status = "applied_diff" if code == 0 else "apply_failed"
         else:
-            ok, written = apply_fenced_files(worktree, model_text, trial.task.allowed_paths, adir / "logs" / "apply_fenced_fallback.log")
+            ok, written = apply_fenced_files(worktree, model_text, trial.task.allowed_paths, adir / "logs" / "apply_fenced_fallback.log", overwrite_guard=guard_cb)
             attempt.apply_status = f"wrote_files:{','.join(written)}" if ok else "apply_check_failed"
     else:
-        ok, written = apply_fenced_files(worktree, model_text, trial.task.allowed_paths, log)
+        ok, written = apply_fenced_files(worktree, model_text, trial.task.allowed_paths, log, overwrite_guard=guard_cb)
         attempt.apply_status = f"wrote_files:{','.join(written)}" if ok else "no_applyable_changes"
     attempt.last_error = "" if attempt.apply_status.startswith(("applied", "wrote")) else read_text(log)[-1000:]
     save_after_attempt_update(trial, attempt, "applied")
@@ -1511,6 +1585,450 @@ def generate_attempt(args: argparse.Namespace) -> Path:
     return out
 
 
+def _diff_changed_paths(diff_text: str) -> List[str]:
+    """Best-effort list of repo-relative paths touched by a unified diff."""
+    paths: List[str] = []
+    for line in diff_text.splitlines():
+        if line.startswith("+++ b/"):
+            paths.append(line[len("+++ b/"):].strip())
+        elif line.startswith("+++ ") and not line.startswith("+++ /dev/null"):
+            paths.append(line[len("+++ "):].strip())
+    return [p for p in paths if p and p != "/dev/null"]
+
+
+def _apply_text_to_worktree(
+    worktree: Path,
+    model_text: str,
+    allowed: List[str],
+    log: Path,
+) -> Tuple[str, List[str]]:
+    """Apply one model output (diff-first, fenced fallback) into a worktree.
+
+    Mirrors ``apply_output`` but works on raw text + an explicit allowed list so
+    the council orchestrator can stitch each subtask's change onto the shared
+    worktree using the exact same brownfield guards as the local/frontier lanes.
+    Returns ``(status, changed_files)``.
+    """
+    diff = extract_diff(model_text)
+    guard_cb = _default_overwrite_guard()
+    if diff:
+        patch_path = log.parent / f"{log.stem}.patch"
+        write_text(patch_path, diff)
+        check_code, _ = run_cmd(["git", "apply", "--check", str(patch_path)], cwd=worktree, log_path=log, timeout_s=120)
+        if check_code == 0:
+            code, _ = run_cmd(["git", "apply", str(patch_path)], cwd=worktree, log_path=log, timeout_s=120)
+            if code == 0:
+                return "applied_diff", _diff_changed_paths(diff)
+        ok, written = apply_fenced_files(
+            worktree, model_text, allowed, log.parent / f"{log.stem}_fenced.log", overwrite_guard=guard_cb
+        )
+        return ("wrote_files" if ok else "apply_failed"), written
+    ok, written = apply_fenced_files(worktree, model_text, allowed, log, overwrite_guard=guard_cb)
+    return ("wrote_files" if ok else "no_applyable_changes"), written
+
+
+def _refit_plan_to_task(plan: Any, allowed_paths: List[str], *, max_experts: int = 2) -> Any:
+    """Re-fence a planner-emitted plan onto the arena task's allowed paths.
+
+    The planner decides *whether/how* to decompose and *which* specialists to call,
+    but the arena owns the write fence (``allowed_paths``) and defers compile/test
+    gating to its own preview/verify step, so each subtask's ``verify_commands`` is
+    cleared (the council verify callback passes once a change applies).
+    """
+    from council_runtime.decomposition_plan import DecompositionPlan, SubtaskNode
+
+    fence = list(allowed_paths) or ["**/*"]
+    new_subtasks = []
+    for node in plan.subtasks:
+        new_subtasks.append(
+            SubtaskNode(
+                subtask_id=node.subtask_id,
+                domain=node.domain,
+                goal=node.goal,
+                assigned_question=node.assigned_question,
+                allowed_paths=fence,
+                target_files=list(node.target_files),
+                depends_on=list(node.depends_on),
+                handoff_context=node.handoff_context,
+                verify_commands=[],
+                selected_experts=list(node.selected_experts)[:max_experts],
+            )
+        )
+    return DecompositionPlan(
+        task_synopsis=plan.task_synopsis,
+        primary_goal=plan.primary_goal,
+        success_criteria=list(plan.success_criteria),
+        subtasks=new_subtasks,
+        integration_plan=dict(plan.integration_plan),
+        loop_policy=dict(plan.loop_policy),
+    )
+
+
+def generate_council_attempt(args: argparse.Namespace) -> Path:
+    """Council lane: the planner decomposes the task and dispatches each subtask to
+    its own specialist council; every subtask's change is stitched onto the shared
+    arena worktree with the same diff/fenced apply + overwrite guards as the
+    local/frontier lanes. Generation and apply happen together here (the loop
+    applies as it goes), so the UI skips the separate ``apply_output`` step for
+    council and relies on the arena's own preview/verify for the real gate.
+    """
+    load_dotenv()
+    trial = load_trial(args.trial_id)
+    attempt = trial.attempts[args.attempt]
+    adir = attempt_dir(trial.trial_id, attempt.attempt)
+    log_root = adir / "logs"
+    worktree = Path(attempt.worktree_path)
+
+    from council_runtime.executor import CouncilGeneration, run_council
+    from council_runtime.orchestrator import (
+        SubtaskApply,
+        SubtaskDispatch,
+        SubtaskVerify,
+        run_decomposed_task,
+    )
+    from council_runtime.planner_decomposition_policy import (
+        generate_decomposition_plan,
+        make_council_plan_for_subtask,
+    )
+    from council_runtime.decomposition_plan import derive_decomposition_plan, validate_decomposition_plan
+
+    use_bm25_ctx = not getattr(args, "no_context_bm25", False)
+    context = build_context_pack(
+        trial,
+        max_chars=int(getattr(args, "context_chars", 9000)),
+        log_dir=log_root,
+        use_bm25=use_bm25_ctx,
+    ).text
+    requested_max_tokens = int(args.max_tokens or trial.task.max_tokens or 4096)
+    temp = float(getattr(args, "temp", 0.0))
+    council_mode = str(getattr(args, "council_mode", "planner-model"))
+    council_rounds = max(1, int(getattr(args, "council_rounds", 1)))
+    council_max_subtasks = max(1, int(getattr(args, "council_max_subtasks", 4)))
+
+    local_model_id = resolve_local_model_id(args.adapter_path, getattr(args, "local_model", None))
+    adapter_key = str(args.adapter_path or "").strip()
+    local_cache_key = (str(local_model_id), adapter_key)
+    backend = _LOCAL_BACKEND_CACHE.get(local_cache_key)
+    if backend is None:
+        backend = LocalMlxBackend(model_id=local_model_id, adapter_path=args.adapter_path)
+        _LOCAL_BACKEND_CACHE[local_cache_key] = backend
+
+    format_instruction = (
+        "Return only fenced full-file blocks with repo-relative paths, or one unified diff "
+        "that applies with git apply. Do not include shell commands, commentary, or summaries. "
+        "Preserve existing exported component/function names unless the task explicitly asks to "
+        "rename them. Stay within the allowed paths."
+    )
+
+    def generate_participant(turn: Any) -> Any:
+        user = f"{format_instruction}\n\n{context}\n\n{turn.participant_prompt}"
+        text = backend.generate(
+            GenerationRequest(
+                messages=[
+                    ChatMessage("system", "You are a careful TypeScript game engineer on a focused subtask."),
+                    ChatMessage("user", user),
+                ],
+                max_tokens=requested_max_tokens,
+                temperature=temp,
+            )
+        )
+        return CouncilGeneration(text=sanitize_model_output(text), metadata={"backend": "local"})
+
+    council_plan_for_subtask = make_council_plan_for_subtask(debate_max_rounds=council_rounds)
+    council_dispatches: List[dict] = []
+
+    def dispatch(ctx: Any) -> Any:
+        subtask_prompt = (
+            f"{ctx.subtask.goal}\n\n{ctx.subtask.assigned_question}\n\n"
+            f"Upstream changes already applied to the shared worktree (build on these, "
+            f"do not redo them):\n{ctx.upstream_digest() or '- none'}\n\n"
+            f"Edit only these paths: {', '.join(ctx.subtask.allowed_paths) or '(unspecified)'}.\n"
+            f"{format_instruction}"
+        )
+        final_text, meta = run_council(
+            prompt=subtask_prompt,
+            council_plan=council_plan_for_subtask(ctx),
+            disagreement=0.0,
+            generate_participant=generate_participant,
+            max_rounds=council_rounds,
+        )
+        council_dispatches.append(
+            {
+                "subtask_id": ctx.subtask.subtask_id,
+                "domain": ctx.subtask.domain,
+                "iteration": int(ctx.iteration),
+                "attempt": int(ctx.attempt),
+                "selected_experts": [str(e.get("expert_id")) for e in ctx.subtask.selected_experts],
+                "subtask_prompt": subtask_prompt,
+                "rounds": meta.get("rounds") or [],
+                "final_text": final_text,
+            }
+        )
+        return SubtaskDispatch(
+            output=final_text,
+            metadata={k: v for k, v in meta.items() if k != "participants"},
+            trace_ids=list(meta.get("trace_ids") or []),
+        )
+
+    def apply_cb(node: Any, output: str, wt: Any) -> Any:
+        log = log_root / f"council_apply_{slug(node.subtask_id, 24)}.log"
+        status, changed = _apply_text_to_worktree(Path(wt), output, list(node.allowed_paths), log)
+        ok = status.startswith(("applied", "wrote"))
+        applied_via = "diff" if status.startswith("applied") else ("overwrite" if ok else "none")
+        return SubtaskApply(ok=ok, applied_via=applied_via, changed_files=changed, detail=status)
+
+    def verify_cb(node: Any, wt: Any) -> Any:
+        # The arena owns the real gate (preview + fixed verification). A subtask is
+        # "done" for the loop once its change applies, so dependents can build on it.
+        return SubtaskVerify(compiled=True, tests_score=1.0, detail="arena_deferred_verify")
+
+    started = time.perf_counter()
+    plan_raw_text = ""
+    if council_mode == "single":
+        plan = derive_decomposition_plan(prompt=trial.task.prompt, allowed_paths=list(trial.task.allowed_paths))
+        plan = _refit_plan_to_task(plan, trial.task.allowed_paths)
+        plan_source = "single"
+        plan_parse_ok = True
+    else:
+        emission = generate_decomposition_plan(
+            trial.task.prompt,
+            backend=(None if council_mode == "heuristic" else backend),
+            mock=(council_mode == "heuristic"),
+            max_subtasks=council_max_subtasks,
+        )
+        plan = _refit_plan_to_task(emission.plan, trial.task.allowed_paths)
+        plan_source = emission.source
+        plan_parse_ok = emission.parse_ok
+        # Preserve the planner model's *actual* completion (esp. when it failed to
+        # parse and we fell back to the heuristic) so the trace shows what it said.
+        if emission.source in ("model", "model_fallback"):
+            plan_raw_text = emission.raw_text
+
+    validation = validate_decomposition_plan(plan.to_dict())
+    write_text(adir / "council_plan.json", json.dumps(plan.to_dict(), indent=2) + "\n")
+
+    result = run_decomposed_task(
+        prompt=trial.task.prompt,
+        plan=plan,
+        dispatch_subtask=dispatch,
+        apply_subtask=apply_cb,
+        verify_subtask=verify_cb,
+        worktree=worktree,
+        # Retry a flaky subtask once so a single bad apply doesn't zero out the
+        # whole council; widen the iteration budget so a retry can still
+        # propagate down a dependency chain (worst case ~2 passes per subtask).
+        max_attempts_per_subtask=2,
+        max_iterations=max(2, len(plan.subtasks) * 2),
+    )
+    elapsed = time.perf_counter() - started
+
+    applied_records = [rec for rec in result.history if rec.apply.ok]
+    changed_files: List[str] = []
+    for rec in applied_records:
+        for path in rec.apply.changed_files:
+            if path not in changed_files:
+                changed_files.append(path)
+
+    report_lines = [
+        f"# Council attempt — {len(plan.subtasks)} subtask(s) ({plan_source})",
+        "",
+        f"- Decomposition source: `{plan_source}` (parse_ok={plan_parse_ok}, valid={validation.valid})",
+        f"- Subtasks applied: {len(applied_records)}/{len(plan.subtasks)}",
+        f"- Changed files: {', '.join(f'`{p}`' for p in changed_files) or 'none'}",
+        "",
+    ]
+    for rec in result.history:
+        node = plan.subtask_by_id(rec.subtask_id)
+        experts = ", ".join(str(e.get('expert_id')) for e in (node.selected_experts if node else [])) or "generalist"
+        report_lines.append(
+            f"## subtask `{rec.subtask_id}` — domain `{rec.domain}` — experts: {experts}"
+        )
+        report_lines.append(f"_apply: {rec.apply.applied_via} ({rec.apply.detail})_")
+        report_lines.append("")
+        report_lines.append(rec.dispatch.output or "_(no output)_")
+        report_lines.append("")
+    out_text = "\n".join(report_lines)
+
+    write_text(adir / "council_result.json", json.dumps(result.to_dict(), indent=2) + "\n")
+    trace_doc = {
+        "trial_id": trial.trial_id,
+        "task_id": trial.task.id,
+        "task_title": trial.task.title,
+        "prompt": trial.task.prompt,
+        "council_mode": council_mode,
+        "council_rounds": council_rounds,
+        "elapsed_s": elapsed,
+        "apply_status": (
+            f"applied_council:{len(applied_records)}/{len(plan.subtasks)}"
+            if applied_records
+            else "no_applyable_changes"
+        ),
+        "changed_files": changed_files,
+        "decomposition": {
+            "source": plan_source,
+            "parse_ok": plan_parse_ok,
+            "valid": validation.valid,
+            "plan": plan.to_dict(),
+            "raw_planner_output": plan_raw_text,
+        },
+        "dispatches": council_dispatches,
+        "result": result.to_dict(),
+    }
+    write_text(adir / "council_trace.json", json.dumps(trace_doc, indent=2) + "\n")
+    if applied_records:
+        attempt.apply_status = f"applied_council:{len(applied_records)}/{len(plan.subtasks)}"
+    else:
+        attempt.apply_status = "no_applyable_changes"
+    attempt.last_error = "" if applied_records else "council produced no applyable changes"
+    attempt.generation_elapsed_s = elapsed
+    metrics = {
+        "trial_id": trial.trial_id,
+        "attempt": attempt.attempt,
+        "backend": "council_mlx",
+        "model_label": attempt.model_label,
+        "started_at": utc_now(),
+        "elapsed_s": elapsed,
+        "council_mode": council_mode,
+        "council_rounds": council_rounds,
+        "decomposition_source": plan_source,
+        "decomposition_parse_ok": plan_parse_ok,
+        "subtask_count": len(plan.subtasks),
+        "subtasks_applied": len(applied_records),
+        "changed_files": changed_files,
+        "subtask_pass_rate": result.subtask_pass_rate,
+    }
+    trial.attempts[attempt.attempt] = attempt
+    save_trial(trial)
+    write_attempt_manifest(trial.trial_id, attempt)
+    write_text(adir / "generation_metrics.json", json.dumps(metrics, indent=2) + "\n")
+    append_index(trial, attempt, event="generated")
+    out = adir / "model_output.md"
+    write_text(out, out_text)
+    write_diff_artifacts(trial, attempt)
+    return out
+
+
+def _indent_block(text: str, pad: str = "        ") -> str:
+    text = str(text or "").strip()
+    if not text:
+        return f"{pad}(empty)"
+    return "\n".join(pad + line for line in text.splitlines())
+
+
+def render_council_trace_text(trial_id: str) -> str:
+    """Human-readable transcript of a council run: planner decomposition, each
+    subtask's specialist debate (per-round participant outputs + adjudication),
+    the chosen change, and the apply outcome. Returned as plain text so model
+    output containing ``` fences renders verbatim (no markdown nesting issues).
+    """
+    trial_id = (trial_id or "").strip()
+    if not trial_id:
+        return "Create/run a trial first."
+    path = attempt_dir(trial_id, "council") / "council_trace.json"
+    if not path.is_file():
+        return (
+            f"No council trace found for trial `{trial_id}`.\n"
+            "Run a trial with the Council lane enabled, then click this button."
+        )
+    try:
+        doc = json.loads(read_text(path))
+    except (json.JSONDecodeError, OSError) as exc:
+        return f"Could not read council trace: {type(exc).__name__}: {exc}"
+
+    dec = doc.get("decomposition", {})
+    plan = dec.get("plan", {})
+    subtasks = plan.get("subtasks", [])
+    lines: List[str] = []
+    lines.append("=" * 78)
+    lines.append(f"COUNCIL PROCESS — task: {doc.get('task_id')}  ({doc.get('task_title','')})")
+    lines.append("=" * 78)
+    lines.append("")
+    lines.append("PROMPT:")
+    lines.append(_indent_block(doc.get("prompt", ""), "    "))
+    lines.append("")
+    lines.append(
+        f"DECOMPOSITION: source={dec.get('source')}  parse_ok={dec.get('parse_ok')}  "
+        f"valid={dec.get('valid')}  subtasks={len(subtasks)}  mode={doc.get('council_mode')}  "
+        f"rounds={doc.get('council_rounds')}"
+    )
+    lines.append(
+        f"OUTCOME: apply_status={doc.get('apply_status')}  "
+        f"changed_files={doc.get('changed_files') or 'none'}  elapsed={doc.get('elapsed_s', 0):.1f}s"
+    )
+    lines.append("")
+    lines.append("-" * 78)
+    lines.append("PLAN (what the planner decided)")
+    lines.append("-" * 78)
+    for s in subtasks:
+        experts = ", ".join(str(e.get("expert_id")) for e in s.get("selected_experts", [])) or "generalist"
+        deps = ", ".join(s.get("depends_on", [])) or "none"
+        lines.append(f"[{s.get('subtask_id')}] domain={s.get('domain')}  experts=[{experts}]  depends_on=[{deps}]")
+        lines.append(f"    goal: {s.get('goal','')}")
+        lines.append(f"    edit fence: {', '.join(s.get('allowed_paths', [])) or '(unspecified)'}")
+    lines.append("")
+
+    raw_planner = dec.get("raw_planner_output", "")
+    if dec.get("source") == "model_fallback":
+        lines.append("-" * 78)
+        lines.append("PLANNER FALLBACK — the model plan above is the HEURISTIC, not the model")
+        lines.append("-" * 78)
+        lines.append(
+            "The planner model was invoked but its output did not parse as a valid plan,"
+            " so the deterministic heuristic was substituted. Raw model completion below:"
+        )
+        lines.append("")
+        lines.append(_indent_block(raw_planner or "(empty)", "    "))
+        lines.append("")
+    elif dec.get("source") == "model" and raw_planner:
+        lines.append("-" * 78)
+        lines.append("PLANNER RAW OUTPUT (model completion that produced the plan)")
+        lines.append("-" * 78)
+        lines.append(_indent_block(raw_planner, "    "))
+        lines.append("")
+
+    history = {
+        (h.get("subtask_id"), h.get("attempt")): h
+        for h in doc.get("result", {}).get("history", [])
+    }
+    lines.append("-" * 78)
+    lines.append("SUBTASK COUNCILS (the debate)")
+    lines.append("-" * 78)
+    dispatches = doc.get("dispatches", [])
+    if not dispatches:
+        lines.append("(no subtask councils ran)")
+    for d in dispatches:
+        sid, att = d.get("subtask_id"), d.get("attempt")
+        h = history.get((sid, att), {})
+        applied = (
+            f"applied_via={h.get('applied_via')} ok={h.get('apply_ok')} changed={h.get('changed_files')}"
+            if h
+            else "n/a"
+        )
+        experts = ", ".join(d.get("selected_experts", [])) or "generalist"
+        lines.append("")
+        lines.append(
+            f"### Subtask `{sid}`  domain={d.get('domain')}  (iteration {d.get('iteration')}, attempt {att})"
+        )
+        lines.append(f"    experts convened: {experts}")
+        lines.append(f"    apply result: {applied}")
+        for rnd in d.get("rounds", []):
+            lines.append(f"  -- Round {rnd.get('round_idx')} --")
+            for p in rnd.get("participants", []):
+                who = p.get("base_expert_id") or p.get("participant_id")
+                lines.append(f"    >> {who}  (role={p.get('role')}, confidence={p.get('confidence')})")
+                lines.append(_indent_block(p.get("text", "")))
+                lines.append("")
+            adj = rnd.get("adjudication_preview", {})
+            lines.append(
+                f"    [adjudication] winners={adj.get('winner_ids')}  "
+                f"confidence={adj.get('confidence')}  disagreement={adj.get('disagreement')}"
+            )
+        lines.append("    === CHOSEN OUTPUT for this subtask ===")
+        lines.append(_indent_block(d.get("final_text", "")))
+    lines.append("")
+    return "\n".join(lines)
+
+
 def cleanup(args: argparse.Namespace) -> AttemptManifest:
     trial = load_trial(args.trial_id)
     attempt = trial.attempts[args.attempt]
@@ -1632,28 +2150,257 @@ def summarize_validation_artifact(path: Path) -> Tuple[str, str]:
     return "\n".join(lines), json.dumps(payload, indent=2, ensure_ascii=False)
 
 
+# --------------------------------------------------------------------------- #
+# Model Chat: agentic loop + judge voting
+#
+# Pure/testable helpers live at module scope (no Gradio dependency) so the
+# stop-signal detection, verdict parsing, and vote tally can be unit tested
+# without spinning up a model backend. Gradio-facing wiring stays nested in
+# `build_app()` alongside the rest of the Model Chat callbacks.
+# --------------------------------------------------------------------------- #
+DEBATE_STOP_TOKEN = "[[DEBATE_CONCLUDED]]"
+
+JUDGE_SYSTEM_PROMPT = (
+    "You are an impartial judge for a debate between AI models in the Fallen Empire arena. "
+    "Read the full transcript and decide which named participant argued their position most "
+    "convincingly overall, considering reasoning quality, evidence, and how well they addressed "
+    "the other side's points. Do not favor a participant merely for speaking last. "
+    "Respond in exactly this format:\n"
+    "WINNER: <one of the candidate names, or TIE>\n"
+    "REASONING: <2-4 sentences justifying the verdict>"
+)
+
+_JUDGE_WINNER_RE = re.compile(r"WINNER\s*:\s*(.+)", re.IGNORECASE)
+_JUDGE_REASONING_RE = re.compile(r"REASONING\s*:\s*(.+)", re.IGNORECASE | re.DOTALL)
+
+
+def _is_judge_speaker(speaker: Dict[str, Any]) -> bool:
+    return bool(speaker.get("is_judge"))
+
+
+def _debater_names(room_state: Optional[List[Dict[str, Any]]]) -> List[str]:
+    return [s.get("name") for s in room_state or [] if s.get("name") and not _is_judge_speaker(s)]
+
+
+def _judge_names(room_state: Optional[List[Dict[str, Any]]]) -> List[str]:
+    return [s.get("name") for s in room_state or [] if s.get("name") and _is_judge_speaker(s)]
+
+
+def _debate_signaled_stop(text: str) -> bool:
+    return DEBATE_STOP_TOKEN.lower() in (text or "").lower()
+
+
+def _strip_stop_token(text: str) -> str:
+    if not text:
+        return text
+    pattern = re.compile(re.escape(DEBATE_STOP_TOKEN), re.IGNORECASE)
+    return pattern.sub("", text).strip()
+
+
+def _transcript_speaker_names(chat_state: Optional[List[Dict[str, Any]]]) -> List[str]:
+    """Distinct non-human speaker names that have actually spoken, in first-seen order."""
+    seen: List[str] = []
+    for item in chat_state or []:
+        name = item.get("speaker_name") or item.get("speaker")
+        if name and name != "Human" and name not in seen:
+            seen.append(name)
+    return seen
+
+
+def _chat_transcript_by_name(chat_state: Optional[List[Dict[str, Any]]], max_chars: int = 12000) -> str:
+    """Like `_chat_transcript` but keyed by bare speaker name (legible for judges)."""
+    lines = []
+    for item in chat_state or []:
+        name = item.get("speaker_name") or item.get("speaker", "speaker")
+        content = (item.get("content") or "").strip()
+        if content:
+            lines.append(f"{name}: {content}")
+    text = "\n\n".join(lines)
+    if len(text) <= max_chars:
+        return text
+    return "[earlier transcript clipped]\n\n" + text[-max_chars:]
+
+
+def _generate_with_speaker_backend(speaker: Dict[str, Any], req: "GenerationRequest") -> Tuple[str, Optional[int]]:
+    """Route a GenerationRequest to a speaker's configured backend (Local or Frontier).
+
+    Backends are cached at module scope (`_LOCAL_BACKEND_CACHE` / `_FRONTIER_BACKEND_CACHE`)
+    so repeated turns/judgments reuse the same loaded model or client. Returns
+    (sanitized_text, total_tokens_or_None).
+    """
+    if str(speaker.get("backend") or "Local") == "Frontier":
+        model_key = str(speaker.get("frontier_model") or os.environ.get("FRONTIER_MODEL") or "")
+        base_url_key = str(
+            os.environ.get("FRONTIER_API_BASE_URL") or os.environ.get("OPENAI_API_BASE_URL") or "https://api.openai.com/v1"
+        ).rstrip("/")
+        cache_key = (model_key, base_url_key)
+        backend = _FRONTIER_BACKEND_CACHE.get(cache_key)
+        if backend is None:
+            backend = OpenAICompatibleBackend(model=model_key or None)
+            _FRONTIER_BACKEND_CACHE[cache_key] = backend
+        text, usage = backend.generate(req)
+        return sanitize_model_output(text).strip(), usage.get("total_tokens")
+
+    adapter = str(speaker.get("local_adapter") or "checkpoints/fe-lora-30m").strip()
+    model_id = resolve_local_model_id(adapter, os.environ.get("MODEL"))
+    cache_key = (str(model_id), adapter)
+    backend = _LOCAL_BACKEND_CACHE.get(cache_key)
+    if backend is None:
+        backend = LocalMlxBackend(model_id=model_id, adapter_path=adapter)
+        _LOCAL_BACKEND_CACHE[cache_key] = backend
+    text = backend.generate(req)
+    return sanitize_model_output(text).strip(), None
+
+
+def _judge_generate(
+    judge: Dict[str, Any],
+    transcript: str,
+    candidate_names: List[str],
+    max_tokens: int,
+    temp: float,
+) -> str:
+    user = (
+        "Candidates: " + ", ".join(candidate_names) + "\n\n"
+        "Transcript:\n" + (transcript or "(empty)") + "\n\n"
+        "Give your verdict now in the required format."
+    )
+    profile = str(judge.get("profile") or "").strip()
+    system = JUDGE_SYSTEM_PROMPT + (f"\n\nJudge profile:\n{profile}" if profile else "")
+    req = GenerationRequest(
+        messages=[ChatMessage("system", system), ChatMessage("user", user)],
+        max_tokens=max(64, int(max_tokens or 512)),
+        temperature=float(temp or 0.0),
+    )
+    text, _total_tokens = _generate_with_speaker_backend(judge, req)
+    return text
+
+
+def _parse_judge_verdict(raw_text: str, candidate_names: List[str]) -> Dict[str, Any]:
+    """Parse a judge's free-text verdict into a structured winner + reasoning.
+
+    Matches `candidate_names` case-insensitively and tolerates the judge repeating
+    extra text on the winner line (e.g. "WINNER: Alice (Local)").
+    """
+    text = raw_text or ""
+    winner_match = _JUDGE_WINNER_RE.search(text)
+    reasoning_match = _JUDGE_REASONING_RE.search(text)
+    reasoning = reasoning_match.group(1).strip() if reasoning_match else text.strip()
+    if not winner_match:
+        return {"winner": None, "reasoning": reasoning, "raw": text, "parse_ok": False}
+    lowered = winner_match.group(1).strip().lower()
+    winner = None
+    for name in candidate_names:
+        if name.lower() in lowered or lowered in name.lower():
+            winner = name
+            break
+    if winner is None and ("tie" in lowered or "both" in lowered or "draw" in lowered):
+        return {"winner": "tie", "reasoning": reasoning, "raw": text, "parse_ok": True}
+    return {"winner": winner, "reasoning": reasoning, "raw": text, "parse_ok": winner is not None}
+
+
+def _tally_judge_votes(verdicts: List[Dict[str, Any]]) -> Dict[str, Any]:
+    counts: Dict[str, int] = {}
+    unparsed = 0
+    for verdict in verdicts:
+        winner = verdict.get("winner")
+        if not winner:
+            unparsed += 1
+            continue
+        counts[winner] = counts.get(winner, 0) + 1
+    if not counts:
+        return {"counts": {}, "winner": None, "tie": False, "leaders": [], "unparsed": unparsed}
+    top = max(counts.values())
+    leaders = [name for name, count in counts.items() if count == top]
+    is_tie = len(leaders) > 1
+    return {
+        "counts": counts,
+        "winner": None if is_tie else leaders[0],
+        "tie": is_tie,
+        "leaders": leaders,
+        "unparsed": unparsed,
+    }
+
+
+def _render_judge_scoreboard(verdicts: List[Dict[str, Any]], tally: Dict[str, Any], candidates: List[str]) -> str:
+    lines = ["## Judge scoreboard", ""]
+    counts = tally.get("counts") or {}
+    if candidates:
+        lines.append(" · ".join(f"**{name}**: {counts.get(name, 0)} vote(s)" for name in candidates))
+    if tally.get("tie"):
+        lines.append(f"\n**Result: TIE** between {', '.join(tally.get('leaders') or [])}.")
+    elif tally.get("winner"):
+        lines.append(f"\n**Result: {tally['winner']} wins** ({counts.get(tally['winner'], 0)}/{len(verdicts)} votes).")
+    else:
+        lines.append("\n**Result: no clear verdict** (judges disagreed or could not be parsed).")
+    if tally.get("unparsed"):
+        lines.append(f"_{tally['unparsed']} judge verdict(s) could not be parsed cleanly — shown below as raw text._")
+    lines.append("")
+    for verdict in verdicts:
+        pick = verdict.get("winner") or "(unparsed)"
+        detail = verdict.get("reasoning") or verdict.get("raw") or ""
+        lines.append(f"- **{verdict.get('judge_label') or verdict.get('judge')}** → `{pick}` — {detail}")
+    return "\n".join(lines)
+
+
+def _build_debate_record(
+    *,
+    room_state: List[Dict[str, Any]],
+    chat_state: List[Dict[str, Any]],
+    judge_names: List[str],
+    verdicts: List[Dict[str, Any]],
+    tally: Dict[str, Any],
+) -> Dict[str, Any]:
+    debaters = _transcript_speaker_names(chat_state)[:2]
+    label = "_vs_".join(debaters) if debaters else "debate"
+    return {
+        "debate_id": f"model_chat_{slug(label)}_{uuid.uuid4().hex[:8]}",
+        "created_at": utc_now(),
+        "speakers": [
+            {"name": s.get("name"), "backend": s.get("backend"), "is_judge": bool(s.get("is_judge"))}
+            for s in room_state or []
+        ],
+        "transcript": [
+            {
+                "speaker": item.get("speaker"),
+                "speaker_name": item.get("speaker_name") or item.get("speaker"),
+                "content": item.get("content"),
+            }
+            for item in chat_state or []
+        ],
+        "judges": judge_names,
+        "verdicts": verdicts,
+        "vote_tally": tally,
+        "winner": tally.get("winner"),
+        "tie": bool(tally.get("tie")),
+    }
+
+
 def build_app():
     import gradio as gr
     theme_css = """
 :root {
-  --arena-bg: #000000;
-  --arena-panel: #0b0f19;
-  --arena-panel-solid: #101624;
-  --arena-panel-muted: #151d2e;
-  --arena-border: rgba(148, 163, 184, 0.22);
-  --arena-text: #f8fafc;
-  --arena-muted: #cbd5e1;
-  --arena-input: #050914;
-  --arena-code: #172554;
-  --arena-blue: #2563eb;
-  --arena-blue-light: #93c5fd;
+  --arena-bg: #050506;
+  --arena-panel: rgba(16, 18, 22, 0.94);
+  --arena-panel-solid: #15181d;
+  --arena-panel-muted: #1c2027;
+  --arena-border: rgba(228, 219, 196, 0.16);
+  --arena-border-strong: rgba(228, 219, 196, 0.30);
+  --arena-text: #f6f2e9;
+  --arena-muted: #b9b2a4;
+  --arena-input: #0b0d10;
+  --arena-code: #212018;
+  --arena-accent: #d6ad4b;
+  --arena-accent-strong: #f0c96a;
+  --arena-cyan: #5ec4bd;
 }
 .gradio-container,
 body {
-  background: #000000 !important;
+  background: var(--arena-bg) !important;
 }
 .gradio-container {
-  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.20), transparent 34rem), #000000 !important;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(214, 173, 75, 0.13), transparent 28rem),
+    linear-gradient(180deg, #090a0c 0%, #050506 52%, #030304 100%) !important;
   color: var(--arena-text) !important;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", sans-serif !important;
 }
@@ -1667,10 +2414,24 @@ body {
 .gradio-container .prose,
 .gradio-container .markdown,
 .gradio-container .accordion {
-  border-radius: 18px !important;
+  border-radius: 10px !important;
   border-color: var(--arena-border) !important;
   background: var(--arena-panel) !important;
-  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.36) !important;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28) !important;
+}
+.gradio-container .tabs {
+  padding: 0.35rem !important;
+}
+.gradio-container .tab-nav button,
+.gradio-container [role="tab"] {
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  font-weight: 700 !important;
+}
+.gradio-container [role="tab"][aria-selected="true"] {
+  background: #f6f2e9 !important;
+  color: #111111 !important;
+  border-color: #f6f2e9 !important;
 }
 .gradio-container,
 .gradio-container h1,
@@ -1728,7 +2489,7 @@ body {
   opacity: 0.85 !important;
 }
 .gradio-container a {
-  color: var(--arena-blue-light) !important;
+  color: var(--arena-cyan) !important;
 }
 .gradio-container table,
 .gradio-container th,
@@ -1745,7 +2506,7 @@ body {
 .gradio-container code {
   background: var(--arena-code) !important;
   color: var(--arena-text) !important;
-  border-radius: 7px;
+  border-radius: 6px;
   padding: 0.08rem 0.3rem;
 }
 .gradio-container pre {
@@ -1756,12 +2517,52 @@ body {
 .gradio-container button.secondary,
 .gradio-container button:not(.primary) {
   background: var(--arena-panel-solid) !important;
-  border: 1px solid var(--arena-border) !important;
+  border: 1px solid var(--arena-border-strong) !important;
   color: var(--arena-text) !important;
+}
+.gradio-container button {
+  min-height: 42px !important;
+  padding: 0.55rem 1rem !important;
+  border-radius: 8px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease, box-shadow 140ms ease !important;
+}
+.gradio-container button:hover {
+  border-color: var(--arena-accent) !important;
+  transform: translateY(-1px);
+}
+.gradio-container button.primary,
+.gradio-container button.primary:hover {
+  background: linear-gradient(180deg, var(--arena-accent-strong), var(--arena-accent)) !important;
+  border: 1px solid rgba(255, 236, 178, 0.72) !important;
+  color: #17130a !important;
+  box-shadow: 0 12px 28px rgba(214, 173, 75, 0.22) !important;
+}
+.gradio-container input,
+.gradio-container textarea,
+.gradio-container select {
+  min-height: 42px !important;
+}
+.gradio-container input:focus,
+.gradio-container textarea:focus,
+.gradio-container select:focus {
+  border-color: var(--arena-accent) !important;
+  box-shadow: 0 0 0 3px rgba(214, 173, 75, 0.12) !important;
+}
+.gradio-container .message,
+.gradio-container .chatbot {
+  border-radius: 10px !important;
+  border-color: var(--arena-border) !important;
+  background: rgba(10, 11, 13, 0.96) !important;
 }
 """
 
-    def create_ui(task_id, source_repo, worktree_root, base_ref):
+    def create_ui(task_id, source_repo, worktree_root, base_ref, include_council=True):
+        attempts = ["local", "frontier"]
+        if include_council:
+            attempts.append("council")
         ns = argparse.Namespace(
             task_id=task_id,
             tasks=DEFAULT_TASKS,
@@ -1769,14 +2570,16 @@ body {
             worktree_root=worktree_root or str(DEFAULT_WORKTREE_ROOT),
             base_ref=base_ref or "HEAD",
             trial_id=None,
-            attempts=["local", "frontier"],
+            attempts=attempts,
             local_adapter="checkpoints/fe-lora-30m",
             frontier_model=os.environ.get("FRONTIER_MODEL", "frontier"),
             copy=False,
         )
         trial = create_trial(ns)
+        lanes = ", ".join(f"`{a}`" for a in attempts)
         summary = (
-            f"Created trial `{trial.trial_id}` from standardized task `{trial.task.id}`.\n\n"
+            f"Created trial `{trial.trial_id}` from standardized task `{trial.task.id}` "
+            f"with lanes: {lanes}.\n\n"
             "Next: generate/apply model attempts, then start preview links."
         )
         return trial.trial_id, summary
@@ -1791,14 +2594,21 @@ body {
         max_tokens,
         local_port,
         frontier_port,
+        council_port,
         start_servers,
+        include_council,
+        council_mode,
+        council_rounds,
     ):
-        trial_id, create_summary = create_ui(task_id, source_repo, worktree_root, base_ref)
-        generate_status = generate_apply_both_ui(trial_id, local_adapter, frontier_model, max_tokens)
-        preview_status, local_link, frontier_link = preview_both_ui(
+        trial_id, create_summary = create_ui(task_id, source_repo, worktree_root, base_ref, include_council)
+        generate_status = generate_apply_both_ui(
+            trial_id, local_adapter, frontier_model, max_tokens, council_mode, council_rounds
+        )
+        preview_status, local_link, frontier_link, council_link = preview_both_ui(
             trial_id,
             local_port,
             frontier_port,
+            council_port,
             start_servers,
         )
         status = (
@@ -1806,14 +2616,19 @@ body {
             f"### Generation\n{generate_status}\n\n"
             f"### Preview\n{preview_status}"
         )
-        return trial_id, status, local_link, frontier_link
+        return trial_id, status, local_link, frontier_link, council_link
 
-    def generate_apply_both_ui(trial_id, local_adapter, frontier_model, max_tokens):
+    def generate_apply_both_ui(
+        trial_id, local_adapter, frontier_model, max_tokens, council_mode="planner-model", council_rounds=1
+    ):
         trial_id = trial_id.strip()
         if not trial_id:
             return "Create a trial first."
         statuses = []
+        present = set(load_trial(trial_id).attempts.keys())
         for attempt_name, backend in [("local", "local"), ("frontier", "frontier")]:
+            if attempt_name not in present:
+                continue
             try:
                 context_chars = 9000 if backend == "local" else 16000
                 output_path = generate_attempt(
@@ -1847,6 +2662,30 @@ body {
                 )
             except Exception as exc:
                 statuses.append(f"- `{attempt_name}` failed: `{type(exc).__name__}: {exc}`")
+        if "council" in present:
+            try:
+                generate_council_attempt(
+                    argparse.Namespace(
+                        trial_id=trial_id,
+                        attempt="council",
+                        adapter_path=local_adapter or "checkpoints/fe-lora-30m",
+                        local_model=os.environ.get("MODEL"),
+                        max_tokens=int(max_tokens or 4096),
+                        temp=0.0,
+                        context_chars=9000,
+                        no_context_bm25=False,
+                        council_mode=str(council_mode or "planner-model"),
+                        council_rounds=int(council_rounds or 1),
+                        council_max_subtasks=4,
+                    )
+                )
+                manifest = load_trial(trial_id).attempts["council"]
+                elapsed = manifest.generation_elapsed_s or 0.0
+                statuses.append(
+                    f"- `council` decomposed + generated in {elapsed:.1f}s; apply status is `{manifest.apply_status}`"
+                )
+            except Exception as exc:
+                statuses.append(f"- `council` failed: `{type(exc).__name__}: {exc}`")
         try:
             signal_path = write_pairwise_training_signal(load_trial(trial_id))
             if signal_path:
@@ -1855,40 +2694,42 @@ body {
             statuses.append(f"- pairwise training signal failed: `{type(exc).__name__}: {exc}`")
         return "\n".join(statuses)
 
-    def preview_both_ui(trial_id, local_port, frontier_port, start_servers):
+    def preview_both_ui(trial_id, local_port, frontier_port, council_port, start_servers):
         trial_id = trial_id.strip()
         if not trial_id:
-            return "Create a trial first.", "", ""
-        local = preview(
-            argparse.Namespace(
-                trial_id=trial_id,
-                attempt="local",
-                port=int(local_port or 5174),
-                command=None,
-                start=bool(start_servers),
+            return "Create a trial first.", "", "", ""
+        present = set(load_trial(trial_id).attempts.keys())
+
+        def _preview_lane(name, port):
+            if name not in present:
+                return None
+            return preview(
+                argparse.Namespace(
+                    trial_id=trial_id,
+                    attempt=name,
+                    port=int(port),
+                    command=None,
+                    start=bool(start_servers),
+                )
             )
-        )
-        frontier = preview(
-            argparse.Namespace(
-                trial_id=trial_id,
-                attempt="frontier",
-                port=int(frontier_port or 5175),
-                command=None,
-                start=bool(start_servers),
-            )
-        )
-        status = "\n".join(
-            [
-                "Preview metadata recorded.",
-                f"- `local`: `{local.preview_status}`",
-                f"- `frontier`: `{frontier.preview_status}`",
-            ]
-        )
+
+        local = _preview_lane("local", local_port or 5174)
+        frontier = _preview_lane("frontier", frontier_port or 5175)
+        council = _preview_lane("council", council_port or 5176)
+        rows = ["Preview metadata recorded."]
+        for name, att in [("local", local), ("frontier", frontier), ("council", council)]:
+            if att is not None:
+                rows.append(f"- `{name}`: `{att.preview_status}`")
+        status = "\n".join(rows)
         if start_servers:
             status += "\n\nLinks are marked ready only after the dev server answers the sandbox URL."
-        local_link = f"[Open Local Preview]({local.preview_url})" if local.preview_status == "ready" else f"Local preview not ready: `{local.preview_status}`"
-        frontier_link = f"[Open Frontier Preview]({frontier.preview_url})" if frontier.preview_status == "ready" else f"Frontier preview not ready: `{frontier.preview_status}`"
-        return status, local_link, frontier_link
+
+        def _link(label, att):
+            if att is None:
+                return f"{label} lane not in this trial."
+            return f"[Open {label} Preview]({att.preview_url})" if att.preview_status == "ready" else f"{label} preview not ready: `{att.preview_status}`"
+
+        return status, _link("Local", local), _link("Frontier", frontier), _link("Council", council)
 
     def complete_ui(
         trial_id,
@@ -1903,20 +2744,28 @@ body {
         frontier_ui,
         frontier_tests,
         frontier_merge,
+        council_correctness,
+        council_feel,
+        council_ui,
+        council_tests,
+        council_merge,
         preference_strength,
         failure_modes,
         manual_local_typecheck,
         manual_local_visible_change,
         manual_frontier_typecheck,
         manual_frontier_visible_change,
+        manual_council_typecheck,
+        manual_council_visible_change,
         notes,
         cleanup_after,
     ):
         trial_id = trial_id.strip()
         if not trial_id:
             return "Create a trial first."
+        present = set(load_trial(trial_id).attempts.keys())
         outputs = []
-        for attempt_name, scores in [
+        lane_scores = [
             (
                 "local",
                 {
@@ -1926,6 +2775,8 @@ body {
                     "test_confidence": local_tests,
                     "mergeability": local_merge,
                 },
+                bool(manual_local_typecheck),
+                bool(manual_local_visible_change),
             ),
             (
                 "frontier",
@@ -1936,8 +2787,25 @@ body {
                     "test_confidence": frontier_tests,
                     "mergeability": frontier_merge,
                 },
+                bool(manual_frontier_typecheck),
+                bool(manual_frontier_visible_change),
             ),
-        ]:
+            (
+                "council",
+                {
+                    "correctness": council_correctness,
+                    "gameplay_feel": council_feel,
+                    "ui_quality": council_ui,
+                    "test_confidence": council_tests,
+                    "mergeability": council_merge,
+                },
+                bool(manual_council_typecheck),
+                bool(manual_council_visible_change),
+            ),
+        ]
+        for attempt_name, scores, manual_typecheck, manual_visible in lane_scores:
+            if attempt_name not in present:
+                continue
             grade_path = grade(
                 argparse.Namespace(
                     trial_id=trial_id,
@@ -1951,12 +2819,8 @@ body {
                     winner=winner if winner == attempt_name else "no",
                     preference_strength=preference_strength,
                     failure_modes=failure_modes or [],
-                    manual_typecheck=bool(
-                        manual_local_typecheck if attempt_name == "local" else manual_frontier_typecheck
-                    ),
-                    manual_visible_change=bool(
-                        manual_local_visible_change if attempt_name == "local" else manual_frontier_visible_change
-                    ),
+                    manual_typecheck=manual_typecheck,
+                    manual_visible_change=manual_visible,
                     notes=notes or "",
                 )
             )
@@ -1974,6 +2838,9 @@ body {
         report(argparse.Namespace())
         outputs.append("- refreshed summary report")
         return "\n".join(outputs)
+
+    def council_trace_ui(trial_id):
+        return render_council_trace_text(trial_id)
 
     def packet_ui(trial_id, attempt):
         if not trial_id.strip():
@@ -2097,60 +2964,577 @@ body {
             f"Branch: `{attempt.branch}`"
         )
 
+    def _chat_pairs(chat_state):
+        pairs: list[tuple[str, str]] = []
+        pending_user = ""
+        for item in chat_state or []:
+            speaker = item.get("speaker", item.get("role", "speaker"))
+            content = item.get("content", "")
+            if speaker == "Human":
+                if pending_user:
+                    pairs.append((pending_user, ""))
+                pending_user = content
+            else:
+                label = f"**{speaker}**\n\n{content}"
+                if pending_user:
+                    pairs.append((pending_user, label))
+                    pending_user = ""
+                else:
+                    pairs.append(("", label))
+        if pending_user:
+            pairs.append((pending_user, ""))
+        return pairs
+
+    def _chat_transcript(chat_state, max_chars: int = 12000) -> str:
+        lines = []
+        for item in chat_state or []:
+            speaker = item.get("speaker", item.get("role", "speaker"))
+            content = (item.get("content") or "").strip()
+            if content:
+                lines.append(f"{speaker}: {content}")
+        text = "\n\n".join(lines)
+        if len(text) <= max_chars:
+            return text
+        return "[earlier transcript clipped]\n\n" + text[-max_chars:]
+
+    def _default_chat_speakers():
+        return []
+
+    def _speaker_choices(room_state):
+        names = [str(s.get("name", "")).strip() for s in room_state or [] if str(s.get("name", "")).strip()]
+        return names
+
+    def _find_speaker(room_state, speaker_name):
+        speakers = list(room_state or [])
+        for speaker in speakers:
+            if speaker.get("name") == speaker_name:
+                return speaker
+        return speakers[0] if speakers else None
+
+    def _speaker_label(speaker) -> str:
+        if not speaker:
+            return "No speaker"
+        name = str(speaker.get("name") or "Speaker").strip() or "Speaker"
+        backend = str(speaker.get("backend") or "Local").strip()
+        if backend == "Frontier":
+            model = str(speaker.get("frontier_model") or os.environ.get("FRONTIER_MODEL") or "default").strip()
+            return f"{name} [{backend}: {model}]"
+        adapter = str(speaker.get("local_adapter") or "checkpoints/fe-lora-30m").strip()
+        model_id = resolve_local_model_id(adapter, os.environ.get("MODEL"))
+        return f"{name} [{backend}: {adapter} on {model_id}]"
+
+    def _chat_generate(
+        speaker_name,
+        room_state,
+        chat_state,
+        max_tokens,
+        temp,
+    ):
+        speaker = _find_speaker(room_state, speaker_name)
+        if not speaker:
+            raise RuntimeError("Add at least one speaker in Setup Conversation Room, then enter the room.")
+        label = _speaker_label(speaker)
+        profile = str(speaker.get("profile") or "").strip()
+        transcript = _chat_transcript(chat_state)
+        system = (
+            "You are participating in the Fallen Empire arena model chat. "
+            "Respond as the selected model speaker, stay grounded in the shared transcript, "
+            "and address the previous turn directly. Keep answers concise unless code or diagnosis requires detail. "
+            "If you and the other speaker(s) have reached genuine agreement, or you have nothing new to contribute, "
+            f"end your reply with the exact token {DEBATE_STOP_TOKEN} on its own final line to signal the "
+            "conversation can conclude. Only use that token when the discussion has truly resolved — do not use "
+            "it prematurely."
+            + (f"\n\nSpeaker profile:\n{profile}" if profile else "")
+        )
+        user = (
+            f"Current speaker: {label}\n\n"
+            "Shared transcript:\n"
+            f"{transcript or '(empty)'}\n\n"
+            "Write the next contribution from the current speaker only."
+        )
+        req = GenerationRequest(
+            messages=[ChatMessage("system", system), ChatMessage("user", user)],
+            max_tokens=max(64, int(max_tokens or 768)),
+            temperature=float(temp or 0.0),
+        )
+        text, total_tokens = _generate_with_speaker_backend(speaker, req)
+        status = f"{label} responded" + (f" using {total_tokens} tokens." if total_tokens else ".")
+        return text, status
+
+    def chat_send_ui(
+        user_text,
+        speaker_name,
+        room_state,
+        chat_state,
+        max_tokens,
+        temp,
+    ):
+        state = list(chat_state or [])
+        text = (user_text or "").strip()
+        if not text:
+            return _chat_pairs(state), state, "", "Enter a message or use Continue Selected Model."
+        state.append({"speaker": "Human", "speaker_name": "Human", "content": text})
+        try:
+            reply, status = _chat_generate(speaker_name, room_state, state, int(max_tokens or 768), float(temp or 0.0))
+            ended = _debate_signaled_stop(reply)
+            state.append({
+                "speaker": _speaker_label(_find_speaker(room_state, speaker_name)),
+                "speaker_name": speaker_name,
+                "content": _strip_stop_token(reply),
+                "ended_debate": ended,
+            })
+            if ended:
+                status = f"{status} (signaled debate conclusion)"
+        except Exception as exc:
+            status = f"{speaker_name} failed: `{type(exc).__name__}: {exc}`"
+        return _chat_pairs(state), state, "", status
+
+    def chat_continue_ui(
+        speaker_name,
+        room_state,
+        chat_state,
+        max_tokens,
+        temp,
+    ):
+        state = list(chat_state or [])
+        if not state:
+            return _chat_pairs(state), state, "Start with a human message first."
+        try:
+            reply, status = _chat_generate(speaker_name, room_state, state, int(max_tokens or 768), float(temp or 0.0))
+            ended = _debate_signaled_stop(reply)
+            state.append({
+                "speaker": _speaker_label(_find_speaker(room_state, speaker_name)),
+                "speaker_name": speaker_name,
+                "content": _strip_stop_token(reply),
+                "ended_debate": ended,
+            })
+            if ended:
+                status = f"{status} (signaled debate conclusion)"
+        except Exception as exc:
+            status = f"{speaker_name} failed: `{type(exc).__name__}: {exc}`"
+        return _chat_pairs(state), state, status
+
+    def chat_clear_ui():
+        return [], [], ""
+
+    def run_agentic_loop_ui(
+        opening_message,
+        participant_names,
+        room_state,
+        chat_state,
+        max_tokens,
+        temp,
+        max_rounds,
+    ):
+        """Broadcast one message to several speakers and let them keep responding to
+        each other automatically (round-robin, each seeing prior turns) until a
+        speaker signals the debate is concluded or `max_rounds` is hit (safety cap)."""
+        state = list(chat_state or [])
+        names = [n for n in (participant_names or []) if n]
+        opening = (opening_message or "").strip()
+        if not names:
+            yield _chat_pairs(state), state, opening_message, "Select at least one participant to broadcast to."
+            return
+        if not opening and not state:
+            yield _chat_pairs(state), state, "", "Enter an opening message to broadcast to the selected participants."
+            return
+        if opening:
+            state.append({"speaker": "Human", "speaker_name": "Human", "content": opening})
+            yield _chat_pairs(state), state, "", f"Broadcasting to {', '.join(names)}…"
+
+        rounds_cap = max(1, int(max_rounds or 1))
+        stop_reason = None
+        for round_idx in range(1, rounds_cap + 1):
+            for name in names:
+                speaker = _find_speaker(room_state, name)
+                if not speaker or speaker.get("name") != name:
+                    continue
+                label = _speaker_label(speaker)
+                try:
+                    reply, _status = _chat_generate(name, room_state, state, int(max_tokens or 768), float(temp or 0.0))
+                    ended = _debate_signaled_stop(reply)
+                    state.append({
+                        "speaker": label,
+                        "speaker_name": name,
+                        "content": _strip_stop_token(reply),
+                        "ended_debate": ended,
+                    })
+                    status = f"Round {round_idx}/{rounds_cap} — {label} responded."
+                    if ended:
+                        stop_reason = f"{name} signaled the debate is concluded (round {round_idx})."
+                        status += " Debate concluded."
+                except Exception as exc:
+                    status = f"Round {round_idx}/{rounds_cap} — {name} failed: `{type(exc).__name__}: {exc}`"
+                yield _chat_pairs(state), state, "", status
+                if stop_reason:
+                    break
+            if stop_reason:
+                break
+
+        final_status = stop_reason or f"Reached max rounds ({rounds_cap}) without a concession — stopping (safety cap)."
+        yield _chat_pairs(state), state, "", final_status
+
+    def judge_the_debate_ui(judge_names_selected, room_state, chat_state, max_tokens, temp):
+        speakers = list(room_state or [])
+        selected = set(judge_names_selected or [])
+        judges = [s for s in speakers if s.get("name") in selected and _is_judge_speaker(s)]
+        if not judges:
+            return "", "Select at least one judge (add a speaker with 'This speaker is a judge' checked, then Enter Room)."
+        candidates = _transcript_speaker_names(chat_state)
+        if len(candidates) < 2:
+            return "", "Need at least two participants with turns in the transcript before judging."
+        transcript = _chat_transcript_by_name(chat_state)
+        verdicts: list[Dict[str, Any]] = []
+        for judge in judges:
+            judge_label = _speaker_label(judge)
+            try:
+                raw = _judge_generate(judge, transcript, candidates, int(max_tokens or 768), float(temp or 0.0))
+                parsed = _parse_judge_verdict(raw, candidates)
+            except Exception as exc:
+                parsed = {"winner": None, "reasoning": f"`{type(exc).__name__}: {exc}`", "raw": "", "parse_ok": False}
+            verdicts.append({"judge": judge.get("name"), "judge_label": judge_label, **parsed})
+        tally = _tally_judge_votes(verdicts)
+        scoreboard = _render_judge_scoreboard(verdicts, tally, candidates)
+        record = _build_debate_record(
+            room_state=speakers,
+            chat_state=chat_state,
+            judge_names=[j.get("name") for j in judges],
+            verdicts=verdicts,
+            tally=tally,
+        )
+        try:
+            append_jsonl(MODEL_CHAT_DEBATES_PATH, record)
+            persist_note = f" Logged to `{MODEL_CHAT_DEBATES_PATH.relative_to(REPO)}` for training data."
+        except Exception as exc:
+            persist_note = f" (failed to log debate record: `{type(exc).__name__}: {exc}`)"
+        status = f"{len(judges)} judge(s) voted." + persist_note
+        return scoreboard, status
+
+    def room_summary(room_state) -> str:
+        speakers = list(room_state or [])
+        if not speakers:
+            return "No speakers yet. Add a speaker profile, then enter the room."
+        rows = []
+        for idx, speaker in enumerate(speakers, start=1):
+            tag = " `[JUDGE]`" if _is_judge_speaker(speaker) else ""
+            rows.append(f"{idx}. `{speaker.get('name')}`{tag} — {speaker.get('backend')} — {speaker.get('profile') or 'no profile'}")
+        return "\n".join(rows)
+
+    def room_reset_ui():
+        speakers = []
+        return (
+            speakers,
+            room_summary(speakers),
+            gr.update(choices=[], value=None),
+            gr.update(choices=[], value=[]),
+            gr.update(choices=[], value=[]),
+            "Room cleared.",
+        )
+
+    def room_add_speaker_ui(room_state, name, backend, profile, local_adapter, frontier_model, is_judge):
+        speakers = list(room_state or [])
+        clean_name = (name or "").strip()
+        if not clean_name:
+            return (
+                speakers,
+                room_summary(speakers),
+                gr.update(choices=_speaker_choices(speakers)),
+                gr.update(choices=_debater_names(speakers)),
+                gr.update(choices=_judge_names(speakers)),
+                "Speaker name is required.",
+            )
+        speaker = {
+            "name": clean_name,
+            "backend": backend or "Local",
+            "profile": (profile or "").strip(),
+            "local_adapter": (local_adapter or "checkpoints/fe-lora-30m").strip(),
+            "frontier_model": (frontier_model or os.environ.get("FRONTIER_MODEL", "")).strip(),
+            "is_judge": bool(is_judge),
+        }
+        replaced = False
+        for idx, existing in enumerate(speakers):
+            if existing.get("name") == clean_name:
+                speakers[idx] = speaker
+                replaced = True
+                break
+        if not replaced:
+            speakers.append(speaker)
+        choices = _speaker_choices(speakers)
+        return (
+            speakers,
+            room_summary(speakers),
+            gr.update(choices=choices, value=clean_name),
+            gr.update(choices=_debater_names(speakers)),
+            gr.update(choices=_judge_names(speakers)),
+            f"Updated `{clean_name}`." if replaced else f"Added `{clean_name}`.",
+        )
+
+    def room_enter_ui(room_state):
+        speakers = list(room_state or [])
+        if not speakers:
+            return (
+                gr.update(choices=[], value=None),
+                gr.update(choices=[], value=[]),
+                gr.update(choices=[], value=[]),
+                "Add at least one speaker before entering the room.",
+            )
+        choices = _speaker_choices(speakers)
+        return (
+            gr.update(choices=choices, value=choices[0]),
+            gr.update(choices=_debater_names(speakers), value=[]),
+            gr.update(choices=_judge_names(speakers), value=[]),
+            f"Entered room with {len(speakers)} speaker(s).",
+        )
+
     with gr.Blocks(title="Fallen Empire Game Task Arena", css=theme_css) as demo:
         gr.Markdown(
             "# Fallen Empire Game Task Arena\n"
-            "Choose a standardized task, generate Local and Frontier attempts in disposable worktrees, open playable previews, then grade and clean up."
+            "Choose a standardized task, then generate **Local LoRA**, **Frontier**, and a multi-agent "
+            "**Council** attempt side by side in disposable worktrees. Each attempt applies real code into "
+            "its own copy of the game's `/test-env` sandbox, opens a playable preview, and is graded head to head."
         )
-        task_id = gr.Dropdown(
-            choices=list(load_task_specs().keys()),
-            label="Standardized Test",
-            value=next(iter(load_task_specs())),
-        )
-        task_details = gr.Markdown()
-        task_id.change(task_details_ui, inputs=[task_id], outputs=[task_details])
-        demo.load(task_details_ui, inputs=[task_id], outputs=[task_details])
+        with gr.Tabs():
+            with gr.Tab("Arena Trials"):
+                task_id = gr.Dropdown(
+                    choices=list(load_task_specs().keys()),
+                    label="Standardized Test",
+                    value=next(iter(load_task_specs())),
+                )
+                task_details = gr.Markdown()
+                task_id.change(task_details_ui, inputs=[task_id], outputs=[task_details])
+                demo.load(task_details_ui, inputs=[task_id], outputs=[task_details])
 
-        with gr.Accordion("Advanced paths (usually leave these alone)", open=False):
-            source_repo = gr.Textbox(label="Source repo", value=str(DEFAULT_SOURCE_REPO))
-            worktree_root = gr.Textbox(label="Worktree root", value=str(DEFAULT_WORKTREE_ROOT))
-            base_ref = gr.Textbox(label="Base ref", value="HEAD")
+                with gr.Accordion("Advanced paths (usually leave these alone)", open=False):
+                    source_repo = gr.Textbox(label="Source repo", value=str(DEFAULT_SOURCE_REPO))
+                    worktree_root = gr.Textbox(label="Worktree root", value=str(DEFAULT_WORKTREE_ROOT))
+                    base_ref = gr.Textbox(label="Base ref", value="HEAD")
 
-        with gr.Accordion("Model and preview settings", open=False):
-            with gr.Row():
-                gen_local_adapter = gr.Textbox(label="Local adapter", value="checkpoints/fe-lora-30m")
-                gen_frontier_model = gr.Textbox(label="Frontier model", value=os.environ.get("FRONTIER_MODEL", ""))
-                gen_tokens = gr.Number(label="Max tokens", value=4096, precision=0)
-            with gr.Row():
-                local_port = gr.Number(label="Local port", value=5174, precision=0)
-                frontier_port = gr.Number(label="Frontier port", value=5175, precision=0)
-                start_servers = gr.Checkbox(label="Start dev servers", value=True)
+                with gr.Accordion("Model and preview settings", open=False):
+                    with gr.Row():
+                        gen_local_adapter = gr.Textbox(label="Local adapter", value="checkpoints/fe-lora-30m")
+                        gen_frontier_model = gr.Textbox(label="Frontier model", value=os.environ.get("FRONTIER_MODEL", ""))
+                        gen_tokens = gr.Number(label="Max tokens", value=4096, precision=0)
+                    with gr.Row():
+                        local_port = gr.Number(label="Local port", value=5174, precision=0)
+                        frontier_port = gr.Number(label="Frontier port", value=5175, precision=0)
+                        council_port = gr.Number(label="Council port", value=5176, precision=0)
+                        start_servers = gr.Checkbox(label="Start dev servers", value=True)
+                    with gr.Row():
+                        include_council = gr.Checkbox(
+                            label="Include Council lane (planner decomposes + specialist councils write code)",
+                            value=True,
+                        )
+                        council_mode = gr.Dropdown(
+                            choices=["planner-model", "heuristic", "single"],
+                            value="planner-model",
+                            label="Council decomposition",
+                            info="planner-model: the LoRA planner decides how to split & which specialists to call (heuristic fallback). heuristic: deterministic split. single: no decomposition.",
+                        )
+                        council_rounds = gr.Number(label="Council debate rounds", value=1, precision=0)
 
-        run_trial_btn = gr.Button("Run Full Trial: Generate Both + Open Preview Links", variant="primary")
-        trial_id = gr.Textbox(label="Trial ID", interactive=False)
-        run_status = gr.Markdown()
-        with gr.Row():
-            local_preview_link = gr.Markdown()
-            frontier_preview_link = gr.Markdown()
-        run_trial_btn.click(
-            run_full_trial_ui,
-            inputs=[
-                task_id,
-                source_repo,
-                worktree_root,
-                base_ref,
-                gen_local_adapter,
-                gen_frontier_model,
-                gen_tokens,
-                local_port,
-                frontier_port,
-                start_servers,
-            ],
-            outputs=[trial_id, run_status, local_preview_link, frontier_preview_link],
-        )
+                run_trial_btn = gr.Button("Run Full Trial: Generate All + Open Preview Links", variant="primary")
+                trial_id = gr.Textbox(label="Trial ID", interactive=False)
+                run_status = gr.Markdown()
+                with gr.Row():
+                    local_preview_link = gr.Markdown()
+                    frontier_preview_link = gr.Markdown()
+                    council_preview_link = gr.Markdown()
+                run_trial_btn.click(
+                    run_full_trial_ui,
+                    inputs=[
+                        task_id,
+                        source_repo,
+                        worktree_root,
+                        base_ref,
+                        gen_local_adapter,
+                        gen_frontier_model,
+                        gen_tokens,
+                        local_port,
+                        frontier_port,
+                        council_port,
+                        start_servers,
+                        include_council,
+                        council_mode,
+                        council_rounds,
+                    ],
+                    outputs=[trial_id, run_status, local_preview_link, frontier_preview_link, council_preview_link],
+                )
+
+            with gr.Tab("Model Chat"):
+                room_state = gr.State([])
+                chat_state = gr.State([])
+                gr.Markdown("## Setup Conversation Room")
+                with gr.Accordion("Create or update speakers", open=True):
+                    room_speaker_summary = gr.Markdown(room_summary([]))
+                    with gr.Row():
+                        room_speaker_name = gr.Textbox(label="Speaker name", placeholder="e.g. Local implementer")
+                        room_backend = gr.Dropdown(["Local", "Frontier"], value="Local", label="Backend")
+                    room_profile = gr.Textbox(
+                        label="Profile",
+                        lines=3,
+                        placeholder="Describe this speaker's role, style, constraints, and what it should focus on.",
+                    )
+                    with gr.Row():
+                        room_local_adapter = gr.Textbox(label="Local adapter", value="checkpoints/fe-lora-30m")
+                        room_frontier_model = gr.Textbox(label="Frontier model", value=os.environ.get("FRONTIER_MODEL", ""))
+                    room_is_judge = gr.Checkbox(
+                        label="This speaker is a judge (votes on debate winners; excluded from the debate loop)",
+                        value=False,
+                    )
+                    with gr.Row():
+                        room_add_btn = gr.Button("Add Or Update Speaker", variant="primary")
+                        room_reset_btn = gr.Button("Clear Room")
+                        room_enter_btn = gr.Button("Enter Room")
+                    room_status = gr.Markdown()
+
+                gr.Markdown("## Conversation Room")
+                with gr.Row():
+                    chat_speaker = gr.Dropdown(choices=[], value=None, label="Speak to")
+                    chat_max_tokens = gr.Number(label="Max response tokens", value=768, precision=0)
+                    chat_temp = gr.Slider(0, 1, value=0, step=0.05, label="Temperature")
+                chat_box = gr.Chatbot(label="Shared conversation", height=520, type="tuples")
+                chat_input = gr.Textbox(
+                    label="Message",
+                    lines=3,
+                    placeholder="Enter the room, choose a speaker, then send a message. Switch speakers to have them respond in the same conversation.",
+                )
+                with gr.Row():
+                    chat_send_btn = gr.Button("Send To Speaker", variant="primary")
+                    chat_continue_btn = gr.Button("Continue Speaker")
+                    chat_clear_btn = gr.Button("Clear Chat")
+                chat_status = gr.Markdown()
+
+                gr.Markdown("## Agentic Loop — Send To Both")
+                gr.Markdown(
+                    "Broadcast the message above to every selected participant at once, then let them "
+                    "keep responding to each other automatically. A participant can end the debate by "
+                    "signaling genuine agreement or that they have nothing new to add; otherwise the loop "
+                    "stops at **Max rounds** as a safety cap."
+                )
+                with gr.Row():
+                    loop_participants = gr.CheckboxGroup(choices=[], label="Broadcast to / loop participants")
+                    loop_max_rounds = gr.Slider(1, 20, value=6, step=1, label="Max rounds (safety cap)")
+                with gr.Row():
+                    loop_run_btn = gr.Button("Send To Both & Run Loop", variant="primary")
+                    loop_stop_btn = gr.Button("Stop Loop")
+                loop_status = gr.Markdown()
+
+                with gr.Accordion("Judge the debate", open=False):
+                    gr.Markdown(
+                        "Each selected judge independently reads the full transcript and votes for who "
+                        "argued the case best. Votes are tallied into a scoreboard, and the transcript + "
+                        "verdicts are appended to a JSONL log for later training/preference-data use."
+                    )
+                    judge_checkboxes = gr.CheckboxGroup(choices=[], label="Judges to consult")
+                    judge_run_btn = gr.Button("Judge The Debate", variant="primary")
+                    judge_status = gr.Markdown()
+                    judge_scoreboard = gr.Markdown()
+
+                room_add_outputs = [room_state, room_speaker_summary, chat_speaker, loop_participants, judge_checkboxes, room_status]
+                room_add_btn.click(
+                    room_add_speaker_ui,
+                    inputs=[
+                        room_state,
+                        room_speaker_name,
+                        room_backend,
+                        room_profile,
+                        room_local_adapter,
+                        room_frontier_model,
+                        room_is_judge,
+                    ],
+                    outputs=room_add_outputs,
+                    show_api=False,
+                )
+                room_reset_btn.click(
+                    room_reset_ui,
+                    outputs=room_add_outputs,
+                    show_api=False,
+                )
+                room_enter_btn.click(
+                    room_enter_ui,
+                    inputs=[room_state],
+                    outputs=[chat_speaker, loop_participants, judge_checkboxes, room_status],
+                    show_api=False,
+                )
+                chat_send_btn.click(
+                    chat_send_ui,
+                    inputs=[
+                        chat_input,
+                        chat_speaker,
+                        room_state,
+                        chat_state,
+                        chat_max_tokens,
+                        chat_temp,
+                    ],
+                    outputs=[chat_box, chat_state, chat_input, chat_status],
+                    show_api=False,
+                )
+                chat_input.submit(
+                    chat_send_ui,
+                    inputs=[
+                        chat_input,
+                        chat_speaker,
+                        room_state,
+                        chat_state,
+                        chat_max_tokens,
+                        chat_temp,
+                    ],
+                    outputs=[chat_box, chat_state, chat_input, chat_status],
+                    show_api=False,
+                )
+                chat_continue_btn.click(
+                    chat_continue_ui,
+                    inputs=[
+                        chat_speaker,
+                        room_state,
+                        chat_state,
+                        chat_max_tokens,
+                        chat_temp,
+                    ],
+                    outputs=[chat_box, chat_state, chat_status],
+                    show_api=False,
+                )
+                chat_clear_btn.click(chat_clear_ui, outputs=[chat_box, chat_state, chat_status], show_api=False)
+
+                loop_event = loop_run_btn.click(
+                    run_agentic_loop_ui,
+                    inputs=[
+                        chat_input,
+                        loop_participants,
+                        room_state,
+                        chat_state,
+                        chat_max_tokens,
+                        chat_temp,
+                        loop_max_rounds,
+                    ],
+                    outputs=[chat_box, chat_state, chat_input, loop_status],
+                    show_api=False,
+                )
+                loop_stop_btn.click(
+                    lambda: "Loop stop requested — finishing the current turn, then halting.",
+                    inputs=None,
+                    outputs=[loop_status],
+                    cancels=[loop_event],
+                    show_api=False,
+                )
+                judge_run_btn.click(
+                    judge_the_debate_ui,
+                    inputs=[judge_checkboxes, room_state, chat_state, chat_max_tokens, chat_temp],
+                    outputs=[judge_scoreboard, judge_status],
+                    show_api=False,
+                )
+
+        with gr.Accordion("Council process trace — read the full debate", open=False):
+            gr.Markdown(
+                "The planner's decomposition, each subtask's specialist council (per-round "
+                "participant drafts + adjudication), the chosen change, and the apply result."
+            )
+            council_trace_btn = gr.Button("Show Full Council Trace")
+            council_trace_box = gr.Textbox(label="Council trace", lines=30, max_lines=2000, interactive=False)
+            council_trace_btn.click(council_trace_ui, inputs=[trial_id], outputs=[council_trace_box])
 
         gr.Markdown("## Grade And Complete")
-        winner = gr.Radio(["local", "frontier", "tie", "neither"], value="tie", label="Winner")
+        winner = gr.Radio(["local", "frontier", "council", "tie", "neither"], value="tie", label="Winner")
         with gr.Row():
             with gr.Column():
                 gr.Markdown("### Local")
@@ -2166,6 +3550,13 @@ body {
                 frontier_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
                 frontier_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
                 frontier_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
+            with gr.Column():
+                gr.Markdown("### Council")
+                council_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
+                council_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
+                council_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
+                council_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
+                council_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
         rubric_outputs = [
             local_correctness,
             local_feel,
@@ -2177,14 +3568,19 @@ body {
             frontier_ui,
             frontier_tests,
             frontier_merge,
+            council_correctness,
+            council_feel,
+            council_ui,
+            council_tests,
+            council_merge,
         ]
         task_id.change(
-            lambda task: grading_labels_ui(task) * 2,
+            lambda task: grading_labels_ui(task) * 3,
             inputs=[task_id],
             outputs=rubric_outputs,
         )
         demo.load(
-            lambda task: grading_labels_ui(task) * 2,
+            lambda task: grading_labels_ui(task) * 3,
             inputs=[task_id],
             outputs=rubric_outputs,
         )
@@ -2218,6 +3614,10 @@ body {
                 gr.Markdown("#### Frontier viability")
                 manual_frontier_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
                 manual_frontier_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
+            with gr.Column():
+                gr.Markdown("#### Council viability")
+                manual_council_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
+                manual_council_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
         cleanup_after = gr.Checkbox(label="Delete disposable worktrees after saving", value=True)
         complete_btn = gr.Button("Complete Trial: Save Results + Cleanup", variant="primary")
         complete_status = gr.Markdown()
@@ -2236,12 +3636,19 @@ body {
                 frontier_ui,
                 frontier_tests,
                 frontier_merge,
+                council_correctness,
+                council_feel,
+                council_ui,
+                council_tests,
+                council_merge,
                 preference_strength,
                 failure_modes,
                 manual_local_typecheck,
                 manual_local_visible_change,
                 manual_frontier_typecheck,
                 manual_frontier_visible_change,
+                manual_council_typecheck,
+                manual_council_visible_change,
                 notes,
                 cleanup_after,
             ],
@@ -2281,7 +3688,7 @@ body {
             )
 
         with gr.Accordion("Details: manual packet / verification / reports", open=False):
-            attempt = gr.Radio(["local", "frontier"], value="local", label="Attempt")
+            attempt = gr.Radio(["local", "frontier", "council"], value="local", label="Attempt")
             with gr.Row():
                 create_btn = gr.Button("Create Worktrees Only")
                 generate_btn = gr.Button("Generate + Apply Both")
@@ -2294,9 +3701,9 @@ body {
             packet_text = gr.Textbox(label="Packet text", lines=12)
             attempt_manifest = gr.Textbox(label="Attempt manifest / verify output", lines=10)
             report_md = gr.Markdown()
-            create_btn.click(create_ui, inputs=[task_id, source_repo, worktree_root, base_ref], outputs=[trial_id, detail_status])
-            generate_btn.click(generate_apply_both_ui, inputs=[trial_id, gen_local_adapter, gen_frontier_model, gen_tokens], outputs=[detail_status])
-            preview_btn.click(preview_both_ui, inputs=[trial_id, local_port, frontier_port, start_servers], outputs=[detail_status, local_preview_link, frontier_preview_link])
+            create_btn.click(create_ui, inputs=[task_id, source_repo, worktree_root, base_ref, include_council], outputs=[trial_id, detail_status])
+            generate_btn.click(generate_apply_both_ui, inputs=[trial_id, gen_local_adapter, gen_frontier_model, gen_tokens, council_mode, council_rounds], outputs=[detail_status])
+            preview_btn.click(preview_both_ui, inputs=[trial_id, local_port, frontier_port, council_port, start_servers], outputs=[detail_status, local_preview_link, frontier_preview_link, council_preview_link])
             packet_btn.click(packet_ui, inputs=[trial_id, attempt], outputs=[packet_path, packet_text, attempt_manifest])
             verify_btn.click(verify_ui, inputs=[trial_id, attempt], outputs=[attempt_manifest])
             report_btn.click(report_ui, outputs=[report_md])
@@ -2396,6 +3803,19 @@ def main() -> None:
         help="Disable BM25 reordering among glob-matched context files (deterministic order only).",
     )
 
+    p_council = sub.add_parser("council", help="Council lane: planner decomposes + specialist councils write code into the worktree.")
+    p_council.add_argument("--trial-id", required=True)
+    p_council.add_argument("--attempt", default="council")
+    p_council.add_argument("--adapter-path", default="checkpoints/fe-lora-30m")
+    p_council.add_argument("--local-model", default=os.environ.get("MODEL"))
+    p_council.add_argument("--max-tokens", type=int, default=4096)
+    p_council.add_argument("--temp", type=float, default=0.0)
+    p_council.add_argument("--context-chars", type=int, default=9000)
+    p_council.add_argument("--no-context-bm25", action="store_true")
+    p_council.add_argument("--council-mode", choices=["planner-model", "heuristic", "single"], default="planner-model")
+    p_council.add_argument("--council-rounds", type=int, default=1)
+    p_council.add_argument("--council-max-subtasks", type=int, default=4)
+
     p_apply = sub.add_parser("apply")
     p_apply.add_argument("--trial-id", required=True)
     p_apply.add_argument("--attempt", required=True)
@@ -2468,7 +3888,7 @@ def main() -> None:
     elif args.subcommand == "report":
         report(args)
     elif args.subcommand == "ui":
-        build_app().launch(server_name=args.host, server_port=args.port, share=args.share)
+        build_app().launch(server_name=args.host, server_port=args.port, share=args.share, show_api=False)
 
 
 if __name__ == "__main__":
