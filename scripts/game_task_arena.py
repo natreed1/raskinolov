@@ -57,6 +57,10 @@ INDEX_PATH = REPO / "benchmarks" / "results" / "game_task_index.jsonl"
 REPORTS_DIR = REPO / "benchmarks" / "results" / "game_task_reports"
 DEFAULT_TASKS = REPO / "benchmarks" / "game_task_arena_examples.json"
 MODEL_CHAT_DEBATES_PATH = REPO / "benchmarks" / "results" / "model_chat_debates" / "debates.jsonl"
+MODEL_CHAT_CONVERSATIONS_DIR = REPO / "benchmarks" / "results" / "model_chat_conversations"
+MODEL_CHAT_CONVERSATIONS_INDEX = MODEL_CHAT_CONVERSATIONS_DIR / "index.json"
+EARLY_STOP_MODES = ("first_signal", "unanimous", "majority")
+DEFAULT_EARLY_STOP_MODE = "unanimous"
 
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -2159,6 +2163,116 @@ def summarize_validation_artifact(path: Path) -> Tuple[str, str]:
 # `build_app()` alongside the rest of the Model Chat callbacks.
 # --------------------------------------------------------------------------- #
 DEBATE_STOP_TOKEN = "[[DEBATE_CONCLUDED]]"
+DEBATE_PASS_TOKEN = "[[PASS]]"
+
+# Structured debate: proposal → develop (×N−2) → conclusion (debaters), then adjudicator.
+# Legacy phase names (opening/rebuttal/final) remain aliases for prompts and tests.
+DEBATE_TURN_MODES: Tuple[str, ...] = ("proposal", "develop", "conclusion")
+DEBATE_TURN_MODE_LABELS: Dict[str, str] = {
+    "proposal": "Proposal",
+    "develop": "Deepen",
+    "conclusion": "Conclusion",
+}
+DEBATE_PHASES: Tuple[str, ...] = ("opening", "rebuttal", "final")
+DEBATE_PHASE_LABELS: Dict[str, str] = {
+    "opening": "Opening statements",
+    "rebuttal": "Rebuttal",
+    "final": "Final statement",
+    "proposal": "Proposal",
+    "develop": "Deepen",
+    "conclusion": "Conclusion",
+}
+DEFAULT_DEBATE_PHASES = 3
+
+# Curated reference facts for Russian-author debates (offline fallback + search backing).
+# Sourced from Britannica, Wikipedia, Encyclopedia.com summaries (2026-07-01).
+DEBATE_FACT_SNIPPETS: Dict[str, List[str]] = {
+    "tolstoy": [
+        "Leo Tolstoy (1828–1910) wrote War and Peace (1869), an epic of Napoleon's 1812 invasion weaving five aristocratic families through history and private conscience.",
+        "Anna Karenina (1878) is Tolstoy's other masterwork — a realist novel of love, adultery, and social hypocrisy; Fyodor Dostoevsky called it flawless as art.",
+        "Tolstoy is widely ranked among the greatest novelists; Virginia Woolf called him 'the greatest of all novelists.'",
+        "Tolstoy's realism penetrates inner consciousness through concrete observation — War and Peace is often cited as among the greatest novels ever written.",
+    ],
+    "dostoevsky": [
+        "Fyodor Dostoevsky (1821–1881) wrote Crime and Punishment (1866), a psychological novel of guilt and moral torment through Raskolnikov in St. Petersburg.",
+        "The Brothers Karamazov (1880) is Dostoevsky's final novel — a philosophical drama of faith, doubt, and patricide with the 'Grand Inquisitor' chapter.",
+        "Dostoevsky pioneered polyphonic fiction: characters hold autonomous moral voices rather than serving one authorial thesis.",
+        "Virginia Woolf said Dostoevsky alone among writers could reconstruct the swiftest, most complicated states of mind.",
+    ],
+    "chekhov": [
+        "Anton Chekhov (1860–1904) is considered the father of the modern short story and a founder of modern drama alongside Ibsen.",
+        "Major plays: The Seagull, Uncle Vanya, Three Sisters, The Cherry Orchard — 'theatre of mood' with subtext over plot machinery.",
+        "Chekhov was a physician; his laconic style probes ordinary life without didactic moralizing — stories like 'The Lady with the Little Dog.'",
+        "Chekhov reinvented the short story through mood, understatement, and psychological precision; Raymond Carver called him the greatest short-story writer.",
+    ],
+    "russian literature": [
+        "The 'greatest Russian author' debate usually centers Tolstoy (epic social realism), Dostoevsky (psychological and spiritual depth), and Chekhov (modern short fiction and drama).",
+        "War and Peace and Anna Karenina are Tolstoy's; Crime and Punishment and Brothers Karamazov are Dostoevsky's; Chekhov's masterpieces are plays and short stories, not epic novels.",
+    ],
+}
+
+# Distinct fallback turns when the local model fails quality checks (probe + UI).
+DEBATE_FALLBACK_TURNS: Dict[str, List[str]] = {
+    "Tolstoy Advocate": [
+        (
+            "REBUTTAL: A single psyche in crisis cannot stand for all of literature. "
+            "NEW EVIDENCE: War and Peace (1869) tracks five families through Napoleon's 1812 invasion — "
+            "history and private conscience at a scale no one-case thriller can match. "
+            "CLAIM: Tolstoy's panoramic realism makes him Russia's greatest novelist."
+        ),
+        (
+            "REBUTTAL: Intensity of guilt is not the only measure of greatness. "
+            "NEW EVIDENCE: Anna Karenina (1878) ties intimate betrayal to social hypocrisy; "
+            "even Dostoevsky praised its artistic perfection. "
+            "CLAIM: Tolstoy unites moral philosophy and society-wide drama like no other Russian writer."
+        ),
+        (
+            "REBUTTAL: Modern drama's brevity does not erase the novel's reach. "
+            "NEW EVIDENCE: Tolstoy's The Death of Ivan Ilyich compresses mortality and self-deception "
+            "into a novella as piercing as any confession scene. "
+            "CLAIM: Tolstoy owns both the epic and the intimate — that range crowns him."
+        ),
+    ],
+    "Dostoevsky Advocate": [
+        (
+            "REBUTTAL: Sweeping battle scenes are not the same as moral depth. "
+            "NEW EVIDENCE: Crime and Punishment (1866) maps Raskolnikov's guilt as an inner force "
+            "that destroys him before any court does — psychology as drama. "
+            "CLAIM: Dostoevsky's conscience-tragedies make him Russia's greatest author."
+        ),
+        (
+            "REBUTTAL: Social panoramas can flatten the soul's contradictions. "
+            "NEW EVIDENCE: The Brothers Karamazov (1880) pits faith against doubt in the 'Grand Inquisitor' "
+            "and Dmitri's trial — ideas with blood on them. "
+            "CLAIM: No Russian writer pushes further into the mystery of free will than Dostoevsky."
+        ),
+        (
+            "REBUTTAL: Elegant society portraits are not the final test of genius. "
+            "NEW EVIDENCE: Notes from Underground anticipates modern alienation — a voice that argues "
+            "with itself and the reader at once. "
+            "CLAIM: Dostoevsky's polyphonic minds remain unmatched in Russian literature."
+        ),
+    ],
+    "Chekhov Advocate": [
+        (
+            "REBUTTAL: Epic length is not the same as lasting influence. "
+            "NEW EVIDENCE: Chekhov's The Cherry Orchard (1904) distills a class in decline through mood "
+            "and subtext rather than sermon — modern drama starts here. "
+            "CLAIM: Chekhov's precision changed how all writers see ordinary life."
+        ),
+        (
+            "REBUTTAL: Thunderous philosophy can miss the quiet truth of character. "
+            "NEW EVIDENCE: 'The Lady with the Little Dog' proves love and regret in a few pages "
+            "what thousand-page novels only gesture at. "
+            "CLAIM: Chekhov is the greatest because he reinvented the short story and modern theatre."
+        ),
+    ],
+}
+
+_BRACKET_SPEAKER_HALLUCINATION_RE = re.compile(
+    r"(?:^|\n)\s*\[(?:Turn\s+\d+\s*:\s*)?([^:\]\n]{1,48}):",
+    re.IGNORECASE,
+)
 
 JUDGE_SYSTEM_PROMPT = (
     "You are an impartial judge for a debate between AI models in the Fallen Empire arena. "
@@ -2174,6 +2288,223 @@ _JUDGE_WINNER_RE = re.compile(r"WINNER\s*:\s*(.+)", re.IGNORECASE)
 _JUDGE_REASONING_RE = re.compile(r"REASONING\s*:\s*(.+)", re.IGNORECASE | re.DOTALL)
 
 
+# Base speaker archetypes for the Model Chat room. These are *prompt-injection* personas
+# (dropped into a speaker's `profile`), not trained adapters — chosen for fast iteration.
+# Personas + trait numbers are lifted from the council stack so debates echo the trained
+# roster: Council Studio voices (`scripts/council_studio.py` PERSONALITIES), roster
+# personality variants (`scripts/router/roster.py` / `data/routing/council_roster_v1.json`),
+# EQ bootstrap variants (`scripts/bootstrap_council_eq_traces.py`), and the planner
+# (`scripts/council_runtime/planner_decomposition_policy.py`). Trait scale is 0.0–1.0 per
+# `scripts/router/roster.py::TRAIT_KEYS`. `default_temperature` is a suggested pace only
+# (the Model Chat temperature slider is global); pacing is also baked into the profile text.
+CHAT_ARCHETYPE_PRESETS: List[Dict[str, Any]] = [
+    {
+        "name": "Researcher",
+        "summary": "Slow, calculated, evidence-first; weighs multiple hypotheses before asserting.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.2,
+        "profile": (
+            "Role: researcher. Be slow, calculated, and evidence-driven — never rush to a verdict. "
+            "Before asserting anything, gather and weigh the evidence, consider at least two competing "
+            "hypotheses, and cite specific facts, mechanisms, files, or earlier turns. "
+            "Traits (0-1): skepticism 0.80, risk_tolerance 0.30, creativity 0.50, decisiveness 0.40, "
+            "assertiveness 0.45, verbosity 0.60. "
+            "Prefer \"here is what the evidence shows\" over quick opinions. Explicitly flag claims that "
+            "lack support and say what would verify them. When you would normally search for a source, "
+            "state exactly what you'd look up and what result would change your mind."
+        ),
+    },
+    {
+        "name": "Risk Auditor",
+        "summary": "Skeptical; challenges assumptions, names failure modes, demands evidence.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.2,
+        "profile": (
+            "Role: risk auditor. Traits (0-1): skepticism 0.85, risk_tolerance 0.20, assertiveness 0.60, "
+            "creativity 0.30, decisiveness 0.50, verbosity 0.50. "
+            "Challenge assumptions, name concrete failure modes and edge cases, and demand evidence before "
+            "accepting any change. Push back hard on anything risky, unproven, or hand-wavy."
+        ),
+    },
+    {
+        "name": "Implementer",
+        "summary": "Decisive builder; smallest correct concrete change, names files + verification.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.3,
+        "profile": (
+            "Role: implementer. Traits (0-1): decisiveness 0.85, assertiveness 0.70, skepticism 0.40, "
+            "creativity 0.40, risk_tolerance 0.50, verbosity 0.45. "
+            "Prefer the smallest correct concrete change that actually ships. Name the specific systems and "
+            "files involved and how you'd verify it. Drive the debate toward a decision rather than circling."
+        ),
+    },
+    {
+        "name": "Explorer",
+        "summary": "Creative; proposes bold alternatives and trade-offs before committing.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.7,
+        "profile": (
+            "Role: explorer. Traits (0-1): creativity 0.85, risk_tolerance 0.70, verbosity 0.60, "
+            "skepticism 0.50, assertiveness 0.55, decisiveness 0.45. "
+            "Propose bold alternatives and unexpected options, surface trade-offs others miss, and widen the "
+            "option set before anyone commits to a single path."
+        ),
+    },
+    {
+        "name": "Verifier",
+        "summary": "Conservative; fixates on tests, type checks, regressions, reproducible evidence.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.1,
+        "profile": (
+            "Role: verifier. Traits (0-1): skepticism 0.70, risk_tolerance 0.30, decisiveness 0.60, "
+            "creativity 0.35, assertiveness 0.50, verbosity 0.50. "
+            "Focus on tests, compile/type checks, regressions, and reproducible evidence. Keep asking "
+            "\"how do we know this works?\" and insist on concrete verification steps."
+        ),
+    },
+    {
+        "name": "Direct Builder",
+        "summary": "High-assertiveness; takes a firm stance fast and defends the most direct path.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.4,
+        "profile": (
+            "Role: direct builder. Traits (0-1): assertiveness 0.78, decisiveness 0.82, risk_tolerance 0.64, "
+            "skepticism 0.48, creativity 0.45, verbosity 0.50. "
+            "Take a firm position quickly and defend the most direct implementation path. Avoid hedging and "
+            "cut through indecision, but concede cleanly if genuinely out-argued."
+        ),
+    },
+    {
+        "name": "Creative Synthesizer",
+        "summary": "Combines competing proposals into a broader synthesis before choosing.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.7,
+        "profile": (
+            "Role: creative synthesizer. Traits (0-1): creativity 0.86, verbosity 0.72, risk_tolerance 0.55, "
+            "skepticism 0.45, assertiveness 0.55, decisiveness 0.50. "
+            "Combine competing proposals into a broader, better option set, then recommend a synthesis rather "
+            "than picking a side prematurely. Find the version that captures the strengths of each argument."
+        ),
+    },
+    {
+        "name": "Calibrated Mediator",
+        "summary": "Balanced; finds the real crux and drives a well-justified handoff.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.3,
+        "profile": (
+            "Role: calibrated mediator. Balanced traits (0-1): assertiveness 0.60, verbosity 0.50, "
+            "risk_tolerance 0.50, creativity 0.45, skepticism 0.60, decisiveness 0.65. "
+            "Weigh disagreement and uncertainty fairly, identify the real crux of the debate, and drive "
+            "toward a clear, well-justified conclusion and handoff."
+        ),
+    },
+    {
+        "name": "Planner",
+        "summary": "Big-picture; decomposes into a minimal, dependency-ordered plan.",
+        "backend": "Local",
+        "is_judge": False,
+        "default_temperature": 0.6,
+        "profile": (
+            "Role: planner. Think in terms of decomposition and sequencing: break the problem into a minimal, "
+            "dependency-ordered set of steps, say which kind of specialist should own each, and describe the "
+            "integration plan that survives compile and test. Keep the big picture and call out ordering risks "
+            "and hidden dependencies the others miss."
+        ),
+    },
+    {
+        "name": "Impartial Judge",
+        "summary": "Judge preset (excluded from debate phases; adjudicates after phase 3).",
+        "backend": "Local",
+        "is_judge": True,
+        "default_temperature": 0.0,
+        "profile": (
+            "Role: impartial judge. Read the whole debate and decide who argued most convincingly based on "
+            "reasoning quality, evidence, and how well they answered the other side — not who spoke last or "
+            "most. Be fair and specific about why."
+        ),
+    },
+]
+
+
+def _archetype_names() -> List[str]:
+    return [str(p.get("name")) for p in CHAT_ARCHETYPE_PRESETS if p.get("name")]
+
+
+def _find_archetype(name: Optional[str]) -> Optional[Dict[str, Any]]:
+    target = (name or "").strip().lower()
+    for preset in CHAT_ARCHETYPE_PRESETS:
+        if str(preset.get("name", "")).strip().lower() == target:
+            return preset
+    return None
+
+
+CUSTOM_ARCHETYPE_LABEL = "New custom agent"
+
+
+def _archetype_picker_choices() -> List[str]:
+    return _archetype_names() + [CUSTOM_ARCHETYPE_LABEL]
+
+
+def _is_custom_archetype_pick(name: Optional[str]) -> bool:
+    return (name or "").strip() == CUSTOM_ARCHETYPE_LABEL
+
+
+def _lobby_custom_fields_visible(name: Optional[str]) -> bool:
+    return _is_custom_archetype_pick(name)
+
+
+def _archetype_preview_text(name: Optional[str]) -> str:
+    if _is_custom_archetype_pick(name):
+        return (
+            "**New custom agent** — set name, backend, and profile below, "
+            "then click **Add Or Update Speaker**."
+        )
+    preset = _find_archetype(name)
+    if not preset:
+        return "Pick a base archetype to preview its injected persona."
+    tag = " · **judge** (adjudicates after debate phases; optional panel vote)" if preset.get("is_judge") else ""
+    temp = preset.get("default_temperature")
+    temp_note = f" · suggested temperature ≈ {temp}" if temp is not None else ""
+    return (
+        f"**{preset['name']}**{tag} — {preset.get('summary', '')}{temp_note}\n\n"
+        f"> {preset['profile']}"
+    )
+
+
+def _archetype_load_into_form_values(name: Optional[str]) -> Optional[tuple[str, str, str, str, bool]]:
+    """Preset fields for **Load Into Form**; switches the picker to the custom-agent option."""
+    preset = _find_archetype(name)
+    if not preset:
+        return None
+    return (
+        CUSTOM_ARCHETYPE_LABEL,
+        str(preset["name"]),
+        str(preset.get("backend", "Local")),
+        str(preset.get("profile", "")),
+        bool(preset.get("is_judge")),
+    )
+
+
+def _unique_speaker_name(existing_names: Optional[List[str]], base: str) -> str:
+    """Return `base`, or `base 2`, `base 3`, … so repeated archetype adds don't collide."""
+    taken = {str(n).strip() for n in (existing_names or []) if str(n).strip()}
+    clean = (base or "Speaker").strip() or "Speaker"
+    if clean not in taken:
+        return clean
+    idx = 2
+    while f"{clean} {idx}" in taken:
+        idx += 1
+    return f"{clean} {idx}"
+
+
 def _is_judge_speaker(speaker: Dict[str, Any]) -> bool:
     return bool(speaker.get("is_judge"))
 
@@ -2186,6 +2517,124 @@ def _judge_names(room_state: Optional[List[Dict[str, Any]]]) -> List[str]:
     return [s.get("name") for s in room_state or [] if s.get("name") and _is_judge_speaker(s)]
 
 
+def _judge_checkbox_state(room_state: Optional[List[Dict[str, Any]]]) -> tuple[List[str], List[str]]:
+    """Return (choices, selected) for the judge CheckboxGroup — all judges pre-selected."""
+    judges = _judge_names(room_state)
+    return judges, judges
+
+
+def _debate_turn_mode(round_idx: int, max_rounds: int) -> str:
+    """Map a 1-based debate round to proposal, develop, or conclusion."""
+    cap = max(1, int(max_rounds or 1))
+    ri = max(1, int(round_idx or 1))
+    if cap <= 1:
+        return "conclusion"
+    if ri <= 1:
+        return "proposal"
+    if ri >= cap:
+        return "conclusion"
+    return "develop"
+
+
+_TURN_MODE_TO_LEGACY_PHASE: Dict[str, str] = {
+    "proposal": "opening",
+    "develop": "rebuttal",
+    "conclusion": "final",
+}
+
+
+def _normalize_turn_mode(phase: Optional[str]) -> str:
+    """Normalize legacy phase names to proposal/develop/conclusion."""
+    key = str(phase or "").strip().lower()
+    if key in ("opening", "proposal"):
+        return "proposal"
+    if key in ("rebuttal", "develop"):
+        return "develop"
+    if key in ("final", "conclusion"):
+        return "conclusion"
+    return "develop"
+
+
+def _debate_phase_for_round(round_idx: int, max_rounds: int) -> str:
+    """Legacy phase name (opening/rebuttal/final) for a 1-based debate round."""
+    return _TURN_MODE_TO_LEGACY_PHASE[_debate_turn_mode(round_idx, max_rounds)]
+
+
+def _debate_phase_label(phase: str) -> str:
+    mode = _normalize_turn_mode(phase)
+    if mode in DEBATE_TURN_MODE_LABELS:
+        return DEBATE_TURN_MODE_LABELS[mode]
+    return DEBATE_PHASE_LABELS.get(str(phase or "").strip(), str(phase or "debate").replace("_", " ").title())
+
+
+def _debate_pacing_context(
+    round_idx: int,
+    max_rounds: int,
+    speaker_name: str = "",
+    chat_state: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Pacing hints so models self-schedule across N debate phases."""
+    cap = max(1, int(max_rounds or 1))
+    ri = max(1, int(round_idx or 1))
+    mode = _debate_turn_mode(ri, cap)
+    rounds_remaining = max(0, cap - ri)
+    label = DEBATE_TURN_MODE_LABELS.get(mode, mode.title())
+    if mode == "proposal":
+        pacing_line = (
+            f"You are in phase {ri} of {cap}. Establish your thesis clearly; "
+            f"you have {rounds_remaining} phase(s) after this to deepen — hold depth in reserve."
+        )
+    elif mode == "develop":
+        pacing_line = (
+            f"You are in phase {ri} of {cap} ({rounds_remaining} remain after this). "
+            "Mid-debate: read opponents carefully — rebut or respond if you see a gap or provocative claim, "
+            "otherwise add new evidence. Push deeper than the prior phase."
+        )
+    elif cap == 1:
+        pacing_line = "Single-phase debate — deliver your strongest closing argument."
+    else:
+        pacing_line = (
+            f"Final phase ({ri} of {cap}) — synthesize your strongest threads; "
+            "do not recycle prior wording verbatim."
+        )
+    speaker_phases = 0
+    target = str(speaker_name or "").strip()
+    if target:
+        speaker_phases = sum(
+            1 for item in _completed_chat_turns(chat_state) if _turn_speaker_name(item) == target
+        )
+    return {
+        "round_idx": ri,
+        "max_rounds": cap,
+        "turn_mode": mode,
+        "phase_label": label,
+        "pacing_line": pacing_line,
+        "rounds_remaining": rounds_remaining,
+        "speaker_phases_spoken": speaker_phases,
+    }
+
+
+def _format_debate_phase_status(round_idx: int, max_rounds: int, *, detail: str = "") -> str:
+    cap = max(1, int(max_rounds or 1))
+    ri = max(1, int(round_idx or 1))
+    ctx = _debate_pacing_context(ri, cap)
+    base = f"Phase {ri}/{cap}: {ctx['phase_label']}"
+    return f"{base} — {detail}" if detail else base
+
+
+def _format_adjudicator_status(*, detail: str = "") -> str:
+    base = "Adjudicator: Final write-up"
+    return f"{base} — {detail}" if detail else base
+
+
+def _resolve_adjudicator(room_state: Optional[List[Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+    """First judge in the room (e.g. Impartial Judge) adjudicates after debate phases."""
+    for speaker in room_state or []:
+        if speaker.get("name") and _is_judge_speaker(speaker):
+            return speaker
+    return None
+
+
 def _debate_signaled_stop(text: str) -> bool:
     return DEBATE_STOP_TOKEN.lower() in (text or "").lower()
 
@@ -2195,6 +2644,1283 @@ def _strip_stop_token(text: str) -> str:
         return text
     pattern = re.compile(re.escape(DEBATE_STOP_TOKEN), re.IGNORECASE)
     return pattern.sub("", text).strip()
+
+
+def _debate_signaled_pass(text: str) -> bool:
+    return DEBATE_PASS_TOKEN.lower() in (text or "").lower()
+
+
+def _strip_pass_token(text: str) -> str:
+    if not text:
+        return text
+    pattern = re.compile(re.escape(DEBATE_PASS_TOKEN), re.IGNORECASE)
+    return pattern.sub("", text).strip()
+
+
+def _is_debate_pass_turn(text: str, raw: str = "") -> bool:
+    """True when a speaker explicitly passes (no new argument to add)."""
+    combined = f"{raw or ''} {text or ''}"
+    if _debate_signaled_pass(combined):
+        return True
+    cleaned = (text or "").strip()
+    if not cleaned and not (raw or "").strip():
+        return True
+    lowered = cleaned.lower()
+    if lowered in {"pass", "no new argument", "nothing new to add", "no new evidence", "no comment"}:
+        return True
+    return any(pattern.match(cleaned) for pattern in _DEBATE_PASS_PHRASE_RES)
+
+
+def _format_pass_turn_status(speaker_name: str, *, debug: str = "") -> str:
+    base = f"Round note — **{speaker_name}** passed (nothing new to add)."
+    snippet = " ".join(str(debug or "").split()).strip()
+    if snippet:
+        if len(snippet) > 160:
+            snippet = snippet[:159].rstrip() + "…"
+        return f"{base} _({snippet})_"
+    return base
+
+
+def _format_debate_summary_panel(summary: str) -> str:
+    clean = (summary or "").strip()
+    if not clean:
+        return ""
+    return f"### Conversation summary\n\n{clean}"
+
+
+# Small local models tend to (a) echo the "Name:" transcript format at the start of
+# their reply and (b) emit garbled bracketed end-markers (e.g. "[[DEBATED]]",
+# "[[DEBATE_CONCLUDED]"). Both pollute the debate; strip them so replies read cleanly.
+_TRAILING_BRACKET_MARKER_RE = re.compile(r"\s*\[\[?[A-Z0-9][A-Z0-9 _]*\]?\]?\s*$")
+
+
+def _strip_leading_speaker_prefix(text: str, names: Optional[List[str]]) -> str:
+    """Remove one or more leading ``<known speaker name>:`` prefixes a model may echo.
+
+    Only strips prefixes matching a name actually in the room (case-insensitive), so
+    legitimate lead-ins like ``Note:`` or ``Step 1:`` are preserved. Also strips a
+    leading ``Human:`` echo.
+    """
+    if not text:
+        return text
+    known = {str(n).strip().lower() for n in (names or []) if str(n).strip()}
+    known.add("human")
+    result = text.lstrip()
+    while True:
+        match = re.match(r"^([^\n:]{1,48}):\s*", result)
+        if not match or match.group(1).strip().lower() not in known:
+            break
+        result = result[match.end():].lstrip()
+    return result
+
+
+def _debate_search_enabled() -> bool:
+    """Whether to inject web/curated reference facts into debate prompts."""
+    return os.environ.get("FE_DEBATE_SEARCH", "1").strip().lower() not in ("0", "false", "no", "off")
+
+
+def _debate_search_queries(speaker: Dict[str, Any], topic: str) -> List[str]:
+    """Build 1–2 targeted search queries from speaker stance and debate topic."""
+    blob = f"{speaker.get('name', '')} {speaker.get('profile', '')}".lower()
+    queries: List[str] = []
+    if "tolstoy" in blob:
+        queries.append("Leo Tolstoy War and Peace Anna Karenina literary significance")
+    elif "dostoevsky" in blob:
+        queries.append("Fyodor Dostoevsky Crime and Punishment Brothers Karamazov psychological depth")
+    elif "chekhov" in blob:
+        queries.append("Anton Chekhov modern short story drama literary influence")
+    topic_clean = (topic or "").strip()
+    if topic_clean and len(queries) < 2:
+        queries.append(topic_clean[:140])
+    return queries[:2]
+
+
+def _curated_debate_facts_for_query(query: str, *, max_snippets: int = 3) -> List[str]:
+    """Return curated fact lines whose keys match the query (offline-safe)."""
+    q = (query or "").lower()
+    hits: List[str] = []
+    for key, facts in DEBATE_FACT_SNIPPETS.items():
+        if key in q or any(part in q for part in key.split()):
+            for fact in facts:
+                if fact not in hits:
+                    hits.append(fact)
+                if len(hits) >= max_snippets:
+                    return hits
+    if not hits and "russian" in q:
+        hits.extend(DEBATE_FACT_SNIPPETS.get("russian literature", [])[:max_snippets])
+    return hits[:max_snippets]
+
+
+def _debate_search_snippets(query: str, *, max_snippets: int = 3) -> str:
+    """Fetch short reference snippets for a debate query.
+
+    Tries DuckDuckGo (`ddgs` / `duckduckgo_search`) when installed; otherwise uses
+    curated ``DEBATE_FACT_SNIPPETS``. Always offline-safe via the curated fallback.
+    """
+    query = (query or "").strip()
+    if not query:
+        return ""
+    snippets: List[str] = []
+    try:
+        try:
+            from ddgs import DDGS  # type: ignore
+        except ImportError:
+            from duckduckgo_search import DDGS  # type: ignore
+        with DDGS() as ddgs:
+            for row in ddgs.text(query, max_results=max_snippets):
+                body = str(row.get("body") or row.get("snippet") or "").strip()
+                if body:
+                    snippets.append(body[:320])
+                if len(snippets) >= max_snippets:
+                    break
+    except Exception:
+        snippets = []
+    if not snippets:
+        snippets = _curated_debate_facts_for_query(query, max_snippets=max_snippets)
+    if not snippets:
+        return ""
+    return "\n".join(f"- {s}" for s in snippets[:max_snippets])
+
+
+def _debate_reference_facts(speaker: Dict[str, Any], topic: str) -> str:
+    """Combine search/curated snippets for a speaker's debate turn."""
+    parts: List[str] = []
+    seen: set[str] = set()
+    for query in _debate_search_queries(speaker, topic):
+        block = _debate_search_snippets(query, max_snippets=2)
+        if block and block not in seen:
+            seen.add(block)
+            parts.append(block)
+    return "\n".join(parts)
+
+
+DEBATE_TYPING_CURSOR = " ▌"
+_SPEAKER_LABEL_SUFFIX_RE = re.compile(r"\s*\[(?:Local|Frontier):[^\]]*\]\s*$", re.IGNORECASE)
+_DEBATE_PLACEHOLDER_TURN_RE = re.compile(
+    r"^(?:sure,?\s*)?(?:here(?:'s| is) my (?:next )?turn|my turn|let me (?:respond|reply|answer))\b",
+    re.IGNORECASE,
+)
+_DEBATE_META_FILLER_RES: Tuple[re.Pattern[str], ...] = (
+    re.compile(r"\bstand(?:s|ing)? by my position\b", re.IGNORECASE),
+    re.compile(r"\bmy position still stands\b", re.IGNORECASE),
+    re.compile(
+        r"\b(?:from|with|using|grounded in) (?:the )?reference facts above\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bevidence from the reference facts above\b", re.IGNORECASE),
+    re.compile(r"\bnothing (?:new|more|substantive) to add\b", re.IGNORECASE),
+    re.compile(r"\bno (?:new )?(?:argument|evidence|points?|contribution) to add\b", re.IGNORECASE),
+    re.compile(r"\b(?:i have|i've got) nothing (?:new|more) to (?:add|say|contribute)\b", re.IGNORECASE),
+    re.compile(r"\b(?:passing: pass)\s*$", re.IGNORECASE),
+    re.compile(r"\bwill (?:hold|maintain) (?:my )?position\b", re.IGNORECASE),
+)
+_DEBATE_PASS_PHRASE_RES: Tuple[re.Pattern[str], ...] = (
+    re.compile(r"^\s*pass\s*[.!]?\s*$", re.IGNORECASE),
+    re.compile(r"^\s*nothing new to add\s*[.!]?\s*$", re.IGNORECASE),
+    re.compile(r"^\s*no new argument\s*[.!]?\s*$", re.IGNORECASE),
+    re.compile(r"^\s*i (?:have|'ve) nothing (?:new|more) to add\s*[.!]?\s*$", re.IGNORECASE),
+    re.compile(r"^\s*no (?:new )?(?:evidence|points?) to add\s*[.!]?\s*$", re.IGNORECASE),
+)
+
+# Opening fallbacks for generic personas on their first turn (no stance-specific advocate key).
+GENERIC_DEBATE_OPENING_FALLBACKS: List[str] = [
+    (
+        "NEW EVIDENCE: The usual contenders are Tolstoy for epic realism (War and Peace), "
+        "Dostoevsky for psychological depth (Crime and Punishment), and Chekhov for modern short fiction. "
+        "CLAIM: Tolstoy's panoramic scope makes him the strongest default pick for greatest Russian author."
+    ),
+    (
+        "NEW EVIDENCE: Dostoevsky's polyphonic novels put conscience and free will on trial "
+        "in ways Tolstoy's social panoramas do not — The Brothers Karamazov is the clearest example. "
+        "CLAIM: Dostoevsky is Russia's greatest author on moral and psychological intensity."
+    ),
+]
+
+
+def _turn_speaker_name(item: Dict[str, Any]) -> str:
+    """Bare speaker name for transcript/prompting (strips backend label suffixes)."""
+    name = str(item.get("speaker_name") or "").strip()
+    if name:
+        return name
+    raw = str(item.get("speaker") or "").strip()
+    if not raw or raw == "Human":
+        return raw or "Human"
+    bare = _SPEAKER_LABEL_SUFFIX_RE.sub("", raw).strip()
+    return bare or raw
+
+
+def _normalize_turn_content(content: str) -> str:
+    text = str(content or "").strip()
+    if text.endswith(DEBATE_TYPING_CURSOR):
+        text = text[: -len(DEBATE_TYPING_CURSOR)].strip()
+    return text
+
+
+def _is_completed_turn(item: Dict[str, Any]) -> bool:
+    raw = str(item.get("content") or "")
+    if raw.endswith(DEBATE_TYPING_CURSOR):
+        return False
+    content = _normalize_turn_content(raw)
+    if not content:
+        return False
+    if content.startswith("_(failed:") or content == "_(no output)_":
+        return False
+    return True
+
+
+def _completed_chat_turns(chat_state: Optional[List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    """Completed turns only — excludes in-progress/empty rows from prompt context."""
+    rows: List[Dict[str, Any]] = []
+    for item in chat_state or []:
+        if not _is_completed_turn(item):
+            continue
+        rows.append(
+            {
+                **item,
+                "speaker_name": _turn_speaker_name(item),
+                "content": _normalize_turn_content(str(item.get("content") or "")),
+            }
+        )
+    return rows
+
+
+def _hydrate_loop_chat_state(
+    conversations_store: Optional[Dict[str, Any]],
+    chat_state: Optional[List[Dict[str, Any]]],
+) -> List[Dict[str, Any]]:
+    """Prefer the longer transcript between Gradio State and the persisted active conversation."""
+    incoming = list(chat_state or [])
+    conv = _get_active_conversation(conversations_store or {})
+    stored = list((conv or {}).get("chat_state") or [])
+    return stored if len(stored) > len(incoming) else incoming
+
+
+def _speaker_turn_index(chat_state: Optional[List[Dict[str, Any]]], speaker_name: str) -> int:
+    """How many prior turns this speaker has already contributed."""
+    count = 0
+    target = str(speaker_name or "").strip()
+    for item in _completed_chat_turns(chat_state):
+        if _turn_speaker_name(item) == target:
+            count += 1
+    return count
+
+
+def _fallback_turn_options(speaker: Dict[str, Any]) -> List[str]:
+    """Curated fallback lines keyed by speaker name or inferred debate stance."""
+    name = str(speaker.get("name") or "").strip()
+    if name in DEBATE_FALLBACK_TURNS:
+        return DEBATE_FALLBACK_TURNS[name]
+    blob = f"{name} {speaker.get('profile', '')}".lower()
+    if "tolstoy" in blob and "dostoevsky advocate" not in blob:
+        return DEBATE_FALLBACK_TURNS.get("Tolstoy Advocate", [])
+    if "dostoevsky" in blob:
+        return DEBATE_FALLBACK_TURNS.get("Dostoevsky Advocate", [])
+    if "chekhov" in blob:
+        return DEBATE_FALLBACK_TURNS.get("Chekhov Advocate", [])
+    return []
+
+
+def _is_speaker_first_turn(chat_state: Optional[List[Dict[str, Any]]], speaker_name: str) -> bool:
+    """True when this debater has not yet contributed a completed turn."""
+    return _speaker_turn_index(chat_state, speaker_name) == 0
+
+
+def _is_debate_opening_turn(chat_state: Optional[List[Dict[str, Any]]], speaker_name: str) -> bool:
+    """True when a speaker should open (not rebut): first contribution and no opposing debater yet."""
+    if not _is_speaker_first_turn(chat_state, speaker_name):
+        return False
+    opp_name, opp_content = _last_opponent_turn(chat_state, speaker_name)
+    return not bool(opp_name and opp_content)
+
+
+def _is_meta_filler_turn(text: str) -> bool:
+    """Reject meta rebuttal filler that cites no concrete evidence (common small-model failure)."""
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return True
+    lowered = cleaned.lower()
+    if any(pattern.search(cleaned) for pattern in _DEBATE_META_FILLER_RES):
+        return True
+    # Short turns that only gesture at "reference facts" without naming a work or author.
+    if "reference facts" in lowered and len(cleaned) < 180:
+        if not re.search(
+            r"\b(?:tolstoy|dostoevsky|chekhov|war and peace|anna karenina|"
+            r"crime and punishment|karamazov|seagull|cherry orchard)\b",
+            lowered,
+        ):
+            return True
+    return False
+
+
+def _generic_fallback_turn(speaker: Dict[str, Any], chat_state: Optional[List[Dict[str, Any]]]) -> str:
+    """Opening fallback on first turn; pass on later turns for generic personas."""
+    name = str(speaker.get("name") or "").strip()
+    if _is_speaker_first_turn(chat_state, name):
+        completed = _completed_chat_turns(chat_state)
+        if _is_debate_opening_turn(chat_state, name):
+            for candidate in GENERIC_DEBATE_OPENING_FALLBACKS:
+                if not _is_repetitive_turn(candidate, completed, name):
+                    return candidate
+    return DEBATE_PASS_TOKEN
+
+
+def _fallback_debate_turn(speaker: Dict[str, Any], chat_state: Optional[List[Dict[str, Any]]]) -> str:
+    """Curated on-topic turn when the model fails quality checks after retries."""
+    name = str(speaker.get("name") or "").strip()
+    options = list(_fallback_turn_options(speaker))
+    if not options:
+        return _generic_fallback_turn(speaker, chat_state)
+    start = _speaker_turn_index(chat_state, name)
+    completed = _completed_chat_turns(chat_state)
+    for offset in range(len(options)):
+        candidate = options[(start + offset) % len(options)]
+        if not _is_repetitive_turn(candidate, completed, name):
+            return candidate
+    return DEBATE_PASS_TOKEN
+
+
+def _speaker_last_turn_content(
+    chat_state: Optional[List[Dict[str, Any]]],
+    speaker_name: str,
+) -> str:
+    target = str(speaker_name or "").strip()
+    for item in reversed(_completed_chat_turns(chat_state)):
+        if _turn_speaker_name(item) == target:
+            return str(item.get("content") or "").strip()
+    return ""
+
+
+def _is_substantive_less_turn(
+    text: str,
+    raw: str,
+    speaker: Dict[str, Any],
+    chat_state: List[Dict[str, Any]],
+    *,
+    phase: Optional[str] = None,
+) -> bool:
+    """True when a model turn should be omitted from the transcript (pass/skip)."""
+    if _is_debate_pass_turn(text, raw):
+        return True
+    cleaned = (text or "").strip()
+    if not cleaned:
+        return True
+    if len(cleaned) < 24:
+        return True
+    if _DEBATE_PLACEHOLDER_TURN_RE.match(cleaned):
+        return True
+    if _is_meta_filler_turn(cleaned):
+        return True
+    name = str(speaker.get("name") or "")
+    prior_content = _speaker_last_turn_content(chat_state, name)
+    if prior_content:
+        if _text_similarity(cleaned, prior_content) >= 0.62:
+            return True
+        if _is_near_copy(cleaned, prior_content, min_len=40):
+            return True
+    phase_key = str(phase or "").strip().lower()
+    turn_mode = _normalize_turn_mode(phase_key)
+    later_phase = turn_mode in {"develop", "conclusion"} or _speaker_turn_index(chat_state, name) > 0
+    if later_phase and not _turn_quality_ok(speaker, cleaned, chat_state, phase=phase):
+        return True
+    return False
+
+
+def _stream_signals_pass(raw: str) -> bool:
+    """Detect an explicit pass token early during streaming (before turn commit)."""
+    return _debate_signaled_pass(raw or "")
+
+
+def _parse_debate_model_output(
+    speaker: Dict[str, Any],
+    raw_output: str,
+    prior_state: List[Dict[str, Any]],
+    opponents: List[str],
+    *,
+    phase: Optional[str] = None,
+) -> Tuple[Optional[str], bool, bool]:
+    """Parse one model attempt without applying curated fallbacks.
+
+    Returns ``(content, ended_debate, explicit_pass)``. ``content`` is ``None`` when
+    the attempt should be retried or replaced by a fallback.
+    """
+    names = list(opponents or [])
+    ended = _debate_signaled_stop(raw_output)
+    final_text = _clean_debate_reply(sanitize_model_output(raw_output), names)
+    if _is_substantive_less_turn(final_text, raw_output, speaker, prior_state, phase=phase):
+        return None, ended, True
+    if final_text and _turn_quality_ok(speaker, final_text, prior_state, phase=phase):
+        return final_text, ended, False
+    return None, ended, False
+
+
+def _debate_stance_lock(speaker: Dict[str, Any]) -> str:
+    """Infer a locked debate position from speaker name/profile (e.g. Tolstoy vs Dostoevsky)."""
+    blob = f"{speaker.get('name', '')} {speaker.get('profile', '')}".lower()
+    if "tolstoy" in blob and "dostoevsky advocate" not in blob:
+        return (
+            "LOCKED POSITION: Leo Tolstoy is the greatest Russian author. "
+            "Never argue that Dostoevsky or Chekhov is greater. "
+            "Anna Karenina and War and Peace are Tolstoy — not Dostoevsky."
+        )
+    if "dostoevsky" in blob:
+        return (
+            "LOCKED POSITION: Fyodor Dostoevsky is the greatest Russian author. "
+            "Never argue that Tolstoy or Chekhov is greater. "
+            "Crime and Punishment and The Brothers Karamazov are Dostoevsky — not Tolstoy."
+        )
+    if "chekhov" in blob:
+        return (
+            "LOCKED POSITION: Anton Chekhov is the greatest Russian author. "
+            "Never argue that Tolstoy or Dostoevsky is greater."
+        )
+    return ""
+
+
+def _has_author_mixups(text: str) -> bool:
+    """Detect common wrong author↔work pairings (small models do this often)."""
+    t = (text or "").lower()
+    mixups = (
+        ("dostoevsky", "anna karenina"),
+        ("dostoevsky", "war and peace"),
+        ("tolstoy", "crime and punishment"),
+        ("tolstoy", "brothers karamazov"),
+        ("tolstoy", "karamazov"),
+        ("chekhov", "war and peace"),
+        ("chekhov", "crime and punishment"),
+    )
+    return any(a in t and w in t for a, w in mixups)
+
+
+def _violates_stance_lock(speaker: Dict[str, Any], text: str) -> bool:
+    """True if a speaker argues for the wrong side (e.g. Tolstoy advocate crowns Dostoevsky)."""
+    blob = f"{speaker.get('name', '')} {speaker.get('profile', '')}".lower()
+    t = (text or "").lower()
+    if _has_author_mixups(text):
+        return True
+    wrong_greatest = r".{0,120}\b(?:greatest|greatest russian|positions him as the greatest)\b"
+    if "tolstoy" in blob and "dostoevsky advocate" not in blob:
+        if re.search(rf"\bdostoevsky\b{wrong_greatest}|\bgreatest\b.{0,120}\bdostoevsky\b", t):
+            return True
+        if re.search(r"\bdostoevsky\b.{0,80}\b(?:greater|better|superior)\b", t):
+            return True
+    if "dostoevsky" in blob:
+        if re.search(rf"\btolstoy\b{wrong_greatest}|\bgreatest\b.{0,120}\btolstoy\b", t):
+            return True
+        if re.search(r"\btolstoy\b.{0,80}\b(?:greater|better|superior)\b", t):
+            return True
+        if re.search(r"\btolstoy(?:'s)?\b.{0,100}\b(?:strongest case|makes him|crowns him)\b", t):
+            return True
+    if "chekhov" in blob:
+        if re.search(rf"\b(?:tolstoy|dostoevsky)\b{wrong_greatest}", t):
+            return True
+    return False
+
+
+def _looks_like_rebuttal_only(text: str) -> bool:
+    """True when a first-turn reply is pure rebuttal/meta with no opening claim."""
+    lowered = (text or "").strip().lower()
+    if not lowered:
+        return True
+    has_claim = bool(re.search(r"\bclaim\s*:", lowered))
+    has_evidence = bool(
+        re.search(
+            r"\b(?:war and peace|anna karenina|crime and punishment|brothers karamazov|"
+            r"karamazov|tolstoy|dostoevsky|chekhov)\b",
+            lowered,
+        )
+    )
+    rebuttal_lead = lowered.startswith("rebuttal:") or bool(
+        re.match(r"^(?:that (?:last|prior) point|you have not|repeating the same)\b", lowered)
+    )
+    if rebuttal_lead and not has_evidence and not has_claim:
+        return True
+    return _is_meta_filler_turn(text)
+
+
+def _turn_quality_ok(
+    speaker: Dict[str, Any],
+    text: str,
+    chat_state: List[Dict[str, Any]],
+    *,
+    phase: Optional[str] = None,
+) -> bool:
+    name = str(speaker.get("name") or "")
+    cleaned = (text or "").strip()
+    if not cleaned or len(cleaned) < 24:
+        return False
+    lowered = cleaned.lower()
+    if lowered.startswith("transcript so far") or lowered == "_(no output)_":
+        return False
+    if _DEBATE_PLACEHOLDER_TURN_RE.match(cleaned):
+        return False
+    if _is_meta_filler_turn(cleaned):
+        return False
+    phase_key = str(phase or "").strip().lower()
+    turn_mode = _normalize_turn_mode(phase_key) if phase_key else None
+    opening_turn = turn_mode == "proposal" if turn_mode else _is_debate_opening_turn(chat_state, name)
+    profile = str(speaker.get("profile") or "")
+    opening_challenge = _opening_phase_challenge_turn(
+        chat_state, name, profile, phase=phase_key or "opening",
+    )
+    if opening_turn and not opening_challenge and _looks_like_rebuttal_only(cleaned):
+        return False
+    if _violates_stance_lock(speaker, cleaned):
+        return False
+    prior = _completed_chat_turns(chat_state)
+    if _is_repetitive_turn(cleaned, prior, name):
+        return False
+    # Reject obvious prompt-echo / template debris from small models.
+    if re.search(r"\bnew evidence:\s*new evidence:\b", lowered):
+        return False
+    return True
+
+
+def _is_near_copy(new_text: str, prior_text: str, *, min_len: int = 70) -> bool:
+    prior = (prior_text or "").strip()
+    new = (new_text or "").strip()
+    if len(prior) < min_len or len(new) < min_len:
+        return False
+    probe = prior[: min(220, len(prior))].lower()
+    return probe in new.lower()
+
+
+def _dedupe_structured_sections(text: str) -> str:
+    """If the model repeats REBUTTAL/NEW EVIDENCE/CLAIM blocks, keep only the first set."""
+    if not text:
+        return text
+    markers = list(re.finditer(r"\b(REBUTTAL|NEW EVIDENCE|CLAIM)\s*:", text, re.I))
+    if len(markers) <= 3:
+        return text.strip()
+    # Cut at the second REBUTTAL (model started the template over).
+    second_rebuttal = [m for m in markers if m.group(1).upper() == "REBUTTAL"]
+    if len(second_rebuttal) >= 2:
+        return text[: second_rebuttal[1].start()].strip()
+    return text.strip()
+
+
+def _strip_trailing_bracket_marker(text: str) -> str:
+    """Drop trailing garbled bracket end-markers (mangled stop tokens) from a reply."""
+    if not text:
+        return text
+    result = text.rstrip()
+    for _ in range(3):
+        stripped = _TRAILING_BRACKET_MARKER_RE.sub("", result).rstrip()
+        if stripped == result:
+            break
+        result = stripped
+    return result
+
+
+def _truncate_at_next_speaker(text: str, names: Optional[List[str]]) -> str:
+    """Cut a reply at the first point the model starts another speaker's turn.
+
+    Small local models often continue the "Name: text" chat pattern and hallucinate a
+    whole multi-turn dialogue (including fake ``Human:`` turns) in a single generation.
+    We keep only the current speaker's own contribution — everything up to the first
+    line that begins with a known speaker name (or ``Human``) followed by a colon — and
+    let the loop drive the actual back-and-forth.
+    """
+    if not text:
+        return text
+    markers = {str(n).strip().lower() for n in (names or []) if str(n).strip()}
+    markers.add("human")
+    lines = text.split("\n")
+    kept: List[str] = []
+    for idx, line in enumerate(lines):
+        match = re.match(r"^\s*([^:\n]{1,48}):\s", line)
+        if idx > 0 and match and match.group(1).strip().lower() in markers:
+            break
+        kept.append(line)
+    return "\n".join(kept).strip()
+
+
+def _strip_bracket_speaker_hallucinations(text: str, names: Optional[List[str]] = None) -> str:
+    """Remove bracket-prefixed fake transcript chunks like ``[Dostoevsky Advocate: ...]``."""
+    if not text:
+        return text
+    known = {str(n).strip().lower() for n in (names or []) if str(n).strip()}
+    result = text.strip()
+    # Peel leading [Speaker: ...] wrappers the model echoes.
+    while True:
+        match = re.match(r"^\s*\[([^\]]+)\]\s*", result)
+        if not match:
+            break
+        result = result[match.end() :].strip()
+    # Cut at the first embedded bracket turn (another speaker or Turn N:).
+    for match in _BRACKET_SPEAKER_HALLUCINATION_RE.finditer(result):
+        if match.start() <= 0:
+            continue
+        label = match.group(1).strip().lower()
+        if label in known or "advocate" in label or label.startswith("turn"):
+            return result[: match.start()].strip()
+    return result
+
+
+def _clean_debate_reply(text: str, names: Optional[List[str]]) -> str:
+    """Full post-processing for one debate turn: strip the stop token, drop an echoed
+    leading ``Name:`` prefix, truncate any hallucinated later turns, dedupe repeated
+    structured sections, strip bracket hallucinations, and remove garbled trailing bracket markers."""
+    cleaned = _strip_pass_token(_strip_stop_token(text or ""))
+    cleaned = _strip_leading_speaker_prefix(cleaned, names)
+    cleaned = _strip_bracket_speaker_hallucinations(cleaned, names)
+    cleaned = _truncate_at_next_speaker(cleaned, names)
+    cleaned = _dedupe_structured_sections(cleaned)
+    cleaned = _strip_trailing_bracket_marker(cleaned)
+    return cleaned.strip()
+
+
+def _normalize_for_similarity(text: str) -> set[str]:
+  words = re.findall(r"[a-z0-9']+", (text or "").lower())
+  return {w for w in words if len(w) > 2 and w not in {"the", "and", "that", "this", "with", "your", "you", "are", "for", "not"}}
+
+
+def _text_similarity(a: str, b: str) -> float:
+    """Jaccard similarity on normalized word sets (0 = unrelated, 1 = identical)."""
+    sa, sb = _normalize_for_similarity(a), _normalize_for_similarity(b)
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+def _points_already_made(chat_state: Optional[List[Dict[str, Any]]], max_points: int = 10) -> List[str]:
+    """Short bullets of prior non-empty turns for anti-repetition prompting."""
+    points: List[str] = []
+    for item in _completed_chat_turns(chat_state):
+        content = " ".join(str(item.get("content") or "").split())
+        speaker = _turn_speaker_name(item) or "?"
+        snippet = content[:140] + ("…" if len(content) > 140 else "")
+        points.append(f"- {speaker}: {snippet}")
+    return points[-max_points:]
+
+
+_DEBATE_KNOWN_WORKS: Tuple[str, ...] = (
+    "War and Peace",
+    "Anna Karenina",
+    "Crime and Punishment",
+    "The Brothers Karamazov",
+    "Brothers Karamazov",
+    "The Cherry Orchard",
+    "Cherry Orchard",
+    "The Seagull",
+    "Uncle Vanya",
+    "Three Sisters",
+    "Notes from Underground",
+    "The Death of Ivan Ilyich",
+    "Grand Inquisitor",
+    "Hadji Murad",
+    "Ward No. 6",
+    "The Lady with the Little Dog",
+)
+_DEBATE_KNOWN_AUTHORS: Tuple[str, ...] = (
+    "Leo Tolstoy",
+    "Tolstoy",
+    "Fyodor Dostoevsky",
+    "Dostoevsky",
+    "Anton Chekhov",
+    "Chekhov",
+    "Virginia Woolf",
+    "Raskolnikov",
+)
+_EVIDENCE_EXAMPLE_RE = re.compile(
+    r"NEW EVIDENCE[:\s—-]+([^\n.]+(?:\.|$))",
+    re.IGNORECASE,
+)
+
+
+def _evidence_already_used(
+    chat_state: Optional[List[Dict[str, Any]]],
+    *,
+    max_items: int = 20,
+) -> List[str]:
+    """Extract book titles, author names, and concrete examples cited in prior turns."""
+    found: List[str] = []
+    seen_lower: set[str] = set()
+
+    def _add(item: str) -> None:
+        clean = " ".join((item or "").split()).strip(" .,;:")
+        if not clean or len(clean) < 3:
+            return
+        key = clean.lower()
+        if key in seen_lower:
+            return
+        seen_lower.add(key)
+        found.append(clean)
+
+    for item in _completed_chat_turns(chat_state):
+        content = str(item.get("content") or "")
+        content_lower = content.lower()
+        for work in _DEBATE_KNOWN_WORKS:
+            if work.lower() in content_lower:
+                _add(work)
+        for author in _DEBATE_KNOWN_AUTHORS:
+            if re.search(r"\b" + re.escape(author) + r"\b", content, re.I):
+                _add(author)
+        for match in _EVIDENCE_EXAMPLE_RE.finditer(content):
+            _add(match.group(1)[:120])
+        for match in re.finditer(r'"([^"]{4,80})"', content):
+            _add(match.group(1))
+    return found[:max_items]
+
+
+def _debate_alternate_search_query(
+    speaker: Dict[str, Any],
+    topic: str,
+    used_evidence: Optional[List[str]] = None,
+) -> str:
+    """Build a search query skewed toward evidence not yet cited in the debate."""
+    blob = f"{speaker.get('name', '')} {speaker.get('profile', '')}".lower()
+    used_blob = " ".join(used_evidence or []).lower()
+    alternates: List[str] = []
+    if "tolstoy" in blob:
+        alternates = [
+            "Tolstoy Hadji Murad Sevastopol Stories lesser known works literary significance",
+            "Tolstoy moral philosophy pacifism influence on Gandhi literary criticism",
+            "Tolstoy realism inner consciousness War and Peace battle scenes",
+        ]
+    elif "dostoevsky" in blob:
+        alternates = [
+            "Dostoevsky Demons The Idiot polyphonic novel technique",
+            "Dostoevsky religious philosophy existential influence literature",
+            "Dostoevsky Raskolnikov guilt psychology literary criticism",
+        ]
+    elif "chekhov" in blob:
+        alternates = [
+            "Chekhov Ward No 6 Lady with the Little Dog themes modern short story",
+            "Chekhov influence on modern drama Ibsen theatre of mood",
+            "Chekhov physician laconic style ordinary life literary significance",
+        ]
+    topic_clean = (topic or "").strip()
+    if topic_clean:
+        alternates.append(f"{topic_clean[:100]} counterargument lesser known evidence")
+    for alt in alternates:
+        if not any(part and part.lower() in used_blob for part in alt.split()[:4]):
+            return alt
+    return alternates[0] if alternates else (topic_clean or "literary evidence debate")
+
+
+def _debate_fresh_reference_facts(
+    speaker: Dict[str, Any],
+    topic: str,
+    used_evidence: Optional[List[str]] = None,
+) -> str:
+    """One fresh search query for a new angle when a turn would pass due to repetition."""
+    if not _debate_search_enabled():
+        return ""
+    query = _debate_alternate_search_query(speaker, topic, used_evidence)
+    return _debate_search_snippets(query, max_snippets=3)
+
+
+def _conversation_in_room(conversations_store: Optional[Dict[str, Any]]) -> bool:
+    """True when the active conversation has entered the debate room."""
+    conv = _get_active_conversation(conversations_store or {}) or {}
+    return bool(conv.get("in_room"))
+
+
+def _last_transcript_speaker(chat_state: Optional[List[Dict[str, Any]]]) -> str:
+    completed = _completed_chat_turns(chat_state)
+    if not completed:
+        return ""
+    return _turn_speaker_name(completed[-1])
+
+
+def _last_opponent_turn(
+    chat_state: Optional[List[Dict[str, Any]]],
+    speaker_name: str,
+) -> Tuple[str, str]:
+    """Return (name, content) for the latest completed turn from a different debater."""
+    target = str(speaker_name or "").strip()
+    for item in reversed(_completed_chat_turns(chat_state)):
+        name = _turn_speaker_name(item)
+        if not name or name.lower() == "human" or name == target:
+            continue
+        return name, str(item.get("content") or "").strip()
+    return "", ""
+
+
+_PROFILE_CHALLENGE_KEYWORDS = re.compile(
+    r"\b(rebut(?:tal)?|challenge|respond to|push back|counter(?:-?argue)?|refute)\b",
+    re.I,
+)
+
+
+def _profile_specifies_challenge_behavior(profile: str) -> bool:
+    """True when the speaker profile already encodes rebuttal/challenge instructions."""
+    return bool(_PROFILE_CHALLENGE_KEYWORDS.search(profile or ""))
+
+
+def _prior_debater_in_phase(
+    chat_state: Optional[List[Dict[str, Any]]],
+    speaker_name: str,
+    phase: str,
+) -> Tuple[str, str]:
+    """Return (name, content) for the immediately prior debater in the given phase."""
+    phase_key = str(phase or "opening").strip().lower()
+    if phase_key not in ("opening", "proposal"):
+        return "", ""
+    debater_turns: List[Tuple[str, str]] = []
+    for item in _completed_chat_turns(chat_state):
+        name = _turn_speaker_name(item)
+        if not name or name.lower() == "human":
+            continue
+        debater_turns.append((name, str(item.get("content") or "").strip()))
+    if not debater_turns:
+        return "", ""
+    return debater_turns[-1]
+
+
+def _opening_phase_challenge_turn(
+    chat_state: Optional[List[Dict[str, Any]]],
+    speaker_name: str,
+    profile: str,
+    *,
+    phase: str,
+) -> bool:
+    """True when proposal/opening phase should inject default challenge-the-prior-speaker behavior."""
+    if str(phase or "").strip().lower() not in ("opening", "proposal"):
+        return False
+    if _profile_specifies_challenge_behavior(profile):
+        return False
+    prior_name, prior_content = _prior_debater_in_phase(chat_state, speaker_name, phase)
+    return bool(prior_name and prior_content)
+
+
+def _is_repetitive_turn(
+    new_text: str,
+    chat_state: Optional[List[Dict[str, Any]]],
+    speaker_name: str,
+    *,
+    threshold: float = 0.38,
+) -> bool:
+    """True when a turn is too similar to an earlier one (common small-model failure)."""
+    cleaned = (new_text or "").strip()
+    if len(cleaned) < 40:
+        return False
+    for item in chat_state or []:
+        prior = (item.get("content") or "").strip()
+        if not prior:
+            continue
+        if _text_similarity(cleaned, prior) >= threshold:
+            return True
+        if _is_near_copy(cleaned, prior):
+            return True
+    head = cleaned[:100]
+    for item in chat_state or []:
+        prior = (item.get("content") or "").strip()
+        if prior and _text_similarity(head, prior[:100]) >= 0.55:
+            return True
+    return False
+
+
+def _build_phase_debate_request(
+    speaker: Dict[str, Any],
+    chat_state: Optional[List[Dict[str, Any]]],
+    max_tokens: int,
+    temp: float,
+    opponents: Optional[List[str]] = None,
+    *,
+    phase: str,
+    anti_repeat: bool = False,
+    topic_hint: str = "",
+    simple_mode: bool = False,
+    reference_facts: str = "",
+    round_idx: Optional[int] = None,
+    max_rounds: Optional[int] = None,
+) -> GenerationRequest:
+    """Build a structured debate turn for proposal, develop, or conclusion phase."""
+    name = str(speaker.get("name") or "Speaker").strip() or "Speaker"
+    profile = str(speaker.get("profile") or "").strip()
+    stance_lock = _debate_stance_lock(speaker)
+    prior_turns = _completed_chat_turns(chat_state)
+    phase_key = str(phase or "opening").strip().lower()
+    if phase_key not in DEBATE_PHASES and phase_key not in DEBATE_TURN_MODES:
+        phase_key = "opening"
+    turn_mode = _normalize_turn_mode(phase_key)
+    is_proposal = turn_mode == "proposal"
+    is_develop = turn_mode == "develop"
+    is_conclusion = turn_mode == "conclusion"
+    transcript = _chat_transcript_by_name(prior_turns)
+    others = [o for o in (opponents or []) if o and o != name]
+    last_speaker = _last_transcript_speaker(prior_turns)
+    opp_name, opp_content = _last_opponent_turn(prior_turns, name)
+    has_opponent_argument = bool(opp_name and opp_content)
+    opening_challenge = _opening_phase_challenge_turn(prior_turns, name, profile, phase=phase_key)
+    prior_debater_name, prior_debater_content = (
+        _prior_debater_in_phase(prior_turns, name, phase_key) if opening_challenge else ("", "")
+    )
+    points = _points_already_made(prior_turns)
+    used_evidence = _evidence_already_used(prior_turns)
+    pacing_block = ""
+    if round_idx is not None and max_rounds is not None:
+        pacing = _debate_pacing_context(int(round_idx), int(max_rounds), name, prior_turns)
+        pacing_block = f"\n\n{pacing['pacing_line']}"
+    opponents_clause = (
+        f"You are debating against: {', '.join(others)}. Pick a DISTINCT position from theirs and defend it."
+        if others
+        else "Argue your position clearly and rigorously."
+    )
+    search_awareness = ""
+    if _debate_search_enabled() or reference_facts:
+        search_awareness = (
+            "\n\nYou may rely on reference facts from search (injected below when available). "
+            "Use them to support arguments with concrete works, scenes, or historical facts. "
+            "Cite each piece of evidence at most once across the whole debate."
+        )
+    facts_block = ""
+    if reference_facts:
+        facts_block = (
+            "\n\nReference facts (use these; do not invent attributions):\n"
+            + reference_facts
+        )
+    elif _debate_search_enabled():
+        facts_block = (
+            "\n\nReference facts from search may appear here on later turns — cite them when provided."
+        )
+    proposal_directive = (
+        "The previous speaker stated their position. Challenge that point directly, then advance "
+        "your own position with new evidence (CHALLENGE + NEW EVIDENCE + CLAIM)."
+        if opening_challenge
+        else (
+            "State your thesis clearly. Use NEW EVIDENCE + CLAIM. No rebuttal yet — "
+            "no opponent has argued against you in this phase. Set the depth bar for the debate."
+        )
+    )
+    develop_directive = (
+        "Read the transcript carefully. Choose ONE primary move:\n"
+        "A) RESPOND/REBUT — if an opponent raised a provocative claim, question, or left a gap you can exploit.\n"
+        "B) NEW EVIDENCE — if rebutting would repeat yourself or no fresh angle exists, deepen with new evidence.\n"
+        "Either way, push the conversation deeper than the prior phase. Do not repeat evidence already used."
+    )
+    phase_directive = {
+        "proposal": proposal_directive,
+        "develop": develop_directive,
+        "conclusion": (
+            "SYNTHESIZE your strongest threads into a closing argument deeper than prior phases. "
+            "Do not recycle opening wording verbatim. "
+            "Use FINAL CLAIM (brief NEW EVIDENCE only if not yet stated)."
+        ),
+    }[turn_mode]
+    phase_status_label = DEBATE_TURN_MODE_LABELS.get(turn_mode, turn_mode.title())
+    if simple_mode:
+        if is_proposal and opening_challenge:
+            turn_shape = (
+                "Write ONE short paragraph (3–4 sentences): challenge the previous speaker's point directly, "
+                "cite ONE concrete book/scene/fact, then state your thesis (CHALLENGE + NEW EVIDENCE + CLAIM)."
+            )
+        elif is_proposal:
+            turn_shape = (
+                "Write ONE short paragraph (3–4 sentences): state your position clearly, "
+                "cite ONE concrete book/scene/fact (NEW EVIDENCE + CLAIM). No rebuttal."
+            )
+        elif is_conclusion:
+            turn_shape = (
+                "Write ONE short paragraph (3–4 sentences): closing summary of your case "
+                "without repeating verbatim; end with FINAL CLAIM."
+            )
+        else:
+            turn_shape = (
+                "Write ONE short paragraph (3–4 sentences): either rebut/respond to a gap in the opponent's case "
+                "OR add new evidence — whichever deepens the debate more (RESPOND/REBUT or NEW EVIDENCE + CLAIM)."
+            )
+        system = (
+            f"You are \"{name}\" in a live structured debate. {opponents_clause}\n\n"
+            f"Phase: {phase_status_label}. {phase_directive}\n\n"
+            f"{turn_shape} First person only; "
+            "never prefix with a name; never copy prior wording; never attribute a novel to the wrong author. "
+            f"If you have nothing substantively new to add, respond with only {DEBATE_PASS_TOKEN}."
+            + pacing_block
+            + search_awareness
+            + facts_block
+            + (f"\n\n{stance_lock}" if stance_lock else "")
+            + (f"\n\nPersona:\n{profile}" if profile else "")
+            + (f"\n\nDebate topic:\n{topic_hint}" if topic_hint else "")
+        )
+    else:
+        if is_proposal and opening_challenge:
+            structure = (
+                "Your opening turn MUST include exactly these three parts (use short paragraphs):\n"
+                "1) CHALLENGE — one direct pushback on the previous speaker's argument.\n"
+                "2) NEW EVIDENCE — one concrete example (book, scene, character, or historical fact).\n"
+                "3) CLAIM — your thesis in one sharp sentence."
+            )
+        elif is_proposal:
+            structure = (
+                "Your opening turn MUST include exactly these two parts (use short paragraphs):\n"
+                "1) NEW EVIDENCE — one concrete example (book, scene, character, or historical fact).\n"
+                "2) CLAIM — your thesis in one sharp sentence.\n\n"
+                "Do NOT include REBUTTAL on your opening turn."
+            )
+        elif is_conclusion:
+            structure = (
+                "Your closing turn MUST include:\n"
+                "1) A brief synthesis of your strongest points (do NOT repeat prior turns verbatim).\n"
+                "2) FINAL CLAIM — your closing thesis in one sharp sentence."
+            )
+        else:
+            structure = (
+                "Each develop turn MUST choose ONE primary move (use short paragraphs):\n"
+                "1) RESPOND/REBUT — direct pushback on the latest opposing point or a gap they left, OR\n"
+                "2) NEW EVIDENCE — a concrete example not mentioned before that deepens your case.\n"
+                "3) CLAIM — your updated thesis in one sharp sentence."
+            )
+        system = (
+            f"You are \"{name}\" in a live structured debate. {opponents_clause} "
+            "WIN by making the strongest case — do not agree just to be agreeable.\n\n"
+            f"Phase: {phase_status_label}. {phase_directive}\n\n"
+            + structure
+            + "\n\nRules: first person only; never prefix with a name; never copy prior wording; "
+            + (
+                "never paraphrase the opponent's last message back at them; "
+                if (has_opponent_argument and is_develop) or opening_challenge
+                else ""
+            )
+            + "stay under ~120 words; "
+            "never attribute a novel to the wrong author.\n"
+            + (
+                f"If you have no new evidence or rebuttal beyond what is already in the transcript, "
+                f"respond with only {DEBATE_PASS_TOKEN} — passing is preferred over repeating yourself.\n"
+                if is_develop or opening_challenge
+                else f"If you cannot state an opening position, respond with only {DEBATE_PASS_TOKEN}.\n"
+                if is_proposal
+                else f"If you have nothing new for your closing, respond with only {DEBATE_PASS_TOKEN}.\n"
+            )
+            + f"End with {DEBATE_STOP_TOKEN} only if the debate is truly finished."
+            + pacing_block
+            + search_awareness
+            + facts_block
+            + (f"\n\n{stance_lock}" if stance_lock else "")
+            + (f"\n\nPersona:\n{profile}" if profile else "")
+            + (f"\n\nDebate topic context:\n{topic_hint}" if topic_hint else "")
+        )
+    if transcript:
+        user_parts = [
+            "Transcript so far:\n" + transcript,
+        ]
+        if points and (is_develop or is_conclusion):
+            user_parts.append(
+                "Points already made (do NOT repeat these ideas or phrasing):\n"
+                + "\n".join(points)
+            )
+        if used_evidence:
+            user_parts.append(
+                "Evidence already used (do NOT repeat):\n"
+                + "\n".join(f"- {item}" for item in used_evidence)
+            )
+        if has_opponent_argument and is_develop:
+            user_parts.append(
+                f"Latest opposing argument ({opp_name}) — read carefully:\n{opp_content[:900]}"
+            )
+            user_parts.append(
+                "Before you write: what did the opponent NOT address? "
+                "If you see a gap or provocative claim, RESPOND/REBUT; otherwise deepen with NEW EVIDENCE."
+            )
+        elif opening_challenge and prior_debater_name and prior_debater_content:
+            user_parts.append(
+                f"The previous speaker ({prior_debater_name}) argued:\n{prior_debater_content[:900]}\n\n"
+                "Challenge that point directly, then advance your own position with new evidence."
+            )
+        elif last_speaker and last_speaker != name and is_develop:
+            user_parts.append(f"Reply directly to {last_speaker}'s latest point.")
+        if anti_repeat:
+            if used_evidence:
+                user_parts.append(
+                    "IMPORTANT: Your previous attempt repeated evidence or phrasing. "
+                    "Use NEW evidence NOT in the used list above — a different work, theme, "
+                    "scene, or historical fact grounded in the reference facts."
+                )
+            else:
+                user_parts.append(
+                    "IMPORTANT: Your previous attempt was too repetitive or off-topic. Say something substantively NEW — "
+                    "a different work, theme, or line of argument grounded in the reference facts."
+                )
+        if is_proposal and opening_challenge:
+            user_parts.append(
+                "Write your opening now (CHALLENGE → NEW EVIDENCE → CLAIM)."
+            )
+        elif is_proposal:
+            user_parts.append(
+                "State your position clearly (NEW EVIDENCE + CLAIM only; no rebuttal yet)."
+            )
+        elif is_conclusion:
+            user_parts.append(
+                "Write your closing statement now (summarize without repeating verbatim; end with FINAL CLAIM)."
+            )
+        else:
+            user_parts.append(
+                "Write your develop turn now — choose RESPOND/REBUT or NEW EVIDENCE, then CLAIM."
+                if not simple_mode
+                else "Write your develop turn now."
+            )
+        user = "\n\n".join(user_parts)
+    else:
+        user = "State your position clearly (NEW EVIDENCE + CLAIM only; no rebuttal yet)."
+    eff_temp = float(temp or 0.0)
+    if anti_repeat:
+        eff_temp = min(0.85, eff_temp + 0.1)
+    elif simple_mode:
+        eff_temp = max(0.35, eff_temp - 0.1)
+    return GenerationRequest(
+        messages=[ChatMessage("system", system), ChatMessage("user", user)],
+        max_tokens=max(96, int(max_tokens or 768)),
+        temperature=eff_temp,
+    )
+
+
+def _build_adjudicator_request(
+    adjudicator: Dict[str, Any],
+    chat_state: Optional[List[Dict[str, Any]]],
+    max_tokens: int,
+    temp: float,
+) -> GenerationRequest:
+    """Build the adjudicator-only phase request (narrative summary write-up)."""
+    name = str(adjudicator.get("name") or "Adjudicator").strip() or "Adjudicator"
+    profile = str(adjudicator.get("profile") or "").strip()
+    transcript = _chat_transcript_by_name(chat_state, max_chars=12000)
+    topic = _debate_topic_hint(chat_state) or "the debate topic"
+    system = (
+        f'You are "{name}", the impartial adjudicator for this debate. '
+        "You are NOT a debater — read the full transcript and produce a balanced narrative write-up.\n\n"
+        f"{_CONVERSATION_SUMMARY_STRUCTURE}\n\n"
+        "Be factual, specific, and impartial. Do not invent facts not in the transcript."
+        + (f"\n\nAdjudicator profile:\n{profile}" if profile else "")
+    )
+    user = (
+        f"Debate topic: {topic}\n\n"
+        f"Full transcript:\n{transcript or '(empty)'}\n\n"
+        "Read the full transcript and write the narrative summary using the required structure."
+    )
+    return GenerationRequest(
+        messages=[ChatMessage("system", system), ChatMessage("user", user)],
+        max_tokens=max(128, int(max_tokens or 512)),
+        temperature=max(0.0, min(0.3, float(temp or 0.0))),
+    )
+
+
+def _build_debate_turn_request(
+    speaker: Dict[str, Any],
+    chat_state: Optional[List[Dict[str, Any]]],
+    max_tokens: int,
+    temp: float,
+    opponents: Optional[List[str]] = None,
+    *,
+    anti_repeat: bool = False,
+    topic_hint: str = "",
+    simple_mode: bool = False,
+    reference_facts: str = "",
+    phase: Optional[str] = None,
+    round_idx: Optional[int] = None,
+    max_rounds: Optional[int] = None,
+) -> GenerationRequest:
+    """Build a debate turn request with explicit anti-repetition and rebuttal structure."""
+    name = str(speaker.get("name") or "Speaker").strip() or "Speaker"
+    prior_turns = _completed_chat_turns(chat_state)
+    if phase:
+        resolved_phase = str(phase).strip().lower()
+    elif round_idx is not None and max_rounds is not None:
+        resolved_phase = _debate_phase_for_round(int(round_idx), int(max_rounds))
+    else:
+        turn_idx = _speaker_turn_index(prior_turns, name)
+        if turn_idx <= 0:
+            resolved_phase = "opening" if _is_debate_opening_turn(prior_turns, name) else "rebuttal"
+        elif turn_idx == 1:
+            resolved_phase = "rebuttal"
+        else:
+            resolved_phase = "final"
+    return _build_phase_debate_request(
+        speaker,
+        chat_state,
+        max_tokens,
+        temp,
+        opponents=opponents,
+        phase=resolved_phase,
+        anti_repeat=anti_repeat,
+        topic_hint=topic_hint,
+        simple_mode=simple_mode,
+        reference_facts=reference_facts,
+        round_idx=round_idx,
+        max_rounds=max_rounds,
+    )
+
+
+def _debate_topic_hint(chat_state: Optional[List[Dict[str, Any]]]) -> str:
+    for item in chat_state or []:
+        if str(item.get("speaker_name") or item.get("speaker") or "").strip().lower() == "human":
+            return str(item.get("content") or "").strip()
+    return ""
+
+
+def _generate_debate_turn_text(
+    speaker: Dict[str, Any],
+    chat_state: List[Dict[str, Any]],
+    opponents: List[str],
+    max_tokens: int,
+    temp: float,
+    *,
+    phase: Optional[str] = None,
+    round_idx: Optional[int] = None,
+    max_rounds: Optional[int] = None,
+) -> str:
+    """Generate one debate turn; retry with simpler prompts, then curated fallback."""
+    names = list(opponents or [])
+    prompt_state = _completed_chat_turns(chat_state)
+    topic = _debate_topic_hint(prompt_state)
+    used_evidence = _evidence_already_used(prompt_state)
+    reference_facts = ""
+    if _debate_search_enabled():
+        reference_facts = _debate_reference_facts(speaker, topic)
+    resolved_phase = phase
+    if not resolved_phase and round_idx is not None and max_rounds is not None:
+        resolved_phase = _debate_phase_for_round(int(round_idx), int(max_rounds))
+    for attempt in range(2):
+        attempt_facts = reference_facts
+        if attempt > 0 and _debate_search_enabled():
+            fresh = _debate_fresh_reference_facts(speaker, topic, used_evidence)
+            if fresh:
+                attempt_facts = fresh
+        req = _build_debate_turn_request(
+            speaker,
+            prompt_state,
+            max_tokens,
+            temp,
+            opponents=names,
+            anti_repeat=attempt > 0,
+            topic_hint=topic,
+            simple_mode=attempt >= 1,
+            reference_facts=attempt_facts,
+            phase=resolved_phase,
+            round_idx=round_idx,
+            max_rounds=max_rounds,
+        )
+        text, _ = _generate_with_speaker_backend(speaker, req)
+        cleaned = _clean_debate_reply(sanitize_model_output(text), names)
+        if _is_debate_pass_turn(cleaned, text):
+            return ""
+        if _turn_quality_ok(speaker, cleaned, prompt_state, phase=resolved_phase):
+            return cleaned
+    fallback = _fallback_debate_turn(speaker, prompt_state)
+    if _is_debate_pass_turn(fallback, fallback):
+        return ""
+    return fallback
+
+
+def _generate_adjudicator_writeup(
+    adjudicator: Dict[str, Any],
+    chat_state: List[Dict[str, Any]],
+    max_tokens: int,
+    temp: float,
+) -> str:
+    """Generate the phase-4 adjudicator summary; fall back to neutral summarizer on failure."""
+    state = _completed_chat_turns(chat_state)
+    if not state:
+        return ""
+    try:
+        req = _build_adjudicator_request(adjudicator, state, max_tokens, temp)
+        text, _ = _generate_with_speaker_backend(adjudicator, req)
+        cleaned = _normalize_summary_text(text)
+        if cleaned and len(cleaned) >= 40:
+            return cleaned
+    except Exception:
+        pass
+    return _rule_based_conversation_summary(state, None)
 
 
 def _transcript_speaker_names(chat_state: Optional[List[Dict[str, Any]]]) -> List[str]:
@@ -2210,9 +3936,9 @@ def _transcript_speaker_names(chat_state: Optional[List[Dict[str, Any]]]) -> Lis
 def _chat_transcript_by_name(chat_state: Optional[List[Dict[str, Any]]], max_chars: int = 12000) -> str:
     """Like `_chat_transcript` but keyed by bare speaker name (legible for judges)."""
     lines = []
-    for item in chat_state or []:
-        name = item.get("speaker_name") or item.get("speaker", "speaker")
-        content = (item.get("content") or "").strip()
+    for item in _completed_chat_turns(chat_state):
+        name = _turn_speaker_name(item)
+        content = str(item.get("content") or "").strip()
         if content:
             lines.append(f"{name}: {content}")
     text = "\n\n".join(lines)
@@ -2221,12 +3947,12 @@ def _chat_transcript_by_name(chat_state: Optional[List[Dict[str, Any]]], max_cha
     return "[earlier transcript clipped]\n\n" + text[-max_chars:]
 
 
-def _generate_with_speaker_backend(speaker: Dict[str, Any], req: "GenerationRequest") -> Tuple[str, Optional[int]]:
-    """Route a GenerationRequest to a speaker's configured backend (Local or Frontier).
+def _resolve_speaker_backend(speaker: Dict[str, Any]) -> Tuple[Any, str]:
+    """Return (backend, kind) for a speaker, reusing module-scope caches.
 
-    Backends are cached at module scope (`_LOCAL_BACKEND_CACHE` / `_FRONTIER_BACKEND_CACHE`)
-    so repeated turns/judgments reuse the same loaded model or client. Returns
-    (sanitized_text, total_tokens_or_None).
+    ``kind`` is "frontier" or "local". Backends are cached (`_LOCAL_BACKEND_CACHE` /
+    `_FRONTIER_BACKEND_CACHE`) so repeated turns/judgments reuse the same loaded
+    model or client instead of reloading weights per turn.
     """
     if str(speaker.get("backend") or "Local") == "Frontier":
         model_key = str(speaker.get("frontier_model") or os.environ.get("FRONTIER_MODEL") or "")
@@ -2238,8 +3964,7 @@ def _generate_with_speaker_backend(speaker: Dict[str, Any], req: "GenerationRequ
         if backend is None:
             backend = OpenAICompatibleBackend(model=model_key or None)
             _FRONTIER_BACKEND_CACHE[cache_key] = backend
-        text, usage = backend.generate(req)
-        return sanitize_model_output(text).strip(), usage.get("total_tokens")
+        return backend, "frontier"
 
     adapter = str(speaker.get("local_adapter") or "checkpoints/fe-lora-30m").strip()
     model_id = resolve_local_model_id(adapter, os.environ.get("MODEL"))
@@ -2248,8 +3973,45 @@ def _generate_with_speaker_backend(speaker: Dict[str, Any], req: "GenerationRequ
     if backend is None:
         backend = LocalMlxBackend(model_id=model_id, adapter_path=adapter)
         _LOCAL_BACKEND_CACHE[cache_key] = backend
+    return backend, "local"
+
+
+def _generate_with_speaker_backend(speaker: Dict[str, Any], req: "GenerationRequest") -> Tuple[str, Optional[int]]:
+    """Route a GenerationRequest to a speaker's backend and return (sanitized_text, total_tokens_or_None)."""
+    backend, kind = _resolve_speaker_backend(speaker)
+    if kind == "frontier":
+        text, usage = backend.generate(req)
+        return sanitize_model_output(text).strip(), usage.get("total_tokens")
     text = backend.generate(req)
     return sanitize_model_output(text).strip(), None
+
+
+def _stream_with_speaker_backend(speaker: Dict[str, Any], req: "GenerationRequest"):
+    """Yield incremental text deltas from a speaker's backend for a live typing effect.
+
+    Uses the backend's ``stream_generate`` (token-by-token for local MLX, SSE deltas
+    for frontier) when available. If streaming yields nothing or is unavailable, falls
+    back to a single full-text chunk via the non-streaming path. Deltas are raw model
+    output; callers should sanitize the concatenated result when finalizing.
+    """
+    backend, _kind = _resolve_speaker_backend(speaker)
+    stream = getattr(backend, "stream_generate", None)
+    if stream is not None:
+        produced = False
+        try:
+            for chunk in stream(req):
+                if chunk:
+                    produced = True
+                    yield chunk
+        except Exception:
+            if produced:
+                raise
+            produced = False  # nothing usable streamed; fall back below
+        if produced:
+            return
+    text, _tot = _generate_with_speaker_backend(speaker, req)
+    if text:
+        yield text
 
 
 def _judge_generate(
@@ -2342,6 +4104,204 @@ def _render_judge_scoreboard(verdicts: List[Dict[str, Any]], tally: Dict[str, An
     return "\n".join(lines)
 
 
+_CLAIM_EXTRACT_RE = re.compile(r"\bCLAIM\s*:\s*(.+?)(?:\n|$)", re.IGNORECASE)
+
+_CONVERSATION_SUMMARY_STRUCTURE = (
+    "Write a narrative summary using exactly this structure:\n"
+    "1. Opening paragraph (one sentence): Frame the debate topic and who argued what — "
+    "name each debater and their opposing position. Do not use inline speaker labels "
+    "(e.g. 'Researcher 2:') or meta notes about phases or end conditions.\n"
+    "2. Body paragraphs (one per debater, separated by blank lines): Each must begin with "
+    "'The basis of [Name]'s argument was...' and summarize substantive points from their "
+    "opening and final turns.\n"
+    "3. Closing paragraph: Begin with 'In summary...' — give a balanced conclusion, note "
+    "any agreement, and state the outcome if judges voted.\n\n"
+    "Use blank lines between paragraphs. No bullet lists, no section headings, no run-on "
+    "single paragraph, and no meta junk (e.g. 'End condition:', 'debate phases completed')."
+)
+
+
+def _normalize_summary_text(text: str) -> str:
+    """Collapse intra-line whitespace but preserve paragraph breaks."""
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    paragraphs = []
+    for block in re.split(r"\n\s*\n", raw):
+        line = " ".join(block.split())
+        if line:
+            paragraphs.append(line)
+    return "\n\n".join(paragraphs)
+
+
+def _extract_claim_or_snippet(content: str, max_len: int = 120) -> str:
+    match = _CLAIM_EXTRACT_RE.search(content or "")
+    if match:
+        return match.group(1).strip()[:max_len]
+    text = " ".join((content or "").split())
+    return text[:max_len] + ("…" if len(text) > max_len else "")
+
+
+def _infer_position_label(name: str, claim: str) -> str:
+    """Short position label for opening framing (e.g. 'Tolstoy' from name or claim)."""
+    blob = f"{name} {claim}".lower()
+    for author in ("tolstoy", "dostoevsky", "chekhov", "pushkin", "gogol"):
+        if author in blob:
+            return author.capitalize()
+    short = " ".join(claim.split()[:8]).rstrip(".,;")
+    return short or name
+
+
+def _extract_speaker_argument_basis(turns: List[Dict[str, Any]], *, max_len: int = 220) -> str:
+    """Substantive argument basis from a speaker's opening and final turns."""
+    if not turns:
+        return ""
+    opening = _extract_claim_or_snippet(str(turns[0].get("content") or ""), max_len=max_len)
+    if len(turns) == 1:
+        return opening.rstrip(".")
+    closing = _extract_claim_or_snippet(str(turns[-1].get("content") or ""), max_len=max_len)
+    if closing and closing != opening:
+        return f"{opening.rstrip('.')}, and in closing emphasized that {closing.rstrip('.')}"
+    return opening.rstrip(".")
+
+
+def _rule_based_conversation_summary(
+    chat_state: Optional[List[Dict[str, Any]]],
+    room_state: Optional[List[Dict[str, Any]]],
+    *,
+    stop_reason: Optional[str] = None,
+    verdicts: Optional[List[Dict[str, Any]]] = None,
+    tally: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Offline-safe narrative synopsis of a concluded debate."""
+    completed = _completed_chat_turns(chat_state)
+    topic = (_debate_topic_hint(chat_state) or "the assigned topic").strip().rstrip(".")
+    speakers = [n for n in _transcript_speaker_names(chat_state) if n.lower() != "human"]
+    paragraphs: List[str] = []
+
+    positions: List[Tuple[str, str]] = []
+    for name in speakers[:4]:
+        turns = [t for t in completed if _turn_speaker_name(t) == name]
+        claim = _extract_claim_or_snippet(str(turns[0].get("content") or "")) if turns else ""
+        positions.append((name, _infer_position_label(name, claim)))
+
+    if len(positions) >= 2:
+        first_name, first_pos = positions[0]
+        second_name, second_pos = positions[1]
+        opening = (
+            f"This conversation centered around {topic}, with both sides discussing opposing opinions: "
+            f"{first_name} proposed {first_pos}, while {second_name} argued for {second_pos}"
+        )
+        for extra_name, extra_pos in positions[2:]:
+            opening += f", and {extra_name} made the case for {extra_pos}"
+        opening += "."
+    elif positions:
+        only_name, only_pos = positions[0]
+        opening = (
+            f"This conversation centered around {topic}, with {only_name} arguing for {only_pos}."
+        )
+    else:
+        opening = f"This conversation centered around {topic}."
+
+    paragraphs.append(opening)
+
+    for name in speakers[:4]:
+        turns = [t for t in completed if _turn_speaker_name(t) == name]
+        basis = _extract_speaker_argument_basis(turns)
+        if basis:
+            paragraphs.append(f"The basis of {name}'s argument was {basis}.")
+
+    closing_parts = ["In summary, the exchange presented contrasting positions"]
+    winner = (tally or {}).get("winner") if tally else None
+    if winner:
+        closing_parts.append(f"and judges rated {winner} as having made the stronger overall case")
+    elif verdicts:
+        closing_parts.append("and judges reviewed the transcript without a clear winner")
+    elif len(speakers) >= 2:
+        closing_parts.append("without either side fully conceding")
+    paragraphs.append(f"{closing_parts[0]} {closing_parts[1] if len(closing_parts) > 1 else ''}.".replace("  ", " "))
+
+    return "\n\n".join(paragraphs)
+
+
+def _pick_summarizer_speaker(room_state: Optional[List[Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+    debaters = [s for s in (room_state or []) if s.get("name") and not _is_judge_speaker(s)]
+    for speaker in debaters:
+        if str(speaker.get("backend") or "Local") == "Frontier":
+            return speaker
+    return debaters[0] if debaters else None
+
+
+def _build_conversation_summary_request(
+    chat_state: List[Dict[str, Any]],
+    *,
+    stop_reason: Optional[str] = None,
+    verdicts: Optional[List[Dict[str, Any]]] = None,
+    tally: Optional[Dict[str, Any]] = None,
+) -> GenerationRequest:
+    transcript = _chat_transcript_by_name(chat_state, max_chars=8000)
+    topic = _debate_topic_hint(chat_state) or "the debate topic"
+    user_parts = [
+        f"Debate topic: {topic}",
+        f"Transcript:\n{transcript}",
+    ]
+    if tally and tally.get("winner"):
+        user_parts.append(f"Judge outcome (for closing paragraph only): {tally['winner']} won the panel vote.")
+    elif tally and tally.get("tie"):
+        user_parts.append("Judge outcome (for closing paragraph only): tie.")
+    user_parts.append(_CONVERSATION_SUMMARY_STRUCTURE)
+    system = (
+        "You are a neutral summarizer for a multi-agent debate. "
+        "Be factual, specific, and readable. Do not invent facts not in the transcript. "
+        "Do not mention end conditions, phase counts, or inline speaker labels."
+    )
+    return GenerationRequest(
+        messages=[ChatMessage("system", system), ChatMessage("user", "\n\n".join(user_parts))],
+        max_tokens=256,
+        temperature=0.2,
+    )
+
+
+def _generate_conversation_summary(
+    room_state: Optional[List[Dict[str, Any]]],
+    chat_state: Optional[List[Dict[str, Any]]],
+    *,
+    stop_reason: Optional[str] = None,
+    verdicts: Optional[List[Dict[str, Any]]] = None,
+    tally: Optional[Dict[str, Any]] = None,
+    max_tokens: int = 256,
+    temp: float = 0.2,
+) -> str:
+    """Summarize a concluded debate; try a speaker backend, else rule-based synthesis."""
+    state = _completed_chat_turns(chat_state)
+    if not state:
+        return ""
+    speaker = _pick_summarizer_speaker(room_state)
+    if speaker:
+        try:
+            req = _build_conversation_summary_request(
+                state,
+                stop_reason=stop_reason,
+                verdicts=verdicts,
+                tally=tally,
+            )
+            req.max_tokens = max(96, int(max_tokens))
+            req.temperature = float(temp or 0.2)
+            text, _ = _generate_with_speaker_backend(speaker, req)
+            cleaned = _normalize_summary_text(text)
+            if cleaned and len(cleaned) >= 40:
+                return cleaned
+        except Exception:
+            pass
+    return _rule_based_conversation_summary(
+        chat_state,
+        room_state,
+        stop_reason=stop_reason,
+        verdicts=verdicts,
+        tally=tally,
+    )
+
+
 def _build_debate_record(
     *,
     room_state: List[Dict[str, Any]],
@@ -2349,6 +4309,7 @@ def _build_debate_record(
     judge_names: List[str],
     verdicts: List[Dict[str, Any]],
     tally: Dict[str, Any],
+    summary: str = "",
 ) -> Dict[str, Any]:
     debaters = _transcript_speaker_names(chat_state)[:2]
     label = "_vs_".join(debaters) if debaters else "debate"
@@ -2372,7 +4333,384 @@ def _build_debate_record(
         "vote_tally": tally,
         "winner": tally.get("winner"),
         "tie": bool(tally.get("tie")),
+        "summary": (summary or "").strip(),
     }
+
+
+def _post_conversation_to_cloud(record: Dict[str, Any], timeout_s: int = 20) -> Optional[str]:
+    """Push a booked debate to the hosted Conversation DB (cloud/conversation_db).
+
+    Reads ``FE_CONVERSATION_DB_URL`` (base URL of the deployed service) and optional
+    ``FE_CONVERSATION_DB_TOKEN`` (bearer secret). Returns the public conversation URL
+    on success, or None when no cloud endpoint is configured. Raises on HTTP errors
+    so callers can surface the failure without losing the local JSONL copy.
+    """
+    base_url = (os.environ.get("FE_CONVERSATION_DB_URL") or "").strip().rstrip("/")
+    if not base_url:
+        return None
+    token = (os.environ.get("FE_CONVERSATION_DB_TOKEN") or "").strip()
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(
+        f"{base_url}/api/conversations",
+        data=json.dumps(record).encode("utf-8"),
+        headers=headers,
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+        body = json.loads(resp.read().decode("utf-8"))
+    conv_path = str(body.get("url") or "").lstrip("/")
+    return f"{base_url}/{conv_path}" if conv_path else base_url
+
+
+# --------------------------------------------------------------------------- #
+# Model Chat: persistent conversations + lobby/room state
+# --------------------------------------------------------------------------- #
+
+def _default_conversation_fields() -> Dict[str, Any]:
+    return {
+        "room_state": [],
+        "chat_state": [],
+        "in_room": False,
+        "max_rounds": DEFAULT_DEBATE_PHASES,
+        "max_tokens": 768,
+        "temperature": 0.5,
+        "early_stop_mode": DEFAULT_EARLY_STOP_MODE,
+        "summary": "",
+        "debate_concluded": False,
+        "debate_stop_reason": "",
+    }
+
+
+def _new_conversation_id() -> str:
+    return f"conv_{uuid.uuid4().hex[:12]}"
+
+
+def _create_conversation_record(*, title: str = "New conversation") -> Dict[str, Any]:
+    now = utc_now()
+    return {
+        "id": _new_conversation_id(),
+        "title": (title or "New conversation").strip() or "New conversation",
+        "created_at": now,
+        "updated_at": now,
+        **_default_conversation_fields(),
+    }
+
+
+CONVERSATION_TITLE_MAX_LEN = 60
+
+
+def _truncate_conversation_title(text: str, *, max_len: int = CONVERSATION_TITLE_MAX_LEN) -> str:
+    snippet = " ".join(str(text or "").split())
+    if not snippet:
+        return "New conversation"
+    if len(snippet) <= max_len:
+        return snippet
+    return snippet[: max_len - 1].rstrip() + "…"
+
+
+def _derive_conversation_title(conv: Dict[str, Any]) -> str:
+    if conv.get("title_manual"):
+        return _truncate_conversation_title(str(conv.get("title") or ""))
+    explicit = str(conv.get("title") or "").strip()
+    for item in conv.get("chat_state") or []:
+        if str(item.get("speaker_name") or item.get("speaker") or "") == "Human":
+            snippet = str(item.get("content") or "").strip().replace("\n", " ")
+            if snippet:
+                return _truncate_conversation_title(snippet)
+    for item in conv.get("chat_state") or []:
+        snippet = str(item.get("content") or "").strip().replace("\n", " ")
+        if snippet:
+            return _truncate_conversation_title(snippet)
+    debaters = _debater_names(conv.get("room_state"))
+    if debaters:
+        joined = ", ".join(debaters[:3]) + ("…" if len(debaters) > 3 else "")
+        return _truncate_conversation_title(joined)
+    if explicit and explicit != "New conversation":
+        return _truncate_conversation_title(explicit)
+    return "New conversation"
+
+
+def _conversation_sidebar_label(conv: Dict[str, Any]) -> str:
+    title = _derive_conversation_title(conv)
+    status = "in room" if conv.get("in_room") else "lobby"
+    turns = len(conv.get("chat_state") or [])
+    turn_note = f" · {turns} turn(s)" if turns else ""
+    return f"{title} ({status}{turn_note})"
+
+
+def _conversation_list_choices(store: Optional[Dict[str, Any]]) -> List[Tuple[str, str]]:
+    conversations = (store or {}).get("conversations") or {}
+    rows: List[Tuple[str, str]] = []
+    for conv_id, conv in sorted(
+        conversations.items(),
+        key=lambda item: str(item[1].get("updated_at") or item[1].get("created_at") or ""),
+        reverse=True,
+    ):
+        rows.append((_conversation_sidebar_label(conv), conv_id))
+    return rows
+
+
+def _empty_conversations_store() -> Dict[str, Any]:
+    conv = _create_conversation_record()
+    return {"active_id": conv["id"], "conversations": {conv["id"]: conv}}
+
+
+def _load_conversations_store() -> Dict[str, Any]:
+    """Load persisted conversations from local JSON (survives arena restarts)."""
+    path = MODEL_CHAT_CONVERSATIONS_INDEX
+    if not path.is_file():
+        store = _empty_conversations_store()
+        _save_conversations_store(store)
+        return store
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        store = _empty_conversations_store()
+        _save_conversations_store(store)
+        return store
+    conversations = raw.get("conversations") if isinstance(raw, dict) else None
+    if not isinstance(conversations, dict) or not conversations:
+        store = _empty_conversations_store()
+        _save_conversations_store(store)
+        return store
+    active_id = str(raw.get("active_id") or "")
+    if active_id not in conversations:
+        active_id = next(iter(conversations))
+    for conv in conversations.values():
+        for key, default in _default_conversation_fields().items():
+            conv.setdefault(key, default if not callable(default) else default())
+        conv.setdefault("title_manual", False)
+        if not conv.get("title_manual"):
+            conv["title"] = _derive_conversation_title(conv)
+    return {"active_id": active_id, "conversations": conversations}
+
+
+def _save_conversations_store(store: Dict[str, Any]) -> None:
+    MODEL_CHAT_CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "active_id": store.get("active_id"),
+        "conversations": store.get("conversations") or {},
+        "saved_at": utc_now(),
+    }
+    write_text(MODEL_CHAT_CONVERSATIONS_INDEX, json.dumps(payload, indent=2, ensure_ascii=False))
+
+
+def _get_active_conversation(store: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not store:
+        return None
+    conv_id = str(store.get("active_id") or "")
+    return (store.get("conversations") or {}).get(conv_id)
+
+
+def _set_active_conversation(store: Dict[str, Any], conv_id: str) -> Dict[str, Any]:
+    if conv_id not in (store.get("conversations") or {}):
+        raise KeyError(f"unknown conversation: {conv_id}")
+    store["active_id"] = conv_id
+    return store
+
+
+def _touch_conversation(conv: Dict[str, Any], **fields: Any) -> Dict[str, Any]:
+    conv.update(fields)
+    conv["updated_at"] = utc_now()
+    if not conv.get("title_manual"):
+        conv["title"] = _derive_conversation_title(conv)
+    return conv
+
+
+def _rename_active_conversation(store: Dict[str, Any], new_title: str) -> Dict[str, Any]:
+    conv = _get_active_conversation(store)
+    if not conv:
+        return store
+    title = _truncate_conversation_title(new_title)
+    conv["title"] = title
+    conv["title_manual"] = True
+    conv["updated_at"] = utc_now()
+    store["conversations"][conv["id"]] = conv
+    _save_conversations_store(store)
+    return store
+
+
+def _update_active_conversation(store: Dict[str, Any], **fields: Any) -> Dict[str, Any]:
+    conv = _get_active_conversation(store)
+    if not conv:
+        return store
+    _touch_conversation(conv, **fields)
+    store["conversations"][conv["id"]] = conv
+    _save_conversations_store(store)
+    return store
+
+
+def _add_conversation(store: Dict[str, Any], *, title: str = "New conversation") -> Dict[str, Any]:
+    conv = _create_conversation_record(title=title)
+    store.setdefault("conversations", {})[conv["id"]] = conv
+    store["active_id"] = conv["id"]
+    _save_conversations_store(store)
+    return store
+
+
+def _delete_conversation(store: Dict[str, Any], conv_id: str) -> Dict[str, Any]:
+    """Remove a conversation from the store; ensure at least one remains."""
+    target = str(conv_id or "").strip()
+    conversations = dict((store or {}).get("conversations") or {})
+    if not target or target not in conversations:
+        return store or _empty_conversations_store()
+    del conversations[target]
+    if not conversations:
+        fresh = _empty_conversations_store()
+        store["active_id"] = fresh["active_id"]
+        store["conversations"] = fresh["conversations"]
+    elif str(store.get("active_id") or "") == target:
+        next_id = max(
+            conversations.items(),
+            key=lambda item: str(item[1].get("updated_at") or item[1].get("created_at") or ""),
+        )[0]
+        store["active_id"] = next_id
+        store["conversations"] = conversations
+    else:
+        store["conversations"] = conversations
+    _save_conversations_store(store)
+    return store
+
+
+def _collect_conclude_votes(
+    chat_state: Optional[List[Dict[str, Any]]],
+    debater_names: Optional[List[str]],
+) -> set[str]:
+    """Return debater names who have signaled conclude via stop token or ended_debate flag."""
+    voted: set[str] = set()
+    debater_set = {str(n).strip().lower() for n in (debater_names or []) if str(n).strip()}
+    for item in chat_state or []:
+        speaker = str(item.get("speaker_name") or item.get("speaker") or "").strip()
+        if speaker.lower() not in debater_set:
+            continue
+        content = str(item.get("content") or "")
+        if item.get("ended_debate") or _debate_signaled_stop(content):
+            voted.add(speaker)
+    return voted
+
+
+def _render_conclude_vote_status(
+    conclude_votes: set[str],
+    debater_names: List[str],
+    *,
+    mode: str,
+) -> str:
+    if not debater_names:
+        return ""
+    parts = []
+    for name in debater_names:
+        mark = "✓" if name in conclude_votes else "—"
+        parts.append(f"**{name}** {mark}")
+    mode_label = {
+        "first_signal": "first conclude signal ends debate",
+        "unanimous": "all must vote to conclude",
+        "majority": "majority must vote to conclude",
+    }.get(mode, mode)
+    return f"**Vote to conclude** ({mode_label}): " + " · ".join(parts)
+
+
+def _early_stop_reached(
+    conclude_votes: set[str],
+    debater_names: List[str],
+    *,
+    mode: str = DEFAULT_EARLY_STOP_MODE,
+    just_signaled: bool = False,
+    just_voter: Optional[str] = None,
+) -> tuple[bool, str]:
+    n = len(debater_names)
+    if n == 0:
+        return False, ""
+    count = len(conclude_votes)
+    if mode == "first_signal" and just_signaled:
+        who = just_voter or "A debater"
+        return True, f"{who} signaled the debate is concluded."
+    if mode == "majority" and count > n // 2:
+        return True, f"Majority voted to conclude ({count}/{n})."
+    if mode == "unanimous" and count >= n:
+        return True, f"All debaters voted to conclude ({count}/{n})."
+    return False, ""
+
+
+def _lobby_room_visibility(in_room: bool) -> tuple[bool, bool]:
+    """Return (lobby_visible, room_visible) for the lobby ↔ room panels."""
+    return (not bool(in_room), bool(in_room))
+
+
+def _resolve_lobby_room_state(
+    room_state: Optional[List[Dict[str, Any]]],
+    conversations_store: Optional[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Prefer live Gradio ``room_state``; fall back to the persisted active conversation."""
+    live = [dict(s) for s in (room_state or []) if isinstance(s, dict)]
+    if live:
+        return live
+    conv = _get_active_conversation(conversations_store or {})
+    return [dict(s) for s in ((conv or {}).get("room_state") or []) if isinstance(s, dict)]
+
+
+def _format_room_speaker_summary(room_state: Optional[List[Dict[str, Any]]]) -> str:
+    speakers = list(room_state or [])
+    if not speakers:
+        return "No speakers yet. Add a speaker profile, then enter the room."
+    rows = []
+    for idx, speaker in enumerate(speakers, start=1):
+        tag = " `[JUDGE]`" if _is_judge_speaker(speaker) else ""
+        rows.append(
+            f"{idx}. `{speaker.get('name')}`{tag} — {speaker.get('backend')} — "
+            f"{speaker.get('profile') or 'no profile'}"
+        )
+    return "\n".join(rows)
+
+
+def _room_roster_note(speakers: Optional[List[Dict[str, Any]]]) -> str:
+    debaters = _debater_names(speakers)
+    judges = _judge_names(speakers)
+    parts = []
+    if debaters:
+        parts.append(f"{len(debaters)} debater(s): {', '.join(debaters)}")
+    if judges:
+        parts.append(f"{len(judges)} judge(s): {', '.join(judges)}")
+    return " · ".join(parts) if parts else "no speakers"
+
+
+def _upsert_room_speaker(
+    speakers: List[Dict[str, Any]],
+    speaker: Dict[str, Any],
+) -> tuple[List[Dict[str, Any]], bool]:
+    roster = [dict(s) for s in speakers or []]
+    clean_name = str(speaker.get("name") or "").strip()
+    replaced = False
+    for idx, existing in enumerate(roster):
+        if existing.get("name") == clean_name:
+            roster[idx] = dict(speaker)
+            replaced = True
+            break
+    if not replaced:
+        roster.append(dict(speaker))
+    return roster, replaced
+
+
+def _append_archetype_speaker(
+    speakers: List[Dict[str, Any]],
+    preset: Dict[str, Any],
+    *,
+    local_adapter: str,
+    frontier_model: str,
+) -> tuple[List[Dict[str, Any]], str, str]:
+    roster = [dict(s) for s in speakers or []]
+    unique = _unique_speaker_name([s.get("name") for s in roster], str(preset["name"]))
+    roster.append({
+        "name": unique,
+        "backend": preset.get("backend", "Local"),
+        "profile": preset.get("profile", ""),
+        "local_adapter": (local_adapter or "checkpoints/fe-lora-30m").strip(),
+        "frontier_model": (frontier_model or os.environ.get("FRONTIER_MODEL", "")).strip(),
+        "is_judge": bool(preset.get("is_judge")),
+    })
+    kind = "judge" if preset.get("is_judge") else "debater"
+    return roster, unique, kind
 
 
 def build_app():
@@ -2491,6 +4829,48 @@ body {
 .gradio-container a {
   color: var(--arena-cyan) !important;
 }
+.model-chat-sidebar {
+  border-right: 1px solid var(--arena-border) !important;
+  padding-right: 0.75rem !important;
+}
+.model-chat-archetype-row {
+  align-items: flex-end !important;
+  gap: 0.5rem !important;
+}
+.model-chat-archetype-row button {
+  min-height: 2.25rem !important;
+  height: 2.25rem !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.8125rem !important;
+  line-height: 1.2 !important;
+  border-radius: 8px !important;
+  white-space: nowrap !important;
+}
+.model-chat-archetype-row button.primary {
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.18) !important;
+}
+.model-chat-advanced-settings {
+  margin-top: 0.25rem !important;
+}
+.model-chat-advanced-settings > .label-wrap {
+  margin-bottom: 0.25rem !important;
+}
+.model-chat-advanced-settings .model-chat-advanced-row {
+  align-items: flex-start !important;
+  gap: 1rem !important;
+  flex-wrap: wrap !important;
+}
+.model-chat-advanced-settings .model-chat-advanced-row > * {
+  flex: 1 1 14rem !important;
+  min-width: 0 !important;
+}
+.model-chat-advanced-settings input[type="range"] {
+  width: 100% !important;
+}
+.model-chat-advanced-settings input[type="number"] {
+  min-width: 4.5rem !important;
+  max-width: 6rem !important;
+}
 .gradio-container table,
 .gradio-container th,
 .gradio-container td {
@@ -2556,6 +4936,24 @@ body {
   border-radius: 10px !important;
   border-color: var(--arena-border) !important;
   background: rgba(10, 11, 13, 0.96) !important;
+}
+/* Gradio adds `.pending` (opacity: 0.2) to outputs while a generator streams.
+   That made the whole chat unreadable during typing — keep it fully visible. */
+.gradio-container .pending,
+.gradio-container .block.pending,
+.gradio-container div.pending {
+  opacity: 1 !important;
+}
+.gradio-container .chatbot .message,
+.gradio-container .chatbot .bot,
+.gradio-container .chatbot .user {
+  color: var(--arena-text) !important;
+}
+.gradio-container .chatbot .user {
+  background: rgba(214, 173, 75, 0.12) !important;
+}
+.gradio-container .chatbot .bot {
+  background: rgba(94, 196, 189, 0.08) !important;
 }
 """
 
@@ -2986,16 +5384,43 @@ body {
         return pairs
 
     def _chat_transcript(chat_state, max_chars: int = 12000) -> str:
-        lines = []
-        for item in chat_state or []:
-            speaker = item.get("speaker", item.get("role", "speaker"))
-            content = (item.get("content") or "").strip()
-            if content:
-                lines.append(f"{speaker}: {content}")
-        text = "\n\n".join(lines)
-        if len(text) <= max_chars:
-            return text
-        return "[earlier transcript clipped]\n\n" + text[-max_chars:]
+        return _chat_transcript_by_name(chat_state, max_chars)
+
+    def _chat_request(
+        speaker,
+        chat_state,
+        max_tokens,
+        temp,
+        opponents=None,
+        anti_repeat=False,
+        *,
+        phase=None,
+        round_idx=None,
+        max_rounds=None,
+    ):
+        topic = _debate_topic_hint(chat_state)
+        used_evidence = _evidence_already_used(chat_state)
+        if _debate_search_enabled():
+            if anti_repeat and used_evidence:
+                reference_facts = _debate_fresh_reference_facts(speaker, topic, used_evidence)
+            else:
+                reference_facts = _debate_reference_facts(speaker, topic)
+        else:
+            reference_facts = ""
+        return _build_debate_turn_request(
+            speaker,
+            chat_state,
+            int(max_tokens or 768),
+            float(temp or 0.0),
+            opponents=opponents,
+            anti_repeat=anti_repeat,
+            topic_hint=topic,
+            simple_mode=anti_repeat,
+            reference_facts=reference_facts,
+            phase=phase,
+            round_idx=round_idx,
+            max_rounds=max_rounds,
+        ), _speaker_label(speaker)
 
     def _default_chat_speakers():
         return []
@@ -3023,166 +5448,362 @@ body {
         model_id = resolve_local_model_id(adapter, os.environ.get("MODEL"))
         return f"{name} [{backend}: {adapter} on {model_id}]"
 
-    def _chat_generate(
-        speaker_name,
-        room_state,
-        chat_state,
-        max_tokens,
-        temp,
-    ):
-        speaker = _find_speaker(room_state, speaker_name)
-        if not speaker:
-            raise RuntimeError("Add at least one speaker in Setup Conversation Room, then enter the room.")
-        label = _speaker_label(speaker)
-        profile = str(speaker.get("profile") or "").strip()
-        transcript = _chat_transcript(chat_state)
-        system = (
-            "You are participating in the Fallen Empire arena model chat. "
-            "Respond as the selected model speaker, stay grounded in the shared transcript, "
-            "and address the previous turn directly. Keep answers concise unless code or diagnosis requires detail. "
-            "If you and the other speaker(s) have reached genuine agreement, or you have nothing new to contribute, "
-            f"end your reply with the exact token {DEBATE_STOP_TOKEN} on its own final line to signal the "
-            "conversation can conclude. Only use that token when the discussion has truly resolved — do not use "
-            "it prematurely."
-            + (f"\n\nSpeaker profile:\n{profile}" if profile else "")
+    def chat_clear_ui(conversations_store):
+        store = _update_active_conversation(
+            dict(conversations_store or {}),
+            chat_state=[],
+            summary="",
+            debate_concluded=False,
+            debate_stop_reason="",
         )
-        user = (
-            f"Current speaker: {label}\n\n"
-            "Shared transcript:\n"
-            f"{transcript or '(empty)'}\n\n"
-            "Write the next contribution from the current speaker only."
+        conv = _get_active_conversation(store) or {}
+        names = _debater_names(conv.get("room_state"))
+        mode = conv.get("early_stop_mode") or DEFAULT_EARLY_STOP_MODE
+        return [], [], "", _render_conclude_vote_status(set(), names, mode=mode), store, "Transcript cleared.", ""
+
+    def _active_conv_snapshot(store, room_state, chat_state, **extra):
+        fields = {
+            "room_state": list(room_state or []),
+            "chat_state": list(chat_state or []),
+        }
+        fields.update(extra)
+        return _update_active_conversation(dict(store or {}), **fields)
+
+    def _conv_list_update(store):
+        choices = _conversation_list_choices(store)
+        active = _get_active_conversation(store)
+        active_id = active["id"] if active else (choices[0][1] if choices else None)
+        return gr.update(choices=choices, value=active_id)
+
+    def _sync_from_active_conv(store):
+        conv = _get_active_conversation(store) or {}
+        lobby_vis, room_vis = _lobby_room_visibility(bool(conv.get("in_room")))
+        names = _debater_names(conv.get("room_state"))
+        mode = conv.get("early_stop_mode") or DEFAULT_EARLY_STOP_MODE
+        votes = _collect_conclude_votes(conv.get("chat_state"), names)
+        judge_choices, judge_selected = _judge_checkbox_state(conv.get("room_state"))
+        return (
+            store,
+            conv.get("room_state") or [],
+            _chat_pairs(conv.get("chat_state")),
+            conv.get("chat_state") or [],
+            gr.update(visible=lobby_vis),
+            gr.update(visible=room_vis),
+            room_summary(conv.get("room_state")),
+            gr.update(choices=judge_choices, value=judge_selected),
+            conv.get("max_rounds", DEFAULT_DEBATE_PHASES),
+            conv.get("max_tokens", 768),
+            conv.get("temperature", 0.5),
+            mode,
+            _render_conclude_vote_status(votes, names, mode=mode),
+            _conv_list_update(store),
+            f"**{_derive_conversation_title(conv)}** — {'in room' if conv.get('in_room') else 'lobby'}.",
+            _format_debate_summary_panel(str(conv.get("summary") or "")),
+            gr.update(value=_derive_conversation_title(conv)),
         )
-        req = GenerationRequest(
-            messages=[ChatMessage("system", system), ChatMessage("user", user)],
-            max_tokens=max(64, int(max_tokens or 768)),
-            temperature=float(temp or 0.0),
-        )
-        text, total_tokens = _generate_with_speaker_backend(speaker, req)
-        status = f"{label} responded" + (f" using {total_tokens} tokens." if total_tokens else ".")
-        return text, status
 
-    def chat_send_ui(
-        user_text,
-        speaker_name,
-        room_state,
-        chat_state,
-        max_tokens,
-        temp,
-    ):
-        state = list(chat_state or [])
-        text = (user_text or "").strip()
-        if not text:
-            return _chat_pairs(state), state, "", "Enter a message or use Continue Selected Model."
-        state.append({"speaker": "Human", "speaker_name": "Human", "content": text})
-        try:
-            reply, status = _chat_generate(speaker_name, room_state, state, int(max_tokens or 768), float(temp or 0.0))
-            ended = _debate_signaled_stop(reply)
-            state.append({
-                "speaker": _speaker_label(_find_speaker(room_state, speaker_name)),
-                "speaker_name": speaker_name,
-                "content": _strip_stop_token(reply),
-                "ended_debate": ended,
-            })
-            if ended:
-                status = f"{status} (signaled debate conclusion)"
-        except Exception as exc:
-            status = f"{speaker_name} failed: `{type(exc).__name__}: {exc}`"
-        return _chat_pairs(state), state, "", status
+    def select_conversation_ui(conv_id, store):
+        if not conv_id or conv_id not in (store or {}).get("conversations", {}):
+            return _sync_from_active_conv(store)
+        store = dict(store or {})
+        _set_active_conversation(store, conv_id)
+        _save_conversations_store(store)
+        return _sync_from_active_conv(store)
 
-    def chat_continue_ui(
-        speaker_name,
-        room_state,
-        chat_state,
-        max_tokens,
-        temp,
-    ):
-        state = list(chat_state or [])
-        if not state:
-            return _chat_pairs(state), state, "Start with a human message first."
-        try:
-            reply, status = _chat_generate(speaker_name, room_state, state, int(max_tokens or 768), float(temp or 0.0))
-            ended = _debate_signaled_stop(reply)
-            state.append({
-                "speaker": _speaker_label(_find_speaker(room_state, speaker_name)),
-                "speaker_name": speaker_name,
-                "content": _strip_stop_token(reply),
-                "ended_debate": ended,
-            })
-            if ended:
-                status = f"{status} (signaled debate conclusion)"
-        except Exception as exc:
-            status = f"{speaker_name} failed: `{type(exc).__name__}: {exc}`"
-        return _chat_pairs(state), state, status
+    def new_conversation_ui(store):
+        store = dict(store or {})
+        _add_conversation(store)
+        return _sync_from_active_conv(store)
 
-    def chat_clear_ui():
-        return [], [], ""
+    def rename_conversation_ui(new_title, store):
+        store = dict(store or {})
+        title = (new_title or "").strip()
+        if not title:
+            return _sync_from_active_conv(store)
+        _rename_active_conversation(store, title)
+        return _sync_from_active_conv(store)
+
+    def delete_conversation_ui(conv_id, store):
+        store = dict(store or {})
+        target = str(conv_id or store.get("active_id") or "").strip()
+        if not target:
+            return _sync_from_active_conv(store)
+        _delete_conversation(store, target)
+        return _sync_from_active_conv(store)
+
+    TYPING_CURSOR = DEBATE_TYPING_CURSOR
 
     def run_agentic_loop_ui(
         opening_message,
-        participant_names,
         room_state,
         chat_state,
         max_tokens,
         temp,
         max_rounds,
+        early_stop_mode,
+        conversations_store,
     ):
-        """Broadcast one message to several speakers and let them keep responding to
-        each other automatically (round-robin, each seeing prior turns) until a
-        speaker signals the debate is concluded or `max_rounds` is hit (safety cap)."""
-        state = list(chat_state or [])
-        names = [n for n in (participant_names or []) if n]
+        """Structured debate: proposal → develop (×N−2) → conclusion (each debater once per phase), then adjudicator.
+
+        Streams each reply into the chatbox. Stops when debaters vote to conclude
+        (per ``early_stop_mode``) or ``max_rounds`` debate phases complete. Judges
+        sit out the debate phases and produce the phase-4 write-up when present."""
+        empty_summary = ""
+        state = _hydrate_loop_chat_state(conversations_store, chat_state)
+        names = _debater_names(room_state)
+        mode = (early_stop_mode or DEFAULT_EARLY_STOP_MODE).strip().lower()
+        if mode not in EARLY_STOP_MODES:
+            mode = DEFAULT_EARLY_STOP_MODE
         opening = (opening_message or "").strip()
         if not names:
-            yield _chat_pairs(state), state, opening_message, "Select at least one participant to broadcast to."
+            yield _chat_pairs(state), state, opening_message, "", conversations_store, "Add at least one non-judge speaker, then Enter Room.", empty_summary
             return
         if not opening and not state:
-            yield _chat_pairs(state), state, "", "Enter an opening message to broadcast to the selected participants."
+            yield _chat_pairs(state), state, "", "", conversations_store, "Type a message to kick off the debate.", empty_summary
             return
         if opening:
             state.append({"speaker": "Human", "speaker_name": "Human", "content": opening})
-            yield _chat_pairs(state), state, "", f"Broadcasting to {', '.join(names)}…"
+            yield _chat_pairs(state), state, "", _render_conclude_vote_status(set(), names, mode=mode), conversations_store, f"Sent to {', '.join(names)}. Debate starting…", empty_summary
 
-        rounds_cap = max(1, int(max_rounds or 1))
+        phases_cap = max(1, int(max_rounds or DEFAULT_DEBATE_PHASES))
+        conclude_votes = _collect_conclude_votes(state, names)
         stop_reason = None
-        for round_idx in range(1, rounds_cap + 1):
+        for round_idx in range(1, phases_cap + 1):
+            phase = _debate_phase_for_round(round_idx, phases_cap)
             for name in names:
                 speaker = _find_speaker(room_state, name)
                 if not speaker or speaker.get("name") != name:
                     continue
                 label = _speaker_label(speaker)
+                prompt_state = _completed_chat_turns(state)
+                req, _lbl = _chat_request(
+                    speaker, prompt_state, int(max_tokens or 768), float(temp or 0.0),
+                    opponents=names, phase=phase, round_idx=round_idx, max_rounds=phases_cap,
+                )
+                state.append({"speaker": label, "speaker_name": name, "content": "", "ended_debate": False})
+                vote_status = _render_conclude_vote_status(conclude_votes, names, mode=mode)
+                typing_status = _format_debate_phase_status(round_idx, phases_cap, detail=f"{name} is typing…")
+                acc = ""
+                last_emit = 0.0
                 try:
-                    reply, _status = _chat_generate(name, room_state, state, int(max_tokens or 768), float(temp or 0.0))
-                    ended = _debate_signaled_stop(reply)
-                    state.append({
-                        "speaker": label,
-                        "speaker_name": name,
-                        "content": _strip_stop_token(reply),
-                        "ended_debate": ended,
-                    })
-                    status = f"Round {round_idx}/{rounds_cap} — {label} responded."
+                    for chunk in _stream_with_speaker_backend(speaker, req):
+                        acc += chunk
+                        if _stream_signals_pass(acc):
+                            break
+                        state[-1]["content"] = acc + TYPING_CURSOR
+                        now = time.perf_counter()
+                        if now - last_emit >= 0.05:
+                            last_emit = now
+                            yield _chat_pairs(state), state, "", vote_status, conversations_store, typing_status, empty_summary
+                    prior_state = _completed_chat_turns(state[:-1])
+                    final_text, ended, explicit_pass = _parse_debate_model_output(
+                        speaker, acc, prior_state, names, phase=phase,
+                    )
+                    if explicit_pass:
+                        state.pop()
+                        status = _format_pass_turn_status(name, debug=acc)
+                    elif final_text is None:
+                        typing_status = _format_debate_phase_status(
+                            round_idx, phases_cap, detail=f"{name} retrying (too repetitive)…",
+                        )
+                        yield _chat_pairs(state), state, "", vote_status, conversations_store, typing_status, empty_summary
+                        retry_req, _ = _chat_request(
+                            speaker, prior_state, int(max_tokens or 768), float(temp or 0.0),
+                            opponents=names, anti_repeat=True,
+                            phase=phase, round_idx=round_idx, max_rounds=phases_cap,
+                        )
+                        acc = ""
+                        for chunk in _stream_with_speaker_backend(speaker, retry_req):
+                            acc += chunk
+                            if _stream_signals_pass(acc):
+                                break
+                            state[-1]["content"] = acc + TYPING_CURSOR
+                            now = time.perf_counter()
+                            if now - last_emit >= 0.05:
+                                last_emit = now
+                                yield _chat_pairs(state), state, "", vote_status, conversations_store, typing_status, empty_summary
+                        final_text, ended, explicit_pass = _parse_debate_model_output(
+                            speaker, acc, prior_state, names, phase=phase,
+                        )
+                        if explicit_pass:
+                            state.pop()
+                            status = _format_pass_turn_status(name, debug=acc)
+                        elif final_text is None:
+                            if _is_substantive_less_turn("", acc, speaker, prior_state, phase=phase):
+                                state.pop()
+                                status = _format_pass_turn_status(name, debug=acc)
+                            else:
+                                fallback = _fallback_debate_turn(speaker, prior_state)
+                                if _is_debate_pass_turn(fallback, fallback):
+                                    state.pop()
+                                    status = _format_pass_turn_status(name, debug=acc or fallback)
+                                else:
+                                    state[-1]["content"] = fallback
+                                    state[-1]["ended_debate"] = ended
+                                    status = _format_debate_phase_status(round_idx, phases_cap, detail=f"{label} responded.")
+                        else:
+                            state[-1]["content"] = final_text
+                            state[-1]["ended_debate"] = ended
+                            status = _format_debate_phase_status(round_idx, phases_cap, detail=f"{label} responded.")
+                    else:
+                        state[-1]["content"] = final_text
+                        state[-1]["ended_debate"] = ended
+                        status = _format_debate_phase_status(round_idx, phases_cap, detail=f"{label} responded.")
                     if ended:
-                        stop_reason = f"{name} signaled the debate is concluded (round {round_idx})."
+                        conclude_votes.add(name)
+                    vote_status = _render_conclude_vote_status(conclude_votes, names, mode=mode)
+                    reached, reason = _early_stop_reached(
+                        conclude_votes, names, mode=mode, just_signaled=ended, just_voter=name,
+                    )
+                    if reached:
+                        stop_reason = f"{reason} (phase {round_idx}/{phases_cap})."
                         status += " Debate concluded."
                 except Exception as exc:
-                    status = f"Round {round_idx}/{rounds_cap} — {name} failed: `{type(exc).__name__}: {exc}`"
-                yield _chat_pairs(state), state, "", status
+                    state[-1]["content"] = f"_(failed: {type(exc).__name__}: {exc})_"
+                    status = _format_debate_phase_status(
+                        round_idx, phases_cap, detail=f"{name} failed: `{type(exc).__name__}: {exc}`",
+                    )
+                store = _update_active_conversation(
+                    dict(conversations_store or {}),
+                    chat_state=state,
+                    room_state=list(room_state or []),
+                )
+                yield _chat_pairs(state), state, "", vote_status, store, status, empty_summary
                 if stop_reason:
                     break
             if stop_reason:
                 break
 
-        final_status = stop_reason or f"Reached max rounds ({rounds_cap}) without a concession — stopping (safety cap)."
-        yield _chat_pairs(state), state, "", final_status
+        final_status = stop_reason or f"Completed {phases_cap} debate phase(s) — adjudicator next."
+        adjudicator = _resolve_adjudicator(room_state)
+        if adjudicator:
+            adj_name = str(adjudicator.get("name") or "Adjudicator")
+            adj_label = _speaker_label(adjudicator)
+            yield (
+                _chat_pairs(state),
+                state,
+                "",
+                _render_conclude_vote_status(conclude_votes, names, mode=mode),
+                conversations_store,
+                _format_adjudicator_status(detail=f"{adj_name} is writing…"),
+                empty_summary,
+            )
+            state.append({"speaker": adj_label, "speaker_name": adj_name, "content": "", "ended_debate": False})
+            acc = ""
+            last_emit = 0.0
+            try:
+                req = _build_adjudicator_request(
+                    adjudicator, state[:-1], int(max_tokens or 768), float(temp or 0.0),
+                )
+                for chunk in _stream_with_speaker_backend(adjudicator, req):
+                    acc += chunk
+                    state[-1]["content"] = acc + TYPING_CURSOR
+                    now = time.perf_counter()
+                    if now - last_emit >= 0.05:
+                        last_emit = now
+                        yield (
+                            _chat_pairs(state), state, "", _render_conclude_vote_status(conclude_votes, names, mode=mode),
+                            conversations_store, _format_adjudicator_status(detail=f"{adj_name} is writing…"), empty_summary,
+                        )
+                writeup = " ".join((acc or "").split())
+                if not writeup or len(writeup) < 40:
+                    writeup = _generate_adjudicator_writeup(
+                        adjudicator, state[:-1], int(max_tokens or 768), float(temp or 0.0),
+                    )
+                state[-1]["content"] = writeup
+                adj_status = _format_adjudicator_status(detail=f"{adj_label} finished.")
+            except Exception as exc:
+                writeup = _generate_adjudicator_writeup(
+                    adjudicator, state[:-1], int(max_tokens or 768), float(temp or 0.0),
+                )
+                state[-1]["content"] = writeup or f"_(adjudicator failed: {type(exc).__name__}: {exc})_"
+                adj_status = _format_adjudicator_status(detail=f"{adj_name} failed — used fallback summary.")
+            summary = writeup or ""
+            store = _update_active_conversation(
+                dict(conversations_store or {}),
+                chat_state=state,
+                room_state=list(room_state or []),
+                summary=summary,
+                debate_concluded=True,
+                debate_stop_reason=final_status,
+            )
+            summary_panel = _format_debate_summary_panel(summary)
+            yield (
+                _chat_pairs(state), state, "", _render_conclude_vote_status(conclude_votes, names, mode=mode),
+                store, f"{final_status} {adj_status}", summary_panel,
+            )
+            return
 
-    def judge_the_debate_ui(judge_names_selected, room_state, chat_state, max_tokens, temp):
+        yield (
+            _chat_pairs(state),
+            state,
+            "",
+            _render_conclude_vote_status(conclude_votes, names, mode=mode),
+            conversations_store,
+            "Generating conversation summary…",
+            empty_summary,
+        )
+        summary = _generate_conversation_summary(
+            room_state,
+            state,
+            stop_reason=final_status,
+            max_tokens=int(max_tokens or 768),
+            temp=float(temp or 0.0),
+        )
+        store = _update_active_conversation(
+            dict(conversations_store or {}),
+            chat_state=state,
+            room_state=list(room_state or []),
+            summary=summary,
+            debate_concluded=True,
+            debate_stop_reason=final_status,
+        )
+        summary_panel = _format_debate_summary_panel(summary)
+        yield _chat_pairs(state), state, "", _render_conclude_vote_status(conclude_votes, names, mode=mode), store, final_status, summary_panel
+
+    def send_message_if_in_room(
+        opening_message,
+        room_state,
+        chat_state,
+        max_tokens,
+        temp,
+        max_rounds,
+        early_stop_mode,
+        conversations_store,
+    ):
+        """Send handler for Enter/submit — only runs the debate loop when in the room."""
+        if not _conversation_in_room(conversations_store):
+            msg = (opening_message or "").strip()
+            status = "Enter the room before sending a message." if msg else ""
+            state = list(chat_state or [])
+            yield _chat_pairs(state), state, opening_message, "", conversations_store, status, ""
+            return
+        yield from run_agentic_loop_ui(
+            opening_message,
+            room_state,
+            chat_state,
+            max_tokens,
+            temp,
+            max_rounds,
+            early_stop_mode,
+            conversations_store,
+        )
+
+    def continue_loop_ui(room_state, chat_state, max_tokens, temp, max_rounds, early_stop_mode, conversations_store):
+        """Keep the debate going with no new human message (speakers respond to each other)."""
+        yield from run_agentic_loop_ui(
+            "", room_state, chat_state, max_tokens, temp, max_rounds, early_stop_mode, conversations_store,
+        )
+
+    def judge_the_debate_ui(judge_names_selected, room_state, chat_state, max_tokens, temp, conversations_store):
         speakers = list(room_state or [])
         selected = set(judge_names_selected or [])
         judges = [s for s in speakers if s.get("name") in selected and _is_judge_speaker(s)]
         if not judges:
-            return "", "Select at least one judge (add a speaker with 'This speaker is a judge' checked, then Enter Room)."
+            return "", "Select at least one judge (add a speaker with 'This speaker is a judge' checked, then Enter Room).", ""
         candidates = _transcript_speaker_names(chat_state)
         if len(candidates) < 2:
-            return "", "Need at least two participants with turns in the transcript before judging."
+            return "", "Need at least two participants with turns in the transcript before judging.", ""
         transcript = _chat_transcript_by_name(chat_state)
         verdicts: list[Dict[str, Any]] = []
         for judge in judges:
@@ -3195,52 +5816,66 @@ body {
             verdicts.append({"judge": judge.get("name"), "judge_label": judge_label, **parsed})
         tally = _tally_judge_votes(verdicts)
         scoreboard = _render_judge_scoreboard(verdicts, tally, candidates)
+        conv = _get_active_conversation(conversations_store or {}) or {}
+        stop_reason = str(conv.get("debate_stop_reason") or "")
+        summary = _generate_conversation_summary(
+            speakers,
+            chat_state,
+            stop_reason=stop_reason or None,
+            verdicts=verdicts,
+            tally=tally,
+            max_tokens=int(max_tokens or 768),
+            temp=float(temp or 0.0),
+        )
         record = _build_debate_record(
             room_state=speakers,
             chat_state=chat_state,
             judge_names=[j.get("name") for j in judges],
             verdicts=verdicts,
             tally=tally,
+            summary=summary,
         )
         try:
             append_jsonl(MODEL_CHAT_DEBATES_PATH, record)
             persist_note = f" Logged to `{MODEL_CHAT_DEBATES_PATH.relative_to(REPO)}` for training data."
         except Exception as exc:
             persist_note = f" (failed to log debate record: `{type(exc).__name__}: {exc}`)"
-        status = f"{len(judges)} judge(s) voted." + persist_note
-        return scoreboard, status
+        cloud_note = ""
+        try:
+            cloud_url = _post_conversation_to_cloud(record)
+            if cloud_url:
+                cloud_note = f" Booked to the cloud: [{cloud_url}]({cloud_url})"
+        except Exception as exc:
+            cloud_note = f" (cloud push failed: `{type(exc).__name__}: {exc}` — local copy is safe)"
+        _update_active_conversation(dict(conversations_store or {}), summary=summary)
+        status = f"{len(judges)} judge(s) voted." + persist_note + cloud_note
+        return scoreboard, status, _format_debate_summary_panel(summary)
 
     def room_summary(room_state) -> str:
-        speakers = list(room_state or [])
-        if not speakers:
-            return "No speakers yet. Add a speaker profile, then enter the room."
-        rows = []
-        for idx, speaker in enumerate(speakers, start=1):
-            tag = " `[JUDGE]`" if _is_judge_speaker(speaker) else ""
-            rows.append(f"{idx}. `{speaker.get('name')}`{tag} — {speaker.get('backend')} — {speaker.get('profile') or 'no profile'}")
-        return "\n".join(rows)
+        return _format_room_speaker_summary(room_state)
 
-    def room_reset_ui():
+    def room_reset_ui(room_state, conversations_store):
         speakers = []
+        store = _active_conv_snapshot(
+            conversations_store,
+            speakers,
+            (_get_active_conversation(conversations_store or {}) or {}).get("chat_state") or [],
+        )
         return (
             speakers,
             room_summary(speakers),
-            gr.update(choices=[], value=None),
-            gr.update(choices=[], value=[]),
-            gr.update(choices=[], value=[]),
+            store,
             "Room cleared.",
         )
 
-    def room_add_speaker_ui(room_state, name, backend, profile, local_adapter, frontier_model, is_judge):
-        speakers = list(room_state or [])
+    def room_add_speaker_ui(room_state, name, backend, profile, local_adapter, frontier_model, is_judge, conversations_store):
+        speakers = _resolve_lobby_room_state(room_state, conversations_store)
         clean_name = (name or "").strip()
         if not clean_name:
             return (
                 speakers,
                 room_summary(speakers),
-                gr.update(choices=_speaker_choices(speakers)),
-                gr.update(choices=_debater_names(speakers)),
-                gr.update(choices=_judge_names(speakers)),
+                conversations_store,
                 "Speaker name is required.",
             )
         speaker = {
@@ -3251,39 +5886,130 @@ body {
             "frontier_model": (frontier_model or os.environ.get("FRONTIER_MODEL", "")).strip(),
             "is_judge": bool(is_judge),
         }
-        replaced = False
-        for idx, existing in enumerate(speakers):
-            if existing.get("name") == clean_name:
-                speakers[idx] = speaker
-                replaced = True
-                break
-        if not replaced:
-            speakers.append(speaker)
-        choices = _speaker_choices(speakers)
+        speakers, replaced = _upsert_room_speaker(speakers, speaker)
+        chat_state = (_get_active_conversation(conversations_store or {}) or {}).get("chat_state") or []
+        store = _active_conv_snapshot(conversations_store, speakers, chat_state)
         return (
             speakers,
             room_summary(speakers),
-            gr.update(choices=choices, value=clean_name),
-            gr.update(choices=_debater_names(speakers)),
-            gr.update(choices=_judge_names(speakers)),
+            store,
             f"Updated `{clean_name}`." if replaced else f"Added `{clean_name}`.",
         )
 
-    def room_enter_ui(room_state):
-        speakers = list(room_state or [])
+    def room_enter_ui(room_state, conversations_store):
+        speakers = _resolve_lobby_room_state(room_state, conversations_store)
         if not speakers:
             return (
-                gr.update(choices=[], value=None),
-                gr.update(choices=[], value=[]),
-                gr.update(choices=[], value=[]),
+                speakers,
+                room_summary(speakers),
+                gr.update(),
+                gr.update(),
+                conversations_store,
+                gr.update(),
+                gr.update(),
                 "Add at least one speaker before entering the room.",
             )
-        choices = _speaker_choices(speakers)
+        chat_state = (_get_active_conversation(conversations_store or {}) or {}).get("chat_state") or []
+        store = _active_conv_snapshot(conversations_store, speakers, chat_state, in_room=True)
+        judge_choices, judge_selected = _judge_checkbox_state(speakers)
+        lobby_vis, room_vis = _lobby_room_visibility(True)
         return (
-            gr.update(choices=choices, value=choices[0]),
-            gr.update(choices=_debater_names(speakers), value=[]),
-            gr.update(choices=_judge_names(speakers), value=[]),
-            f"Entered room with {len(speakers)} speaker(s).",
+            speakers,
+            room_summary(speakers),
+            gr.update(choices=judge_choices, value=judge_selected),
+            store,
+            gr.update(visible=lobby_vis),
+            gr.update(visible=room_vis),
+            f"Entered room ({_room_roster_note(speakers)}).",
+        )
+
+    def room_exit_ui(room_state, conversations_store):
+        speakers = _resolve_lobby_room_state(room_state, conversations_store)
+        chat_state = (_get_active_conversation(conversations_store or {}) or {}).get("chat_state") or []
+        store = _active_conv_snapshot(conversations_store, speakers, chat_state, in_room=False)
+        lobby_vis, room_vis = _lobby_room_visibility(False)
+        return (
+            store,
+            gr.update(visible=lobby_vis),
+            gr.update(visible=room_vis),
+            "Left the room — adjust setup in the lobby, then Enter Room again.",
+        )
+
+    def archetype_picker_sync_ui(name):
+        """Preview the selected preset and toggle the custom-speaker form."""
+        return (
+            _archetype_preview_text(name),
+            gr.update(visible=_lobby_custom_fields_visible(name)),
+        )
+
+    def room_add_archetype_ui(room_state, name, local_adapter, frontier_model, conversations_store):
+        speakers = _resolve_lobby_room_state(room_state, conversations_store)
+        if _is_custom_archetype_pick(name):
+            return (
+                speakers,
+                room_summary(speakers),
+                conversations_store,
+                "Use **Add Or Update Speaker** below for a custom agent.",
+                gr.update(visible=True),
+            )
+        preset = _find_archetype(name)
+        if not preset:
+            return (
+                speakers,
+                room_summary(speakers),
+                conversations_store,
+                "Pick a base archetype first.",
+                gr.update(),
+            )
+        speakers, unique, kind = _append_archetype_speaker(
+            speakers,
+            preset,
+            local_adapter=local_adapter,
+            frontier_model=frontier_model,
+        )
+        chat_state = (_get_active_conversation(conversations_store or {}) or {}).get("chat_state") or []
+        store = _active_conv_snapshot(conversations_store, speakers, chat_state)
+        return (
+            speakers,
+            room_summary(speakers),
+            store,
+            f"Added `{unique}` ({kind}) from the **{preset['name']}** archetype. Press **Enter Room** when ready.",
+            gr.update(),
+        )
+
+    def lobby_settings_change_ui(room_state, chat_state, max_rounds, max_tokens, temp, early_stop_mode, conversations_store):
+        store = _active_conv_snapshot(
+            conversations_store,
+            room_state,
+            chat_state,
+            max_rounds=int(max_rounds or DEFAULT_DEBATE_PHASES),
+            max_tokens=int(max_tokens or 768),
+            temperature=float(temp or 0.5),
+            early_stop_mode=(early_stop_mode or DEFAULT_EARLY_STOP_MODE),
+        )
+        return store
+
+    def archetype_load_into_form_ui(name):
+        loaded = _archetype_load_into_form_values(name)
+        if not loaded:
+            return (
+                gr.update(),
+                gr.update(),
+                gr.update(),
+                gr.update(),
+                gr.update(),
+                gr.update(visible=False),
+                gr.update(),
+            )
+        picker_value, speaker_name, backend, profile, is_judge = loaded
+        return (
+            gr.update(value=picker_value),
+            gr.update(value=speaker_name),
+            gr.update(value=backend),
+            gr.update(value=profile),
+            gr.update(value=is_judge),
+            gr.update(visible=True),
+            gr.update(value=_archetype_preview_text(picker_value)),
         )
 
     with gr.Blocks(title="Fallen Empire Game Task Arena", css=theme_css) as demo:
@@ -3361,76 +6087,281 @@ body {
                 )
 
             with gr.Tab("Model Chat"):
-                room_state = gr.State([])
-                chat_state = gr.State([])
-                gr.Markdown("## Setup Conversation Room")
-                with gr.Accordion("Create or update speakers", open=True):
-                    room_speaker_summary = gr.Markdown(room_summary([]))
-                    with gr.Row():
-                        room_speaker_name = gr.Textbox(label="Speaker name", placeholder="e.g. Local implementer")
-                        room_backend = gr.Dropdown(["Local", "Frontier"], value="Local", label="Backend")
-                    room_profile = gr.Textbox(
-                        label="Profile",
-                        lines=3,
-                        placeholder="Describe this speaker's role, style, constraints, and what it should focus on.",
-                    )
-                    with gr.Row():
-                        room_local_adapter = gr.Textbox(label="Local adapter", value="checkpoints/fe-lora-30m")
-                        room_frontier_model = gr.Textbox(label="Frontier model", value=os.environ.get("FRONTIER_MODEL", ""))
-                    room_is_judge = gr.Checkbox(
-                        label="This speaker is a judge (votes on debate winners; excluded from the debate loop)",
-                        value=False,
-                    )
-                    with gr.Row():
-                        room_add_btn = gr.Button("Add Or Update Speaker", variant="primary")
-                        room_reset_btn = gr.Button("Clear Room")
-                        room_enter_btn = gr.Button("Enter Room")
-                    room_status = gr.Markdown()
+                conversations_store = gr.State(_load_conversations_store())
+                _boot = _load_conversations_store()
+                _boot_conv = _get_active_conversation(_boot) or {}
+                _boot_lobby_vis, _boot_room_vis = _lobby_room_visibility(bool(_boot_conv.get("in_room")))
+                room_state = gr.State(_boot_conv.get("room_state") or [])
+                chat_state = gr.State(_boot_conv.get("chat_state") or [])
 
-                gr.Markdown("## Conversation Room")
                 with gr.Row():
-                    chat_speaker = gr.Dropdown(choices=[], value=None, label="Speak to")
-                    chat_max_tokens = gr.Number(label="Max response tokens", value=768, precision=0)
-                    chat_temp = gr.Slider(0, 1, value=0, step=0.05, label="Temperature")
-                chat_box = gr.Chatbot(label="Shared conversation", height=520, type="tuples")
-                chat_input = gr.Textbox(
-                    label="Message",
-                    lines=3,
-                    placeholder="Enter the room, choose a speaker, then send a message. Switch speakers to have them respond in the same conversation.",
+                    with gr.Column(scale=1, min_width=260, elem_classes=["model-chat-sidebar"]):
+                        gr.Markdown("### Conversations")
+                        conv_list = gr.Radio(
+                            choices=_conversation_list_choices(_boot),
+                            value=_boot.get("active_id"),
+                            label="Switch conversation",
+                            show_label=False,
+                        )
+                        with gr.Row():
+                            conv_title_input = gr.Textbox(
+                                label="Title",
+                                show_label=False,
+                                placeholder="Conversation title",
+                                value=_derive_conversation_title(_boot_conv),
+                                scale=4,
+                            )
+                            conv_rename_btn = gr.Button("Rename", scale=1, variant="secondary")
+                        with gr.Row():
+                            new_conv_btn = gr.Button("+ New conversation", variant="secondary", scale=2)
+                            delete_conv_btn = gr.Button("Delete conversation", variant="stop", scale=2)
+
+                    with gr.Column(scale=3):
+                        conv_header = gr.Markdown(
+                            f"**{_derive_conversation_title(_boot_conv)}** — "
+                            f"{'in room' if _boot_conv.get('in_room') else 'lobby'}."
+                        )
+
+                        with gr.Column(visible=_boot_lobby_vis) as lobby_column:
+                            gr.Markdown("## Lobby — set up before entering")
+                            with gr.Accordion("Speakers & archetypes", open=True):
+                                room_speaker_summary = gr.Markdown(_format_room_speaker_summary(_boot_conv.get("room_state")))
+                                gr.Markdown(
+                                    "Add debaters and optional judges (Impartial Judge adjudicates after the "
+                                    "Debate phases (proposal → deepen → conclusion; adjudicator runs after). Expand **Advanced settings** to tune phases, early stop, "
+                                    "tokens, and temperature, then **Enter Room** to start chatting."
+                                )
+                                _boot_archetype = (
+                                    _archetype_picker_choices()[0] if _archetype_picker_choices() else None
+                                )
+                                with gr.Row(elem_classes=["model-chat-archetype-row"]):
+                                    archetype_picker = gr.Dropdown(
+                                        choices=_archetype_picker_choices(),
+                                        value=_boot_archetype,
+                                        label="Base archetype",
+                                        scale=6,
+                                    )
+                                    archetype_add_btn = gr.Button(
+                                        "Add specialist",
+                                        variant="primary",
+                                        scale=1,
+                                        min_width=96,
+                                    )
+                                    archetype_load_btn = gr.Button(
+                                        "Load Into Form",
+                                        scale=1,
+                                        min_width=96,
+                                    )
+                                archetype_preview = gr.Markdown(_archetype_preview_text(_boot_archetype))
+                                with gr.Column(visible=False) as custom_speaker_column:
+                                    with gr.Row():
+                                        room_speaker_name = gr.Textbox(
+                                            label="Speaker name",
+                                            placeholder="e.g. Local implementer",
+                                        )
+                                        room_backend = gr.Dropdown(
+                                            ["Local", "Frontier"],
+                                            value="Local",
+                                            label="Backend",
+                                        )
+                                    room_profile = gr.Textbox(
+                                        label="Profile / personality",
+                                        lines=3,
+                                        placeholder="Role, style, constraints…",
+                                    )
+                                    with gr.Row():
+                                        room_local_adapter = gr.Textbox(
+                                            label="Local adapter",
+                                            value="checkpoints/fe-lora-30m",
+                                        )
+                                        room_frontier_model = gr.Textbox(
+                                            label="Frontier model",
+                                            value=os.environ.get("FRONTIER_MODEL", ""),
+                                        )
+                                    room_is_judge = gr.Checkbox(
+                                        label="Judge (adjudicates after debate phases; optional panel vote)",
+                                        value=False,
+                                    )
+                                    with gr.Row():
+                                        room_add_btn = gr.Button(
+                                            "Add Or Update Speaker",
+                                            variant="primary",
+                                            min_width=120,
+                                        )
+                                with gr.Row():
+                                    room_reset_btn = gr.Button("Clear Speakers", scale=1, min_width=96)
+                            with gr.Accordion("Advanced settings", open=False, elem_classes=["model-chat-advanced-settings"]):
+                                with gr.Row(elem_classes=["model-chat-advanced-row"]):
+                                    loop_max_rounds = gr.Slider(
+                                        1,
+                                        20,
+                                        value=int(_boot_conv.get("max_rounds", DEFAULT_DEBATE_PHASES)),
+                                        step=1,
+                                        label="Debate phases",
+                                        info="Phase 1: proposal; middle phases: deepen (rebut or new evidence); last: conclusion. Adjudicator runs after.",
+                                        scale=1,
+                                    )
+                                    early_stop_mode = gr.Dropdown(
+                                        choices=list(EARLY_STOP_MODES),
+                                        value=_boot_conv.get("early_stop_mode", DEFAULT_EARLY_STOP_MODE),
+                                        label="Early stop when",
+                                        info="Debaters vote via [[DEBATE_CONCLUDED]] in their reply.",
+                                        scale=1,
+                                    )
+                                with gr.Row(elem_classes=["model-chat-advanced-row"]):
+                                    chat_max_tokens = gr.Number(
+                                        label="Max response tokens",
+                                        value=int(_boot_conv.get("max_tokens", 768)),
+                                        precision=0,
+                                        minimum=64,
+                                        maximum=8192,
+                                        scale=1,
+                                    )
+                                    chat_temp = gr.Slider(
+                                        0,
+                                        1,
+                                        value=float(_boot_conv.get("temperature", 0.5)),
+                                        step=0.05,
+                                        label="Temperature",
+                                        scale=1,
+                                    )
+                            with gr.Row():
+                                room_enter_btn = gr.Button("Enter Room", variant="primary", scale=2)
+                            room_status = gr.Markdown()
+
+                        with gr.Column(visible=_boot_room_vis) as room_column:
+                            gr.Markdown("## In the room")
+                            with gr.Row():
+                                room_exit_btn = gr.Button("Exit room", variant="secondary", scale=1)
+                            chat_box = gr.Chatbot(
+                                label="Conversation",
+                                height=520,
+                                type="tuples",
+                                value=_chat_pairs(_boot_conv.get("chat_state")),
+                            )
+                            chat_input = gr.Textbox(
+                                label="Message",
+                                lines=1,
+                                max_lines=4,
+                                placeholder="Message the room — press Enter to send…",
+                            )
+                            conclude_vote_status = gr.Markdown(
+                                _render_conclude_vote_status(
+                                    _collect_conclude_votes(
+                                        _boot_conv.get("chat_state"),
+                                        _debater_names(_boot_conv.get("room_state")),
+                                    ),
+                                    _debater_names(_boot_conv.get("room_state")),
+                                    mode=_boot_conv.get("early_stop_mode", DEFAULT_EARLY_STOP_MODE),
+                                )
+                            )
+                            with gr.Row():
+                                chat_send_btn = gr.Button("Send & Run Loop", variant="primary", scale=3)
+                                chat_continue_btn = gr.Button("Continue Loop", scale=1)
+                                loop_stop_btn = gr.Button("Stop", scale=1)
+                                chat_clear_btn = gr.Button("Clear transcript", scale=1)
+                            chat_status = gr.Markdown()
+                            debate_summary = gr.Markdown(
+                                value=_format_debate_summary_panel(str(_boot_conv.get("summary") or "")),
+                            )
+
+                            with gr.Accordion("Judge the debate", open=False):
+                                gr.Markdown(
+                                    "Each selected judge reads the transcript and votes. Results are "
+                                    "logged locally and pushed to the cloud Conversation DB when configured."
+                                )
+                                judge_checkboxes = gr.CheckboxGroup(
+                                    choices=_judge_names(_boot_conv.get("room_state")),
+                                    value=_judge_names(_boot_conv.get("room_state")),
+                                    label="Judges to consult",
+                                )
+                                judge_run_btn = gr.Button("Judge The Debate", variant="primary")
+                                judge_status = gr.Markdown()
+                                judge_scoreboard = gr.Markdown()
+
+                sync_outputs = [
+                    conversations_store,
+                    room_state,
+                    chat_box,
+                    chat_state,
+                    lobby_column,
+                    room_column,
+                    room_speaker_summary,
+                    judge_checkboxes,
+                    loop_max_rounds,
+                    chat_max_tokens,
+                    chat_temp,
+                    early_stop_mode,
+                    conclude_vote_status,
+                    conv_list,
+                    conv_header,
+                    debate_summary,
+                    conv_title_input,
+                ]
+                room_add_outputs = [room_state, room_speaker_summary, conversations_store, room_status]
+                room_enter_outputs = [
+                    room_state,
+                    room_speaker_summary,
+                    judge_checkboxes,
+                    conversations_store,
+                    lobby_column,
+                    room_column,
+                    room_status,
+                ]
+
+                def _boot_model_chat_ui():
+                    store = _load_conversations_store()
+                    return _sync_from_active_conv(store)
+
+                demo.load(_boot_model_chat_ui, outputs=sync_outputs, show_api=False)
+
+                archetype_picker.change(
+                    archetype_picker_sync_ui,
+                    inputs=[archetype_picker],
+                    outputs=[archetype_preview, custom_speaker_column],
+                    show_api=False,
                 )
-                with gr.Row():
-                    chat_send_btn = gr.Button("Send To Speaker", variant="primary")
-                    chat_continue_btn = gr.Button("Continue Speaker")
-                    chat_clear_btn = gr.Button("Clear Chat")
-                chat_status = gr.Markdown()
-
-                gr.Markdown("## Agentic Loop — Send To Both")
-                gr.Markdown(
-                    "Broadcast the message above to every selected participant at once, then let them "
-                    "keep responding to each other automatically. A participant can end the debate by "
-                    "signaling genuine agreement or that they have nothing new to add; otherwise the loop "
-                    "stops at **Max rounds** as a safety cap."
+                new_conv_btn.click(new_conversation_ui, inputs=[conversations_store], outputs=sync_outputs, show_api=False)
+                delete_conv_btn.click(
+                    delete_conversation_ui,
+                    inputs=[conv_list, conversations_store],
+                    outputs=sync_outputs,
+                    show_api=False,
                 )
-                with gr.Row():
-                    loop_participants = gr.CheckboxGroup(choices=[], label="Broadcast to / loop participants")
-                    loop_max_rounds = gr.Slider(1, 20, value=6, step=1, label="Max rounds (safety cap)")
-                with gr.Row():
-                    loop_run_btn = gr.Button("Send To Both & Run Loop", variant="primary")
-                    loop_stop_btn = gr.Button("Stop Loop")
-                loop_status = gr.Markdown()
+                conv_list.change(select_conversation_ui, inputs=[conv_list, conversations_store], outputs=sync_outputs, show_api=False)
+                conv_rename_btn.click(
+                    rename_conversation_ui,
+                    inputs=[conv_title_input, conversations_store],
+                    outputs=sync_outputs,
+                    show_api=False,
+                )
+                conv_title_input.submit(
+                    rename_conversation_ui,
+                    inputs=[conv_title_input, conversations_store],
+                    outputs=sync_outputs,
+                    show_api=False,
+                )
 
-                with gr.Accordion("Judge the debate", open=False):
-                    gr.Markdown(
-                        "Each selected judge independently reads the full transcript and votes for who "
-                        "argued the case best. Votes are tallied into a scoreboard, and the transcript + "
-                        "verdicts are appended to a JSONL log for later training/preference-data use."
-                    )
-                    judge_checkboxes = gr.CheckboxGroup(choices=[], label="Judges to consult")
-                    judge_run_btn = gr.Button("Judge The Debate", variant="primary")
-                    judge_status = gr.Markdown()
-                    judge_scoreboard = gr.Markdown()
-
-                room_add_outputs = [room_state, room_speaker_summary, chat_speaker, loop_participants, judge_checkboxes, room_status]
+                archetype_add_btn.click(
+                    room_add_archetype_ui,
+                    inputs=[room_state, archetype_picker, room_local_adapter, room_frontier_model, conversations_store],
+                    outputs=room_add_outputs + [custom_speaker_column],
+                    show_api=False,
+                )
+                archetype_load_btn.click(
+                    archetype_load_into_form_ui,
+                    inputs=[archetype_picker],
+                    outputs=[
+                        archetype_picker,
+                        room_speaker_name,
+                        room_backend,
+                        room_profile,
+                        room_is_judge,
+                        custom_speaker_column,
+                        archetype_preview,
+                    ],
+                    show_api=False,
+                )
                 room_add_btn.click(
                     room_add_speaker_ui,
                     inputs=[
@@ -3441,86 +6372,84 @@ body {
                         room_local_adapter,
                         room_frontier_model,
                         room_is_judge,
+                        conversations_store,
                     ],
                     outputs=room_add_outputs,
                     show_api=False,
                 )
                 room_reset_btn.click(
                     room_reset_ui,
+                    inputs=[room_state, conversations_store],
                     outputs=room_add_outputs,
                     show_api=False,
                 )
+                lobby_settings_inputs = [
+                    room_state, chat_state, loop_max_rounds, chat_max_tokens, chat_temp, early_stop_mode, conversations_store,
+                ]
+                for setting_widget in (loop_max_rounds, chat_max_tokens, chat_temp, early_stop_mode):
+                    setting_widget.change(
+                        lobby_settings_change_ui,
+                        inputs=lobby_settings_inputs,
+                        outputs=[conversations_store],
+                        show_api=False,
+                    )
                 room_enter_btn.click(
                     room_enter_ui,
-                    inputs=[room_state],
-                    outputs=[chat_speaker, loop_participants, judge_checkboxes, room_status],
+                    inputs=[room_state, conversations_store],
+                    outputs=room_enter_outputs,
                     show_api=False,
                 )
-                chat_send_btn.click(
-                    chat_send_ui,
-                    inputs=[
-                        chat_input,
-                        chat_speaker,
-                        room_state,
-                        chat_state,
-                        chat_max_tokens,
-                        chat_temp,
-                    ],
-                    outputs=[chat_box, chat_state, chat_input, chat_status],
+                room_exit_btn.click(
+                    room_exit_ui,
+                    inputs=[room_state, conversations_store],
+                    outputs=[conversations_store, lobby_column, room_column, room_status],
                     show_api=False,
                 )
-                chat_input.submit(
-                    chat_send_ui,
-                    inputs=[
-                        chat_input,
-                        chat_speaker,
-                        room_state,
-                        chat_state,
-                        chat_max_tokens,
-                        chat_temp,
-                    ],
-                    outputs=[chat_box, chat_state, chat_input, chat_status],
-                    show_api=False,
-                )
-                chat_continue_btn.click(
-                    chat_continue_ui,
-                    inputs=[
-                        chat_speaker,
-                        room_state,
-                        chat_state,
-                        chat_max_tokens,
-                        chat_temp,
-                    ],
-                    outputs=[chat_box, chat_state, chat_status],
-                    show_api=False,
-                )
-                chat_clear_btn.click(chat_clear_ui, outputs=[chat_box, chat_state, chat_status], show_api=False)
 
-                loop_event = loop_run_btn.click(
-                    run_agentic_loop_ui,
-                    inputs=[
-                        chat_input,
-                        loop_participants,
-                        room_state,
-                        chat_state,
-                        chat_max_tokens,
-                        chat_temp,
-                        loop_max_rounds,
-                    ],
-                    outputs=[chat_box, chat_state, chat_input, loop_status],
+                loop_inputs = [
+                    chat_input, room_state, chat_state, chat_max_tokens, chat_temp,
+                    loop_max_rounds, early_stop_mode, conversations_store,
+                ]
+                loop_outputs = [chat_box, chat_state, chat_input, conclude_vote_status, conversations_store, chat_status, debate_summary]
+                send_click = chat_send_btn.click(
+                    send_message_if_in_room,
+                    inputs=loop_inputs,
+                    outputs=loop_outputs,
+                    show_progress="hidden",
+                    show_api=False,
+                )
+                send_submit = chat_input.submit(
+                    send_message_if_in_room,
+                    inputs=loop_inputs,
+                    outputs=loop_outputs,
+                    show_progress="hidden",
+                    show_api=False,
+                )
+                continue_click = chat_continue_btn.click(
+                    continue_loop_ui,
+                    inputs=[room_state, chat_state, chat_max_tokens, chat_temp, loop_max_rounds, early_stop_mode, conversations_store],
+                    outputs=loop_outputs,
+                    show_progress="hidden",
                     show_api=False,
                 )
                 loop_stop_btn.click(
-                    lambda: "Loop stop requested — finishing the current turn, then halting.",
+                    lambda: "Loop stopped — the current turn finishes, then it halts.",
                     inputs=None,
-                    outputs=[loop_status],
-                    cancels=[loop_event],
+                    outputs=[chat_status],
+                    cancels=[send_click, send_submit, continue_click],
                     show_api=False,
                 )
+                chat_clear_btn.click(
+                    chat_clear_ui,
+                    inputs=[conversations_store],
+                    outputs=[chat_box, chat_state, chat_input, conclude_vote_status, conversations_store, chat_status, debate_summary],
+                    show_api=False,
+                )
+
                 judge_run_btn.click(
                     judge_the_debate_ui,
-                    inputs=[judge_checkboxes, room_state, chat_state, chat_max_tokens, chat_temp],
-                    outputs=[judge_scoreboard, judge_status],
+                    inputs=[judge_checkboxes, room_state, chat_state, chat_max_tokens, chat_temp, conversations_store],
+                    outputs=[judge_scoreboard, judge_status, debate_summary],
                     show_api=False,
                 )
 
@@ -3533,99 +6462,31 @@ body {
             council_trace_box = gr.Textbox(label="Council trace", lines=30, max_lines=2000, interactive=False)
             council_trace_btn.click(council_trace_ui, inputs=[trial_id], outputs=[council_trace_box])
 
-        gr.Markdown("## Grade And Complete")
-        winner = gr.Radio(["local", "frontier", "council", "tie", "neither"], value="tie", label="Winner")
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("### Local")
-                local_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
-                local_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
-                local_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
-                local_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
-                local_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
-            with gr.Column():
-                gr.Markdown("### Frontier")
-                frontier_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
-                frontier_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
-                frontier_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
-                frontier_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
-                frontier_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
-            with gr.Column():
-                gr.Markdown("### Council")
-                council_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
-                council_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
-                council_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
-                council_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
-                council_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
-        rubric_outputs = [
-            local_correctness,
-            local_feel,
-            local_ui,
-            local_tests,
-            local_merge,
-            frontier_correctness,
-            frontier_feel,
-            frontier_ui,
-            frontier_tests,
-            frontier_merge,
-            council_correctness,
-            council_feel,
-            council_ui,
-            council_tests,
-            council_merge,
-        ]
-        task_id.change(
-            lambda task: grading_labels_ui(task) * 3,
-            inputs=[task_id],
-            outputs=rubric_outputs,
-        )
-        demo.load(
-            lambda task: grading_labels_ui(task) * 3,
-            inputs=[task_id],
-            outputs=rubric_outputs,
-        )
-        notes = gr.Textbox(label="Notes", lines=4)
-        preference_strength = gr.Radio(
-            ["weak", "medium", "strong", "invalid/no winner"],
-            value="medium",
-            label="Preference strength",
-            info="How clear was the winner after considering apply/typecheck/preview and quality?",
-        )
-        failure_modes = gr.CheckboxGroup(
-            [
-                "no output",
-                "parse/apply failed",
-                "typecheck/preflight failed",
-                "preview failed",
-                "no visible change",
-                "wrong file/schema",
-                "generic/off-theme",
-                "regressed existing exports",
-                "too broad/risky",
-            ],
-            label="Observed failure modes",
-        )
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown("#### Local viability")
-                manual_local_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
-                manual_local_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
-            with gr.Column():
-                gr.Markdown("#### Frontier viability")
-                manual_frontier_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
-                manual_frontier_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
-            with gr.Column():
-                gr.Markdown("#### Council viability")
-                manual_council_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
-                manual_council_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
-        cleanup_after = gr.Checkbox(label="Delete disposable worktrees after saving", value=True)
-        complete_btn = gr.Button("Complete Trial: Save Results + Cleanup", variant="primary")
-        complete_status = gr.Markdown()
-        complete_btn.click(
-            complete_ui,
-            inputs=[
-                trial_id,
-                winner,
+        with gr.Accordion("Grade And Complete — human rubric & save (open when you're ready to score a trial)", open=False):
+            winner = gr.Radio(["local", "frontier", "council", "tie", "neither"], value="tie", label="Winner")
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("### Local")
+                    local_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
+                    local_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
+                    local_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
+                    local_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
+                    local_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
+                with gr.Column():
+                    gr.Markdown("### Frontier")
+                    frontier_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
+                    frontier_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
+                    frontier_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
+                    frontier_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
+                    frontier_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
+                with gr.Column():
+                    gr.Markdown("### Council")
+                    council_correctness = gr.Slider(1, 5, value=3, step=1, label="Correctness")
+                    council_feel = gr.Slider(1, 5, value=3, step=1, label="Gameplay feel")
+                    council_ui = gr.Slider(1, 5, value=3, step=1, label="UI quality")
+                    council_tests = gr.Slider(1, 5, value=3, step=1, label="Test confidence")
+                    council_merge = gr.Slider(1, 5, value=3, step=1, label="Mergeability")
+            rubric_outputs = [
                 local_correctness,
                 local_feel,
                 local_ui,
@@ -3641,19 +6502,87 @@ body {
                 council_ui,
                 council_tests,
                 council_merge,
-                preference_strength,
-                failure_modes,
-                manual_local_typecheck,
-                manual_local_visible_change,
-                manual_frontier_typecheck,
-                manual_frontier_visible_change,
-                manual_council_typecheck,
-                manual_council_visible_change,
-                notes,
-                cleanup_after,
-            ],
-            outputs=[complete_status],
-        )
+            ]
+            task_id.change(
+                lambda task: grading_labels_ui(task) * 3,
+                inputs=[task_id],
+                outputs=rubric_outputs,
+            )
+            demo.load(
+                lambda task: grading_labels_ui(task) * 3,
+                inputs=[task_id],
+                outputs=rubric_outputs,
+            )
+            notes = gr.Textbox(label="Notes", lines=4)
+            preference_strength = gr.Radio(
+                ["weak", "medium", "strong", "invalid/no winner"],
+                value="medium",
+                label="Preference strength",
+                info="How clear was the winner after considering apply/typecheck/preview and quality?",
+            )
+            failure_modes = gr.CheckboxGroup(
+                [
+                    "no output",
+                    "parse/apply failed",
+                    "typecheck/preflight failed",
+                    "preview failed",
+                    "no visible change",
+                    "wrong file/schema",
+                    "generic/off-theme",
+                    "regressed existing exports",
+                    "too broad/risky",
+                ],
+                label="Observed failure modes",
+            )
+            with gr.Row():
+                with gr.Column():
+                    gr.Markdown("#### Local viability")
+                    manual_local_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
+                    manual_local_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
+                with gr.Column():
+                    gr.Markdown("#### Frontier viability")
+                    manual_frontier_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
+                    manual_frontier_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
+                with gr.Column():
+                    gr.Markdown("#### Council viability")
+                    manual_council_typecheck = gr.Checkbox(label="Typecheck verified", value=False)
+                    manual_council_visible_change = gr.Checkbox(label="Visible change confirmed", value=False)
+            cleanup_after = gr.Checkbox(label="Delete disposable worktrees after saving", value=True)
+            complete_btn = gr.Button("Complete Trial: Save Results + Cleanup", variant="primary")
+            complete_status = gr.Markdown()
+            complete_btn.click(
+                complete_ui,
+                inputs=[
+                    trial_id,
+                    winner,
+                    local_correctness,
+                    local_feel,
+                    local_ui,
+                    local_tests,
+                    local_merge,
+                    frontier_correctness,
+                    frontier_feel,
+                    frontier_ui,
+                    frontier_tests,
+                    frontier_merge,
+                    council_correctness,
+                    council_feel,
+                    council_ui,
+                    council_tests,
+                    council_merge,
+                    preference_strength,
+                    failure_modes,
+                    manual_local_typecheck,
+                    manual_local_visible_change,
+                    manual_frontier_typecheck,
+                    manual_frontier_visible_change,
+                    manual_council_typecheck,
+                    manual_council_visible_change,
+                    notes,
+                    cleanup_after,
+                ],
+                outputs=[complete_status],
+            )
 
         with gr.Accordion("Split/Merge Validity Testing", open=False):
             gr.Markdown(

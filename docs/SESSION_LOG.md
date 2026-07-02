@@ -4,6 +4,426 @@ Newest entries at the **top**.
 
 ---
 
+## 2026-07-02 — Arena restart (:7868, orphaned frpc cleanup)
+
+**Arena.** `:7868` was down (orphaned Gradio `frpc` only). Killed stale `frpc`, restarted `scripts/game_task_arena.py ui --port 7868 --share` with `cloud/conversation_db/.env.local` and `FE_DEBATE_SEARCH=1`. Python PID 81505 — `http://127.0.0.1:7868` HTTP **200**. Log: `logs/arena_restart_20260702T210121Z.log`.
+
+---
+
+## 2026-07-02 — Model Chat: Enter-to-send, evidence registry, deeper debate loop
+
+**Why.** Improve small-model debate quality (fe-lora-30m): Enter should send in-room messages; models should use search-backed reference facts without repeating evidence; each phase should escalate depth with opponent-gap prompting.
+
+**What changed (`scripts/game_task_arena.py`).**
+- **Enter to send:** `chat_input.submit()` and **Send & Run Loop** both call `send_message_if_in_room`, which gates on `_conversation_in_room(conversations_store)`; chat input is `lines=1` so Enter submits (Shift+Enter for newline via `max_lines=4`).
+- **Evidence registry:** `_evidence_already_used(chat_state)` extracts known works/authors and `NEW EVIDENCE:` snippets; injected as `Evidence already used (do NOT repeat): …` in debate prompts.
+- **Search awareness:** system prompts state models may rely on reference facts from search (`FE_DEBATE_SEARCH` / `_debate_reference_facts`); cite each piece at most once.
+- **Deeper feedback loop:** per-phase escalation (opening=thesis, rebuttal=deeper counter+new angle, final=synthesis); rebuttal user prompt asks what the opponent did NOT address; anti-repeat retries push NEW evidence; `_debate_fresh_reference_facts` runs one alternate search query on retry.
+- Helpers: `_conversation_in_room`, `_debate_alternate_search_query`, `_debate_fresh_reference_facts`.
+
+**Tests.** `tests/test_game_task_arena_model_chat.py` — **94 passed** (+6: in-room guard, evidence extraction, search/no-repeat prompts, fresh search, phase escalation).
+
+**Arena.** Restarted `scripts/game_task_arena.py ui --port 7868 --share` with `FE_DEBATE_SEARCH=1` and `cloud/conversation_db/.env.local`. Log: `logs/arena_restart_20260702T*.log`.
+
+---
+
+## 2026-07-02 — Arena restart (:7868, debate search + cloud DB)
+
+**Arena.** Killed orphaned Gradio `frpc` tunnel processes blocking `:7868`, then restarted with `cloud/conversation_db/.env.local` sourced and `FE_DEBATE_SEARCH=1`. PID 69763 — local `http://127.0.0.1:7868` (HTTP 200), share `https://9bc61396d0b9cde29f.gradio.live`.
+
+---
+
+## 2026-07-02 — Model Chat: add-speaker lobby fix + smarter pass/skip turns
+
+**Why.** Users reported a lobby glitch when adding speakers (archetype picker → Add specialist / custom agent → Enter Room) and empty/filler debater turns still appearing in the chat despite `[[PASS]]` support.
+
+**Root cause (add speaker).** Lobby add handlers wired `judge_checkboxes` (inside the hidden in-room column) as a Gradio output alongside `room_state` and `room_speaker_summary`. Updating hidden in-room components from lobby events can fail or partially apply in Gradio, leaving the speaker roster Markdown out of sync with persisted `conversations_store`. `room_enter_ui` also read only the live `room_state` input (not the store fallback) and did not re-emit `room_state` on enter.
+
+**Fix (add speaker).**
+- Removed `judge_checkboxes` from lobby add/reset outputs; judges refresh on **Enter Room** and conversation sync only.
+- Added `_resolve_lobby_room_state`, `_upsert_room_speaker`, `_append_archetype_speaker`, `_format_room_speaker_summary`; all lobby add paths merge live state + persisted store.
+- `room_enter_ui` now returns `room_state`, `room_speaker_summary`, and judge choices; resolves speakers from store when Gradio state is empty.
+- Custom-agent **Add specialist** now reveals `custom_speaker_column`; archetype add no longer writes to hidden `room_is_judge`.
+
+**Fix (pass/skip).**
+- Added `_is_substantive_less_turn`, `_stream_signals_pass`, expanded meta-filler/pass phrase detection.
+- `_parse_debate_model_output` treats substantive-less output as explicit pass (omit bubble, status-only note with optional debug snippet).
+- `run_agentic_loop_ui` stops streaming early on `[[PASS]]`, skips near-duplicate/rebuttal filler, and prefers pass over curated fallback when retries fail on rebuttal/final.
+
+**Tests.** `tests/test_game_task_arena_model_chat.py` — **84 passed** (+6 lobby/pass helper tests).
+
+**Arena.** Restarted `scripts/game_task_arena.py ui --port 7868 --share` (HTTP 200). Log: `logs/arena_model_chat_addspeaker_pass_*.log`.
+
+---
+
+## 2026-07-02 — Model Chat lobby UI: conditional custom speaker form
+
+**Why.** Lobby showed speaker name/profile/backend fields at all times and the **Add Archetype** button dominated the archetype row — cluttered preset flow (pick archetype → add) and made custom agents harder to distinguish.
+
+**What changed (`scripts/game_task_arena.py`).**
+- Added `CUSTOM_ARCHETYPE_LABEL` (`New custom agent`) to the base-archetype dropdown (appended after presets).
+- Custom speaker fields (name, profile/personality, backend, adapters, judge checkbox, **Add Or Update Speaker**) live in a `custom_speaker_column` hidden unless that option is selected; `archetype_picker.change` toggles via `gr.update(visible=…)`.
+- Preset flow: preview archetype persona → **Add specialist** (renamed, compact row styling via `.model-chat-archetype-row` CSS).
+- **Load Into Form** switches the picker to **New custom agent**, reveals the form, and pre-fills fields from the selected preset for editing.
+- Module helpers: `_archetype_picker_choices`, `_is_custom_archetype_pick`, `_lobby_custom_fields_visible`, `_archetype_preview_text`, `_archetype_load_into_form_values`.
+
+**Tests.** `tests/test_game_task_arena_model_chat.py` — 4 new helper tests; full file **78 passed**.
+
+**Arena.** Restarted `scripts/game_task_arena.py ui --port 7868 --share` (HTTP 200). Log: `logs/arena_model_chat_lobby_ui_*.log`.
+
+---
+
+## 2026-06-24 — Real context handoff between council subtasks (downstream agents see what actually landed)
+
+**Why.** In `decompose` mode, downstream subtask agents were handed only a 300-char slice of the *upstream council's proposed output* (`rec.dispatch.output[:300]`) plus filenames — not the actual changes that landed on the shared worktree. So a dependent agent ("build the HUD on top of the persisted morale field") couldn't see the real current state of the files it was supposed to build on. This is one reason chained subtasks produced incoherent patches.
+
+**What changed.**
+- `scripts/council_runtime/orchestrator.py` → `SubtaskContext.upstream_digest()` rewritten: when a shared `worktree` is present, it now reads the **current on-disk content** of each upstream subtask's `changed_files` (bounded: `max_file_chars=1400`, `max_files=6`, `max_chars=4000`) so the downstream agent edits against reality. Without a worktree (deterministic selftest/unit tests) it falls back to the old short dispatch-output slice — behavior preserved.
+- Dispatch prompts in both `orchestrator.build_council_subtask_dispatcher` and `game_task_arena.generate_council_attempt` relabeled to "Upstream changes already applied to the shared worktree (build on these, do not redo them)".
+
+**Verified.** `council_runtime/orchestrator.py selftest` → `SELFTEST_OK` (fallback path). Standalone check confirms worktree-backed digest emits actual `src/store.ts` content and the no-worktree path still uses dispatch output. `tests/test_council_orchestrator.py`, `test_planner_decomposition_policy.py`, `test_council_runtime_executor.py` → 20 passed. No lint errors.
+
+**Not yet done (offered, deferred by user choice).** Complexity gate + plan guard, advisory→synthesize→single-implementer council mode, planner-adapter training.
+
+---
+
+## 2026-06-24 — Council trace now captures the planner's *raw* completion on fallback
+
+**Why.** While reviewing a council trace the user asked "this is what the planner gave?" about a `persistence → ui_state → test_coverage` plan. Inspecting `benchmarks/results/game_task_trials/20260624-001945_loading-screen-polish/attempts/council/council_trace.json` showed `council_mode=planner-model` but `decomposition.source=model_fallback`, `parse_ok=False` — i.e. the planner model **was** called, emitted unparseable JSON, and the deterministic heuristic was substituted (so the displayed plan is the heuristic template, not the model). Root cause is the 30M smoke adapter being unable to emit valid `planner_decomposition_plan_v1` JSON.
+
+**Gap.** The trace stored only `source`/`parse_ok` and the (fallback) plan — not what the model actually emitted, so you couldn't see *why* it fell back.
+
+**What changed (`scripts/game_task_arena.py`).**
+- `generate_council_attempt`: capture `emission.raw_text` into `plan_raw_text` when `source in ("model","model_fallback")` and write it to `council_trace.json` under `decomposition.raw_planner_output`.
+- `render_council_trace_text`: on `source=model_fallback` print a **"PLANNER FALLBACK"** section with the raw model completion (explaining the shown plan is the heuristic); on `source=model` print a **"PLANNER RAW OUTPUT"** section. Older traces (no field) render `(empty)`.
+
+**Note.** `planner-model` mode needs a planner-trained adapter to actually produce real plans; the smoke/arena-apply adapters fall back. No lint errors.
+
+---
+
+## 2026-06-23 — Council lane added to the Game Task Arena (GPT vs LoRA vs Council, side by side)
+
+**Why.** Scrapped the standalone `council_studio.py` simulated demo. The user wants the new multi-agent council flow to **compete head-to-head with the local LoRA and frontier GPT inside the real arena skills site** (`scripts/game_task_arena.py ui`, port 7868), generating *real* code into the same `/test-env` sandbox worktrees so we can open the playable previews and judge whether decomposition beats single-shot.
+
+**What changed (all in `scripts/game_task_arena.py`).**
+- **New `generate_council_attempt(args)`** — the third lane. Uses the **same local LoRA adapter** as the `local` lane (per user choice), builds the arena context pack once, then:
+  - `generate_decomposition_plan(...)` → the planner decides whether/how to split and which specialists to call (`council_mode`: `planner-model` model-backed w/ heuristic fallback, `heuristic` deterministic, or `single` no-decompose via `derive_decomposition_plan`).
+  - `_refit_plan_to_task(plan, task.allowed_paths)` re-fences every subtask to the arena task's allowed paths and caps experts (≤2) so apply respects the arena write fence.
+  - `run_decomposed_task(...)` on the attempt's worktree: each subtask runs its own `run_council` (participants from the planner's `selected_experts`, context pack injected into each participant prompt), and the chosen output is stitched in via `_apply_text_to_worktree` (diff-first `git apply`, fenced-file fallback, **same `OverwriteGuard`** as local/frontier). Verify is deferred to the arena's own preview/verify (a subtask "passes" the loop once its change applies, so dependents can build on it).
+  - Writes `council_plan.json`, `council_result.json`, and a `model_output.md` council report (plan summary + per-subtask experts + each subtask's output); sets `apply_status=applied_council:<n>/<m>`; runs `write_diff_artifacts`.
+- **`create_trial`** now labels a `council` attempt as backend `council_mlx`.
+- **UI (3-way):** `create_ui` adds an `include_council` toggle (3rd worktree); `generate_apply_both_ui` runs the council lane (skips the separate `apply_output` since the loop applies as it goes); `preview_both_ui` adds a 3rd preview link (default port **5176**); `run_full_trial_ui` returns the 3rd link; `complete_ui` + the grading block add a **Council** rubric column, `council` winner option, and council viability checkboxes. New settings row: Include Council, decomposition mode dropdown, debate rounds, council port.
+- **CLI:** new `council` subcommand (`--council-mode/--council-rounds/--council-max-subtasks`) for headless parity.
+
+**Verification.** Mock-safe end-to-end smoke (fake backend, real git worktree, no MLX): `single` → `applied_council:1/1`, `heuristic` → `applied_council:3/3`, file written into the worktree, recorded in `model_output.md`. `ast.parse` + import clean, no lints. Arena UI boots and serves **HTTP 200 at http://127.0.0.1:7868** with the council lane live.
+
+**Notes / known edges.** `write_diff_artifacts` uses `git diff` (tracked changes only) — brand-new files don't show in `diff.patch` for *any* lane (pre-existing arena behavior); the rendered preview + the per-attempt "Open in Cursor" worktree link + `model_output.md` cover viewing new-file changes. Frontier lane still needs `FRONTIER_API_KEY`/`FRONTIER_MODEL`; local + council need neither. Next: run a real trial on `loading-screen-polish` with an actual adapter and eyeball the three previews.
+
+**First real trial review (20260623-235434, `loading-screen-polish`).** Frontier ✅ applied; `local` ❌ and `council` ❌ — both ran on the **30M smoke adapter `fe-lora-30m`** (the UI default), which can't produce applyable code. `local`: 240-tok short rewrite → 56→31 non-blank lines → `OverwriteGuard` correctly blocked a 45% mass-deletion. `council`: subtask-0's council output was a **corrupt unified diff** (`git apply --check`: "corrupt patch at line 5", missing leading-space context markers); the fenced fallback then rejected the `a/src/...` diff path as outside-allowed, and the planner's chained 3-subtask plan meant subtasks 1–2 never ran. Diagnosis: integration/guards working as intended; the loss is model capability. Real LoRA to use: `checkpoints/fe-lora-arena-apply-sft` (MLX LoRA on `Qwen2.5-Coder-7B-Instruct-4bit`, trained on `data/lora/arena_task_baselines_apply_contract`, PPO-marked) or `fe-lora-arena-guarded-stddev-v1`.
+
+**Council trace viewer (this session).** `generate_council_attempt` now captures each subtask council's full `run_council` `meta` (per-round participant drafts incl. text/role/confidence + adjudication previews + chosen output) into a new `council_trace.json` (alongside `council_plan.json`/`council_result.json`). New module fn `render_council_trace_text(trial_id)` renders it as a plain-text transcript (plan → per-subtask debate → chosen change → apply result; plain text so model output containing ``` fences shows verbatim). UI: a **"Show Full Council Trace"** button in a "Council process trace" accordion (handler `council_trace_ui`). Trace file lives in the results attempt dir, so it survives `cleanup` (worktree removal). Verified end-to-end with a fake backend → `TRACE_OK`.
+
+**Two council robustness fixes (this session).** (1) **Salvage diff-prefixed paths without writing diff garbage:** `_clean_candidate_path` now strips git `a/`/`b/` path prefixes so a path lifted from diff markers can still match the repo-relative allowed globs, AND new `_looks_like_unified_diff` makes `apply_fenced_files` *skip* any fenced body that is actually a unified diff (prevents writing `@@`/`+`/`-` text into a `.tsx` file when a diff fails `git apply`). (2) **Retry budget:** council `run_decomposed_task` now uses `max_attempts_per_subtask=2` and `max_iterations=max(2, 2*N)` so one flaky subtask retries instead of zeroing the whole lane, and a retry can still propagate down a dependency chain. Verified: a/b strip + diff-detection unit cases; fenced fallback skips a corrupt diff yet applies a clean `a/`-prefixed file; council retry (corrupt diff → clean retry) → `applied_council:1/1`. Existing `scripts/test_game_task_arena_parser.py` regression cases still pass. Fixes touch the shared parser, so local/frontier lanes benefit too.
+
+## 2026-06-23 — Lambda integration training path (SFT → PPO → merge, QLoRA) + smoke
+
+**Why.** The local MLX SFT warmup adapter (`checkpoints/adapters/integration/sft_warmup`) is an **MLX LoRA on the 4-bit base** — *not* loadable as a CUDA/PPO init (deltas tuned to quantized weights; PEFT key/alpha layout differs). The training **data** ports, the **weights** don't. So to train on Lambda we reproduce the warmup on the HF base, then PPO, then merge back to fp16 so the result is local-ready.
+
+**SFT eval first (local MLX, before any PPO).** `run_integration_curriculum.py evaluate` on the local MLX `sft_warmup` adapter, 15 tier1 tasks, matched system prompt → **applyable_diff_rate 0.60, compiled 0.467, hard_capped 0.40, mean_reward 0.497** (per-task rewards spread 7×1.0 / 1×0.1 / 7×0.05). Cold-start was ~0% applyable / all-floor — the warmup gives PPO real reward variance. (Caveat: tier1 has SFT train-leakage so compiled/reward are optimistic; applyable-shape is the gate and it's solidly up.) → GO for PPO.
+
+**New scripts.**
+- `scripts/train_integration_sft_lora.py` — transformers/**QLoRA** SFT (CUDA-native PEFT adapter) from the same backend-agnostic chat dataset. `--dry-run` is tokenizer-only (validated on Mac: 164/164 examples usable, prompt-masking correct, p90 len 2903 ≤ 3072).
+- `scripts/merge_peft_to_fp16.py` — `merge_and_unload` the trained LoRA into the **fp16** base (NOT quantized) → standalone merged model; local quant happens later via `mlx_lm.convert --quantize`. This is the faithful QLoRA deployment order (quantize the real trained weights *after* training).
+- `scripts/lambda/launch_integration_training.py` — one-shot launcher that runs **SFT → N chained PPO cycles → merge** on one GPU, modeled on `launch_integration_eval_smoke.py` (same `_remote_lifecycle_prelude`: idle+max-runtime watchdog, NFS durable staging, GPU telemetry, `trap cleanup EXIT`, require-artifact-export). It also rsyncs `data/lora/...` explicitly because `_sync_repos` excludes `data/lora` + `checkpoints`.
+
+**Quantization / memory lessons baked in (why economistRL PPO OOM'd on Lambda; PROJECT_STATE "Known issue 2026-06-08").**
+1. Pass the **`mlx-community/Qwen2.5-Coder-7B-Instruct-4bit`** id as `--base-model` everywhere. On CUDA `economist_rl_ppo_trainer._should_load_transformers_4bit` + `_transformers_model_id` map it to `Qwen/Qwen2.5-Coder-7B-Instruct` for weights but load via **bitsandbytes nf4 (QLoRA)**. Passing the bare `Qwen/...` id loads fp16 → the PPO OOM we saw before. Same id drives QLoRA in the new SFT trainer.
+2. **Precision consistency:** rollouts generate in fp16 (model_router `load_peft_causal_lm`, no 4bit) but PPO trains in 4bit. Added `--ppo-refresh-old-logprobs` to `run_integration_training.py` and enabled it in the launcher so old-logprobs are recomputed on the **training** model — otherwise the PPO old/new ratio is taken across mismatched models.
+3. Gradient checkpointing on by default in SFT; reduced logprob window (1536) for PPO.
+
+**Local validation (zero-cost):** SFT `--dry-run` → `DRYRUN_OK`; merge `--print-plan` OK; launcher `--dry-run` remote script `bash -n` clean (fixed a real bug: `shlex.quote("$SRC")` froze the adapter var as a literal — switched to double-quoted `$SRC`/`$CAND` so bash expands them); `run_integration_training.py selftest` → `SELFTEST_OK`; `tests/test_integration_training.py` → 6/6.
+
+**Smoke — GREEN (first end-to-end CUDA integration PPO; PROJECT_STATE notes it was never verified).** `launch_integration_training.py --sft-iters 120 --sft-max-seq-len 2048 --ppo-cycles 1 --rollouts 8 --tier tier1_anchored_single_hunk` on **gpu_1x_a10@us-west-1** (instance `ff0848875c034297ae41e26cf20ead7f`), `remote exit_code=0` for the full SFT→PPO→merge chain. SFT (CUDA QLoRA, `load_in_4bit=true`): 120 iters, **val_loss 0.450→0.370**, **peak mem 13.25 GB**, ~10 min; PPO cycle ran (fp16 gen → 4bit train, refresh-old-logprobs); merge executed (`merge_manifest.json`). Instance **terminated cleanly (no orphan)**. Recovery dir: `benchmarks/results/integration_training/lambda_recovery/integration_rl_20260623T235332Z-20260624T001408Z/`.
+
+**Three launch lessons (all fixed in code/flow):**
+1. **a10 24 GB SFT OOM at seq 3072** — fragmentation (~7 GB reserved-unallocated) + the 152k-vocab LM-head logits spike. Fixed: `export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` in the remote prelude + (for the smoke) seq 2048. After: peak 13.25 GB. SFT was *training correctly* before the OOM (loss falling), so it was purely a memory ceiling.
+2. **A100 + NFS cross-region** — when capacity put A100 in us-east-1/us-west-2 but the `Evaluation-Runs` NFS only exists in us-west-1, the launch 404'd (`Filesystem ... does not exist in region`) and, being non-retryable, aborted instead of falling through to the a10. Fix for now: pin `--instance-type gpu_1x_a10 --region us-west-1` so the GPU and the durable NFS share a region.
+3. **14 GB merged-model recovery dropped the SSH mid-transfer**, which (old ordering) also cost the small logs/summary. Fixed in `launch_integration_training.py`: recover **cloud-eval-logs + training rows + adapters FIRST, the fp16 merged model LAST**, with `--partial` + 3 retries. The merged model is reproducible from the recovered `rl_pass_*` adapter, so it's the safest item to lose. (We did recover both adapters — `sft_warmup_cuda` + `rl_pass_001`, 335 MB — plus the merged config/manifest; only the merged weight shards + logs timed out this run; durable copy is the NFS tarball `final_0-ff08…tar.gz`.)
+
+**Also fixed:** `nohup … &`/`source .env` issues — `.env` has a space after `=` (`LAMBDA_API_KEY= secret…`) so `source` mis-parses; load via `export LAMBDA_API_KEY="$(grep '^LAMBDA_API_KEY=' .env | cut -d= -f2- | xargs)"`.
+
+**Next:** fuller run once approved — 700-iter SFT (seq 3072 on the a10 is fine now with expandable_segments; or a larger card if we drop NFS) + multi-cycle PPO (`--ppo-cycles 3 --rollouts 16`).
+
+---
+
+## 2026-06-23 — Integration SFT warmup trained (local MLX) + Lambda orphan RCA
+
+**SFT warmup (done).** Trained the diff-format SFT init for integration RL locally on MLX. `mlx_lm.lora 0.29.1` on `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit`, LoRA 8 layers, batch 1, seq 3072, `--mask-prompt --grad-checkpoint`, 700 iters, lr 1e-5. Data: `data/lora/integration_curriculum_rft_v1` (164 train / 18 valid, tier1, `gpt-5.5` teacher, rejection-sampled + verifier-filtered). **Val loss 0.351 → 0.116** (monotonic across 200-iter evals), peak mem 10.5 GB, ~4 hr, exit 0. Adapter + `training_manifest.json` at `checkpoints/adapters/integration/sft_warmup/`. Use as `--source-adapter` for `run_integration_training.py train` (fresh-start policy: never chain off split-016). **Caveat:** MLX 4bit adapter → usable for LOCAL MLX RL only; Lambda transformers RL needs an HF-base SFT or conversion. Note: the dataset came from the **pre-grounding** bank (154 tier1), but every kept pair applied+compiled on the real `gameLoop.ts`, so it is valid for diff-shape SFT (grounding matters for RL reward, not SFT shape).
+
+**Two MLX OOM/process lessons.** (1) First train attempt OOM'd (Metal `Insufficient Memory`) on the first gradient step at seq 3072 / 16 layers on a 26 GB machine; fixed with `--grad-checkpoint` + `--num-layers 8` (peak 10.5 GB). (2) **Detached `nohup … &` jobs launched inside a tool call get reaped** when the call returns (observed 3×: SFT gen PID 91758, first train PID 94121, and the Lambda smoke launcher). Reliable path = launch directly as a tracked background job, not `nohup &`.
+
+**Lambda orphan RCA (instance `1e151d60729c45e8958187fedbbdd644`).** The tier1 PPO smoke launcher froze at `01:51Z status=booting` and left an A10 billing ~5 hr until manually terminated. Root cause: the launcher was started via `nohup … &` in a tool call and was hard-killed while blocked in `_launch_instances_with_fallback._wait_for_instance_readiness` — *after* `_launch_instances` created/billed the instance but *before* the remote `trap cleanup EXIT` + idle/max-runtime watchdog + require-artifact-export were uploaded (those start only post-boot, `launch_integration_eval_smoke.py` lines ~330-339). All local terminators are Python `except` blocks (lines 411-420, guarded by `if instance_id:` which was still `""` pre-return) → a SIGKILL bypassed them and the id wasn't even known locally. No independent reaper exists. **Proposed fixes (not yet implemented):** (1) create-time Lambda TTL/auto-terminate so safety is process-independent; (2) write instance_id sentinel immediately after create + an out-of-band reaper for `fe-*` instances with sentinel but no DONE; (3) never launch the blocking launcher via `nohup &`; (4) pre-flight gate refusing launch without a TTL/sentinel safety net. (My ad-hoc `GET /instances` returned 403 — wrong auth vs `_api_call`/`_lambda_cloud_base_url_from_env` — so relied on user termination + frozen log as evidence.)
+
+---
+
+## 2026-06-22 — Integration training driver + readiness smoke
+
+**Goal:** Stand up the integration-owned RL training loop (the greenfield orchestrators are deprecated) and verify the pipeline end-to-end before spending GPU.
+
+**Pipeline readiness (local, zero-cost):** `run_integration_curriculum.py selftest` → `SELFTEST_OK` (truncation exploit hard-capped 0.05, clean diff 1.0); `validate` the new 365-task bank → ok; **full end-to-end on a real tier1 task** (`spoilage-food-decay-04`, hand-built one-line anchored diff to the real 803-line `gameLoop.ts`) → `via=diff`, real `tsc`+`ml-cohort` ran, `compiled 1.0`, reward **1.0**, ~6s. (Side note: the grounding filter correctly *kept* `spoilage-food-decay` because food/storage/stock concepts live in `gameLoop.ts` even though "spoilage" doesn't.)
+
+**Lambda smoke (in flight):** `scripts/lambda/launch_integration_eval_smoke.py --tier tier1_anchored_single_hunk --limit 10` with `split-016` (transformers backend) on `gpu_1x_a10@us-west-1` (instance `1e151d60729c45e8958187fedbbdd644`). Durable NFS staging + auto-terminate + watchdog + require-artifact-export per the artifact rule. Log: `logs/launch_integration_eval_smoke_split016_tier1_20260623T015154Z.log`. **split-016 is used only to exercise the harness; it regressed and will NOT be the training init.**
+
+**New: `scripts/run_integration_training.py`** — integration-owned rollout→reward→PPO driver. Mirrors the economist `run_rollouts` (generation + windowed `old_logprob` attach with the live backend before GPU release) but swaps in the integration triplet (`build_integration_user_prompt` → `attach_integration_evidence` apply+`tsc`+ml-cohort → `score_integration_output`). Emits the identical `{task_id, score, rollout}` shape so `build_ppo_samples`/`train_ppo_batch` consume it unchanged. Core `run_integration_training_cycle(tasks, cfg, *, rollout_fn, score_fn, train_fn)` uses injected callbacks (repo's council-orchestrator pattern) → unit-testable with no model/repo. CLI: `selftest`, `train`. Reuses (does not duplicate) the shared PPO trainer + `ExecutionWorktreePool` + `CachedAdapterGenerator`; imports are function/class-level so the greenfield `main()` guards never fire.
+
+**Fresh-start policy enforced:** `train` requires `--source-adapter` and `build_train_fn` raises if it's `None` — the loop must never chain off a regressed RL adapter. Recommended init = **base + diff-format SFT warmup** via the existing `build_integration_sft_via_rejection.py` (frontier teacher → same integration verifier filter → chat SFT pairs under `data/lora/<name>/`) → train SFT LoRA → pass as `--source-adapter`.
+
+**Tests:** `scripts/run_integration_training.py selftest` → `SELFTEST_OK` (clean reward 1.0 vs exploit 0.05 hard-capped; 2 PPO samples with 2 distinct advantages). `tests/test_integration_training.py` → 6 passed (clean>exploit, advantage-bearing samples, artifacts written, tier/limit selection, source-adapter guard, empty-tasks guard). No linter errors.
+
+**Docs:** `docs/INTEGRATION_CURRICULUM.md` — replaced the "Wiring into PPO (next step)" stub with the training-driver section + fresh-start/SFT-warmup policy + files-table entries.
+
+---
+
+## 2026-06-22 — Integration curriculum: grounding filter + greenfield system deprecation
+
+**Goal:** Two changes to consolidate on the integration curriculum. (1) Make the converted brownfield bank well-posed by dropping tasks whose mechanic concept has no home in the real target file (the "imaginary islands"). (2) Deprecate the greenfield (mechanic/sandbox) economist-RL **entrypoints** so we can't accidentally start the old training path — without breaking the integration circuit, which is built on the shared economist core.
+
+**Why the filter matters:** the integration reward weights `targeted_tests` at 0.45, but for these converted tasks `targeted_tests_score` is just `npm run test:ml-cohort` (the generic "existing game still works" guard — `run_integration_curriculum.py:153`). For a fictional mechanic there is **no test of the mechanic**, so the reward degenerates to "compile-clean minimal diff that doesn't break existing tests" and is gameable. Grep of `~/fallen-empire/src` confirmed concepts like `spoilage`/`priceElasticity`/`marketClearing`/`laborWage` have **0 matches** (pure fiction), while `food`/`population`/`stock`/`market`/`upkeep` are real seams.
+
+**Changes:**
+- `scripts/build_integration_curriculum.py` — added a **grounding filter**. Extracts domain-concept tokens from `simulation_spec.relevant_state` + `static_code_mechanics.flexible_signals` + `expect.mechanics` (camel-split, ≥4 chars, minus a curated stopword set), and keeps a task only if **≥ `--grounding-min-matches` (default 2)** distinct tokens appear in the concatenated target-file text. `convert_task` now returns `(task|None, reason)`; each kept task carries a `grounding` block; bank gains `grounding_policy` + `conversion_stats.{skipped_ungrounded,grounding_match_histogram,dropped_ungrounded_ids}`. New CLI flag `--grounding-min-matches` (0 disables).
+- Rebuilt `benchmarks/integration_curriculum_tasks_converted_v1.json`: **500 → 365 kept, 135 dropped, all 135 are `generalist` meta-reasoning/test-design tasks** (zero game grounding). All 350 `economy` + 15 grounded generalist survive. Tiers: ~53/22/290.
+- `tests/test_integration_curriculum.py` — updated `convert_task` call sites for the tuple return (`grounding_min_matches=0` in the remap tests) and added `test_grounding_filter_drops_imaginary_islands`. 14/14 pass.
+- `scripts/greenfield_deprecation.py` (new) — `greenfield_deprecation_guard(name)`: import-safe; exits 2 with a loud banner unless `FE_ALLOW_GREENFIELD_TRAINING=1`.
+- Guarded 6 greenfield entrypoints at the **top of `main()`** (local import, so module imports stay side-effect-free): `launch_economist_rl_lambda_cycle`, `launch_economist_rl_lambda_split_workers`, `lambda/run_economist_rl_split_workers`, `lambda/run_economist_rl_ppo_train`, `lambda/run_economist_rl_lambda_cycle` (bypasses when `ECONOMIST_RL_CYCLE_RUNNER_INTERNAL=1`), `lambda/watch_economist_rl_lambda_overnight`; added `[DEPRECATED — GREENFIELD]` docstring banners. The split-workers launcher exports `FE_ALLOW_GREENFIELD_TRAINING=1` into its remote startup script so an overridden launch isn't blocked on the box (`env=os.environ.copy()` already propagates locally).
+
+**Decision (scope):** a literal "delete the old system" was rejected because the dependency graph (computed from the integration entrypoints) shows the integration circuit **transitively needs 10–13 economist core modules incl. the PPO trainer**; only ~10 files are greenfield-only, and several of those (split-worker orchestrator, cycle launchers + their tests) had the user's **uncommitted edits**. Chosen path = deprecate entrypoints, keep shared core, delete nothing. Source bank `economistRL_tasks_v3_execution.json` kept as build-time input only.
+
+**Verified:** `python3 tests/test_integration_curriculum.py` → 14 passed; `test_economist_rl_split_worker_orchestrator` → 9 passed; `test_launch_economist_rl_lambda_split_workers` → 7 passed. Import-safety: `run_economist_rl_lambda_cycle` imports without aborting and still exposes `CachedAdapterGenerator`. End-to-end: `run_economist_rl_ppo_train` exits 2 with the banner; with `FE_ALLOW_GREENFIELD_TRAINING=1` it passes the guard. No linter errors. (Use `python3`; pytest not installed — run test files directly.)
+
+---
+
+## 2026-06-22 — Long-horizon decomposition orchestrator (council-per-subtask), deterministic first slice
+
+**Goal:** Give the planner a looping, long-horizon capability: split a task into dependency-ordered **domain subtasks**, dispatch each to its **own council** (which returns a code change), stitch the pieces onto a single shared worktree, verify, and **loop** (retry/replan) until the integrated result compiles + passes. Design forks chosen by user: dispatch = **full `run_council` per subtask**; first slice = **deterministic selftest (no model/git/repo)**; brain = a **trained planner adapter** emits the decomposition plan as its gradeable action.
+
+**Why this fits the existing stack:** the planner already selects experts with per-expert `assigned_question`/`handoff_context` (`planner_plan.py`), and the **integration engine** (`integration_apply.py` + `run_integration_curriculum.py`) already applies diffs diff-first, runs a full-project compile + targeted tests, and **hard-caps destructive edits** (dropped exports / mass deletion / out-of-scope). The missing piece was the orchestration layer *above* `run_council` + `attach_integration_evidence`. This slice adds that layer without touching the existing single-shot council path.
+
+**Changes (new, additive):**
+- `scripts/council_runtime/decomposition_plan.py` — new `planner_decomposition_plan_v1` contract: `SubtaskNode` (subtask_id, domain, goal, assigned_question, **allowed_paths** [fed straight to `apply_integration_output`], target_files, **depends_on** [DAG edges], handoff_context, verify_commands) + `DecompositionPlan`. Includes deterministic `topological_order` (Kahn, id-tiebroken), `ready_subtasks`, cycle detection, `validate_decomposition_plan` (unknown/self deps, dup ids, cycles, completeness), and a `derive_decomposition_plan` single-subtask fallback so flat planner output stays orchestrable/gradeable.
+- `scripts/council_runtime/orchestrator.py` — `run_decomposed_task(...)`: walks subtasks in dependency order, dispatches each (injected `DispatchFn`; the shared worktree is the recombination surface), applies (`ApplyFn`) + verifies (`VerifyFn`), and **loops** failed-but-retryable subtasks bounded by `max_attempts_per_subtask` **and** `loop_policy.max_iterations` (guaranteed termination; no premature no-progress break). Optional `replan` hook. All model/git/repo deps are injected callbacks, so the loop is unit-testable; production wiring is in lazy factories `build_council_subtask_dispatcher` (wraps `run_council`, returns final text as the subtask diff, nests council traces) and `build_integration_apply_verify` (wraps `integration_apply` + `_run_verify`). `selftest`/`cycle-demo` CLIs included.
+- `scripts/council_runtime/traces.py` — added `planner_decomposition_trace_v1` schema (reward metrics: decomposition_completeness, dependency_correctness, domain_assignment_quality, subtask_pass_rate, integration_outcome, replanning_efficiency, granularity_penalty) + `build_decomposition_trace`. Final integration outcome reuses `build_grader_trace(final=True)` so the existing `final_outcome` reward path lights up unchanged.
+- `tests/test_council_orchestrator.py` — 10 tests: topo order, ready gating, validation (valid/cycle/unknown-dep), derive fallback, happy-path dependency order + recombination, **retry-on-loop** (hud fails attempt 1, recovers attempt 2), attempt-cap stops an unfixable subtask (and gates its dependents), and trace emission/shape.
+- `scripts/council_studio.py` — new **"Orchestrator (long-horizon)" tab**: edit a decomposition plan (JSON), run it live, and watch the decomposition DAG, each subtask's own council conversation (planner → specialists → grader streamed via the nested trace sink), the apply/verify per piece, the retry loop, and the final integrated outcome. Backend toggle (mock default / local MLX per run) reuses `_make_generator`; apply/verify are **simulated in the studio** (clearly labeled) so routing + conversations are watchable without a game-repo/git worktree, with a "simulate first-attempt failure on dependents" switch to demonstrate the loop. Served at `http://127.0.0.1:7862` (`PYTHONPATH=scripts .venv/bin/python scripts/council_studio.py --port 7862`). **UI polish:** animated CSS status banner (spinner while running → green ✓ done / red ✕ error) on both live tabs, and a **Clear / Stop** button per live tab that resets the panels and `cancels=` the in-flight run (requires the queue, which `main()` enables). Studio is **mock-only viewing today: no code is written to disk** — the studio's `apply`/`verify` are simulated; the real `git apply` → full-project compile path lives in `orchestrator.build_integration_apply_verify` (writes into a disposable `ExecutionWorktreePool` checkout) and is not yet wired into the UI.
+
+**Verified:** `python3 -m council_runtime.orchestrator selftest` → `SELFTEST_OK` (persistence→hud ordered, hud retried once, final integration verify passes, decomposition+grader traces emitted); `cycle-demo` flags the cycle. `pytest tests/test_council_orchestrator.py` → 10 passed; existing `tests/test_council_runtime_executor.py` → 3 passed (no regression). No linter errors. (Run with `PYTHONPATH=scripts`; package imports `router.*`. Local `python` is missing — use `python3`.)
+
+**Not yet done (next slices):** (1) extend `rollouts.py` + `reward_functions.py` with a `DecompositionRewardFunction` (dependency_correctness, domain_assignment, subtask_pass_rate, integration_outcome dominant, replanning_efficiency; penalties for orphan/redundant subtasks + cross-piece churn) so the trained planner gets gradient on *decomposition* quality; (2) wire the live `build_*` factories into a real game-repo worktree via `ExecutionWorktreePool` and an MLX planner adapter that emits the decomposition document; (3) register a `planner_decomposition` lane in `archetypes.py`. Per earlier discussion, keep retrieval (if added) as a frozen snapshot corpus feeding the compressor/specialist path, **not** live internet search inside graded rollouts (reproducibility).
+
+---
+
+## 2026-06-21 — Split the "121": agentic_benchmark rename + new mechanics 121 eval
+
+**Goal:** Disambiguate the two distinct 121-task benchmarks. The existing 121 is an **agentic codebase-integration exam** (real-repo apply/compile/test); create a separate, equally-weighted **mechanics 121 eval** (greenfield sandbox vitest) so PPO tier-1 mechanic learning can be gauged independently of integration skill. Reuse existing launch/extraction abstractions.
+
+**Changes:**
+- **Rename (consistent):** `git mv benchmarks/task_bank/compiled/final_mass_testing_system_v1.json benchmarks/task_bank/compiled/agentic_benchmark_v1.json`; set `schema_version`/`name` → `agentic_benchmark_v1`, added `benchmark_kind: agentic_codebase_integration`, `renamed_from`, and a `not_to_be_confused_with` pointer. Updated active references: `scripts/run_final_mass_testing_system.py` (DEFAULT_MANIFEST + docstring), `scripts/launch_lambda_parallel_ablation.py` (add_path), `benchmarks/task_bank/compiled/{test_system_lifecycle_v1,generalist_eval_v1,generalist_eval_swe_verified_v1}.json` (superseded_by/lifecycle), `docs/PROJECT_STATE.md`. Kept the runner *filename* `run_final_mass_testing_system.py` to avoid breaking remote Lambda command strings / historical reproducibility; its docstring now states it runs the agentic benchmark. Historical artifacts (this log, SPECIALIZED_RUN_HISTORY, council_behavior_baselines) left as-is.
+- **Mechanics 121 eval (new):** `scripts/build_mechanics_eval.py` (build/validate/summarize) generates `benchmarks/economistRL_mechanics_eval_v1.json` — 121 held-out greenfield sandbox tasks, **equally weighted** across the 6 core economy-sim subsections (20–21 each), **tiered** by difficulty (tier1=smoke … tier4=adversarial; tier-1 slice = 31 tasks). Self-documenting `schema` block; explicit `pass_criteria` (single source of truth = `economist_rl_reward_engine.eval_report_high_reward`); `aggregation` = equal weight per subsection. `adversarial_multidomain_economy` + generalist track excluded (documented).
+- **Reuse, no new machinery:** the manifest is consumable by `economist_rl_task_execution.resolve_eval_tasks` (`tiers.sandbox`), verified to resolve to 121 sandbox tasks. `scripts/launch_lambda_mechanics_eval.py` delegates to `launch_economist_rl_lambda_split_workers.py` (instance mgmt + `monitor_lambda_run_extraction`/`LambdaRunExtractor`); defaults to dry-run, `--launch` to start.
+- **Tests/docs:** `tests/test_mechanics_eval.py` (8 tests, all pass) covers equal weighting, tiering, schema/pass-criteria, eval-path resolution, committed-manifest sync, equal-weighted summary math, and the agentic rename. New `docs/MECHANICS_EVAL.md`; `docs/PROJECT_STATE.md` benchmark rows updated.
+
+**Verified:** `python scripts/build_mechanics_eval.py build` → 121 tasks (by_subsection 21/20/20/20/20/20, by_tier 31/30/30/30); `validate` PASS; manifest resolves to 121 via existing eval path; `python -m unittest tests.test_mechanics_eval` → OK (8). No linter errors. Council eval import still resolves DEFAULT_MANIFEST → `agentic_benchmark_v1.json`.
+
+**Next intent:** Wire `held_out_eval_ids` exclusion into the split-worker training feed so the gauge stays honest; then run a tier-1 mechanics eval of `rl_pass_split_016` to baseline PPO tier-1.
+
+---
+
+## 2026-06-22 — Baseline recompute: RL is REGRESSIVE on brownfield integration
+
+**Goal:** Answer "are the poor scores bad prompting or bad training, and is RL regressive?" by recomputing the **base model** and **split-006** on the 121 eval under the fixed gate, alongside the already-rescored split-016.
+
+**Method:** Launched two fresh Lambda 121-evals (`launch_lambda_parallel_ablation.py --only-cell baseline`) — `qwen_7_5b_only` (base, no adapter) and `custom_local_adapter` (split-006) — both scored under the **live fixed gate** (my `OverwriteGuard` + full `tsc` edits sync to the worker). Local extract monitors timed out overnight; both instances auto-terminated cleanly (active_instances=0, no cost leak). Recovered final tarballs from the Evaluation-Runs NFS via new `scripts/lambda/recover_eval_from_nfs.py` (one short-lived A10, pulled both instance ids, terminated).
+
+**Result — 121-eval Accepted (applied AND verify passed), honest fixed gate:**
+
+| Model | Applyable | Accepted | Accept rate |
+|---|---:|---:|---:|
+| Base Qwen2.5-Coder-7B (no RL) | 21/121 | **15/121** | **12.40%** |
+| economistRL split-006 | 17/121 | **11/121** | **9.09%** |
+| economistRL split-016 | 19/121 | **8/121** | **6.61%** (offline rescore) |
+
+**Conclusion — RL is regressive for brownfield integration.** Accepted declines monotonically with more RL: **base 15 → 006 11 → 016 8**; the drop holds in the signal-bearing domains (economy 5→4→3, state_persistence 8→4→3). Meanwhile greenfield PPO reward *rose* 0.426→0.637 across splits 007–016 — PPO optimized the greenfield mechanic objective while eroding the model's pre-existing real-file-editing ability (train/eval mismatch + reinforced full-file-overwrite habit the honest gate punishes).
+
+**Prompting vs training = training.** The 121 eval never used the contaminated greenfield prompt; the base model (same harness/prompt, no adapter) beats every RL adapter; and on the fixed brownfield prompt a frontier model went 0→50% where split-016 stayed 0%. The bottleneck is the training distribution, not the prompt.
+
+**Artifacts:** consolidated scoreboard `benchmarks/results/economistRL/rescore/integration_regression_scoreboard.md`; recovered summaries under `benchmarks/results/lambda_eval_extracts/recovery_multi_20260623T002147Z/extracted/cleanup_exit_0-*/…/cloud_ablation_summary_{qwen_base_121_fixedgate,economistRL_rl_pass_split_006_121_fixedgate}.{json,md}`. New helper `scripts/lambda/recover_eval_from_nfs.py`.
+
+**Implication:** Greenfield mechanic RL must not be the path to integration. Either (a) freeze mechanic RL and train integration as a separate curriculum from the base model (SFT warm-start on the 182 RFT examples → integration PPO with the integration reward), or (b) mix brownfield tasks into the PPO feed so the model is never rewarded for full-file overwrite. Do not promote split-016 over base for any brownfield/agentic use.
+
+---
+
+## 2026-06-21 — Re-scored split-016 121-eval through the fixed gate (GPU-free) + corrected the scoreboard
+
+**Goal:** Get the *honest* split-016 number on the 121-task eval without re-generating, by replaying the saved rollouts through the now-fixed apply+verify gate, and replace the inflated scores in the scoreboard so progress is real.
+
+**New tool:** `scripts/rescore_mass_testing_rollouts.py` — replays each recovered `game_task_trials/<trial_id>/attempts/local/model_output.md` through the fixed `apply_output` logic (diff-first + `OverwriteGuard`) into fresh game-repo worktrees (`ExecutionWorktreePool`), then (unless `--apply-only`) re-runs the fixed verify (`npx tsc --noEmit` + `ml-cohort`, reusing `run_integration_curriculum._run_verify`). `--apply-only` is ~4 s (pure apply+guard); full verify only hits the still-applying tasks (~80 s). No model/GPU needed. Outputs under `benchmarks/results/economistRL/rescore/`.
+
+**Result — split-016 on the same 121 tasks, reported (leaky) vs real (fixed gate):**
+
+| Metric | Reported (leaky) | Real (fixed gate) |
+|---|---|---|
+| Applyable | 107/121 (88.43%) | **19/121 (15.70%)** |
+| Verify-passed | 55/121 (45.45%) | **8/121 (6.61%)** |
+| Accepted | 41/121 (33.88%) | **8/121 (6.61%)** |
+| Guard-blocked (mass-deletion/dropped-export) | — | **96/121 (79.34%)** |
+
+- **88 of 107 "applyable" were destructive overwrites**; **34 of 41 "accepted" were false positives** — the model replacing 1600–3835-line real files with ~30-line stubs (many `mass_deletion:98–100pct`) that slipped past the narrow cohort.
+- Corrected accept-by-domain (the previously "best" domains collapse hardest — they were the big-file overwrites): economy 3, state_persistence_integrity 3, ai_strategy 1, hud_status **1** (was 14), army_operations **0** (was 9), multidomain 0. 1 task had no saved output.
+
+**Scoreboard corrected:** rewrote `…/recovery_split016_20260621T023940Z/…/cloud_ablation_summary_economistRL_rl_pass_split_016_121.{json,md}` — headline now shows the fixed-gate scores; the inflated numbers are preserved under `reported_leaky_gate` / an "INVALID" section for audit. Updated `docs/INTEGRATION_CURRICULUM.md` headline from "33.88% accepted" to the honest "8/121 (6.61%)".
+
+**Implication:** split-016's true brownfield baseline is ~6.6%, not 34%. This is the clean anchor for measuring integration-curriculum progress. The replay also means any past/future run that persists `game_task_trials/*/model_output.md` can be re-scored instantly when the gate changes — recommend recovery launchers always pull that dir.
+
+---
+
+## 2026-06-21 — Retrofit the 121-task eval with the anti-deletion gate
+
+**Goal:** The canonical adapter scoreboard (`run_final_mass_testing_system.py`, the "121-task eval") was still scoring split-016 under the *unfixed* leaky gate: full-file overwrites were unconditional (a truncated rewrite could delete thousands of lines of a real file and still count as `applyable`), and verify was `npm run test:ml-cohort` **only** (no full-project compile), so destructive deletions of code outside the narrow cohort passed. The recovered split-016 121-eval numbers (107/121 applyable, 55 verify, 41 accepted) were produced under this leaky gate and are therefore inflated. Fix both leaks in the 121 eval itself.
+
+**Changes:**
+- `scripts/game_task_arena.py` — `apply_output()` now passes a default `OverwriteGuard` into both `apply_fenced_files` calls (diff-fallback + no-diff paths) via new `_default_overwrite_guard()` (lazy-imports `integration_apply.{OverwriteGuard,make_overwrite_guard}`). A truncated rewrite of a file ≥40 non-blank lines that deletes >40% of lines or drops exported symbols is now **rejected** (`apply_status` becomes `apply_check_failed`/`no_applyable_changes`) instead of silently destroying the file. Small seeded stubs (< ~40 lines) are unaffected, so the economist sandbox pipeline keeps working. Opt out with `FE_DISABLE_OVERWRITE_GUARD=1`.
+- `scripts/run_final_mass_testing_system.py` — `_derive_verify_commands()` now **always prepends a full-project compile** (`npx tsc --noEmit -p tsconfig.json`, deduped if already present) ahead of the per-task/cohort verify, so a deletion/dropped-export that breaks the project fails verify regardless of the per-task surface. Opt out with `FE_DISABLE_FULL_TSC_VERIFY=1`.
+
+**Validation:** guard rejects a 60→1 line truncation (`mass_deletion:98pct`) and allows a tiny stub (None); `_derive_verify_commands({})` → `['npx tsc --noEmit -p tsconfig.json', 'npm run test:ml-cohort']` and dedups when a task already specifies tsc. 13/13 `tests/test_integration_curriculum.py` pass; no lint errors. Pre-existing unrelated failure in `tests/test_economist_rl_mechanic_only_apply.py` (`test_sandbox_apply_rejects_tests_fence`, allowed-paths filtering in `attach_execution_evidence`) is untouched by this change.
+
+**Implication:** A future re-score of split-016 on the same 121 tasks under this fixed gate gives the apples-to-apples "41 → real number" — how many accepted survive once deletions are punished. This is distinct from the running integration smoke (different/smaller tier-1 bank + fixed brownfield prompt).
+
+---
+
+## 2026-06-21 — Integration RFT data engine + found/fixed prompt contamination
+
+**Goal:** Warm-start the integration curriculum with SFT before RL (the Lambda smoke showed an RL cold start: 0% applyable, all rollouts at the reward floor → no PPO gradient). Build a rejection-sampling SFT data engine using a **frontier teacher (gpt-5.5)** filtered by the existing integration verifier.
+
+**Decision (SFT-then-RL):** The bank is **verifier-defined** (no gold diffs) and the integration reward is **not wired into the PPO rollout loop** (only the standalone `evaluate`). So it is not RL-ready, and pure RL now has ~zero reward variance. Recommended path: Phase 0 rejection-sampling SFT (teacher = frontier) → Phase 1 SFT from split-016 → Phase 2 wire reward into split-worker rollout → Phase 3 PPO.
+
+**New scripts:**
+- `scripts/build_integration_sft_via_rejection.py` — samples N candidate diffs/task from the frontier teacher, runs each through `attach_integration_evidence` (diff-first apply + `tsc` + ml-cohort + invariants) + `score_integration_output`, keeps only applyable + (by default) compiled candidates above `--min-reward`, and writes chat-format SFT pairs to `data/lora/<name>/{train,valid}.jsonl` + a raw-candidates JSONL + manifest. Loads `.env` for frontier creds.
+- `scripts/integration_prompt.py` — `build_integration_user_prompt()`: brownfield prompt that embeds the task's brownfield instruction + the **real current content** of the target file(s) (full when it fits, task-relevant window when large, e.g. `useGameStore.ts` ~343k chars) and asks for one `git apply` diff. No greenfield sandbox framing.
+
+**Root-cause found via the cheap dry-run (the important bit):** Generation (both the split-016 Lambda smoke and the first frontier dry-run) used the **economist greenfield prompt builder** `build_rollout_user_prompt`, which re-wraps integration tasks as a "disposable economistRL sandbox" and injects the fictional `src/lib/economistRl/<task>/mechanic.ts` scaffold. So **even gpt-5.5 got 0/4 applyable** — it edited a non-existent `mechanic.ts` path → `git apply` fails. The tasks themselves are authored correctly (real `target_files`/`allowed_paths`/prompt). The reward/apply/verify infra was always correct; **the prompt was contaminated.**
+
+**Fix + validation:** Wired `build_integration_user_prompt` into both the SFT generator (`--prompt-style integration`, default) and `run_integration_curriculum._generate_with_adapter`. Re-ran the cheap dry-run on `src/lib/gameLoop.ts` tier-1 tasks (gpt-5.5, 2 tasks × 2 samples): **applyable_rate 0% → 50%**, two `reward=1.0` verified diffs kept (applied + `tsc` + ml-cohort), written to `data/lora/integration_curriculum_rft_v1/train.jsonl`. Example kept diff anchors to real `gameLoop.ts` code (`computeSawmillBuildingPreview`, line 104). 13/13 integration tests still pass.
+
+**Implication for the prior smoke:** split-016's 0% tier-1 baseline is confounded by this prompt bug — it should be re-measured with the fixed prompt before treating 0% as the true adapter baseline.
+
+**Next:** scale the frontier generation (more samples/task, start with `gameLoop.ts`-fit tasks where full file fits; design windowed context for the large targets), then SFT split-016 on the verified set and re-run the smoke. Cost note: gpt-5.5 ~30–60s/call.
+
+---
+
+## 2026-06-20 — Lambda smoke: split-016 over integration curriculum (tier-1), honest baseline
+
+**Goal:** Run the new integration-curriculum `evaluate` smoke on Lambda with the economistRL `split-016` adapter, using the **transformers** backend it was trained with (PEFT adapter, base `Qwen/Qwen2.5-Coder-7B-Instruct`) — a faithful test that Mac MLX 4bit cannot reproduce.
+
+**New launcher:** `scripts/lambda/launch_integration_eval_smoke.py` — one-shot launcher that reuses `launch_lambda_parallel_ablation` helpers (capacity-aware launch/fallback, repo+adapter sync, `_remote_lifecycle_prelude` with `trap cleanup EXIT`/watchdog, NFS `Evaluation-Runs` durable staging, terminate). Cost-safety is triple-redundant: local poller early-terminate → on-instance `trap` (`auto_terminate=1`) → 150-min max-runtime watchdog; `require-artifact-export-before-terminate=1`. Dry-run validated before launch.
+
+**Launch-practice incident (recorded):** First attempt backgrounded the orchestrator via `nohup &` inside a short shell command; the detached process was reaped (~1 min in) when the shell session was torn down, so its own cleanup never ran and instance `71e98028fe13479e8d0e6520ebd652c6` was left `booting` with no remote trap yet. **Manually terminated it** (confirmed `terminating`). Re-launched as a **tracked background job** (the Shell tool's own backgrounding, `python -u`) so it persists across turns. Lesson: run long Lambda orchestrators as tracked background jobs, not `nohup &` inside a foreground command.
+
+**Worker:** instance `1a6b65d627fc48aba0fd399680859fbc` (gpu_1x_a10, us-west-1), `Evaluation-Runs` NFS attached; tmux `fe-integration-eval`. GPU telemetry: ~76% avg / 100% peak util, ~14.5 GB (peak 16.3 GB) mem — transformers fp16 7B ran on GPU as intended. End-to-end ~15 min (boot → npm ci + pip torch/transformers/peft → eval → recovery → terminate). Auto-terminated after recovery; `active_instances` back to terminating/0.
+
+**Recovery (local):** `benchmarks/results/integration_eval/lambda_recovery/split016-tier1_anchored_single_hunk-20260621T052145Z/` — contains `integration_eval/split016_tier1.jsonl` (scored rows), `integration_eval/integration_eval_summary.json`, and `cloud-eval-logs/` (`integration-eval.log`, `gpu-smi*.csv`, `gpu-telemetry-summary.{json,md}`, DONE/status markers). rsync rc=0 on both paths.
+
+**Result (tier-1 `tier1_anchored_single_hunk`, n=10):**
+- `applyable_diff_rate=0.0`, `applyable_any_rate=0.0`, `compiled_rate=0.0`, `hard_capped_rate=1.0`, `mean_reward=0.05`.
+- **10/10 emitted well-formed `diff --git` unified diffs** (format is correct), but **0/10 applied** — hard-capped `integration_hard_cap:no_applyable_changes`. Diffs fail `git apply` because the model hallucinates hunk context/line anchors (`@@ -100,6 +101,7 @@` against lines not present in real `src/lib/gameLoop.ts`) and imports from fictional `@/lib/economistRl/<task>/mechanic` paths.
+
+**Interpretation:** Confirms the train/eval-mismatch thesis — split-016 (trained on greenfield full-file `mechanic.ts` generation) produces syntactically valid diffs but has **never learned to anchor edits to real file content**. The integration reward correctly refuses to credit pretty-but-non-applying diffs (hard cap). This is the honest pre-training baseline that motivates training on the integration curriculum.
+
+**Gaps / next:** strict `git apply` (no `--recount`/fuzz/3way) is intentional for an honest gate; if we want partial credit for near-miss anchors, that's a future reward/apply option, not a baseline change. Logical next step is integration-curriculum training (population/PPO) starting from split-016, then re-run this smoke to measure `applyable_diff_rate` lift.
+
+---
+
+## 2026-06-20 — Wired adapter (split-016) into the integration tasks on a real worktree
+
+**Goal:** Let the trained economistRL split-016 adapter run the tougher (brownfield) integration tasks — i.e. build the missing rollout-loop wiring against the real `~/fallen-empire` repo.
+
+**What was added (`scripts/run_integration_curriculum.py`):**
+- `attach_integration_evidence(...)` — applies a rollout to a real game-repo worktree (diff-first + `OverwriteGuard`), runs the task's `verify_commands` (full `npx tsc --noEmit` + `npm run test:ml-cohort`), and builds the integration evidence the reward consumes.
+- `evaluate` subcommand — reuses the economist `ExecutionWorktreePool` (git worktree of the game repo, node_modules linked) and lazily imports the existing MLX `CachedAdapterGenerator` so the module still imports without MLX. Generates with `--adapter-path` (split-016), or scores `--rollouts`/`--dry-run`. Summary reports `applyable_diff_rate`, `applyable_any_rate`, `guarded_rejected_rate`, `compiled_rate`, `hard_capped_rate`, `mean_reward`.
+
+**Readiness checks (this session):** mechanic PPO scored batches 13→16 mean_reward 0.576→0.637, compile 99–100% (foundation learned, reward still climbing). Real-repo verify baseline: `npm run test:ml-cohort` 2.8s, `npx tsc --noEmit -p tsconfig.json` 4.7s, both pass → gate valid and cheap (~7.5s/rollout).
+
+**Bug fixed:** `integration_apply.apply_integration_output` wrote `model.patch` at a path relative to the caller, but `git apply` runs with `cwd=worktree` → "can't open patch". Now resolves the patch path absolute.
+
+**Verified end-to-end (no model):** hand-built `diff --git` one-line edit to the real 803-line `src/lib/gameLoop.ts` → `applied_via=diff`, `compiled_rate=1.0` (real tsc+ml-cohort ≈7s), `reward=1.0`. Also confirmed the contract: a diff without a `diff --git` header does not apply (`applied_via=none`, hard-capped) — expect a low first-smoke `applyable_diff_rate` until the adapter learns the diff shape (diff-format SFT warmup is the accelerator).
+
+**Recommendation given:** don't jump to a population/PBT run; start with a single-lineage split-016 smoke at tier-1 to measure applyable-diff rate, then ramp tiers.
+
+**Next intent:** run the actual split-016 `evaluate` smoke (needs adapter weights + base model; runs where the economist cycle runs — local MLX or Lambda), then connect the same triplet to the split-worker PPO trainer for tier-1 training.
+
+---
+
+## 2026-06-20 — Integration Curriculum: converted the full 500-task bank to real-file editing
+
+**Goal:** Per user direction, the integration bank should be the *existing* tasks with integration **forced** (edit real files), not a small hand-authored set. Built a converter and generated the full bank.
+
+**Key discovery:** The harness already supports real-file editing — `classify_integration_kind` returns `standard` (edit existing files, no stub) vs `sandbox`. 494/500 economist tasks already list `codebase_requirements.relevant_files`, but they point at **fictional** paths (`src/lib/economy.ts`, `market.ts`, `workers.ts`, …) that don't exist in `~/fallen-empire`, so everything fell back to `sandbox`. Also found `src/lib/empireEconomy.ts` is a **32-line helper**, not the economy engine — the real economy tick is in `src/lib/gameLoop.ts` (803 lines), state in `src/store/useGameStore.ts` (8713), supply in `src/lib/military.ts` (2509).
+
+**What was added:**
+- `scripts/build_integration_curriculum.py` — converts the economist mechanic bank → integration variants: remaps fictional→real files (economy/market/workers/projection→`gameLoop.ts`, supply→`military.ts`, storage→`useGameStore.ts`), drops globs/fictional-test/doc paths, enforces `MIN_TARGET_LINES=60` (so empireEconomy's 32-line helper is never a target; falls back to the real anchor), forces `execution_mode=integration / kind=standard`, sets the diff-only prompt + invariants (`preserve_existing_exports`), and verify = `["npx tsc --noEmit -p tsconfig.json", "npm run test:ml-cohort"]` (full-project compile + the repo's headless-sim/stable-types cohort guard).
+- `benchmarks/integration_curriculum_tasks_converted_v1.json` — **500 tasks**, 0 skipped; tiers ~154/56/290 (t1/t2/t3); targets `gameLoop.ts` (500), `useGameStore.ts` (241), `military.ts` (74). The 9-task `integration_curriculum_tasks_v1.json` stays as the validation seed.
+
+**Verification:** end-to-end smoke against the **real** 803-line `src/lib/gameLoop.ts`: truncated whole-file rewrite → `overwrite_rejected`, reward 0.05, hard-capped; clean 1-line export-preserving diff → reward 1.0. `tests/test_integration_curriculum.py` → 13/13 OK (added converter remap/size-filter/standard-kind/bank-consistency tests). Bank passes `run_integration_curriculum.py validate` (500, ok).
+
+**Decision (testing fidelity):** integration reward uses full-project `tsc` + the existing `npm run test:ml-cohort` guard as the behavior signal; per-task behavior tests against real files can be layered later without changing the contract.
+
+**Next intent:** wire apply/verify/reward into the split-worker rollout loop against a checked-out `~/fallen-empire` worktree and start tier-1 integration training once the mechanic curriculum is learned.
+
+---
+
+## 2026-06-20 — Integration Curriculum (brownfield editing) + apply-exploit fixes
+
+**Goal:** Build a *separate* RL curriculum that teaches brownfield integration (surgically editing real, large game files via minimal anchored diffs) and fix the two exploits diagnosed from the split-016 eval: (1) whole-file truncation / mass deletion via the overwrite apply contract, and (2) destructive rewrites slipping past a narrow type-check cohort. Intended to begin training only **after** the mechanic curriculum is learned.
+
+**Diagnosis recap:** split-016 plateaued (33.88% accepted / 45.45% verify). Training rewarded writing complete *small* `mechanic.ts` stubs (whole-file overwrite harmless); eval required surgical edits of multi-thousand-line files, where the same overwrite contract deleted thousands of lines and dropped exports. PPO never got a surgical-editing gradient and never penalized truncation → train/eval distribution mismatch + apply exploit.
+
+**What was added:**
+- `benchmarks/integration_curriculum_tasks_v1.json` — tiered (anchored single-hunk → multi-hunk → cross-file) brownfield task bank targeting **real** files (`src/lib/ai.ts`, `empireEconomy.ts`, `combat.ts`, `military.ts`, `src/types/game.ts`, `src/store/useGameStore.ts`, `src/components/ui/GameHUD.tsx`, …). Diff-only output contract; full-project `tsc` verify; per-task invariants (`preserve_existing_exports`, explicit `required_exports`/`required_anchors`, `diff_budget`).
+- `scripts/integration_apply.py` — diff-first `apply_integration_output` + `OverwriteGuard` (rejects >40% non-blank-line deletion on files ≥40 lines, and any dropped export) + TS/JS export extraction.
+- `scripts/integration_reward_engine.py` — `score_integration_output`: targeted_tests 0.45 / invariant_preservation 0.20 / diff_minimality 0.15 / anchored_edit 0.10 / instruction_contract 0.10, non-decaying compile gate (reuses `economist_rl_reward_engine.compile_gate_reward`), and **hard caps (0.05)** on dropped exports / missing anchors / destructive overwrite / out-of-allowed edits so PPO cannot learn the truncation exploit. Scored-row shape matches economist rows for the same split-worker trainer.
+- `scripts/run_integration_curriculum.py` — `validate` / `score` / `selftest` + `build_integration_evidence` (the evidence builder the rollout loop will call).
+- `scripts/game_task_arena.py` — `apply_fenced_files(..., overwrite_guard=...)` opt-in hook (default `None`; legacy economist pipeline unchanged).
+- `tests/test_integration_curriculum.py` (10 tests) + `docs/INTEGRATION_CURRICULUM.md`.
+
+**Verification:** `run_integration_curriculum.py selftest` → SELFTEST_OK (truncated rewrite blocked at apply, reward hard-capped at 0.05; clean minimal diff preserving exports → reward 1.0). `tests/test_integration_curriculum.py` → 10/10 OK. Pre-existing failure in `test_economist_rl_mechanic_only_apply.py::test_sandbox_apply_rejects_tests_fence` confirmed present on HEAD (unrelated to this change).
+
+**Next intent:** wire the apply/verify/reward triplet into the split-worker rollout loop against a real game-repo worktree (reusing the existing worktree pool + queue + PPO trainer), then start tier-1 integration training once the mechanic curriculum is learned.
+
+---
+
+## 2026-06-20 — Recovered split-016 121-task eval from NFS
+
+**Goal:** Recover the result of the most recent 121-task eval of the economistRL `rl_pass_split_016` adapter (cell `economistRL_rl_pass_split_016_121`), whose local launch log (`logs/launch_economist_rlpass_split016_121_20260620T225502Z.log`) was empty and whose local extract monitor died at `2026-06-20T23:10Z` (only the model-load preamble was captured under `benchmarks/results/lambda_eval_extracts/live_a28cf19708a1/`).
+
+**Root cause:** The eval ran to a clean exit on Lambda instance `a28cf19708a14465906fe7dd7419885a` (≈22:55Z Jun 20 → 02:07Z Jun 21), staging periodic `checkpoint_<task_n>` tarballs + a final `cleanup_exit_0` tarball to the **Evaluation-Runs** NFS (`/lambda/nfs/Evaluation-Runs/fallen-empire-lora-artifacts/`). Artifacts are keyed by **instance id**, not cell name, so name-based searches missed them. The local monitor simply stopped early.
+
+**Recovery:** New one-shot worker `scripts/lambda/recover_split016_eval_from_nfs.py` launched two short-lived A10s in us-west-1 attached to Evaluation-Runs (`8c672f4a89c94737808a02ba9228b41b` for the scan, `e8d42b78850d47d7a73473795e48cd34` for the pull), rsynced + extracted the final `cleanup_exit_0-a28cf19708a1…-20260621T020724Z.tar.gz` and `checkpoint_120`. Both recovery instances terminated after use; 0 paid compute left running.
+
+**Recovery path:** `benchmarks/results/lambda_eval_extracts/recovery_split016_20260621T023940Z/`. Recovered: `cloud_ablation_rows_economistRL_rl_pass_split_016_121.jsonl` (121 rows), `cloud_ablation_summary_economistRL_rl_pass_split_016_121.{json,md}`, `cloud_ablation_runtime_tasks_*.json`, GPU telemetry.
+
+**Result (custom_local_adapter, manifest `final_mass_testing_system_v1.json`, 121 tasks):**
+
+| Metric | Value |
+|---|---|
+| Applyable | 107 / 121 (88.43%) |
+| Verify-passed | 55 / 121 (45.45%) |
+| Accepted | 41 / 121 (33.88%) |
+| Infra-blocked | 0 |
+| Avg tokens | 3120 |
+
+Domain accept/verify rates: hud_status 0.70/0.95, state_persistence_integrity 0.57/0.76, army_operations 0.45/0.50, economy 0.15/0.30, multidomain 0.10/0.15, ai_strategy_and_planning 0.05/0.05. Failure classes: `none` 55, `verify_failed_unknown` 66.
+
+---
+
 ## 2026-06-08 — Lambda artifact export Cursor rule
 
 **Goal:** Ensure agents always pull Lambda worker artifacts to local storage when a run completes.
@@ -6157,6 +6577,59 @@ nohup .venv/bin/python scripts/lambda/watch_economist_rl_lambda_overnight.py \
 - 15-minute shell loop appending `AGENT_LOOP_TICK_economist_rl` to `logs/agent_loop_economist_rl.log` (instructs Cursor agents to restart watcher on failure)
 
 **Action:** Killed watcher, launcher, and `AGENT_LOOP_TICK_economist_rl` loop processes. Latest launch log (`logs/launch_economist_rl_overnight_attempt_01.log`) already auto-terminated instance `b336e841…` after SSH bootstrap timeout; Lambda list API returned 403 from this session (could not re-verify cloud inventory).
+## 2026-06-21 — Council Studio: live + replay rollout viewer
+
+**Trigger:** User wanted an environment to test the council/workflow and view individual rollouts in real time.
+
+**Added:** `scripts/council_studio.py` — a Gradio app (`.venv` has gradio 4.44.1 + mlx_lm) with two modes sharing one renderer:
+- **Run live:** builds a council plan (planner doc + N personality participants of a base expert), runs `council_runtime.executor.run_council` in a worker thread with a queue-backed streaming `trace_sink`, and yields step-by-step UI updates (planner → specialists → grader → final). Generation backend toggles between instant deterministic `mock` and real `LocalMlxBackend` (MLX). A "simulated final_outcome" slider injects the verifier signal into `trace_context["final_outcome"]` so the reward response to outcome is visible.
+- **Inspect recorded:** loads any council `traces.jsonl` envelope (file or dir), regroups via `group_traces_into_rollouts`, dropdown per rollout.
+- **Reward panel:** on completion/selection, scores `PlannerRewardFunction` + `SpecialistRewardFunction` and renders a component-by-component bar breakdown with weights (exposes the reward-hacking surface: keyword-driven components, self-referential `final_outcome`).
+
+**Verified:** lint clean; mock live run streams 7 frames end-to-end with full reward decomposition; wrote a sample `benchmarks/results/council_eq/studio_demo/traces.jsonl` (3 rollouts) and confirmed the inspect loader populates the dropdown and renders rewards; server boots `HTTP 200` at `http://127.0.0.1:7861`.
+
+**Run:** `.venv/bin/python scripts/council_studio.py` (optional `--port`, `--share`). Real-model live runs require local MLX weights + optional adapter path; first call loads the model.
+
+**Next intent (not done):** real per-token streaming (currently step-level), and wiring a true outcome verifier instead of the simulated-outcome slider.
+
+## 2026-06-22 — Council PPO training: wire in the decomposition policy
+
+**Trigger:** User asked to review the existing council PPO/season training and adjust it to include the new long-horizon decomposition system (orchestrator + `planner_decomposition_trace_v1`).
+
+**Finding (pre-change):** The season pipeline (`run_council_season.py` → `season_training.py` → `season_ops.py`) graded traces into rollouts, dual-graded planner + specialist rewards, aggregated fitness, ran PBT, and built `council_lora_train_request_v1` requests — but **only specialist EQ lanes** were turned into PPO scored rows and actual LoRA updates (`train_requests.specialist_rewards_to_ppo_scored_rows` → `PPOAdapterTrainingBackend` → `economist_rl_ppo_trainer.train_ppo_batch`). Decomposition traces existed upstream (orchestrator + `build_decomposition_trace`) but landed in `CouncilRollout.other_traces` and never produced gradient. Planner train requests got built but were skipped (no rows).
+
+**Change (decomposition now trains through the same PPO season path; owned by the `planner` archetype/organism):**
+- `council_runtime/rollouts.py` — `CouncilRollout` gains `decomposition_trace`; `group_traces_into_rollouts` classifies `planner_decomposition_trace_v1`.
+- `council_runtime/decomposition_rewards.py` (new) — `DecompositionRewardFunction` scores the emitted `decomposition_document` (re-validated via `validate_decomposition_plan`): `plan_validity`, `decomposition_completeness`, `dependency_correctness`, `domain_assignment_quality`, dominant `integration_outcome` (from the orchestrator's final grader trace), minus `invalid_plan_penalty`/`granularity_penalty`. Each row carries `training_prompt` (task + decomposition instruction) and `output` (serialized plan JSON = the gradeable action). Schema `council_decomposition_graded_rollout_v1`.
+- `council_runtime/train_requests.py` — `decomposition_rewards_to_ppo_scored_rows()` (same PPO row schema as specialist).
+- `council_runtime/fitness.py` — `FitnessAggregator.aggregate_decomposition()` maps decomposition reward onto the active planner organism (merges with flat-planner fitness).
+- `council_runtime/season_ops.py` — operator now also runs `DecompositionRolloutGrader` (`decomposition_rewards.jsonl` + summary), merges its fitness, and in the PBT train loop falls back to decomposition→PPO rows for planner requests (specialist requests unchanged). `PlannerRolloutGrader` now skips rollouts that have a decomposition trace (they'd wrongly score 0 as missing flat planner doc). New manifest field `decomposition_reward_count`; new `SeasonRunResult.decomposition_reward_path(_summary)`.
+- `council_runtime/adapter_training.py` — PPO `system_prompt` is now archetype-aware (`system_prompt_for_archetype`): planner-lane training uses a decomposition-shaped prompt instead of the specialist collaboration prompt.
+- `council_runtime/season_training.py` — surfaces `decomposition_reward_count` in `SEASON_TRAINING_MANIFEST.json`.
+
+**Design choice:** Reused the existing **`planner`** archetype/organism rather than registering a new `planner_decomposition` lane — the planner *is* the decomposer, this avoids registry/coevolution churn, and it directly closes the "planner train requests produce no PPO rows" gap. Flat-planner rollouts still use `PlannerRewardFunction`; decomposition rollouts use `DecompositionRewardFunction`; both feed the same planner organism's fitness/PBT.
+
+**Verified:** `tests/test_council_decomposition_training.py` (new, 3 tests: reward on a valid 2-subtask DAG, full operator pbt_mutate/dry_run producing `decomposition_rewards.jsonl` + `ppo_scored_rows/planner/*.jsonl` + train manifest, and cyclic-plan penalty). Full council suite green: `PYTHONPATH=scripts pytest tests/ -k council` → 48 passed; targeted season/fitness/pbt suites → 11 passed. Lint clean on all edited modules.
+
+**Next intent (not done):** generate decomposition rollouts from a real/MLX planner adapter (currently traces come from the orchestrator/studio); optionally split a dedicated `planner_decomposition` archetype if flat-planner and decomposition policies should diverge; promotion gate + `train_planner_adapter.py` entrypoint still absent.
+
+## 2026-06-22 — Planner agency: emit-plan policy (decompose-or-not + call specialists)
+
+**Trigger:** User wants the planner to have full agency — "call different specialists and decompose problems, or not, as it sees fit" — as a *sampled, gradeable action*, not a hand-written/templated document.
+
+**What this adds (the planner's action = one `planner_decomposition_plan_v1` document it emits):**
+- `council_runtime/decomposition_plan.py` — `SubtaskNode` gains `selected_experts[]` (per-subtask routing is now part of the planner action). `derive_decomposition_plan` single-subtask fallback carries a generalist expert. `selected_experts` is intentionally *not* a required field — structural validity stays separate from routing quality, so a 1-subtask "don't decompose" plan is still valid.
+- `council_runtime/planner_decomposition_policy.py` (new) — the policy:
+  - `heuristic_decomposition_plan()` deterministic decompose-or-not from `infer_risk_tags` (1 domain → single subtask; multiple domains → minimal acyclic dependency chain, each routed to a `DOMAIN_EXPERTS` specialist). Used for CI/smoke + as fallback.
+  - `generate_decomposition_plan(..., backend, mock, temperature)` → `PlanEmission(plan, validation, raw_text, parse_ok, source)`. Model mode prompts a planner adapter for the JSON, parses it (`parse_decomposition_plan` / balanced-brace `_extract_json_object`), and on parse failure runs a fallback plan while keeping the **raw** completion + `parse_ok=False` so PPO trains on what the model actually produced and the reward penalizes malformed actions.
+  - `make_council_plan_for_subtask()` → the orchestrator's `council_plan_for_subtask` callback, building council participants from each subtask's `selected_experts` (generalist fallback). This is the seam where the planner's expert choice actually drives which specialists convene.
+- `council_runtime/traces.py` — `build_decomposition_trace` records `policy_action_text` (raw model output, the PPO completion), `parse_ok`, and `selected_expert_count`. `orchestrator.run_decomposed_task` forwards `policy_action_text`/`parse_ok` from `trace_context`.
+- `council_runtime/decomposition_rewards.py` — added `expert_selection_quality` (+weight) and `irrelevant_specialist_penalty` (penalize off-domain/over-staffed experts) components; `plan_validity`/`invalid_plan_penalty` now require `parse_ok` (a malformed sampled action gets 0 validity); PPO `output` is the raw `policy_action_text` when present (else serialized plan).
+- `scripts/run_planner_decomposition_rollouts.py` (new) — the decomposition analogue of `run_council_eq_organic_rollouts.py`: planner emits its plan → orchestrator runs council-per-subtask → writes `traces.jsonl` (+rows/summary/state) that `run_council_season.py` grades & PPO-trains. Deterministic smoke by default (heuristic policy + mock councils + synthetic verify); flags `--model`, `--planner-temp`, `--real-verify`/`--worktree` switch each seam to MLX + real brownfield apply/verify.
+
+**Verified end-to-end (smoke):** `run_planner_decomposition_rollouts.py --max-tasks 3` → 3 multi-subtask rollouts; then `run_council_season.py --archetype-id planner --preset smoke` graded `decomposition_reward_count=1` and wrote `ppo_scored_rows/planner/planner.g001.*.jsonl` whose `output` is the emitted plan JSON and `archetype_id=planner`. Note: mock verify makes all rewards 1.0 (no advantage) — genuine learning signal requires `--real-verify`. Tests: `tests/test_planner_decomposition_policy.py` (7: node round-trip, decompose-or-not, JSON parse incl. embedded/garbage, council-plan reads experts, relevant-vs-irrelevant expert reward, unparseable-action penalty, generator→season end-to-end). Full suite `pytest -k "council or decomposition or planner or orchestrator"` → 65 passed. Lint clean.
+
+**Still TODO for a *real* RL loop:** capture the planner's true logprobs during sampling (replace `proxy_old_logprob` for the planner lane) so PPO is on-policy; wire `run_planner_decomposition_rollouts.py --model --real-verify` against an `ExecutionWorktreePool` checkout so `integration_outcome` is real; optionally surface a "generate plan from prompt" button in `council_studio.py` using `generate_decomposition_plan`.
 
 ## 2026-06-30 — Model Chat tab: send-to-both agentic loop + judge voting
 
@@ -6174,3 +6647,236 @@ nohup .venv/bin/python scripts/lambda/watch_economist_rl_lambda_overnight.py \
 **Verified:** new `tests/test_game_task_arena_model_chat.py` (16 tests: stop-token detection/stripping, debater/judge filters, transcript name-keying, verdict parsing incl. extra-text-on-winner-line and tie language and unparseable text, vote tally incl. majority/tie/unparsed-ignored/no-votes, scoreboard rendering, debate-record shape/id) — all pass with plain `pytest` (no gradio/model needed). `gta.build_app()` builds the full `gradio.Blocks` graph successfully under `.venv` (validates all new `.click()` wiring — input/output component counts match every callback signature). `ast.parse` clean; no linter errors.
 
 **Not done / known limitations:** local (small LoRA) speakers may not reliably follow the stop-token instruction, so most loops will hit the max-rounds safety cap in practice — that's intentional per the confirmed design (model signal + safety cap, not a fixed round count). `Stop Loop` only interrupts between turns. No separate human-grading UI was added for Model Chat debates (the existing "Grade And Complete" rubric section is still Arena-Trials-only, unrelated to this tab) — the JSONL judge log is the data-capture path for now.
+
+## 2026-07-01 — Model Chat: chat-first UX, real-time streaming, typing effect
+
+**Trigger:** User feedback on the just-added Model Chat tab: (1) the broadcast picker let you select/deselect speakers even though the point is to always loop them together — remove the confusing selection; (2) the Arena-Trials grading panel showed under the tab and was too cluttered — hide it behind a dropdown; (3) the loop should run in a chatbox in real time and the prompting should feel like chatting; (4) show a typing effect while a model is generating.
+
+**Changes:**
+- **`scripts/model_router.py`** — added streaming generation (additive; existing `generate`/`generate_batch` unchanged): `LocalMlxBackend.stream_generate` yields token deltas via `mlx_lm.stream_generate` (mlx path; `GenerationResponse.text` is the incremental piece), falling back to a single full-text chunk on the transformers path. `OpenAICompatibleBackend.stream_generate` + `_stream_chat_completion` do SSE `stream=True`, parsing `choices[0].delta.content`, reusing the same `max_tokens`→`max_completion_tokens` and unsupported-`temperature` 400 retry fallbacks as the non-streaming path.
+- **`scripts/game_task_arena.py`** — extracted `_resolve_speaker_backend` (shared Local/Frontier cache lookup) out of `_generate_with_speaker_backend`, and added `_stream_with_speaker_backend` (yields raw deltas via the backend's `stream_generate`, falls back to a single full-text chunk if nothing streams). Refactored `_chat_generate` into `_chat_request` (builds the per-turn `GenerationRequest` from the shared transcript). **Removed** the single-speaker `Send To Speaker` / `Continue Speaker` controls, the `Speak to` dropdown, and the loop `CheckboxGroup` picker. `run_agentic_loop_ui` now targets **all** `_debater_names(room_state)` automatically and **streams each reply into the chatbox** with a live `▌` cursor (throttled to ~20 updates/sec), finalizing each turn with `sanitize_model_output` + stop-token strip. Added `continue_loop_ui` (loop with no new human message). The Conversation Room is now chat-first: one message box → **Send & Run Loop** (or Enter), plus **Continue Loop** / **Stop** / **Clear**, with max-rounds/tokens/temperature on a secondary row. `room_add/reset/enter_ui` simplified to only refresh the judges `CheckboxGroup` (+ a roster note on enter). The Arena-Trials **Grade And Complete** rubric block is now wrapped in a collapsed `gr.Accordion` so it no longer clutters the view.
+
+**Verified:** `ast.parse` clean on both files; all 16 `tests/test_game_task_arena_model_chat.py` helper tests still pass; `build_app()` builds the full Blocks graph (validates every rewired `.click()`/`.submit()` input-output set and the `cancels=[send_click, send_submit, continue_click]` stop wiring); `curl /config` returns the full component tree and the UI serves HTTP 200 on `:7868`. Live token-by-token streaming was not screenshot-verified because the embedded Cursor browser tab did not hydrate the Gradio 4.44.1 SPA (server-side config confirmed healthy).
+
+**Follow-up — debate quality ("loop doesn't build on itself"):** A live 2-speaker probe against `checkpoints/fe-lora-30m` showed the loop *was* feeding the growing transcript to each speaker, but the small model (a) paraphrased/agreed instead of debating, (b) echoed the `Name:` transcript format (replies began `Aggressive: Aggressive: …`), (c) **hallucinated an entire multi-turn dialogue in a single generation** (`… Human: … Aggressive: …`), and (d) emitted garbled stop-token variants (`[[DEBATED]]`). Fixes in `game_task_arena.py`: (1) `_chat_transcript` now keys off the bare `speaker_name` (clean `Name: text`) instead of the verbose backend label; added `_last_transcript_speaker`. (2) `_chat_request` rewritten into a debate-forcing prompt — assigns opponents, demands a direct rebuttal + one NEW point each turn, forbids repetition and `Name:` self-prefixes, holds stance; opening turn is handled separately. (3) New module-scope, unit-tested post-processors composed in `_clean_debate_reply`: `_strip_leading_speaker_prefix` (drops echoed known-name prefixes only), `_truncate_at_next_speaker` (cuts at the first embedded `KnownName:`/`Human:` line so each turn is a single contribution and the **loop** owns the back-and-forth), `_strip_trailing_bracket_marker` (removes mangled `[[…]]` end-markers). The loop passes `opponents=names` and finalizes turns via `_clean_debate_reply`. Re-probe: turns are now single clean contributions that address the opponent by name and build across rounds. Added 5 tests (now 21 total, all pass). Stray leading quote / occasional prompt-echo are residual small-model quirks, not structural.
+
+## 2026-07-01 — Model Chat: base archetypes + cloud Conversation DB
+
+**Base archetypes (prompt-injection, fast iteration):** User asked for addable base archetypes (starting with a "researcher — slow and calculated, uses search") and to check whether the real council training had reusable base types with params. Exploration finding: the council stack has rich personas but **generation params do not vary by role** — differentiation is prompt/trait injection (Council Studio `PERSONALITIES` in `scripts/council_studio.py`; roster personality variants in `scripts/router/roster.py` + `data/routing/council_roster_v1.json`; EQ bootstrap variants in `scripts/bootstrap_council_eq_traces.py`; planner prompt in `scripts/council_runtime/planner_decomposition_policy.py`). Added module-scope `CHAT_ARCHETYPE_PRESETS` in `scripts/game_task_arena.py` with 10 presets carrying the council trait numbers baked into profile text: Researcher (new, per user spec), Risk Auditor, Implementer, Explorer, Verifier, Direct Builder, Creative Synthesizer, Calibrated Mediator, Planner, Impartial Judge (`is_judge=True`). Helpers `_archetype_names` / `_find_archetype` (case-insensitive) / `_unique_speaker_name` (collision-safe `Name 2`, `Name 3`…). UI: "Quick-add a base archetype" row in the speaker accordion — dropdown + live preview (`archetype_preview_ui`), **Add Archetype To Room** (`room_add_archetype_ui`, uses current adapter/frontier fields), **Load Into Form** (`archetype_load_into_form_ui` populates name/backend/profile/judge for tweaking). No real search tool is wired — the Researcher *reasons like* a searcher (states what it would look up); RAG wiring is a possible follow-up. +4 tests (24 total, all pass).
+
+**Cloud Conversation DB (always-on website, chat stays local):** User wanted booked conversations in a hosted database with a web UI ("more like a website", Railway; explicitly not Notion — a Notion notes-taker plan was started then skipped). Added `cloud/conversation_db/` — self-contained FastAPI + SQLite service (`app.py`, `requirements.txt`, `Dockerfile`, `railway.json`, `README.md`): `POST /api/conversations` (Bearer `FE_CONVERSATION_DB_TOKEN`; open if unset), `GET /api/conversations[?q=]` + `/api/conversations/{id}`, website `/` (searchable table: topic derived from first Human turn, speakers, winner badge, turns, date) and `/c/{id}` (full transcript + judge verdicts, dark arena styling), `/health`. Storage `$DATA_DIR/conversations.db` (Railway volume at `/data`); `INSERT OR REPLACE` keyed on `debate_id` so re-judging updates the same row. Arena side: `_post_conversation_to_cloud(record)` in `game_task_arena.py` reads `FE_CONVERSATION_DB_URL`/`FE_CONVERSATION_DB_TOKEN` and is called from `judge_the_debate_ui` after the local `append_jsonl` — status line links the cloud page; cloud failure never loses the local copy; unset env → no-op. **Verified:** local end-to-end smoke (401 without token, ingest, list, index/detail pages, search filter, `_post_conversation_to_cloud` round-trip against the service, unconfigured → None); 24 tests still pass; `build_app()` builds; no lint errors. **Not done:** actual Railway deploy — `railway login` is interactive-only (CLI present at `/usr/local/bin/railway` but unauthorized); deploy commands documented in `cloud/conversation_db/README.md`. The running shared UI (gradio.live) predates the push hook and would need a relaunch with the env vars set once deployed.
+
+## 2026-07-01 — Model Chat debate quality: search grounding + anti-repeat loop
+
+**Trigger:** User reported Model Chat debate output "just repeats itself" on a Russian-author topic (Tolstoy vs Dostoevsky vs Chekhov). Follow-up: "perhaps give them search" so debaters ground turns in real facts instead of hallucinating author↔work pairings.
+
+**Web research (Britannica/Wikipedia/Encyclopedia.com summaries):** Tolstoy — *War and Peace* (1869), *Anna Karenina* (1878), panoramic realist epic; Dostoevsky — *Crime and Punishment* (1866), *Brothers Karamazov* (1880), psychological/polyphonic fiction; Chekhov — modern short story + drama (*The Seagull*, *Uncle Vanya*, *Three Sisters*, *The Cherry Orchard*).
+
+**`scripts/game_task_arena.py` — debate search + quality loop:**
+- `DEBATE_FACT_SNIPPETS` curated offline facts keyed by author/topic; `DEBATE_FALLBACK_TURNS` distinct REBUTTAL/EVIDENCE/CLAIM lines per advocate (rotated by speaker turn index).
+- `_debate_search_enabled()` — env `FE_DEBATE_SEARCH` (default **on**; set `0` for offline/tests).
+- `_debate_search_snippets(query)` — tries `ddgs` / `duckduckgo_search` when installed, else curated lookup; `_debate_reference_facts(speaker, topic)` runs 1–2 stance-targeted queries and injects results into `_build_debate_turn_request` as "Reference facts (use these; do not invent attributions)".
+- `_strip_bracket_speaker_hallucinations` wired into `_clean_debate_reply` (fixes `[Dostoevsky Advocate: …]` multi-speaker junk).
+- `_violates_stance_lock` widened (120-char windows, wrong-side "strongest case" phrasing); removed dead code after `_turn_quality_ok`; stricter empty/prompt-echo rejection.
+- `_generate_debate_turn_text` — 2 model attempts (2nd uses `simple_mode` + search facts) then curated `_fallback_debate_turn` (no more returning garbage `best`).
+- `run_agentic_loop_ui` — on failed retry quality, uses `_fallback_debate_turn` instead of `_(no output)_`.
+
+**Probe:** `scripts/_debate_probe.py` sets `FE_DEBATE_SEARCH=1` by default. Latest run **PASS** — `{'turns': 6, 'repetitions': 0, 'on_topic': 6, 'unique_openers': 6, 'mixups': 1, 'stance_violations': 1}`. Sample turns now rotate distinct fallback lines (War and Peace / Anna Karenina vs Crime and Punishment / Brothers Karamazov / Notes from Underground) with correct attributions.
+
+**Tests:** +10 helpers in `tests/test_game_task_arena_model_chat.py` (bracket strip, mixups, stance lock, turn quality, curated search, fallback rotation, env gate) — **34 passed** via `python3 -m pytest tests/test_game_task_arena_model_chat.py -q`.
+
+**Search approach:** Curated facts primary (always offline-safe); optional DuckDuckGo via `ddgs` when installed (not in `.venv` today). No new pip dependency added.
+
+**Limitation:** `checkpoints/fe-lora-30m` still often fails quality checks; fallbacks carry most turns. For fully model-generated debate, use a Frontier speaker or larger adapter.
+
+## 2026-07-02 — Model Chat UX overhaul: conversations sidebar + lobby/room flow
+
+**Trigger:** User requested a major Model Chat UX overhaul: configurable rounds with early stop by agreement, lobby→enter-room flow (setup hidden after enter, Exit room), persistent conversations (local JSON + Gradio session), and a classic chat sidebar to switch/create conversations.
+
+**`scripts/game_task_arena.py`:**
+- Added `MODEL_CHAT_CONVERSATIONS_DIR` / `index.json` persistence (`_load/_save_conversations_store`, `_add/_update/_set_active_conversation`, title derivation, sidebar labels).
+- Lobby/room state machine: `in_room` per conversation; `_lobby_room_visibility`; lobby panel (speakers, archetypes, rounds, early-stop mode, tokens/temp) vs room panel (transcript, loop controls, judge accordion) toggled on Enter/Exit.
+- Early-stop voting: `_collect_conclude_votes`, `_render_conclude_vote_status`, `_early_stop_reached` with modes `first_signal` / `unanimous` (default) / `majority`; debaters vote via `[[DEBATE_CONCLUDED]]` in replies.
+- Model Chat tab layout: left sidebar (`gr.Radio` conversation list + **+ New conversation**), right main panel with lobby or active room; all mutations persist to `benchmarks/results/model_chat_conversations/index.json`.
+- `run_agentic_loop_ui` / `continue_loop_ui` now persist transcript to the active conversation after each turn.
+
+**`tests/test_game_task_arena_model_chat.py`:** +6 tests (conclude votes, early-stop modes, lobby/room visibility, store round-trip, title derivation, add conversation) — **40 passed**.
+
+**Verified:** `.venv/bin/python -c "from game_task_arena import build_app; build_app()"` OK; arena relaunched on `:7868` with `FE_DEBATE_SEARCH=1` and `cloud/conversation_db/.env.local` env (PID 45665, log `logs/arena_model_chat_ux_20260702T063509Z.log`).
+
+## 2026-07-02 — Model Chat debate repetition: context-chain fixes
+
+**Trigger:** User reported Model Chat debate turns still repetitive / not building on prior arguments after the conversations-sidebar UX landed.
+
+**Architecture traced (UI → transcript):**
+1. **Send & Run Loop** / **Continue Loop** → `run_agentic_loop_ui` / `continue_loop_ui` (Gradio generators).
+2. **State inputs:** `chat_state` (`gr.State`), `conversations_store` (`gr.State` backed by `benchmarks/results/model_chat_conversations/index.json`).
+3. Per speaker/round: `_hydrate_loop_chat_state` → `_completed_chat_turns` → `_chat_request` → `_build_debate_turn_request` (transcript + `points_already_made` + latest opponent quote + search facts) → `_stream_with_speaker_backend` → `_clean_debate_reply` → `_turn_quality_ok` (retry with `anti_repeat`) → `_fallback_debate_turn`.
+4. After each turn: `state` appended + `_update_active_conversation(..., chat_state=state)` persists to `index.json`; outputs refresh `chat_box` + `chat_state`.
+
+**Root causes found:**
+1. **Stale `chat_state` vs store** — `run_agentic_loop_ui` only read `gr.State chat_state`, not the longer persisted active-conversation transcript (Continue Loop after reload/sidebar could drop prior turns from prompts).
+2. **In-progress rows in prompts** — empty/`▌` typing placeholders could pollute or dilute prompt context; `_chat_transcript_by_name` did not normalize backend labels on legacy rows.
+3. **Weak rebuttal anchoring** — prompt listed full transcript + bullet points but did not surface the **latest opposing argument** as a dedicated block.
+4. **Fallback rotation gaps** — `_speaker_turn_index` failed when `speaker_name` missing (label-only rows → index stuck at 0); renamed archetypes without exact `DEBATE_FALLBACK_TURNS` keys got the **same static stance sentence** every turn; fallbacks did not skip near-duplicate prior text.
+5. **Placeholder turns accepted** — meta lines like `Sure, here's my next turn:` passed `_turn_quality_ok` (length ≥ 24).
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Added `_turn_speaker_name`, `_completed_chat_turns`, `_hydrate_loop_chat_state`, `_last_opponent_turn`, `_fallback_turn_options`, `_generic_fallback_turn`, `GENERIC_DEBATE_FALLBACKS`.
+- Prompt path now uses completed turns only; injects `Latest opposing argument (Name) — rebut this directly`.
+- UI loop hydrates from store when longer; builds requests from `_completed_chat_turns(state)`; quality/fallback use completed prior state.
+- Fallback rotates by stance-inferred advocate keys + non-repetitive option scan; generic rotation for other personas.
+- Rejects placeholder/meta turns in `_turn_quality_ok`.
+
+**Tests:** +6 in `tests/test_game_task_arena_model_chat.py` (label strip, completed-turn filter, hydrate, opponent quote in prompt, placeholder reject, renamed-archetype fallback) — **46 passed**.
+
+**Probe:** `FE_DEBATE_SEARCH=0 .venv/bin/python scripts/_debate_probe.py` → **PASS** — `{'turns': 6, 'repetitions': 0, 'on_topic': 6, 'unique_openers': 6, 'mixups': 1, 'stance_violations': 1}` (round-3 Tolstoy no longer emits placeholder meta).
+
+**Arena:** relaunched on `:7868` — PID 64470, log `logs/arena_model_chat_debate_fix_20260702T070810Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Model Chat pass turns + conversation summary on conclude
+
+**Trigger:** User asked that debaters with nothing new to add should pass (not emit filler like "I stand by my position with evidence from the reference facts above."), and that concluded debates should show a concise conversation summary instead of only raw transcript / vote tallies.
+
+**Pass / skip (`scripts/game_task_arena.py`):**
+- Added `DEBATE_PASS_TOKEN = "[[PASS]]"` with `_debate_signaled_pass`, `_strip_pass_token`, `_is_debate_pass_turn`, `_parse_debate_model_output`, `_format_pass_turn_status`.
+- Debate prompts now tell speakers they **may** respond with only `[[PASS]]` when they have no new evidence/rebuttal.
+- `_generic_fallback_turn` and exhausted advocate fallbacks return `[[PASS]]` instead of the old stance-lock filler sentence.
+- `run_agentic_loop_ui` pops the in-progress row when a turn is a pass — nothing is appended to `chat_state`; status line shows `**Name** passed (nothing new to add)`.
+
+**Conversation summary:**
+- Added `_rule_based_conversation_summary`, `_build_conversation_summary_request`, `_generate_conversation_summary` (Frontier speaker when available, else rule-based).
+- On loop end: generates summary, persists `summary`, `debate_concluded`, `debate_stop_reason` on the active conversation in `benchmarks/results/model_chat_conversations/index.json`.
+- New **Conversation summary** Markdown panel below chat status in the room; restored on conversation switch via `_sync_from_active_conv`.
+- **Judge The Debate** regenerates summary including judge outcome; debate JSONL records include `summary`.
+
+**Tests:** +9 in `tests/test_game_task_arena_model_chat.py` (pass detection, parse/omit, generic fallback pass, exhausted advocate pass, rule-based summary, summary panel) — **55 passed**.
+
+**Arena:** relaunched on `:7868` — log `logs/arena_model_chat_pass_summary_20260702T073900Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Model Chat first-turn opening fix (Researcher "stand by my position")
+
+**Trigger:** User bug report — on the first debater statement after Human ("debate who is the greatest russian author"), **Researcher** emitted `I stand by my position with evidence from the reference facts above.` despite no prior stance.
+
+**Root cause:**
+1. **Not fallback code** — grep shows the exact string is absent from emit paths; prior pass/skip work removed `GENERIC_DEBATE_FALLBACKS` stance filler. The bad line was **model-generated meta filler** that passed `_turn_quality_ok`.
+2. **Wrong prompt branch** — Human's opening message populated the transcript, so `_build_debate_turn_request` used the **rebuttal** template (`REBUTTAL → NEW EVIDENCE → CLAIM`) instead of an opening prompt, even though no debater had argued yet.
+3. **No meta-filler guard** — `_turn_quality_ok` did not reject "stand by my position" / "reference facts above" without concrete works.
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Added `_is_debate_opening_turn` (first contribution + no opposing debater yet), `_is_meta_filler_turn`, `_looks_like_rebuttal_only`.
+- Opening turns use NEW EVIDENCE + CLAIM prompts; rebuttal template only after an opponent debater has spoken.
+- Removed dead `GENERIC_DEBATE_FALLBACKS` rebuttal strings; added `GENERIC_DEBATE_OPENING_FALLBACKS` for generic personas on opening turn only.
+- `_turn_quality_ok` / `_parse_debate_model_output` reject meta filler; generic fallback passes on later turns.
+
+**Tests:** +5 in `tests/test_game_task_arena_model_chat.py` (opening fallback, later pass, meta reject, Researcher opening prompt, emit-path grep) — **59 passed**.
+
+**Logic trace:** Researcher first turn after Human → `is_debate_opening_turn=True`, filler rejected, fallback is substantive opening with Tolstoy/Dostoevsky evidence.
+
+**Arena:** relaunched on `:7868` — PID 6912, log `logs/arena_model_chat_opening_fix_20260702T161545Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Model Chat structured 4-phase debate (opening → rebuttal → final → adjudicator)
+
+**Trigger:** User requested replacing the free-form round loop with a structured debate: phases 1–3 (each debater speaks once per phase), phase 4 adjudicator write-up, modeled prompts per phase, UI phase labels, default 3 debate phases, tests, arena restart.
+
+**Phases (`scripts/game_task_arena.py`):**
+- Added `DEBATE_PHASES`, `DEBATE_PHASE_LABELS`, `DEFAULT_DEBATE_PHASES=3`, `_debate_phase_for_round`, `_format_debate_phase_status`, `_format_adjudicator_status`, `_resolve_adjudicator`.
+- `_build_phase_debate_request` — opening (NEW EVIDENCE + CLAIM, no rebuttal), rebuttal (REBUTTAL + NEW EVIDENCE + CLAIM), final (FINAL CLAIM, no verbatim repeat).
+- `_build_adjudicator_request` / `_generate_adjudicator_writeup` — SUMMARY, AGREEMENT/DISAGREEMENT, VERDICT sections.
+- `_build_debate_turn_request` delegates with explicit `phase` or round-index mapping; legacy inference fixed for first turn after opponent spoke → rebuttal.
+- `run_agentic_loop_ui` runs phases 1–`max_rounds` with status `Phase N/M: <label>`, then streams adjudicator (first `is_judge` speaker, e.g. Impartial Judge) into transcript + **Conversation summary** panel; falls back to `_generate_conversation_summary` when no judge in room.
+- Preserved: `[[PASS]]`, `[[DEBATE_CONCLUDED]]` early stop, search facts injection, conversation persistence, judge panel vote.
+
+**UI:** Debate phases slider default **3**, label "opening → rebuttal → final; adjudicator runs after"; judge copy updated.
+
+**Tests:** +9 in `tests/test_game_task_arena_model_chat.py` (phase mapping, status label, opening/rebuttal/final/adjudicator prompts, resolve adjudicator, default phases) — **68 passed**.
+
+**Arena:** relaunched on `:7868` — log `logs/arena_model_chat_phased_debate_20260702T164813Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Model Chat conversation naming + rename (sidebar fix)
+
+**Trigger:** User reported sidebar showing raw `conv_<hash>` IDs instead of first-message titles; wanted rename control and clarity on local vs cloud persistence.
+
+**Root cause (sidebar labels):** `_conversation_list_choices` passed Gradio `Radio` tuples as `(value, label)` but Gradio expects `(label, value)` — IDs were displayed, titles were stored as internal values.
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Fixed choice tuple order; sidebar now shows derived title + status (e.g. `debate who the best russian author is (in room · 5 turn(s))`).
+- Added `CONVERSATION_TITLE_MAX_LEN=60`, `_truncate_conversation_title`, then `_rename_active_conversation` with `title_manual` flag so user renames persist across chat updates.
+- Sidebar: title textbox + **Rename** button (Enter also saves); syncs when switching conversations.
+
+**Persistence audit:**
+- **Local:** all Model Chat conversations persist in `benchmarks/results/model_chat_conversations/index.json` (currently 2 conversations: `conv_a95877844cad`, `conv_862480e6eb39` — both titled from first Human message; no duplicate IDs).
+- **Cloud (`FE_CONVERSATION_DB_URL` from `cloud/conversation_db/.env.local`):** push happens **only** when user clicks **Judge The Debate** (`judge_the_debate_ui` → `_post_conversation_to_cloud`). Routine chat / loop completion does not upload. Railway API `GET /api/conversations` returned **0 records** — no judged debates booked yet; local JSONL at `benchmarks/results/model_chat_debates.jsonl` is separate training log.
+
+**Tests:** +4 in `tests/test_game_task_arena_model_chat.py` (choice label order, rename round-trip, manual title lock, truncation) — **72 passed**.
+
+**Arena:** relaunched on `:7868` with cloud env sourced — log `logs/arena_model_chat_conv_naming_*`.
+
+## 2026-07-02 — Model Chat narrative conversation summary
+
+**Trigger:** User complaint that **Conversation summary** was a run-on blob with inline speaker labels and meta junk (`End condition: 3 debate phases completed`).
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Added `_CONVERSATION_SUMMARY_STRUCTURE` shared template: opening paragraph (topic + who argued what), body paragraphs (`The basis of [Name]'s argument was...`), closing (`In summary...`).
+- `_build_conversation_summary_request` and `_build_adjudicator_request` now use the narrative template; dropped `End condition:` from user prompt; adjudicator no longer uses SUMMARY/AGREEMENT/VERDICT headings.
+- `_rule_based_conversation_summary` rewritten with multi-paragraph structure; helpers `_infer_position_label`, `_extract_speaker_argument_basis`, `_normalize_summary_text` (preserves `\n\n` in model output).
+- `_generate_conversation_summary` / `_generate_adjudicator_writeup` use `_normalize_summary_text` instead of collapsing to one line.
+
+**Tests:** +4 updated/added in `tests/test_game_task_arena_model_chat.py` (narrative framing, per-side sections, `In summary`, adjudicator prompt structure, paragraph normalization) — **74 passed**.
+
+**Arena:** relaunched on `:7868` — PID 51082, log `logs/arena_model_chat_summary_narrative_20260702T201028Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Model Chat lobby advanced settings accordion
+
+**Trigger:** User screenshot — Model Chat lobby debate settings row (debate phases slider, early stop dropdown, max tokens, temperature) had overlapping slider thumbs, labels, and inputs.
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Moved debate phases, early stop when, max response tokens, and temperature behind collapsed `gr.Accordion("Advanced settings", open=False)` with `elem_classes=["model-chat-advanced-settings"]` — lobby default view stays clean (speakers + Enter Room only).
+- Split the four controls into two `gr.Row` pairs (phases + early stop; tokens + temperature) with `scale=1` and `model-chat-advanced-row` flex layout; shortened debate phases label, moved long copy to `info`.
+- Added minimal CSS for `.model-chat-advanced-settings` (row gap, min-width, slider/number field sizing) to prevent thumb/input overlap.
+- Lobby copy updated to point users at **Advanced settings** instead of inline configure text.
+
+**State / behavior:** Widget references and `lobby_settings_change_ui` / phased debate loop inputs unchanged — values still persist via `_update_active_conversation` on change.
+
+**Tests:** `tests/test_game_task_arena_model_chat.py` — **78 passed**.
+
+**Arena:** relaunched on `:7868` — PID 57199, log `logs/arena_model_chat_advanced_settings_20260702T201847Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Model Chat opening-phase challenge default
+
+**Trigger:** User request — when a speaker profile does not already specify rebuttal/challenge behavior, encode default engagement on **Phase 1 (opening)**: after the first debater, each subsequent debater must challenge the immediately prior speaker and push the conversation deeper (not isolated monologues).
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Added `_profile_specifies_challenge_behavior`, `_prior_debater_in_phase`, `_opening_phase_challenge_turn`.
+- `_build_phase_debate_request`: when opening phase has prior debater turns and profile lacks challenge keywords, inject CHALLENGE + NEW EVIDENCE + CLAIM structure (system + user blocks with prior speaker excerpt).
+- First debater in opening unchanged (NEW EVIDENCE + CLAIM only); rebuttal/final phases unchanged.
+- `_turn_quality_ok`: allow challenge-style opening turns for 2nd+ debaters (skip `_looks_like_rebuttal_only` rejection).
+
+**Tests:** +5 in `tests/test_game_task_arena_model_chat.py` (2nd speaker injection, profile skip, helpers) — **88 passed**.
+
+**Arena:** relaunched on `:7868` — PID 69108, log `logs/arena_opening_challenge_20260702T204219Z.log`, HTTP 200 verified.
+
+## 2026-07-02 — Expandable N-phase debate loop (proposal → deepen → conclusion)
+
+**Trigger:** User plan — replace rigid opening/rebuttal/final mapping (rounds 4+ all reused "final") with an N-phase adaptive loop where models pace themselves across phases, read opponents, and either rebut/respond or add new evidence.
+
+**Fixes (`scripts/game_task_arena.py`):**
+- Added `_debate_turn_mode`, `_debate_pacing_context`, `_normalize_turn_mode`; `_debate_phase_for_round` now maps: phase 1 → proposal, phases 2…N−1 → develop, phase N → conclusion (N=1 → conclusion only).
+- `_build_phase_debate_request`: new develop-phase adaptive prompt (RESPOND/REBUT vs NEW EVIDENCE choice); pacing line injected when `round_idx`/`max_rounds` provided (e.g. "You are in phase 3 of 6…").
+- Status labels: Proposal / Deepen / Conclusion; Advanced settings slider info updated.
+- Quality gates: `_turn_quality_ok` / `_is_substantive_less_turn` treat develop like rebuttal via `_normalize_turn_mode`.
+
+**Tests:** `tests/test_game_task_arena_model_chat.py` — **97 passed** (+ turn mode, pacing, develop prompt tests).
+
+**Arena:** relaunch on `:7868` after deploy.
+
+## 2026-07-02 — Model Chat delete conversation
+
+**Trigger:** User asked where conversations persist and requested a delete control in the sidebar.
+
+**Fixes (`scripts/game_task_arena.py`):**
+- `_delete_conversation(store, conv_id)` — removes from `benchmarks/results/model_chat_conversations/index.json`; switches active to most recently updated; creates fresh conversation if last one deleted.
+- Sidebar **Delete conversation** button (red/stop) deletes the selected sidebar entry.
+- Fixed `_conv_list_update` Radio value to use conversation id (`choices[0][1]`) not label.
+
+**Tests:** +2 delete tests — **99 passed** in `tests/test_game_task_arena_model_chat.py`.

@@ -1058,39 +1058,82 @@ class LocalMlxBackend:
         return scale, max(1, rank)
 
     def generate(self, request: GenerationRequest) -> str:
+        return self.generate_batch([request])[0]
+
+    def generate_batch(self, requests: List[GenerationRequest]) -> List[str]:
+        if not requests:
+            return []
         model, tokenizer = self._ensure_loaded()
-        messages = [{"role": m.role, "content": m.content} for m in request.messages]
-        if self._backend_kind == "mlx":
-            prompt = tokenizer.apply_chat_template(
-                messages,
-                tokenize=False,
-                add_generation_prompt=True,
+        rendered_prompts: list[str] = []
+        for request in requests:
+            messages = [{"role": m.role, "content": m.content} for m in request.messages]
+            rendered_prompts.append(
+                tokenizer.apply_chat_template(
+                    messages,
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
             )
-            kwargs: Dict[str, Any] = {"max_tokens": request.max_tokens}
-            if request.temperature > 0:
-                kwargs["sampler"] = self._make_sampler(temp=request.temperature, top_p=1.0)
-            return self._generate(model, tokenizer, prompt=prompt, verbose=False, **kwargs)
+        if self._backend_kind == "mlx":
+            outputs: list[str] = []
+            for prompt, request in zip(rendered_prompts, requests):
+                kwargs: Dict[str, Any] = {"max_tokens": request.max_tokens}
+                if request.temperature > 0:
+                    kwargs["sampler"] = self._make_sampler(temp=request.temperature, top_p=1.0)
+                outputs.append(self._generate(model, tokenizer, prompt=prompt, verbose=False, **kwargs))
+            return outputs
 
         # Transformers fallback generation path.
-        prompt = tokenizer.apply_chat_template(
-            messages,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-        inputs = tokenizer(prompt, return_tensors="pt")
+        first = requests[0]
+        if any(req.max_tokens != first.max_tokens or req.temperature != first.temperature for req in requests):
+            raise ValueError("Batched transformer generation requires uniform max_tokens and temperature")
+        if tokenizer.pad_token_id is None:
+            tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "left"
+        inputs = tokenizer(rendered_prompts, return_tensors="pt", padding=True)
         device = next(model.parameters()).device
         inputs = {k: v.to(device) for k, v in inputs.items()}
         generation_kwargs: Dict[str, Any] = {
-            "max_new_tokens": request.max_tokens,
-            "do_sample": request.temperature > 0,
+            "max_new_tokens": first.max_tokens,
+            "do_sample": first.temperature > 0,
             "pad_token_id": tokenizer.eos_token_id,
+            "remove_invalid_values": True,
+            "renormalize_logits": True,
         }
-        if request.temperature > 0:
-            generation_kwargs["temperature"] = request.temperature
+        if first.temperature > 0:
+            generation_kwargs["temperature"] = first.temperature
+            generation_kwargs["top_p"] = 0.95
         output_ids = model.generate(**inputs, **generation_kwargs)
-        prompt_len = inputs["input_ids"].shape[1]
-        new_tokens = output_ids[0][prompt_len:]
-        return tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+        prompt_width = inputs["input_ids"].shape[1]
+        return [
+            tokenizer.decode(row[prompt_width:], skip_special_tokens=True).strip()
+            for row in output_ids
+        ]
+
+    def stream_generate(self, request: GenerationRequest):
+        """Yield incremental text chunks as they are produced.
+
+        The MLX backend streams token-by-token via ``mlx_lm.stream_generate``. The
+        transformers fallback has no incremental API here, so it yields the full
+        completion as a single chunk. Callers should treat yielded pieces as
+        deltas to be concatenated.
+        """
+        model, tokenizer = self._ensure_loaded()
+        if self._backend_kind == "mlx":
+            from mlx_lm import stream_generate as _mlx_stream
+
+            messages = [{"role": m.role, "content": m.content} for m in request.messages]
+            prompt = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+            kwargs: Dict[str, Any] = {"max_tokens": request.max_tokens}
+            if request.temperature > 0:
+                kwargs["sampler"] = self._make_sampler(temp=request.temperature, top_p=1.0)
+            for response in _mlx_stream(model, tokenizer, prompt=prompt, **kwargs):
+                chunk = getattr(response, "text", "") or ""
+                if chunk:
+                    yield chunk
+            return
+        # No incremental streaming for the transformers path; emit once.
+        yield self.generate(request)
 
 
 class OpenAICompatibleBackend:
@@ -1118,6 +1161,61 @@ class OpenAICompatibleBackend:
         body = self._post_chat_completion(payload)
         text = body["choices"][0]["message"]["content"]
         return text, body.get("usage", {})
+
+    def stream_generate(self, request: GenerationRequest):
+        """Yield content deltas from a streaming chat-completions call (SSE)."""
+        if not self.api_key:
+            raise RuntimeError("FRONTIER_API_KEY or OPENAI_API_KEY is required for frontier calls.")
+        payload = {
+            "model": self.model,
+            "messages": [{"role": m.role, "content": m.content} for m in request.messages],
+            "max_tokens": request.max_tokens,
+            "temperature": request.temperature,
+            "stream": True,
+        }
+        yield from self._stream_chat_completion(payload)
+
+    def _stream_chat_completion(self, payload: Dict[str, Any]):
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            f"{self.base_url}/chat/completions",
+            data=data,
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout_s) as resp:
+                for raw in resp:
+                    line = raw.decode("utf-8", "replace").strip()
+                    if not line or not line.startswith("data:"):
+                        continue
+                    chunk = line[len("data:"):].strip()
+                    if chunk == "[DONE]":
+                        break
+                    try:
+                        obj = json.loads(chunk)
+                    except json.JSONDecodeError:
+                        continue
+                    choices = obj.get("choices") or [{}]
+                    delta = (choices[0].get("delta") or {}).get("content")
+                    if delta:
+                        yield delta
+        except urllib.error.HTTPError as exc:
+            error_text = exc.read().decode("utf-8", "replace")
+            if exc.code == 400 and "max_tokens" in error_text and "max_completion_tokens" in error_text:
+                retry_payload = dict(payload)
+                retry_payload["max_completion_tokens"] = retry_payload.pop("max_tokens")
+                yield from self._stream_chat_completion(retry_payload)
+                return
+            if exc.code == 400 and "temperature" in error_text and "Unsupported value" in error_text:
+                retry_payload = dict(payload)
+                retry_payload.pop("temperature", None)
+                yield from self._stream_chat_completion(retry_payload)
+                return
+            raise RuntimeError(f"Frontier API HTTP {exc.code}: {error_text}") from exc
 
     def _post_chat_completion(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         data = json.dumps(payload).encode("utf-8")
